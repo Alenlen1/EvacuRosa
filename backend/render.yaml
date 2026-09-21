@@ -1,0 +1,21 @@
+# Render Blueprint — see https://render.com/docs/blueprint-spec.
+# Import this repo in the Render dashboard and it'll pick this up
+# automatically ("New +" -> "Blueprint").
+services:
+  - type: web
+    name: evacurosa-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: ALLOWED_ORIGINS
+        sync: false # set to your real Vercel URL after the frontend is deployed
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false

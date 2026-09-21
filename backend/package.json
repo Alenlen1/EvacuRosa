@@ -1,0 +1,27 @@
+{
+  "name": "backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "fetch:roads": "tsx scripts/fetch-santa-rosa-roads.ts",
+    "fetch:earthquakes": "tsx scripts/fetch-earthquakes.ts"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "@supabase/supabase-js": "^2.115.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "tsx": "^4.20.0",
+    "vitest": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "@types/express": "^5.0.6",
+    "@types/cors": "^2.8.17"
+  }
+}

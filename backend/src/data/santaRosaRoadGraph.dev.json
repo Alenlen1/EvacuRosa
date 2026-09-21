@@ -1,0 +1,251 @@
+{
+  "_disclaimer": "DEVELOPMENT FIXTURE. Node placement is a hand-built, approximate illustration of Santa Rosa City's general layout for exercising the A* algorithm during development. It is NOT surveyed road geometry and must never be used for a real routing decision. Run scripts/fetch-santa-rosa-roads.ts to replace this with real OpenStreetMap data before this goes anywhere near production.",
+  "nodes": [
+    {
+      "id": "N1",
+      "latitude": 14.3123,
+      "longitude": 121.1113,
+      "label": "Near City Hall / Poblacion"
+    },
+    {
+      "id": "N2",
+      "latitude": 14.3095,
+      "longitude": 121.1145,
+      "label": "Near Market Area"
+    },
+    {
+      "id": "N3",
+      "latitude": 14.316,
+      "longitude": 121.108,
+      "label": "Toward Santa Rosa-Tagaytay Rd"
+    },
+    {
+      "id": "N4",
+      "latitude": 14.3005,
+      "longitude": 121.112,
+      "label": "Near Paseo de Santa Rosa"
+    },
+    {
+      "id": "N5",
+      "latitude": 14.295,
+      "longitude": 121.098,
+      "label": "Near Nuvali"
+    },
+    {
+      "id": "N6",
+      "latitude": 14.3005,
+      "longitude": 121.125,
+      "label": "Near Balibago"
+    },
+    {
+      "id": "N7",
+      "latitude": 14.318,
+      "longitude": 121.118,
+      "label": "Near Tagapo"
+    },
+    {
+      "id": "N8",
+      "latitude": 14.307,
+      "longitude": 121.12,
+      "label": "Near Sinalhan"
+    },
+    {
+      "id": "N9",
+      "latitude": 14.323,
+      "longitude": 121.105,
+      "label": "Near Pulong Santa Cruz"
+    },
+    {
+      "id": "N10",
+      "latitude": 14.29,
+      "longitude": 121.12,
+      "label": "Near Don Jose"
+    },
+    {
+      "id": "N11",
+      "latitude": 14.314,
+      "longitude": 121.116,
+      "label": "Market Area North connector"
+    },
+    {
+      "id": "N12",
+      "latitude": 14.325,
+      "longitude": 121.115,
+      "label": "Near Caingin"
+    },
+    {
+      "id": "N13",
+      "latitude": 14.298,
+      "longitude": 121.105,
+      "label": "Near Malitlit"
+    },
+    {
+      "id": "N14",
+      "latitude": 14.285,
+      "longitude": 121.11,
+      "label": "Toward Cabuyao (city edge)"
+    }
+  ],
+  "edges": [
+    {
+      "id": "E1",
+      "fromNodeId": "N1",
+      "toNodeId": "N2",
+      "roadId": "R-NH-1",
+      "roadName": "National Highway (approx.)",
+      "distanceMeters": 1900,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E2",
+      "fromNodeId": "N2",
+      "toNodeId": "N4",
+      "roadId": "R-NH-2",
+      "roadName": "National Highway (approx.)",
+      "distanceMeters": 2100,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E3",
+      "fromNodeId": "N1",
+      "toNodeId": "N3",
+      "roadId": "R-SRT-1",
+      "roadName": "Santa Rosa-Tagaytay Rd (approx.)",
+      "distanceMeters": 1400,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E4",
+      "fromNodeId": "N4",
+      "toNodeId": "N5",
+      "roadId": "R-NUV-1",
+      "roadName": "Toward Nuvali (approx.)",
+      "distanceMeters": 2600,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E5",
+      "fromNodeId": "N2",
+      "toNodeId": "N6",
+      "roadId": "R-BAL-1",
+      "roadName": "Toward Balibago (approx.)",
+      "distanceMeters": 3200,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E6",
+      "fromNodeId": "N1",
+      "toNodeId": "N7",
+      "roadId": "R-TAG-1",
+      "roadName": "Toward Tagapo (approx.)",
+      "distanceMeters": 1500,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E7",
+      "fromNodeId": "N1",
+      "toNodeId": "N11",
+      "roadId": "R-MKT-1",
+      "roadName": "Market Area connector (approx.)",
+      "distanceMeters": 800,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E8",
+      "fromNodeId": "N11",
+      "toNodeId": "N7",
+      "roadId": "R-MKT-2",
+      "roadName": "Market Area connector (approx.)",
+      "distanceMeters": 700,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E9",
+      "fromNodeId": "N2",
+      "toNodeId": "N8",
+      "roadId": "R-NH-3",
+      "roadName": "National Highway toward Sinalhan (approx.)",
+      "distanceMeters": 1800,
+      "status": "BLOCKED",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E10",
+      "fromNodeId": "N3",
+      "toNodeId": "N9",
+      "roadId": "R-PSC-1",
+      "roadName": "Toward Pulong Santa Cruz (approx.)",
+      "distanceMeters": 2200,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E11",
+      "fromNodeId": "N3",
+      "toNodeId": "N12",
+      "roadId": "R-CAI-1",
+      "roadName": "Toward Caingin (approx.)",
+      "distanceMeters": 1700,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E12",
+      "fromNodeId": "N4",
+      "toNodeId": "N13",
+      "roadId": "R-MAL-1",
+      "roadName": "Toward Malitlit (approx.)",
+      "distanceMeters": 1300,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E13",
+      "fromNodeId": "N4",
+      "toNodeId": "N10",
+      "roadId": "R-DJ-1",
+      "roadName": "Toward Don Jose (approx.)",
+      "distanceMeters": 2500,
+      "status": "OPEN",
+      "condition": "POOR"
+    },
+    {
+      "id": "E14",
+      "fromNodeId": "N4",
+      "toNodeId": "N14",
+      "roadId": "R-NH-4",
+      "roadName": "National Highway toward Cabuyao (approx.)",
+      "distanceMeters": 3400,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E15",
+      "fromNodeId": "N8",
+      "toNodeId": "N6",
+      "roadId": "R-SIN-1",
+      "roadName": "Sinalhan-Balibago connector (approx.)",
+      "distanceMeters": 1600,
+      "status": "OPEN",
+      "condition": "GOOD"
+    },
+    {
+      "id": "E16",
+      "fromNodeId": "N9",
+      "toNodeId": "N12",
+      "roadId": "R-PSC-2",
+      "roadName": "Pulong Santa Cruz-Caingin connector (approx.)",
+      "distanceMeters": 1300,
+      "status": "OPEN",
+      "condition": "GOOD"
+    }
+  ]
+}

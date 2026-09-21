@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+html,
+body {
+  height: 100%;
+}
+
+/* Leaflet wraps custom divIcon content in a box meant for its default pin —
+   strip that so our own SVG/HTML markers render without an extra frame. */
+.leaflet-div-icon {
+  background: transparent;
+  border: none;
+}

@@ -1,0 +1,18 @@
+{
+  "_disclaimer": "DEVELOPMENT FIXTURE — a sample fire incident for exercising proximity-based fire risk before a real Supabase project exists. Not a real hazard feed; never treat this as a live emergency.",
+  "incidents": [
+    {
+      "id": "fire-dev-1",
+      "barangayName": "Malitlit",
+      "latitude": 14.298,
+      "longitude": 121.105,
+      "severity": "HIGH",
+      "radiusMeters": 250,
+      "status": "ACTIVE",
+      "confirmedBlockedRoadIds": [],
+      "notes": "Dev fixture — near node N13 (Malitlit); soft risk only, no confirmed-blocked road",
+      "reportedAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    }
+  ]
+}
