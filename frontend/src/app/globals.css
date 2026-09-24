@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+.remove-destination-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  margin: 8px 14px;
+  border: 1px solid #dce1e5;
+  border-radius: 8px;
+  background: white;
+  color: #252b31;
+  font-size: 12px;
+}
+
 .mobile-navigation, .mobile-staff-access { display: none; }
 .mobile-navigation-drawer { display: none; }
 @media (max-width: 800px) {

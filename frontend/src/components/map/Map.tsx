@@ -31,6 +31,7 @@ interface MapProps {
   geolocation: GeolocationState;
   destination: { latitude: number; longitude: number } | null;
   destinationLabel?: string;
+  onClearDestination: () => void;
   route: { latitude: number; longitude: number }[] | null;
   centers: EvacuationCenter[];
   floodReports: FloodReport[];
@@ -151,6 +152,7 @@ export default function Map({
   geolocation,
   destination,
   destinationLabel,
+  onClearDestination,
   route,
   centers,
   floodReports,
@@ -194,6 +196,7 @@ export default function Map({
       {destination && (
         <DestinationMarker
           label={destinationLabel}
+          onRemove={onClearDestination}
           latitude={destination.latitude}
           longitude={destination.longitude}
         />

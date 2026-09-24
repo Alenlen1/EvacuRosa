@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MapPin, WifiOff, Map as MapIcon, Building2, ShieldAlert, ArrowRight, Users, X } from "lucide-react";
 import { FloodIcon as Droplet, FireIcon as Flame, EarthquakeIcon as Activity } from "@/components/ui/HazardIcons";
 import { Brand } from "@/components/ui/Brand";
@@ -85,6 +85,17 @@ export default function Home() {
   const [result, setResult] = useState<ActiveResult>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<"route" | "evacuation" | null>(null);
+  const routeVersion = useRef(0);
+
+  function clearDestination() {
+    // Ignore pending responses after removing their destination.
+    routeVersion.current += 1;
+    setDestination(null);
+    setResult(null);
+    setSelectedCenter(null);
+    setError(null);
+    setLoading(null);
+  }
   // Oldest of the four data sources' timestamps — the most conservative
   // "as of" claim to show, and whether ANY of them came from cache rather
   // than a live fetch just now.
@@ -177,6 +188,7 @@ export default function Home() {
 
   async function handleFindRoute() {
     if (!geolocation.position || !destination) return;
+    const version = ++routeVersion.current;
     setLoading("route");
     setError(null);
     setResult(null);
@@ -188,16 +200,17 @@ export default function Home() {
         },
         destination
       );
-      setResult({ kind: "route", data });
+      if (version === routeVersion.current) setResult({ kind: "route", data });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not calculate a route.");
+      if (version === routeVersion.current) setError(err instanceof Error ? err.message : "Could not calculate a route.");
     } finally {
-      setLoading(null);
+      if (version === routeVersion.current) setLoading(null);
     }
   }
 
   async function handleFindEvacuationCenter() {
     if (!geolocation.position) return;
+    const version = ++routeVersion.current;
     setLoading("evacuation");
     setError(null);
     setResult(null);
@@ -206,13 +219,13 @@ export default function Home() {
         latitude: geolocation.position.latitude,
         longitude: geolocation.position.longitude,
       });
-      setResult({ kind: "evacuation", data });
+      if (version === routeVersion.current) setResult({ kind: "evacuation", data });
     } catch (err) {
-      setError(
+      if (version === routeVersion.current) setError(
         err instanceof Error ? err.message : "Could not find an evacuation center."
       );
     } finally {
-      setLoading(null);
+      if (version === routeVersion.current) setLoading(null);
     }
   }
 
@@ -278,6 +291,7 @@ export default function Home() {
               geolocation={geolocation}
               destination={destination}
               destinationLabel={destinationName.label?.title}
+              onClearDestination={clearDestination}
               route={activeRoutePoints}
               centers={centers}
               floodReports={floodReports}
@@ -286,6 +300,8 @@ export default function Home() {
               earthquakeRoadImpacts={earthquakeRoadImpacts}
               onSelectCenter={(center) => { setSelectedCenter(center); setPanel("centers"); setSheetState("partial"); }}
               onMapClick={(latitude, longitude) => {
+                routeVersion.current += 1;
+                setLoading(null);
                 setDestination({ latitude, longitude });
                 setResult(null);
                 setError(null);
@@ -298,6 +314,7 @@ export default function Home() {
         </section>
         <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} actions={
           <>
+          {destination && <button type="button" className="remove-destination-button" onClick={clearDestination}><X size={18} aria-hidden="true" />Remove destination</button>}
           <div className="route-actions">
             {routingDisabledReason && <p>{routingDisabledReason}</p>}
             {destination && <p className="action-destination"><span>Map destination</span><strong>{destinationName.label?.title}</strong></p>}

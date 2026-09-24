@@ -1,6 +1,6 @@
 "use client";
 
-import { Marker, Tooltip } from "react-leaflet";
+import { Marker, Popup, Tooltip } from "react-leaflet";
 import { createDivIcon } from "./icons";
 
 const destinationIcon = createDivIcon(
@@ -15,13 +15,20 @@ interface DestinationMarkerProps {
   latitude: number;
   longitude: number;
   label?: string;
+  onRemove: () => void;
 }
 
 export function DestinationMarker({
   latitude,
   longitude,
   label,
+  onRemove,
 }: DestinationMarkerProps) {
   const title = `Destination: ${label ?? `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`}`;
-  return <Marker position={[latitude, longitude]} icon={destinationIcon} title={title} alt={title}><Tooltip className="hazard-tooltip">{title}</Tooltip></Marker>;
+  return (
+    <Marker position={[latitude, longitude]} icon={destinationIcon} title={title} alt={title}>
+      <Tooltip className="hazard-tooltip">{title}</Tooltip>
+      <Popup><div className="center-popup"><strong>{title}</strong><button type="button" className="secondary-button" onClick={onRemove}>Remove destination</button></div></Popup>
+    </Marker>
+  );
 }
