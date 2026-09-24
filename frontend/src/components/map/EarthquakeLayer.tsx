@@ -47,7 +47,7 @@ export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
               dashArray: event.status === "UNREVIEWED" ? "4 4" : undefined,
             }}
           >
-            <Tooltip sticky>
+            <Tooltip sticky className="hazard-tooltip">
               M{event.magnitude.toFixed(1)}
               {event.depthKm ? ` · ${event.depthKm}km deep` : ""} · {event.status}
               {impactCount > 0

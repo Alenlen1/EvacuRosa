@@ -176,8 +176,8 @@ export default function HazardPlacementMap({
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white">
-      <div className="flex border-b border-slate-200">
+    <div className="hazard-editor">
+      <div className="hazard-tabs" aria-label="Hazard type">
         {(
           [
             { key: "flood" as const, label: "Flood", icon: Droplet },
@@ -188,6 +188,7 @@ export default function HazardPlacementMap({
           <button
             key={key}
             type="button"
+            aria-pressed={mode === key}
             onClick={() => {
               setMode(key);
               resetForm();
@@ -211,11 +212,12 @@ export default function HazardPlacementMap({
       </div>
 
       {mode === "earthquake" && (
-        <div className="border-b border-slate-200 p-2">
-          <label className="mb-1 block text-xs text-slate-600">
+        <div className="hazard-event-selector">
+          <label htmlFor="earthquake-event" className="mb-1 block text-xs text-slate-600">
             Earthquake event to verify impact for
           </label>
           <select
+            id="earthquake-event"
             value={selectedEarthquakeId}
             onChange={(e) => setSelectedEarthquakeId(e.target.value)}
             className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
@@ -231,7 +233,7 @@ export default function HazardPlacementMap({
         </div>
       )}
 
-      <div className="relative h-[65vh] min-h-[480px] max-h-[760px] w-full">
+      <div className="hazard-editor-map">
         <MapContainer
           center={SANTA_ROSA_CITY_CENTER}
           zoom={SANTA_ROSA_CITY_DEFAULT_ZOOM}
@@ -254,7 +256,8 @@ export default function HazardPlacementMap({
         </MapContainer>
       </div>
 
-      <div className="p-3">
+      <div className="hazard-form">
+        <h3 className="mb-3 text-sm font-semibold">Report {mode === "earthquake" ? "a verified road impact" : `a ${mode}`}</h3>
         <p className="mb-2 text-xs text-slate-500">
           {mode === "fire"
             ? "Tap the map where the fire is."
@@ -267,13 +270,14 @@ export default function HazardPlacementMap({
           <div className="space-y-2 rounded border border-slate-200 bg-slate-50 p-2">
             {mode !== "fire" && (
               <div>
-                <label className="mb-1 block text-xs text-slate-600">Nearest road</label>
+                <label htmlFor="hazard-road" className="mb-1 block text-xs text-slate-600">Nearest road</label>
                 {lookingUpRoads ? (
                   <p className="text-xs text-slate-400">Looking up nearby roads…</p>
                 ) : nearestRoads.length === 0 ? (
                   <p className="text-xs text-red-600">No road found near this point.</p>
                 ) : (
                   <select
+                    id="hazard-road"
                     value={selectedRoadId}
                     onChange={(e) => setSelectedRoadId(e.target.value)}
                     className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
@@ -290,8 +294,9 @@ export default function HazardPlacementMap({
 
             {mode !== "earthquake" && (
               <div>
-                <label className="mb-1 block text-xs text-slate-600">Severity</label>
+                <label htmlFor="hazard-severity" className="mb-1 block text-xs text-slate-600">Severity</label>
                 <select
+                  id="hazard-severity"
                   value={severity}
                   onChange={(e) => setSeverity(e.target.value)}
                   className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
@@ -313,10 +318,11 @@ export default function HazardPlacementMap({
 
             {mode === "earthquake" && (
               <div>
-                <label className="mb-1 block text-xs text-slate-600">
+                <label htmlFor="impact-level" className="mb-1 block text-xs text-slate-600">
                   Verified impact level
                 </label>
                 <select
+                  id="impact-level"
                   value={severity}
                   onChange={(e) => setSeverity(e.target.value)}
                   className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
@@ -332,10 +338,11 @@ export default function HazardPlacementMap({
 
             {mode === "flood" && (
               <div>
-                <label className="mb-1 block text-xs text-slate-600">
+                <label htmlFor="water-level" className="mb-1 block text-xs text-slate-600">
                   Water level in meters (optional — leave blank if unmeasured)
                 </label>
                 <input
+                  id="water-level"
                   type="number"
                   step="0.1"
                   value={waterLevelMeters}
@@ -347,8 +354,9 @@ export default function HazardPlacementMap({
 
             {mode === "fire" && (
               <div>
-                <label className="mb-1 block text-xs text-slate-600">Radius (meters)</label>
+                <label htmlFor="fire-radius" className="mb-1 block text-xs text-slate-600">Radius (meters)</label>
                 <input
+                  id="fire-radius"
                   type="number"
                   value={radiusMeters}
                   onChange={(e) => setRadiusMeters(Number(e.target.value))}
@@ -380,8 +388,9 @@ export default function HazardPlacementMap({
             )}
 
             <div>
-              <label className="mb-1 block text-xs text-slate-600">Notes (optional)</label>
+              <label htmlFor="hazard-notes" className="mb-1 block text-xs text-slate-600">Notes (optional)</label>
               <input
+                id="hazard-notes"
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -410,7 +419,7 @@ export default function HazardPlacementMap({
         )}
       </div>
 
-      <div className="space-y-3 border-t border-slate-200 p-3">
+      <div className="hazard-records space-y-3">
         <h3 className="text-sm font-semibold text-slate-700">Active hazard records</h3>
         {floodReports.length === 0 && fireIncidents.length === 0 && earthquakeEvents.length === 0 && (
           <p className="text-xs text-slate-500">No active hazard records.</p>

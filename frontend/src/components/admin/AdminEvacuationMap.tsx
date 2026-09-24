@@ -22,6 +22,7 @@ function centerIcon(status: string) {
     `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="3" y="9" width="18" height="12" rx="2" fill="${color}" stroke="white" stroke-width="1.5"/>
       <path d="M3 9 L12 3 L21 9" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M10 21v-7h4v7M7 11v3M17 11v3" stroke="white" stroke-width="1.5"/>
     </svg>`,
     26
   );
@@ -73,7 +74,7 @@ export default function AdminEvacuationMap({
           icon={centerIcon(c.status)}
           eventHandlers={{ click: () => onSelectCenter(c.id) }}
         >
-          <Popup>{c.name}</Popup>
+          <Popup><div className="center-popup"><strong>{c.name}</strong><span>{c.status.replaceAll("_", " ")}</span></div></Popup>
         </Marker>
       ))}
     </MapContainer>

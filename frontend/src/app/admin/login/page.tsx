@@ -3,6 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
+import { Brand } from "@/components/ui/Brand";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -34,41 +36,50 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="flex h-dvh flex-col items-center justify-center bg-slate-50 p-6">
+    <main className="login-page">
+      <header className="app-header"><Link href="/" aria-label="EvacuRosa public map"><Brand /></Link><span className="city-label">Santa Rosa, Laguna</span><Link href="/" className="admin-link">Back to public map →</Link></header>
+      <div className="login-content">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6"
+        className="login-card"
       >
-        <h1 className="mb-4 text-lg font-semibold text-blue-700">EvacuRosa Admin</h1>
-        <label className="mb-1 block text-xs text-slate-600">Email</label>
+        <span className="eyebrow">AUTHORIZED PERSONNEL</span>
+        <h1>Welcome back</h1>
+        <p className="login-intro">Sign in to your barangay or CDRRMO workspace to manage local emergency information.</p>
+        <label htmlFor="admin-email">Email address</label>
         <input
           type="email"
+          id="admin-email"
+          autoComplete="username"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           className="mb-3 w-full rounded border border-slate-300 px-3 py-2 text-sm"
         />
-        <label className="mb-1 block text-xs text-slate-600">Password</label>
+        <label htmlFor="admin-password">Password</label>
         <input
           type="password"
+          id="admin-password"
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           className="mb-4 w-full rounded border border-slate-300 px-3 py-2 text-sm"
         />
-        {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="error-message mb-3" role="alert">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white disabled:bg-slate-300"
+          className="primary-button"
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>
-        <p className="mt-3 text-center text-[11px] text-slate-400">
-          Barangay admin and CDRRMO accounts are created directly in Supabase
-          Auth — see supabase/README.md.
+        <p className="login-help">
+          Access is limited to authorized barangay and CDRRMO personnel.
+          Contact your system administrator if you need an account.
         </p>
       </form>
+      </div>
     </main>
   );
 }

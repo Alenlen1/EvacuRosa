@@ -2,6 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import { useEffect, useState } from "react";
+import { DomEvent } from "leaflet";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { Droplet, Flame, Activity } from "lucide-react";
 import {
@@ -36,6 +37,7 @@ interface MapProps {
   earthquakeEvents: EarthquakeEvent[];
   earthquakeRoadImpacts: EarthquakeRoadImpact[];
   onMapClick: (latitude: number, longitude: number) => void;
+  onSelectCenter?: (center: EvacuationCenter) => void;
 }
 
 function FollowUser({
@@ -55,6 +57,17 @@ function FollowUser({
     }
   }, [following, position, map]);
 
+  return null;
+}
+
+/** Reflow Leaflet when the mobile information sheet changes the map's size. */
+function ResizeMap() {
+  const map = useMap();
+  useEffect(() => {
+    const observer = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map]);
   return null;
 }
 
@@ -90,13 +103,14 @@ function LayerToggle({
   onToggleEarthquakes: () => void;
 }) {
   return (
-    <div className="leaflet-top leaflet-left">
+    <div className="leaflet-bottom leaflet-left hazard-layer-controls" ref={(element) => { if (element) DomEvent.disableClickPropagation(element); }}>
       <div className="leaflet-control leaflet-bar flex">
         <button
           type="button"
           onClick={onToggleFlood}
           aria-pressed={showFlood}
           aria-label="Toggle flood layer"
+          title="Toggle flood layer"
           className={`flex h-10 w-10 items-center justify-center bg-white ${
             showFlood ? "text-blue-600" : "text-slate-400"
           }`}
@@ -108,6 +122,7 @@ function LayerToggle({
           onClick={onToggleFire}
           aria-pressed={showFire}
           aria-label="Toggle fire layer"
+          title="Toggle fire layer"
           className={`flex h-10 w-10 items-center justify-center bg-white ${
             showFire ? "text-red-600" : "text-slate-400"
           }`}
@@ -119,6 +134,7 @@ function LayerToggle({
           onClick={onToggleEarthquakes}
           aria-pressed={showEarthquakes}
           aria-label="Toggle earthquake layer"
+          title="Toggle earthquake layer"
           className={`flex h-10 w-10 items-center justify-center bg-white ${
             showEarthquakes ? "text-amber-700" : "text-slate-400"
           }`}
@@ -140,6 +156,7 @@ export default function Map({
   earthquakeEvents,
   earthquakeRoadImpacts,
   onMapClick,
+  onSelectCenter,
 }: MapProps) {
   const [following, setFollowing] = useState(false);
   const [showFlood, setShowFlood] = useState(true);
@@ -164,7 +181,7 @@ export default function Map({
       {showEarthquakes && (
         <EarthquakeLayer events={earthquakeEvents} roadImpacts={earthquakeRoadImpacts} />
       )}
-      <EvacuationCenterLayer centers={centers} />
+      <EvacuationCenterLayer centers={centers} onSelectCenter={onSelectCenter} />
       {geolocation.status === "active" && geolocation.position && (
         <UserLocationMarker
           latitude={geolocation.position.latitude}
@@ -180,6 +197,7 @@ export default function Map({
       )}
       {route && <RoutePolyline points={route} />}
       <ClickToSetDestination onMapClick={onMapClick} />
+      <ResizeMap />
       <FollowUser position={geolocation.position} following={following} />
       <LayerToggle
         showFlood={showFlood}

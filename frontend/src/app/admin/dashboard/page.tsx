@@ -1,6 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { Brand } from "@/components/ui/Brand";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -194,24 +196,28 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-slate-50 pb-8">
-      <div className="border-b border-slate-200 bg-white p-4">
-        <h1 className="text-lg font-semibold text-blue-700">
+    <main className="admin-app">
+      <header className="app-header"><Link href="/" aria-label="EvacuRosa public map"><Brand /></Link><span className="city-label">Santa Rosa, Laguna</span><Link href="/" className="admin-link">Back to public map →</Link></header>
+      <div className="admin-heading">
+        <div><span className="eyebrow">{profile?.role === "SUPER_ADMIN" ? "CDRRMO WORKSPACE" : "BARANGAY WORKSPACE"}</span>
+        <h1>
           {profile?.role === "SUPER_ADMIN"
             ? "CDRRMO — Hazard Management"
             : "Assigned evacuation centers"}
         </h1>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        <p>{profile?.role === "SUPER_ADMIN" ? "Monitor and report hazards across Santa Rosa." : "View assigned shelters and keep occupancy information up to date."}</p>
+        {error && <p className="error-message" role="alert">{error}</p>}</div>
       </div>
 
+      <div className={profile?.role !== "SUPER_ADMIN" ? "admin-center-layout" : undefined}>
       {profile?.role !== "SUPER_ADMIN" && (
-        <div className="border-b border-slate-200">
+        <div className="admin-center-map">
           <AdminEvacuationMap centers={centers} onSelectCenter={handleSelectCenterOnMap} />
         </div>
       )}
 
       {profile?.role !== "SUPER_ADMIN" && (
-        <div className="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="admin-center-cards">
           {centers.map((center) => (
             <div
               key={center.id}
@@ -297,9 +303,10 @@ export default function AdminDashboardPage() {
           )}
         </div>
       )}
+      </div>
 
       {profile?.role === "SUPER_ADMIN" && (
-        <div className="p-4">
+        <div className="admin-hazard-section">
           <h2 className="mb-2 text-sm font-semibold text-slate-700">
             Hazard management — flood, fire, earthquake
           </h2>

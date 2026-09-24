@@ -31,7 +31,7 @@ export function FireLayer({ incidents }: FireLayerProps) {
               weight: 2,
             }}
           >
-            <Tooltip sticky>
+            <Tooltip sticky className="hazard-tooltip">
               {incident.severity} fire — {incident.radiusMeters}m radius
               {incident.confirmedBlockedRoadIds.length > 0
                 ? ` — ${incident.confirmedBlockedRoadIds.length} road(s) confirmed blocked`
