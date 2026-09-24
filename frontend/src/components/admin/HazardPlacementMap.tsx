@@ -3,7 +3,8 @@
 import "leaflet/dist/leaflet.css";
 import { useState } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
-import { Droplet, Flame, Activity, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { FloodIcon, FireIcon, EarthquakeIcon } from "@/components/ui/HazardIcons";
 import {
   SANTA_ROSA_CITY_BOUNDS,
   SANTA_ROSA_CITY_CENTER,
@@ -180,9 +181,9 @@ export default function HazardPlacementMap({
       <div className="hazard-tabs" aria-label="Hazard type">
         {(
           [
-            { key: "flood" as const, label: "Flood", icon: Droplet },
-            { key: "fire" as const, label: "Fire", icon: Flame },
-            { key: "earthquake" as const, label: "Earthquake", icon: Activity },
+            { key: "flood" as const, label: "Flood", icon: FloodIcon },
+            { key: "fire" as const, label: "Fire", icon: FireIcon },
+            { key: "earthquake" as const, label: "Earthquake", icon: EarthquakeIcon },
           ]
         ).map(({ key, label, icon: Icon }) => (
           <button

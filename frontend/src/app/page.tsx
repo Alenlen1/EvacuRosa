@@ -3,7 +3,8 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { MapPin, Droplet, Flame, WifiOff, Activity, Map as MapIcon, Building2, ShieldAlert, ArrowRight, Users, X } from "lucide-react";
+import { MapPin, WifiOff, Map as MapIcon, Building2, ShieldAlert, ArrowRight, Users, X } from "lucide-react";
+import { FloodIcon as Droplet, FireIcon as Flame, EarthquakeIcon as Activity } from "@/components/ui/HazardIcons";
 import { Brand } from "@/components/ui/Brand";
 import { MobileNavigation } from "@/components/ui/MobileNavigation";
 import { StatusBadge } from "@/components/ui/StatusBadge";

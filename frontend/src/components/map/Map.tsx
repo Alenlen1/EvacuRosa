@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { useEffect, useState } from "react";
 import { DomEvent } from "leaflet";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
-import { Droplet, Flame, Activity } from "lucide-react";
+import { FloodIcon as Droplet, FireIcon as Flame, EarthquakeIcon as Activity } from "@/components/ui/HazardIcons";
 import {
   SANTA_ROSA_CITY_BOUNDS,
   SANTA_ROSA_CITY_CENTER,
