@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MapPin, Droplet, Flame, WifiOff, Activity, Map as MapIcon, Building2, ShieldAlert, ArrowRight, Users, X } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
+import { MobileNavigation } from "@/components/ui/MobileNavigation";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MapLegend } from "@/components/map/MapLegend";
 import { RouteDetails, routeRiskLabel } from "@/components/map/RouteDetails";
@@ -251,6 +252,7 @@ export default function Home() {
         <p className="brand-promise">Safe routes. Safe shelters.<br /><strong>A safer Santa Rosa.</strong></p>
         <span className="city-label"><MapPin size={16} /> Santa Rosa, Laguna</span>
         <Link href="/admin/login" className="admin-link">Admin sign in <ArrowRight size={15} /></Link>
+        <MobileNavigation activeSection={panel} onSelect={choosePanel} />
       </header>
       {showOfflineBanner && (
         <div className="offline-banner" role="status"><WifiOff size={17} />
@@ -294,6 +296,7 @@ export default function Home() {
           </div>
         </section>
         <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} actions={
+          <>
           <div className="route-actions">
             {routingDisabledReason && <p>{routingDisabledReason}</p>}
             {destination && <p className="action-destination"><span>Map destination</span><strong>{destinationName.label?.title}</strong></p>}
@@ -308,6 +311,8 @@ export default function Home() {
             {!geolocation.position && <p className="location-help">{locationLabel}. Enable location access to calculate a route.</p>}
             {error && <p className="error-message" role="alert">{error}</p>}
           </div>
+          {panel === "hazards" && <Link href="/admin/login" className="mobile-staff-access">Staff access · Admin sign in</Link>}
+          </>
         }>
             {panel === "map" && result && <RouteDetails result={result} label={routeLabel} center={routeCenter} />}
             {panel === "map" && !result && routeLabel && (
