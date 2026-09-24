@@ -31,6 +31,7 @@ interface MapProps {
   geolocation: GeolocationState;
   destination: { latitude: number; longitude: number } | null;
   destinationLabel?: string;
+  searchFocus?: { latitude: number; longitude: number } | null;
   onClearDestination: () => void;
   route: { latitude: number; longitude: number }[] | null;
   centers: EvacuationCenter[];
@@ -83,6 +84,14 @@ function ClickToSetDestination({
       onMapClick(e.latlng.lat, e.latlng.lng);
     },
   });
+  return null;
+}
+
+function FocusSearchResult({ target }: { target?: { latitude: number; longitude: number } | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (target) map.setView([target.latitude, target.longitude], Math.max(map.getZoom(), 15));
+  }, [target, map]);
   return null;
 }
 
@@ -152,6 +161,7 @@ export default function Map({
   geolocation,
   destination,
   destinationLabel,
+  searchFocus,
   onClearDestination,
   route,
   centers,
@@ -163,6 +173,7 @@ export default function Map({
   onSelectCenter,
 }: MapProps) {
   const [following, setFollowing] = useState(false);
+  useEffect(() => { if (searchFocus) setFollowing(false); }, [searchFocus]);
   const [showFlood, setShowFlood] = useState(true);
   const [showFire, setShowFire] = useState(true);
   const [showEarthquakes, setShowEarthquakes] = useState(true);
@@ -205,6 +216,7 @@ export default function Map({
       <ClickToSetDestination onMapClick={onMapClick} />
       <ResizeMap />
       <FollowUser position={geolocation.position} following={following} />
+      <FocusSearchResult target={searchFocus} />
       <LayerToggle
         showFlood={showFlood}
         onToggleFlood={() => setShowFlood((v) => !v)}

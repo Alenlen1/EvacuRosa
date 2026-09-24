@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+.place-search { position: relative; z-index: 600; flex-shrink: 0; min-width: 0; }
+.place-search-field { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px; background: white; border: 1px solid #dce1e5; border-radius: 10px; color: #5d6875; }
+.place-search-field input { min-width: 0; width: 100%; min-height: 44px; color: #252b31; font-size: 16px; }
+.place-search-field input:focus-visible { outline-offset: 0; }
+.place-search-field button { display: grid; place-items: center; min-width: 44px; min-height: 44px; }
+.place-search-field > svg { flex-shrink: 0; }
+.place-search-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; max-height: min(55dvh, 420px); overflow-y: auto; overscroll-behavior: contain; background: white; border: 1px solid #dce1e5; border-radius: 10px; box-shadow: 0 4px 16px #17232f20; }
+.place-search-dropdown li { display: flex; gap: 10px; align-items: center; padding: 12px; min-height: 52px; cursor: pointer; border-bottom: 1px solid #edf0f2; }
+.place-search-dropdown li[aria-selected="true"], .place-search-dropdown li:hover { background: #fcf2aa; }
+.place-search-dropdown li > svg { flex-shrink: 0; }
+.place-search-dropdown strong { display: block; font-size: 13px; overflow-wrap: anywhere; }
+.place-search-dropdown small { display: block; font-size: 11px; color: #5d6875; overflow-wrap: anywhere; }
+.place-search-dropdown p, .search-attribution { padding: 8px 12px; font-size: 11px; color: #5d6875; }
+.search-attribution a { text-decoration: underline; }
+@media (max-width: 800px) {
+  .public-app .place-search { margin: 6px 8px; }
+  .public-app .place-search-field { min-height: 44px; }
+}
+
 .remove-destination-button {
   display: flex;
   align-items: center;

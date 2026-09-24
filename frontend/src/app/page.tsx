@@ -9,6 +9,8 @@ import { Brand } from "@/components/ui/Brand";
 import { MobileNavigation } from "@/components/ui/MobileNavigation";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MapLegend } from "@/components/map/MapLegend";
+import { PlaceSearch } from "@/components/map/PlaceSearch";
+import type { PlaceResult } from "@/lib/placeSearch";
 import { RouteDetails, routeRiskLabel } from "@/components/map/RouteDetails";
 import { RouteSheet, type SheetState } from "@/components/map/RouteSheet";
 import { useDestinationLabel } from "@/hooks/useDestinationLabel";
@@ -71,6 +73,7 @@ export default function Home() {
   const [panel, setPanel] = useState<"map" | "centers" | "hazards">("map");
   const [sheetState, setSheetState] = useState<SheetState>("collapsed");
   const [selectedCenter, setSelectedCenter] = useState<EvacuationCenter | null>(null);
+  const [searchSelection, setSearchSelection] = useState<PlaceResult | null>(null);
   const geolocation = useGeolocation();
   const isOnline = useOnlineStatus();
   const [destination, setDestination] = useState<{
@@ -88,6 +91,7 @@ export default function Home() {
   const routeVersion = useRef(0);
 
   function clearDestination() {
+    setSearchSelection(null);
     // Ignore pending responses after removing their destination.
     routeVersion.current += 1;
     setDestination(null);
@@ -240,7 +244,8 @@ export default function Home() {
     : null;
 
   const recommendedCenter = result?.kind === "evacuation" ? result.data.recommendedCenter : undefined;
-  const destinationName = useDestinationLabel(destination, centers, isOnline && !recommendedCenter);
+  const lookedUpDestination = useDestinationLabel(destination, centers, isOnline && !recommendedCenter && !searchSelection);
+  const destinationName = searchSelection ? { label: searchSelection.label, loading: false } : lookedUpDestination;
   const routeCenter = recommendedCenter ?? centers.find(center => destination &&
     center.latitude === destination.latitude && center.longitude === destination.longitude);
   const routeLabel: DestinationLabel | null = recommendedCenter
@@ -281,6 +286,17 @@ export default function Home() {
           <div className="rail-caption">EVACUROSA<br />CITY NAVIGATION</div>
         </nav>
         <section className="map-workspace" aria-label="Santa Rosa evacuation map">
+          <PlaceSearch centers={centers} online={isOnline} onSelect={place => {
+            routeVersion.current += 1;
+            setLoading(null);
+            setResult(null);
+            setError(null);
+            setSelectedCenter(null);
+            setDestination({ latitude: place.latitude, longitude: place.longitude });
+            setSearchSelection({ ...place });
+            setPanel("map");
+            setSheetState("partial");
+          }} />
           <div className="hazard-strip">
             <button onClick={() => choosePanel("hazards")}><Droplet className="flood-color" size={24} /><span><strong>Flood</strong><small>{floodReports.length} reports · {blockedFloodCount} blocked</small></span></button>
             <button onClick={() => choosePanel("hazards")}><Flame className="fire-color" size={24} /><span><strong>Fire</strong><small>{fireIncidents.length} incidents loaded</small></span></button>
@@ -291,6 +307,7 @@ export default function Home() {
               geolocation={geolocation}
               destination={destination}
               destinationLabel={destinationName.label?.title}
+              searchFocus={searchSelection}
               onClearDestination={clearDestination}
               route={activeRoutePoints}
               centers={centers}
@@ -300,6 +317,7 @@ export default function Home() {
               earthquakeRoadImpacts={earthquakeRoadImpacts}
               onSelectCenter={(center) => { setSelectedCenter(center); setPanel("centers"); setSheetState("partial"); }}
               onMapClick={(latitude, longitude) => {
+                setSearchSelection(null);
                 routeVersion.current += 1;
                 setLoading(null);
                 setDestination({ latitude, longitude });
