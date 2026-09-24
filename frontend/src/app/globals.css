@@ -988,14 +988,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   .map-legend summary {
     padding: 12px;
   }
-  .information-panel {
-    border-radius: 16px 16px 0 0;
-    border-width: 1px 0 0;
-    flex-shrink: 0;
-    max-height: 37dvh;
-    z-index: 500;
-    box-shadow: 0 -3px 14px #17232f0a;
-  }
   .sheet-toggle {
     display: flex;
     align-items: center;
@@ -1005,16 +997,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
     flex-shrink: 0;
     font-size: 13px;
     font-weight: 700;
-  }
-  .information-panel:not(.is-expanded) .panel-scroll {
-    display: none;
-  }
-  .information-panel.is-expanded {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: 64%;
   }
   .panel-scroll {
     padding: 8px 18px 16px;
@@ -1089,9 +1071,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   .hazard-strip {
     display: none;
   }
-  .information-panel {
-    max-height: 43dvh;
-  }
   .route-actions {
     flex-direction: row;
     flex-wrap: wrap;
@@ -1114,31 +1093,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   border-radius: 7px !important;
   padding: 9px 12px !important;
 }
-@media (max-width: 800px) {
-  /* Reserve map space when opening details, including the attribution and controls. */
-  .information-panel.is-expanded {
-    position: relative;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    height: 52%;
-    max-height: 52%;
-  }
-}
-@media (max-height: 600px) and (max-width: 800px) {
-  .public-app {
-    height: auto;
-    min-height: 100dvh;
-    overflow: auto;
-  }
-  .map-canvas {
-    min-height: 230px;
-  }
-  .information-panel.is-expanded {
-    height: 300px;
-    max-height: none;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     scroll-behavior: auto !important;
@@ -1154,4 +1108,270 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .leaflet-div-icon {
   background: transparent;
   border: none;
+}
+/* Public navigation refinements. All responsive overrides stay out of admin pages. */
+.public-app .route-intro {
+  display: none;
+}
+.public-app .route-summary {
+  margin-top: 0;
+}
+.public-app .route-summary h3, .destination-heading h2 {
+  margin-top: 8px;
+  font-size: 20px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.public-app .route-occupancy {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.public-app .route-metrics {
+  margin: 12px 0;
+}
+.public-app .route-risk {
+  text-transform: none;
+  font-weight: 700;
+}
+.public-app .action-destination strong {
+  display: block;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.public-app .action-destination span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.destination-heading p, .geocoder-credit {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.geocoder-credit {
+  margin-top: 16px;
+}
+.geocoder-credit a {
+  text-decoration: underline;
+}
+.other-route {
+  margin-top: 16px;
+}
+.other-route > summary {
+  min-height: 44px;
+  padding: 12px 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sheet-controls {
+  display: none;
+}
+.public-app .information-panel {
+  min-width: 0;
+}
+@media (max-width: 800px) {
+  .public-app {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .public-app .app-header {
+    min-height: 52px;
+    padding: 4px 12px;
+  }
+  .public-app .brand-caption {
+    display: none;
+  }
+  .public-app .brand-name {
+    font-size: 19px;
+  }
+  .public-app .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+  .public-app .navigation-rail > button {
+    min-height: 44px;
+    font-size: 10px;
+    text-transform: none;
+  }
+  .public-app .hazard-strip button {
+    min-height: 44px;
+    padding: 5px 8px;
+  }
+  .public-app .hazard-strip small {
+    font-size: 10px;
+  }
+  .public-app .hazard-strip svg {
+    width: 16px;
+  }
+  .public-app .map-workspace {
+    min-height: 0;
+  }
+  .public-app .map-canvas {
+    min-height: 0;
+  }
+  .public-app .route-sheet {
+    position: relative;
+    flex-shrink: 0;
+    min-height: 0;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -3px 14px #17232f0a;
+    padding-bottom: env(safe-area-inset-bottom);
+    overflow: hidden;
+  }
+  .public-app .sheet-collapsed {
+    max-height: 30%;
+  }
+  .public-app .sheet-partial {
+    height: 43%;
+    max-height: 43%;
+  }
+  .public-app .sheet-expanded {
+    height: 62%;
+    max-height: 62%;
+  }
+  .public-app .sheet-controls {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+  }
+  .public-app .sheet-toggle {
+    display: flex;
+    position: relative;
+    min-width: 0;
+    flex: 1;
+    padding: 18px 14px 10px;
+    gap: 8px;
+    text-align: left;
+  }
+  .public-app .sheet-toggle svg {
+    flex-shrink: 0;
+  }
+  .sheet-handle {
+    position: absolute;
+    width: 30px;
+    height: 4px;
+    background: #bac1c7;
+    border-radius: 4px;
+    top: 6px;
+    left: calc(50% - 15px);
+  }
+  .sheet-preview {
+    min-width: 0;
+  }
+  .sheet-preview strong {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+  }
+  .sheet-preview small {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 400;
+  }
+  .sheet-size-button {
+    font-size: 11px;
+    min-height: 44px;
+    padding: 8px 12px;
+    flex-shrink: 0;
+    text-decoration: underline;
+  }
+  .public-app .sheet-collapsed .panel-scroll {
+    display: none;
+  }
+  .public-app .sheet-collapsed .route-actions {
+    display: none;
+  }
+  .public-app .sheet-partial .route-extra, .public-app .sheet-partial .data-note {
+    display: none;
+  }
+  .public-app .panel-scroll {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px 14px 12px;
+  }
+  .public-app .route-actions {
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-height: 40%;
+    overflow-y: auto;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .public-app .route-actions > p {
+    grid-column: 1 / -1;
+  }
+  .public-app .route-actions .action-destination {
+    display: none;
+  }
+  .public-app .route-actions button {
+    font-size: 11px;
+    min-height: 44px;
+    padding: 8px;
+  }
+  .public-app .route-actions button svg {
+    display: none;
+  }
+  .public-app .route-summary {
+    padding: 12px;
+  }
+  .public-app .map-location-status {
+    max-width: calc(100% - 130px);
+  }
+  .public-app .map-legend {
+    bottom: 25px;
+    right: 10px;
+  }
+  .public-app .map-legend ul {
+    max-height: 20dvh;
+    max-width: 240px;
+  }
+}
+@media (max-width: 800px) and (max-height: 650px) {
+  .public-app .hazard-strip {
+    display: none;
+  }
+  .public-app .sheet-expanded {
+    height: 55%;
+    max-height: 55%;
+  }
+  .public-app .sheet-partial {
+    height: 40%;
+    max-height: 40%;
+  }
+  .public-app .map-location-status {
+    display: none;
+  }
+  .public-app .hazard-layer-controls {
+    left: 52px;
+  }
+}
+@media (max-width: 800px) and (orientation: landscape) {
+  .public-app .public-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 38%);
+    grid-template-rows: 44px minmax(0, 1fr);
+  }
+  .public-app .navigation-rail {
+    grid-column: 1 / -1;
+  }
+  .public-app .route-sheet {
+    height: 100%;
+    max-height: 100%;
+    border-radius: 12px 0 0;
+  }
+  .public-app .sheet-collapsed .panel-scroll {
+    display: block;
+  }
+  .public-app .sheet-collapsed .route-actions {
+    display: grid;
+  }
+  .public-app .map-workspace {
+    min-width: 0;
+  }
 }

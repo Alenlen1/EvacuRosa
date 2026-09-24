@@ -30,6 +30,7 @@ import { EarthquakeLayer } from "./EarthquakeLayer";
 interface MapProps {
   geolocation: GeolocationState;
   destination: { latitude: number; longitude: number } | null;
+  destinationLabel?: string;
   route: { latitude: number; longitude: number }[] | null;
   centers: EvacuationCenter[];
   floodReports: FloodReport[];
@@ -149,6 +150,7 @@ function LayerToggle({
 export default function Map({
   geolocation,
   destination,
+  destinationLabel,
   route,
   centers,
   floodReports,
@@ -191,6 +193,7 @@ export default function Map({
       )}
       {destination && (
         <DestinationMarker
+          label={destinationLabel}
           latitude={destination.latitude}
           longitude={destination.longitude}
         />
