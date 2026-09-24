@@ -13,8 +13,10 @@
    `migrations/0007_remove_placeholder_data.sql`,
    `migrations/0008_superadmin_delete_earthquake_events.sql`,
    `migrations/0009_barangay_only_center_management.sql`.
-   Run `seed.sql` afterward to seed Santa Rosa City's 18 barangays. It does
-   not create evacuation centers or hazards; enter those only from verified
+   Run `seed.sql` afterward to seed Santa Rosa City's 18 barangays and the
+   Market Area Barangay Hall center record (capacity 500). Verify operational
+   details with CDRRMO before relying on this record during an emergency.
+   Other evacuation centers and hazards should be entered only from verified
    CDRRMO or barangay sources.
 3. Fill in both:
    - `frontend/.env.local` — `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`

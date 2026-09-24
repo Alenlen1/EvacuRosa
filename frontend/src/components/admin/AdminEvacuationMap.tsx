@@ -2,7 +2,11 @@
 
 import "leaflet/dist/leaflet.css";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import { SANTA_ROSA_CITY_CENTER, SANTA_ROSA_CITY_DEFAULT_ZOOM } from "@/lib/mapBounds";
+import {
+  SANTA_ROSA_CITY_BOUNDS,
+  SANTA_ROSA_CITY_CENTER,
+  SANTA_ROSA_CITY_DEFAULT_ZOOM,
+} from "@/lib/mapBounds";
 import { createDivIcon } from "@/components/map/icons";
 
 const statusColor: Record<string, string> = {
@@ -52,7 +56,11 @@ export default function AdminEvacuationMap({
     <MapContainer
       center={SANTA_ROSA_CITY_CENTER}
       zoom={SANTA_ROSA_CITY_DEFAULT_ZOOM}
-      className="h-64 w-full"
+      minZoom={12}
+      maxZoom={18}
+      maxBounds={SANTA_ROSA_CITY_BOUNDS}
+      maxBoundsViscosity={1}
+      className="h-[55vh] min-h-[420px] max-h-[640px] w-full"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
