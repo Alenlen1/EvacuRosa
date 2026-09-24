@@ -1,23 +1,62 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  getAvailableCenters: vi.fn(),
+  computeRoute: vi.fn(),
+}));
+
+vi.mock("./evacuation.service", () => ({
+  getAvailableCenters: mocks.getAvailableCenters,
+}));
+
+vi.mock("./routing.service", () => ({
+  computeRoute: mocks.computeRoute,
+}));
+
 import { computeEvacuationRoute } from "./evacuationRouting.service";
 
-// Integration-style test against the real dev fixtures (road graph,
-// centers, flood/fire data) — this is the automated version of what was
-// previously only checked by hand with curl against a running server.
+const center = {
+  id: "center-1",
+  barangayId: null,
+  name: "Verified evacuation center",
+  address: "Santa Rosa City",
+  latitude: 14.31,
+  longitude: 121.11,
+  capacity: 100,
+  currentOccupancy: 20,
+  status: "AVAILABLE" as const,
+  updatedAt: "2026-01-01T00:00:00.000Z",
+};
 
 describe("computeEvacuationRoute", () => {
-  it("recommends a center that is neither FULL nor CLOSED", async () => {
-    const result = await computeEvacuationRoute({ latitude: 14.3123, longitude: 121.1113 });
-
-    expect(result.found).toBe(true);
-    expect(result.recommendedCenter).not.toBeNull();
-    expect(["AVAILABLE", "NEARLY_FULL"]).toContain(result.recommendedCenter?.status);
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getAvailableCenters.mockResolvedValue([center]);
+    mocks.computeRoute.mockResolvedValue({
+      found: true,
+      path: [
+        { latitude: 14.3, longitude: 121.1 },
+        { latitude: center.latitude, longitude: center.longitude },
+      ],
+      distanceMeters: 1200,
+      affectedRoads: 0,
+      riskLevel: "LOW",
+      warnings: [],
+    });
   });
 
-  it("returns a real riskLevel and non-negative distance for the recommendation", async () => {
-    const result = await computeEvacuationRoute({ latitude: 14.3123, longitude: 121.1113 });
+  it("returns an available center and its route", async () => {
+    const result = await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 });
+    expect(result.found).toBe(true);
+    expect(result.recommendedCenter).toEqual(center);
+    expect(result.distanceMeters).toBe(1200);
+    expect(result.riskLevel).toBe("LOW");
+  });
 
-    expect(result.riskLevel).not.toBeNull();
-    expect(result.distanceMeters).toBeGreaterThanOrEqual(0);
+  it("returns a clear failure when no verified centers are available", async () => {
+    mocks.getAvailableCenters.mockResolvedValue([]);
+    const result = await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 });
+    expect(result.found).toBe(false);
+    expect(result.recommendedCenter).toBeNull();
   });
 });

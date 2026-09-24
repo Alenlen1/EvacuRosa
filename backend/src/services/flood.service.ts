@@ -1,22 +1,11 @@
-import devFixture from "../data/floodReports.dev.json";
 import { getSupabase } from "../database/supabase";
 import type { FloodReport } from "../types/flood";
 import type { RoadStatus } from "../algorithms/astar/edge";
 
-let fixtureWarned = false;
-
-function fromFixture(): FloodReport[] {
-  if (!fixtureWarned && devFixture._disclaimer) {
-    console.warn(`[flood-reports] ${devFixture._disclaimer}`);
-    fixtureWarned = true;
-  }
-  return devFixture.reports as FloodReport[];
-}
-
 export async function getActiveFloodReports(): Promise<FloodReport[]> {
   const supabase = getSupabase();
   if (!supabase) {
-    return fromFixture().filter((r) => r.status === "ACTIVE");
+    return [];
   }
 
   const { data, error } = await supabase
@@ -27,11 +16,7 @@ export async function getActiveFloodReports(): Promise<FloodReport[]> {
     .eq("status", "ACTIVE");
 
   if (error) {
-    console.error(
-      "[flood-reports] Supabase query failed, falling back to dev fixture:",
-      error.message
-    );
-    return fromFixture().filter((r) => r.status === "ACTIVE");
+    throw new Error(`Could not load flood reports: ${error.message}`);
   }
 
   return (data ?? []).map((row: any) => ({
@@ -58,6 +43,12 @@ export async function getActiveFloodReports(): Promise<FloodReport[]> {
  */
 export async function buildRoadStatusOverrides(): Promise<Map<string, RoadStatus>> {
   const reports = await getActiveFloodReports();
+  return roadStatusOverridesForReports(reports);
+}
+
+export function roadStatusOverridesForReports(
+  reports: FloodReport[]
+): Map<string, RoadStatus> {
   const overrides = new Map<string, RoadStatus>();
 
   for (const report of reports) {

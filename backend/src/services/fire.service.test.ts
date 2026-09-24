@@ -1,22 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { getActiveFireIncidents, buildFireStatusOverrides } from "./fire.service";
+import { fireStatusOverridesForIncidents } from "./fire.service";
+import type { FireIncident } from "../types/fire";
 
-// No SUPABASE_URL/keys in the test environment, so this exercises the
-// dev-fixture fallback path.
+function incident(overrides: Partial<FireIncident> = {}): FireIncident {
+  return {
+    id: "fire-1",
+    latitude: 14.3,
+    longitude: 121.1,
+    severity: "HIGH",
+    radiusMeters: 200,
+    status: "ACTIVE",
+    confirmedBlockedRoadIds: [],
+    reportedAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
 
-describe("fire incident fallback", () => {
-  it("loads the dev fixture when Supabase isn't configured", async () => {
-    const incidents = await getActiveFireIncidents();
-    expect(incidents.length).toBeGreaterThan(0);
-    expect(incidents[0].status).toBe("ACTIVE");
+describe("fireStatusOverridesForIncidents", () => {
+  it("blocks only explicitly confirmed roads", () => {
+    const overrides = fireStatusOverridesForIncidents([
+      incident({ confirmedBlockedRoadIds: ["R1", "R2"] }),
+    ]);
+    expect(overrides.get("R1")).toBe("BLOCKED");
+    expect(overrides.get("R2")).toBe("BLOCKED");
   });
-});
 
-describe("buildFireStatusOverrides", () => {
-  it("does not block any road when no fire has an explicit confirmation", async () => {
-    // The dev fixture's fire incident has an empty confirmedBlockedRoadIds
-    // on purpose — proximity alone should never produce a BLOCKED override.
-    const overrides = await buildFireStatusOverrides();
-    expect(overrides.size).toBe(0);
+  it("does not block roads based on proximity alone", () => {
+    expect(fireStatusOverridesForIncidents([incident()]).size).toBe(0);
   });
 });

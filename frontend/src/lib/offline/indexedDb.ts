@@ -1,7 +1,7 @@
 "use client";
 
 const DB_NAME = "evacurosa-offline";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = "cache";
 
 interface CacheRecord {
@@ -25,6 +25,9 @@ function openDb(): Promise<IDBDatabase> {
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE)) {
         db.createObjectStore(STORE, { keyPath: "id" });
+      } else {
+        // Version 2 removes data cached by the former runtime fixtures.
+        request.transaction?.objectStore(STORE).clear();
       }
     };
     request.onsuccess = () => resolve(request.result);

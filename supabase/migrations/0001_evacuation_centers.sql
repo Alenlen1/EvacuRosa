@@ -1,7 +1,7 @@
 -- EvacuRosa: barangays, profiles, evacuation_centers, and RLS policies.
 -- Run this in the Supabase SQL editor (or via `supabase db push`) once a
--- project exists. Nothing in the app requires this to run — everything
--- falls back to a read-only dev fixture until it does.
+-- project exists. Without a configured project, public data endpoints
+-- return empty collections and administrative features remain unavailable.
 
 create extension if not exists "pgcrypto";
 

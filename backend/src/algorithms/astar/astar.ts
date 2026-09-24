@@ -20,9 +20,9 @@ export interface FindPathOptions {
    * baked-in status. */
   statusOverrides?: Map<string, RoadStatus>;
   /** Cost used for the actual pathfinding decision — g(n) accumulates this,
-   * not necessarily raw distance. Defaults to plain distance (Phase 2/4
-   * behavior) when omitted. Phase 6 passes a risk-weighted cost here so A*
-   * can prefer a longer-but-safer road over a shorter-but-riskier one. */
+   * not necessarily raw distance. Defaults to plain distance when omitted.
+   * Risk-aware routing passes a weighted cost so A* can prefer a
+   * longer-but-safer road over a shorter-but-riskier one. */
   edgeCost?: (edge: GraphEdge) => number;
 }
 

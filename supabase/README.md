@@ -1,18 +1,19 @@
 # Supabase
 
-## Setup (needed for Phase 3's admin features and real persistence)
+## Setup
 
 1. Create a project at https://supabase.com.
-2. In the SQL editor, run all six migrations **in order**:
+2. In the SQL editor, run all seven migrations **in order**:
    `migrations/0001_evacuation_centers.sql`,
    `migrations/0002_flood_reports.sql`,
    `migrations/0003_fire_incidents.sql`,
    `migrations/0004_earthquake_events.sql`,
    `migrations/0005_unique_constraints.sql`,
-   `migrations/0006_citywide_evacuation_admin.sql`.
-   Optionally run `seed.sql` afterward — it seeds all 18 of Santa Rosa
-   City's real barangays plus a handful of sample centers spread across
-   several of them (useful for testing barangay-scoped admin access).
+   `migrations/0006_citywide_evacuation_admin.sql`,
+   `migrations/0007_remove_placeholder_data.sql`.
+   Run `seed.sql` afterward to seed Santa Rosa City's 18 barangays. It does
+   not create evacuation centers or hazards; enter those only from verified
+   CDRRMO or barangay sources.
 3. Fill in both:
    - `frontend/.env.local` — `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `backend/.env` — `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
@@ -27,10 +28,8 @@
 
 ## Without a Supabase project
 
-`GET /api/evacuation-centers` and `GET /api/floods` still work — they fall
-back to labeled dev fixtures, read-only. The admin login and update/create
-flows genuinely need a real project; there's no meaningful fixture for
-"authenticated write," so that part just won't work until you've done the
-setup above.
+Public evacuation-center and hazard endpoints return empty collections.
+Admin login and update/create flows remain unavailable until the setup above
+is complete.
 
 Real road data works the same way — see `backend/scripts/fetch-santa-rosa-roads.ts`.

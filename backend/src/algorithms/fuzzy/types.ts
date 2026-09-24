@@ -6,9 +6,7 @@ export type ExposureLevel = "LOW" | "MEDIUM" | "HIGH";
 export type EarthquakeLevel = "NONE" | "LOW" | "MODERATE" | "HIGH";
 export type RiskLevel = "VERY_LOW" | "LOW" | "MODERATE" | "HIGH" | "VERY_HIGH";
 
-/** Raw, crisp measurements before fuzzification. Fire and earthquake stay
- * at 0 ("no data") until Phase 7/8 exist to populate them — the engine
- * accepts them now so those phases just start filling in real numbers. */
+/** Raw, crisp measurements before fuzzification. */
 export interface FuzzyRiskInput {
   floodWaterLevelMeters: number;
   fireSeverityLevel: number; // 0-4

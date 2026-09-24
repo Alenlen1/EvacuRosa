@@ -131,7 +131,7 @@ EvacuRosa/
 │   │   │   └── fuzzy/         # Fuzzy inference engine
 │   │   ├── controllers/       # HTTP request handlers
 │   │   ├── database/          # Supabase server client
-│   │   ├── data/              # Development fixtures and road graph
+│   │   ├── data/              # Generated OpenStreetMap road graph
 │   │   ├── middleware/        # Authentication, roles, errors
 │   │   ├── routes/            # Express API routes
 │   │   ├── services/          # Routing, hazards, evacuation logic
@@ -140,10 +140,8 @@ EvacuRosa/
 │
 ├── supabase/
 │   ├── migrations/             # Database schema and RLS policies
-│   └── seed.sql                # Development/sample database data
+│   └── seed.sql                # Barangay reference data
 │
-├── DEPLOYMENT.md
-├── TESTING.md
 └── package.json
 ```
 
@@ -260,7 +258,7 @@ The road graph supports:
 - Nearest-road lookup
 - Spatial indexing for faster nearest-node searches
 
-The graph initially falls back to a development fixture if real Santa Rosa road data has not yet been generated.
+The backend requires the generated Santa Rosa OpenStreetMap road graph and fails clearly if it is missing.
 
 ---
 
@@ -436,29 +434,13 @@ This prevents the recommendation from being based only on which evacuation cente
 
 ---
 
-## Data Sources and Development Fixtures
+## Data Sources
 
-The project can run without a live Supabase project by using development fixtures.
+Evacuation centers and hazard records come from Supabase. When Supabase is
+not configured, those endpoints return empty collections; the application
+does not invent operational data.
 
-Development data is located in:
-
-```text
-backend/src/data/
-```
-
-Current fixtures include:
-
-```text
-evacuationCenters.dev.json
-floodReports.dev.json
-fireIncidents.dev.json
-earthquakeEvents.dev.json
-santaRosaRoadGraph.dev.json
-```
-
-The application clearly treats fixture data as development/sample data.
-
-For production or realistic routing, generate the Santa Rosa road graph from OpenStreetMap data.
+Routing uses the generated Santa Rosa road graph from OpenStreetMap.
 
 Run:
 
@@ -466,9 +448,7 @@ Run:
 npm run fetch:roads --workspace=backend
 ```
 
-The generated real road graph is then preferred automatically by the backend after restart.
-
-The road graph loader keeps a development fallback so the routing engine can still run during development when real road data is not present.
+The backend loads the generated road graph after restart.
 
 ---
 
@@ -506,9 +486,10 @@ supabase/migrations/0003_fire_incidents.sql
 supabase/migrations/0004_earthquake_events.sql
 supabase/migrations/0005_unique_constraints.sql
 supabase/migrations/0006_citywide_evacuation_admin.sql
+supabase/migrations/0007_remove_placeholder_data.sql
 ```
 
-Optional sample data:
+Seed the official barangay reference list:
 
 ```text
 supabase/seed.sql
@@ -1047,7 +1028,7 @@ The following limitations should be understood before presenting EvacuRosa as a 
 - Never expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend.
 - Use Supabase Row Level Security for database-level authorization.
 - Keep `ALLOWED_ORIGINS` restricted to the actual frontend origins in production.
-- Do not treat development fixture data as authoritative emergency information.
+- Enter only verified evacuation-center and hazard data.
 - Do not use the application as a replacement for official emergency response instructions.
 
 ---

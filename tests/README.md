@@ -1,6 +1,11 @@
 # Tests
 
-Test suites get added phase by phase (A* correctness, Fuzzy Logic inference,
-hazard rules, evacuation center ranking, authorization, offline caching).
+Run the frontend and backend suites from the repository root:
 
-Nothing to run yet in Phase 1.
+```powershell
+npm test --workspace=frontend
+npm test --workspace=backend
+```
+
+The suites cover A* routing, fuzzy inference, hazard rules, evacuation-center
+ranking, authorization, and offline caching.

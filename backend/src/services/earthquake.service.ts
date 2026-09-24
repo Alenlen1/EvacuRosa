@@ -1,22 +1,11 @@
-import devFixture from "../data/earthquakeEvents.dev.json";
 import { getSupabase } from "../database/supabase";
 import type { EarthquakeEvent, EarthquakeRoadImpact } from "../types/earthquake";
 import type { RoadStatus } from "../algorithms/astar/edge";
 
-let fixtureWarned = false;
-
-function warnFixtureOnce() {
-  if (!fixtureWarned && devFixture._disclaimer) {
-    console.warn(`[earthquakes] ${devFixture._disclaimer}`);
-    fixtureWarned = true;
-  }
-}
-
 export async function getRecentEarthquakes(): Promise<EarthquakeEvent[]> {
   const supabase = getSupabase();
   if (!supabase) {
-    warnFixtureOnce();
-    return devFixture.events as EarthquakeEvent[];
+    return [];
   }
 
   const { data, error } = await supabase
@@ -28,12 +17,7 @@ export async function getRecentEarthquakes(): Promise<EarthquakeEvent[]> {
     .limit(50);
 
   if (error) {
-    console.error(
-      "[earthquakes] Supabase query failed, falling back to dev fixture:",
-      error.message
-    );
-    warnFixtureOnce();
-    return devFixture.events as EarthquakeEvent[];
+    throw new Error(`Could not load earthquake events: ${error.message}`);
   }
 
   return (data ?? []).map((row: any) => ({
@@ -55,8 +39,7 @@ export async function getRecentEarthquakes(): Promise<EarthquakeEvent[]> {
 export async function getVerifiedRoadImpacts(): Promise<EarthquakeRoadImpact[]> {
   const supabase = getSupabase();
   if (!supabase) {
-    warnFixtureOnce();
-    return devFixture.roadImpacts as EarthquakeRoadImpact[];
+    return [];
   }
 
   const { data, error } = await supabase
@@ -64,12 +47,7 @@ export async function getVerifiedRoadImpacts(): Promise<EarthquakeRoadImpact[]> 
     .select("id, earthquake_event_id, road_id, impact_level, confirmed_blocked, notes, verified_at");
 
   if (error) {
-    console.error(
-      "[earthquakes] Supabase query failed, falling back to dev fixture:",
-      error.message
-    );
-    warnFixtureOnce();
-    return devFixture.roadImpacts as EarthquakeRoadImpact[];
+    throw new Error(`Could not load earthquake road impacts: ${error.message}`);
   }
 
   return (data ?? []).map((row: any) => ({
@@ -89,6 +67,12 @@ export async function getVerifiedRoadImpacts(): Promise<EarthquakeRoadImpact[]> 
  * proximity calculation here at all, unlike fire's radius-based falloff. */
 export async function buildEarthquakeStatusOverrides(): Promise<Map<string, RoadStatus>> {
   const impacts = await getVerifiedRoadImpacts();
+  return earthquakeStatusOverridesForImpacts(impacts);
+}
+
+export function earthquakeStatusOverridesForImpacts(
+  impacts: EarthquakeRoadImpact[]
+): Map<string, RoadStatus> {
   const overrides = new Map<string, RoadStatus>();
   for (const impact of impacts) {
     if (impact.confirmedBlocked) {
@@ -108,6 +92,12 @@ const IMPACT_LEVEL_TO_NUMERIC: Record<string, number> = {
  * input — 0 for any road with no verified impact record, by design. */
 export async function buildEarthquakeImpactByRoadId(): Promise<Map<string, number>> {
   const impacts = await getVerifiedRoadImpacts();
+  return earthquakeImpactByRoadId(impacts);
+}
+
+export function earthquakeImpactByRoadId(
+  impacts: EarthquakeRoadImpact[]
+): Map<string, number> {
   const byRoad = new Map<string, number>();
   for (const impact of impacts) {
     const level = IMPACT_LEVEL_TO_NUMERIC[impact.impactLevel] ?? 0;

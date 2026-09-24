@@ -5,5 +5,5 @@
 alter table barangays add constraint barangays_name_key unique (name);
 
 -- Same issue, same fix, for evacuation_centers: without this, re-running
--- the seed script would silently duplicate sample centers on every run.
+-- repeated imports could silently duplicate center rows.
 alter table evacuation_centers add constraint evacuation_centers_barangay_name_key unique (barangay_id, name);

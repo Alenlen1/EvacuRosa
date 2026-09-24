@@ -107,7 +107,7 @@ describe("A* with status overrides (flood-report-driven)", () => {
   });
 });
 
-describe("A* with a custom (risk-weighted) edge cost — the Phase 6 hybrid claim", () => {
+describe("A* with a custom risk-weighted edge cost", () => {
   function makeDetourGraph() {
     // Nodes are clustered within a few meters of each other in real terms —
     // deliberately, so the straight-line heuristic stays far below every

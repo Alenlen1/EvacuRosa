@@ -1,22 +1,11 @@
-import devFixture from "../data/fireIncidents.dev.json";
 import { getSupabase } from "../database/supabase";
 import type { FireIncident } from "../types/fire";
 import type { RoadStatus } from "../algorithms/astar/edge";
 
-let fixtureWarned = false;
-
-function fromFixture(): FireIncident[] {
-  if (!fixtureWarned && devFixture._disclaimer) {
-    console.warn(`[fire-incidents] ${devFixture._disclaimer}`);
-    fixtureWarned = true;
-  }
-  return devFixture.incidents as FireIncident[];
-}
-
 export async function getActiveFireIncidents(): Promise<FireIncident[]> {
   const supabase = getSupabase();
   if (!supabase) {
-    return fromFixture().filter((f) => f.status === "ACTIVE");
+    return [];
   }
 
   const { data, error } = await supabase
@@ -27,11 +16,7 @@ export async function getActiveFireIncidents(): Promise<FireIncident[]> {
     .eq("status", "ACTIVE");
 
   if (error) {
-    console.error(
-      "[fire-incidents] Supabase query failed, falling back to dev fixture:",
-      error.message
-    );
-    return fromFixture().filter((f) => f.status === "ACTIVE");
+    throw new Error(`Could not load fire incidents: ${error.message}`);
   }
 
   return (data ?? []).map((row: any) => ({
@@ -55,6 +40,12 @@ export async function getActiveFireIncidents(): Promise<FireIncident[]> {
  * proximity to the fire itself. */
 export async function buildFireStatusOverrides(): Promise<Map<string, RoadStatus>> {
   const incidents = await getActiveFireIncidents();
+  return fireStatusOverridesForIncidents(incidents);
+}
+
+export function fireStatusOverridesForIncidents(
+  incidents: FireIncident[]
+): Map<string, RoadStatus> {
   const overrides = new Map<string, RoadStatus>();
 
   for (const incident of incidents) {

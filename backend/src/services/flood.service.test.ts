@@ -1,23 +1,40 @@
 import { describe, expect, it } from "vitest";
-import { buildRoadStatusOverrides } from "./flood.service";
+import { roadStatusOverridesForReports } from "./flood.service";
+import type { FloodReport } from "../types/flood";
 
-// No SUPABASE_URL/keys in the test environment, so this exercises the
-// dev-fixture fallback path — which includes one impassable (SEVERE) and
-// one passable (MODERATE) active flood report by design.
+function report(overrides: Partial<FloodReport>): FloodReport {
+  return {
+    id: "flood-1",
+    roadId: "R1",
+    severity: "MODERATE",
+    roadImpassable: false,
+    status: "ACTIVE",
+    reportedAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
 
-describe("buildRoadStatusOverrides", () => {
-  it("marks a confirmed-impassable flood report's road as BLOCKED", async () => {
-    const overrides = await buildRoadStatusOverrides();
-    expect(overrides.get("R-SIN-1")).toBe("BLOCKED");
+describe("roadStatusOverridesForReports", () => {
+  it("marks a confirmed-impassable road as BLOCKED", () => {
+    const overrides = roadStatusOverridesForReports([
+      report({ roadId: "R-BLOCKED", severity: "SEVERE", roadImpassable: true }),
+    ]);
+    expect(overrides.get("R-BLOCKED")).toBe("BLOCKED");
   });
 
-  it("marks a passable-but-flooded road as FLOODED, not BLOCKED", async () => {
-    const overrides = await buildRoadStatusOverrides();
-    expect(overrides.get("R-CAI-1")).toBe("FLOODED");
+  it("marks a passable affected road as FLOODED", () => {
+    const overrides = roadStatusOverridesForReports([
+      report({ roadId: "R-FLOODED" }),
+    ]);
+    expect(overrides.get("R-FLOODED")).toBe("FLOODED");
   });
 
-  it("never overrides an unrelated road", async () => {
-    const overrides = await buildRoadStatusOverrides();
-    expect(overrides.has("R-NH-1")).toBe(false);
+  it("never downgrades a blocked road", () => {
+    const overrides = roadStatusOverridesForReports([
+      report({ roadId: "R1", roadImpassable: true }),
+      report({ id: "flood-2", roadId: "R1", roadImpassable: false }),
+    ]);
+    expect(overrides.get("R1")).toBe("BLOCKED");
   });
 });

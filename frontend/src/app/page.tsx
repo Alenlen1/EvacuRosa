@@ -352,10 +352,8 @@ export default function Home() {
         )}
 
         <p className="mt-2 text-center text-[11px] text-slate-400">
-          Phase 9: hazard/center data is cached for offline viewing — route
-          calculation itself still needs a connection (there's no
-          client-side routing engine). Sample data shown until a real
-          Supabase project is connected (see supabase/README.md).
+          Hazard and evacuation-center data is cached for offline viewing.
+          Route calculation requires a network connection.
         </p>
       </div>
     </main>

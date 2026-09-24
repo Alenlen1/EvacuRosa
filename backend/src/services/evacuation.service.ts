@@ -1,8 +1,5 @@
-import devFixture from "../data/evacuationCenters.dev.json";
 import { getSupabase } from "../database/supabase";
 import type { EvacuationCenter, EvacuationCenterStatus } from "../types/evacuation";
-
-let fixtureWarned = false;
 
 /** Occupancy-driven status, per the project spec's thresholds — a manual
  * CLOSED always wins regardless of occupancy. */
@@ -19,21 +16,10 @@ export function deriveStatus(
   return "AVAILABLE";
 }
 
-function fromFixture(): EvacuationCenter[] {
-  if (!fixtureWarned && devFixture._disclaimer) {
-    console.warn(`[evacuation-centers] ${devFixture._disclaimer}`);
-    fixtureWarned = true;
-  }
-  return devFixture.centers.map((c) => ({
-    ...c,
-    status: deriveStatus(c.currentOccupancy, c.capacity, c.status),
-  })) as EvacuationCenter[];
-}
-
 export async function getAllCenters(): Promise<EvacuationCenter[]> {
   const supabase = getSupabase();
   if (!supabase) {
-    return fromFixture();
+    return [];
   }
 
   const { data, error } = await supabase
@@ -43,11 +29,7 @@ export async function getAllCenters(): Promise<EvacuationCenter[]> {
     );
 
   if (error) {
-    console.error(
-      "[evacuation-centers] Supabase query failed, falling back to dev fixture:",
-      error.message
-    );
-    return fromFixture();
+    throw new Error(`Could not load evacuation centers: ${error.message}`);
   }
 
   return (data ?? []).map((row: any) => ({

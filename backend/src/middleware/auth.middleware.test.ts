@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { requireAuth, type AuthedRequest } from "./auth.middleware";
+import { env } from "../config/environment";
 
 // These cover the paths that don't require a live Supabase project — the
 // "valid token" success path genuinely needs a real project to test
@@ -38,13 +39,20 @@ describe("requireAuth", () => {
   });
 
   it("returns 503 rather than crashing when Supabase isn't configured", async () => {
-    // The test environment has no SUPABASE_URL/ANON_KEY set, which is
-    // exactly the "not configured yet" state this path exists for.
+    const previousUrl = env.supabaseUrl;
+    const previousAnonKey = env.supabaseAnonKey;
+    env.supabaseUrl = "";
+    env.supabaseAnonKey = "";
     const req = { headers: { authorization: "Bearer sometoken" } } as AuthedRequest;
     const res = makeRes();
     const next = vi.fn();
 
-    await requireAuth(req, res, next);
+    try {
+      await requireAuth(req, res, next);
+    } finally {
+      env.supabaseUrl = previousUrl;
+      env.supabaseAnonKey = previousAnonKey;
+    }
 
     expect(res.status).toHaveBeenCalledWith(503);
     expect(next).not.toHaveBeenCalled();

@@ -39,7 +39,7 @@ function fuzzifyFlood(waterLevelMeters: number): FuzzyMemberships["flood"] {
 
 // Fire — no continuous measurement exists (unlike flood's water level), so
 // severity is mapped directly to a 0-4 ordinal scale with overlapping
-// triangles between adjacent categories. Stays at all-NONE until Phase 7.
+// triangles between adjacent categories.
 function fuzzifyFire(severityLevel: number): FuzzyMemberships["fire"] {
   return {
     NONE: trapezoidal(severityLevel, -0.5, 0, 0, 0.5),
