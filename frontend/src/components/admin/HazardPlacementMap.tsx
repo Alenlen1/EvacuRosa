@@ -2,9 +2,13 @@
 
 import "leaflet/dist/leaflet.css";
 import { useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
-import { Droplet, Flame, Activity } from "lucide-react";
-import { SANTA_ROSA_CITY_CENTER, SANTA_ROSA_CITY_DEFAULT_ZOOM } from "@/lib/mapBounds";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { Droplet, Flame, Activity, Trash2 } from "lucide-react";
+import {
+  SANTA_ROSA_CITY_BOUNDS,
+  SANTA_ROSA_CITY_CENTER,
+  SANTA_ROSA_CITY_DEFAULT_ZOOM,
+} from "@/lib/mapBounds";
 import { createDivIcon } from "@/components/map/icons";
 import { FloodLayer } from "@/components/map/FloodLayer";
 import { FireLayer } from "@/components/map/FireLayer";
@@ -14,6 +18,10 @@ import {
   createFloodReport,
   createFireIncident,
   createEarthquakeRoadImpact,
+  deleteFloodReport,
+  deleteFireIncident,
+  deleteEarthquakeRoadImpact,
+  deleteEarthquakeEvent,
   type FloodReport,
   type FireIncident,
   type EarthquakeEvent,
@@ -23,6 +31,14 @@ import {
 
 type Mode = "flood" | "fire" | "earthquake";
 
+interface CenterMarker {
+  id: string;
+  name: string;
+  latitude: number | null;
+  longitude: number | null;
+  status: string;
+}
+
 const pendingIcon = createDivIcon(
   `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="12" cy="12" r="9" fill="#185FA5" fill-opacity="0.25" stroke="#185FA5" stroke-width="2"/>
@@ -30,6 +46,24 @@ const pendingIcon = createDivIcon(
   </svg>`,
   22
 );
+
+const centerColor: Record<string, string> = {
+  AVAILABLE: "#3B6D11",
+  NEARLY_FULL: "#BA7517",
+  FULL: "#B3261E",
+  CLOSED: "#6B7280",
+};
+
+function centerIcon(status: string) {
+  const color = centerColor[status] ?? centerColor.CLOSED;
+  return createDivIcon(
+    `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="9" width="18" height="12" rx="2" fill="${color}" stroke="white" stroke-width="1.5"/>
+      <path d="M3 9 L12 3 L21 9" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>`,
+    26
+  );
+}
 
 function ClickCapture({ onClick }: { onClick: (lat: number, lng: number) => void }) {
   useMapEvents({
@@ -39,12 +73,14 @@ function ClickCapture({ onClick }: { onClick: (lat: number, lng: number) => void
 }
 
 interface HazardPlacementMapProps {
+  centers: CenterMarker[];
   floodReports: FloodReport[];
   fireIncidents: FireIncident[];
   earthquakeEvents: EarthquakeEvent[];
   earthquakeRoadImpacts: EarthquakeRoadImpact[];
   authToken: string;
   onCreated: () => void;
+  onSelectCenter: (id: string) => void;
 }
 
 /**
@@ -59,8 +95,10 @@ export default function HazardPlacementMap({
   fireIncidents,
   earthquakeEvents,
   earthquakeRoadImpacts,
+  centers,
   authToken,
   onCreated,
+  onSelectCenter,
 }: HazardPlacementMapProps) {
   const [mode, setMode] = useState<Mode>("flood");
   const [pendingPoint, setPendingPoint] = useState<{ lat: number; lng: number } | null>(null);
@@ -76,6 +114,7 @@ export default function HazardPlacementMap({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lookingUpRoads, setLookingUpRoads] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   async function handleMapClick(lat: number, lng: number) {
     setError(null);
@@ -148,6 +187,24 @@ export default function HazardPlacementMap({
     }
   }
 
+  async function removeHazard(kind: "flood" | "fire" | "earthquake" | "impact", id: string) {
+    const label = kind === "impact" ? "earthquake road impact" : `${kind} record`;
+    if (!window.confirm(`Remove this ${label}?`)) return;
+    setRemovingId(id);
+    setError(null);
+    try {
+      if (kind === "flood") await deleteFloodReport(authToken, id);
+      else if (kind === "fire") await deleteFireIncident(authToken, id);
+      else if (kind === "impact") await deleteEarthquakeRoadImpact(authToken, id);
+      else await deleteEarthquakeEvent(authToken, id);
+      onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not remove this record.");
+    } finally {
+      setRemovingId(null);
+    }
+  }
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white">
       <div className="flex border-b border-slate-200">
@@ -208,6 +265,9 @@ export default function HazardPlacementMap({
         <MapContainer
           center={SANTA_ROSA_CITY_CENTER}
           zoom={SANTA_ROSA_CITY_DEFAULT_ZOOM}
+          maxBounds={SANTA_ROSA_CITY_BOUNDS}
+          maxBoundsViscosity={0.8}
+          minZoom={12}
           className="h-full w-full"
         >
           <TileLayer
@@ -217,6 +277,21 @@ export default function HazardPlacementMap({
           <FloodLayer reports={floodReports} />
           <FireLayer incidents={fireIncidents} />
           <EarthquakeLayer events={earthquakeEvents} roadImpacts={earthquakeRoadImpacts} />
+          {centers
+            .filter(
+              (center): center is CenterMarker & { latitude: number; longitude: number } =>
+                center.latitude != null && center.longitude != null
+            )
+            .map((center) => (
+              <Marker
+                key={center.id}
+                position={[center.latitude, center.longitude]}
+                icon={centerIcon(center.status)}
+                eventHandlers={{ click: () => onSelectCenter(center.id) }}
+              >
+                <Popup>{center.name}</Popup>
+              </Marker>
+            ))}
           {pendingPoint && (
             <Marker position={[pendingPoint.lat, pendingPoint.lng]} icon={pendingIcon} />
           )}
@@ -377,6 +452,65 @@ export default function HazardPlacementMap({
               </button>
             </div>
           </div>
+        )}
+      </div>
+
+      <div className="space-y-3 border-t border-slate-200 p-3">
+        <h3 className="text-sm font-semibold text-slate-700">Active hazard records</h3>
+        {floodReports.length === 0 && fireIncidents.length === 0 && earthquakeEvents.length === 0 && (
+          <p className="text-xs text-slate-500">No active hazard records.</p>
+        )}
+        {floodReports.length > 0 && (
+          <section className="space-y-1">
+            <h4 className="text-xs font-medium text-amber-800">Floods</h4>
+            {floodReports.map((report) => (
+              <div key={report.id} className="flex items-center justify-between gap-3 rounded border border-slate-200 px-2 py-1.5 text-xs">
+                <span>{report.severity} · {report.roadId}{report.roadImpassable ? " · blocked" : ""}</span>
+                <button type="button" onClick={() => removeHazard("flood", report.id)} disabled={removingId === report.id} className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50">
+                  <Trash2 size={13} /> {removingId === report.id ? "Removing…" : "Remove"}
+                </button>
+              </div>
+            ))}
+          </section>
+        )}
+        {fireIncidents.length > 0 && (
+          <section className="space-y-1">
+            <h4 className="text-xs font-medium text-red-800">Fires</h4>
+            {fireIncidents.map((incident) => (
+              <div key={incident.id} className="flex items-center justify-between gap-3 rounded border border-slate-200 px-2 py-1.5 text-xs">
+                <span>{incident.severity} fire · {incident.radiusMeters}m radius</span>
+                <button type="button" onClick={() => removeHazard("fire", incident.id)} disabled={removingId === incident.id} className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50">
+                  <Trash2 size={13} /> {removingId === incident.id ? "Removing…" : "Remove"}
+                </button>
+              </div>
+            ))}
+          </section>
+        )}
+        {earthquakeEvents.length > 0 && (
+          <section className="space-y-1">
+            <h4 className="text-xs font-medium text-amber-900">Earthquakes and verified impacts</h4>
+            {earthquakeEvents.map((event) => {
+              const impacts = earthquakeRoadImpacts.filter((impact) => impact.earthquakeEventId === event.id);
+              return (
+                <div key={event.id} className="rounded border border-slate-200 px-2 py-1.5 text-xs">
+                  <div className="flex items-center justify-between gap-3">
+                    <span>M{event.magnitude.toFixed(1)} · {new Date(event.occurredAt).toLocaleDateString()} · {event.status}</span>
+                    <button type="button" onClick={() => removeHazard("earthquake", event.id)} disabled={removingId === event.id} className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50">
+                      <Trash2 size={13} /> {removingId === event.id ? "Removing…" : "Remove event"}
+                    </button>
+                  </div>
+                  {impacts.map((impact) => (
+                    <div key={impact.id} className="mt-1 flex items-center justify-between gap-3 border-t border-slate-100 pt-1">
+                      <span>{impact.impactLevel} impact · {impact.roadId}{impact.confirmedBlocked ? " · blocked" : ""}</span>
+                      <button type="button" onClick={() => removeHazard("impact", impact.id)} disabled={removingId === impact.id} className="text-red-700 disabled:opacity-50">
+                        {removingId === impact.id ? "Removing…" : "Remove impact"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </section>
         )}
       </div>
     </div>

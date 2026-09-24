@@ -267,6 +267,27 @@ export async function updateEarthquakeEvent(req: RoleAwareRequest, res: Response
   res.json({ event: data });
 }
 
+export async function deleteEarthquakeEvent(req: RoleAwareRequest, res: Response) {
+  const { id } = req.params;
+
+  if (!req.userSupabase) {
+    res.status(401).json({ error: "Not authenticated." });
+    return;
+  }
+
+  const { error } = await req.userSupabase
+    .from("earthquake_events")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    res.status(403).json({ error: "Could not remove earthquake event." });
+    return;
+  }
+
+  res.status(204).send();
+}
+
 export async function createEarthquakeRoadImpact(req: RoleAwareRequest, res: Response) {
   const { earthquakeEventId, roadId, impactLevel, confirmedBlocked, notes } = req.body ?? {};
 

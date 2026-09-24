@@ -10,6 +10,7 @@ import {
   updateFireIncident,
   deleteFireIncident,
   updateEarthquakeEvent,
+  deleteEarthquakeEvent,
   createEarthquakeRoadImpact,
   deleteEarthquakeRoadImpact,
 } from "../controllers/admin.controller";
@@ -76,6 +77,13 @@ adminRouter.put(
   attachProfile,
   requireRole("SUPER_ADMIN"),
   updateEarthquakeEvent
+);
+adminRouter.delete(
+  "/earthquakes/:id",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  deleteEarthquakeEvent
 );
 adminRouter.post(
   "/earthquake-road-impacts",

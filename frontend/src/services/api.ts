@@ -238,3 +238,26 @@ export function createEarthquakeRoadImpact(
 ) {
   return adminPost("/api/admin/earthquake-road-impacts", token, data);
 }
+
+async function adminDelete(path: string, token: string): Promise<void> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    throw new Error(errorBody.error ?? "Could not remove this record.");
+  }
+}
+
+export const deleteFloodReport = (token: string, id: string) =>
+  adminDelete(`/api/admin/floods/${encodeURIComponent(id)}`, token);
+
+export const deleteFireIncident = (token: string, id: string) =>
+  adminDelete(`/api/admin/fires/${encodeURIComponent(id)}`, token);
+
+export const deleteEarthquakeRoadImpact = (token: string, id: string) =>
+  adminDelete(`/api/admin/earthquake-road-impacts/${encodeURIComponent(id)}`, token);
+
+export const deleteEarthquakeEvent = (token: string, id: string) =>
+  adminDelete(`/api/admin/earthquakes/${encodeURIComponent(id)}`, token);

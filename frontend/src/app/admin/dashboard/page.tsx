@@ -181,9 +181,11 @@ export default function AdminDashboardPage() {
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </div>
 
-      <div className="border-b border-slate-200">
-        <AdminEvacuationMap centers={centers} onSelectCenter={handleSelectCenterOnMap} />
-      </div>
+      {profile?.role !== "SUPER_ADMIN" && (
+        <div className="border-b border-slate-200">
+          <AdminEvacuationMap centers={centers} onSelectCenter={handleSelectCenterOnMap} />
+        </div>
+      )}
 
       <div className="space-y-3 p-4">
         {centers.map((center) => (
@@ -226,17 +228,18 @@ export default function AdminDashboardPage() {
             Hazard management — flood, fire, earthquake
           </h2>
           <p className="mb-3 text-xs text-slate-500">
-            Tap the map to mark a hazard. Flood and earthquake reports snap to
-            the nearest real road so routing (A* + fuzzy logic) can actually
-            react to them — fire incidents are point-based and don&apos;t
-            need a road.
+            Use the Santa Rosa map to mark hazards and view evacuation centers.
+            Flood and earthquake reports snap to a nearby road; fire incidents
+            use a point and radius. Existing records can be removed below.
           </p>
           <HazardPlacementMapWrapper
+            centers={centers}
             floodReports={floodReports}
             fireIncidents={fireIncidents}
             earthquakeEvents={earthquakeEvents}
             earthquakeRoadImpacts={earthquakeRoadImpacts}
             getAuthToken={getAuthToken}
+            onSelectCenter={handleSelectCenterOnMap}
             onCreated={() => {
               fetchFloodReports().then(setFloodReports).catch(() => {});
               fetchFireIncidents().then(setFireIncidents).catch(() => {});
@@ -261,11 +264,13 @@ function HazardPlacementMapWrapper({
   getAuthToken,
   ...rest
 }: {
+  centers: AdminCenter[];
   floodReports: FloodReport[];
   fireIncidents: FireIncident[];
   earthquakeEvents: EarthquakeEvent[];
   earthquakeRoadImpacts: EarthquakeRoadImpact[];
   getAuthToken: () => Promise<string | undefined>;
+  onSelectCenter: (id: string) => void;
   onCreated: () => void;
 }) {
   const [token, setToken] = useState<string | null>(null);
