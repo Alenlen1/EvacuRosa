@@ -3,14 +3,16 @@
 ## Setup
 
 1. Create a project at https://supabase.com.
-2. In the SQL editor, run all seven migrations **in order**:
+2. In the SQL editor, run all nine migrations **in order**:
    `migrations/0001_evacuation_centers.sql`,
    `migrations/0002_flood_reports.sql`,
    `migrations/0003_fire_incidents.sql`,
    `migrations/0004_earthquake_events.sql`,
    `migrations/0005_unique_constraints.sql`,
    `migrations/0006_citywide_evacuation_admin.sql`,
-   `migrations/0007_remove_placeholder_data.sql`.
+   `migrations/0007_remove_placeholder_data.sql`,
+   `migrations/0008_superadmin_delete_earthquake_events.sql`,
+   `migrations/0009_barangay_only_center_management.sql`.
    Run `seed.sql` afterward to seed Santa Rosa City's 18 barangays. It does
    not create evacuation centers or hazards; enter those only from verified
    CDRRMO or barangay sources.

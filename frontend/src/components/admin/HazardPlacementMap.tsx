@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import { useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import { Droplet, Flame, Activity, Trash2 } from "lucide-react";
 import {
   SANTA_ROSA_CITY_BOUNDS,
@@ -31,14 +31,6 @@ import {
 
 type Mode = "flood" | "fire" | "earthquake";
 
-interface CenterMarker {
-  id: string;
-  name: string;
-  latitude: number | null;
-  longitude: number | null;
-  status: string;
-}
-
 const pendingIcon = createDivIcon(
   `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="12" cy="12" r="9" fill="#185FA5" fill-opacity="0.25" stroke="#185FA5" stroke-width="2"/>
@@ -46,24 +38,6 @@ const pendingIcon = createDivIcon(
   </svg>`,
   22
 );
-
-const centerColor: Record<string, string> = {
-  AVAILABLE: "#3B6D11",
-  NEARLY_FULL: "#BA7517",
-  FULL: "#B3261E",
-  CLOSED: "#6B7280",
-};
-
-function centerIcon(status: string) {
-  const color = centerColor[status] ?? centerColor.CLOSED;
-  return createDivIcon(
-    `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="3" y="9" width="18" height="12" rx="2" fill="${color}" stroke="white" stroke-width="1.5"/>
-      <path d="M3 9 L12 3 L21 9" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-    </svg>`,
-    26
-  );
-}
 
 function ClickCapture({ onClick }: { onClick: (lat: number, lng: number) => void }) {
   useMapEvents({
@@ -73,14 +47,12 @@ function ClickCapture({ onClick }: { onClick: (lat: number, lng: number) => void
 }
 
 interface HazardPlacementMapProps {
-  centers: CenterMarker[];
   floodReports: FloodReport[];
   fireIncidents: FireIncident[];
   earthquakeEvents: EarthquakeEvent[];
   earthquakeRoadImpacts: EarthquakeRoadImpact[];
   authToken: string;
   onCreated: () => void;
-  onSelectCenter: (id: string) => void;
 }
 
 /**
@@ -95,10 +67,8 @@ export default function HazardPlacementMap({
   fireIncidents,
   earthquakeEvents,
   earthquakeRoadImpacts,
-  centers,
   authToken,
   onCreated,
-  onSelectCenter,
 }: HazardPlacementMapProps) {
   const [mode, setMode] = useState<Mode>("flood");
   const [pendingPoint, setPendingPoint] = useState<{ lat: number; lng: number } | null>(null);
@@ -261,7 +231,7 @@ export default function HazardPlacementMap({
         </div>
       )}
 
-      <div className="relative h-64 w-full">
+      <div className="relative h-[65vh] min-h-[480px] max-h-[760px] w-full">
         <MapContainer
           center={SANTA_ROSA_CITY_CENTER}
           zoom={SANTA_ROSA_CITY_DEFAULT_ZOOM}
@@ -277,21 +247,6 @@ export default function HazardPlacementMap({
           <FloodLayer reports={floodReports} />
           <FireLayer incidents={fireIncidents} />
           <EarthquakeLayer events={earthquakeEvents} roadImpacts={earthquakeRoadImpacts} />
-          {centers
-            .filter(
-              (center): center is CenterMarker & { latitude: number; longitude: number } =>
-                center.latitude != null && center.longitude != null
-            )
-            .map((center) => (
-              <Marker
-                key={center.id}
-                position={[center.latitude, center.longitude]}
-                icon={centerIcon(center.status)}
-                eventHandlers={{ click: () => onSelectCenter(center.id) }}
-              >
-                <Popup>{center.name}</Popup>
-              </Marker>
-            ))}
           {pendingPoint && (
             <Marker position={[pendingPoint.lat, pendingPoint.lng]} icon={pendingIcon} />
           )}

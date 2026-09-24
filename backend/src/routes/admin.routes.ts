@@ -21,6 +21,7 @@ adminRouter.put(
   "/evacuation-centers/:id",
   requireAuth,
   attachProfile,
+  requireRole("BARANGAY_ADMIN"),
   updateEvacuationCenter
 );
 

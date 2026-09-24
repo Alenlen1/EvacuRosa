@@ -107,6 +107,11 @@ export default function AdminDashboardPage() {
       .single();
     if (profileRow) setProfile(profileRow as Profile);
 
+    if (profileRow?.role === "SUPER_ADMIN") {
+      setCenters([]);
+      return;
+    }
+
     let query = supabase
       .from("evacuation_centers")
       .select("id, name, capacity, current_occupancy, status, latitude, longitude");
@@ -175,7 +180,7 @@ export default function AdminDashboardPage() {
       <div className="border-b border-slate-200 bg-white p-4">
         <h1 className="text-lg font-semibold text-blue-700">
           {profile?.role === "SUPER_ADMIN"
-            ? "CDRRMO — citywide evacuation centers"
+            ? "CDRRMO — Hazard Management"
             : "Assigned evacuation centers"}
         </h1>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
@@ -187,40 +192,42 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      <div className="space-y-3 p-4">
-        {centers.map((center) => (
-          <div
-            key={center.id}
-            id={`center-${center.id}`}
-            className={`rounded-lg border bg-white p-3 transition-colors ${
-              highlightedId === center.id
-                ? "border-blue-500 ring-2 ring-blue-200"
-                : "border-slate-200"
-            }`}
-          >
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-medium">{center.name}</span>
-              <span className="text-xs text-slate-500">{center.status}</span>
+      {profile?.role !== "SUPER_ADMIN" && (
+        <div className="space-y-3 p-4">
+          {centers.map((center) => (
+            <div
+              key={center.id}
+              id={`center-${center.id}`}
+              className={`rounded-lg border bg-white p-3 transition-colors ${
+                highlightedId === center.id
+                  ? "border-blue-500 ring-2 ring-blue-200"
+                  : "border-slate-200"
+              }`}
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-medium">{center.name}</span>
+                <span className="text-xs text-slate-500">{center.status}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-600">Occupancy</label>
+                <input
+                  type="number"
+                  defaultValue={center.current_occupancy}
+                  className="w-20 rounded border border-slate-300 px-2 py-1 text-sm"
+                  onBlur={(e) => updateOccupancy(center.id, Number(e.target.value))}
+                />
+                <span className="text-xs text-slate-500">/ {center.capacity}</span>
+                {savingId === center.id && (
+                  <span className="text-xs text-slate-400">Saving…</span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-600">Occupancy</label>
-              <input
-                type="number"
-                defaultValue={center.current_occupancy}
-                className="w-20 rounded border border-slate-300 px-2 py-1 text-sm"
-                onBlur={(e) => updateOccupancy(center.id, Number(e.target.value))}
-              />
-              <span className="text-xs text-slate-500">/ {center.capacity}</span>
-              {savingId === center.id && (
-                <span className="text-xs text-slate-400">Saving…</span>
-              )}
-            </div>
-          </div>
-        ))}
-        {centers.length === 0 && !error && (
-          <p className="text-sm text-slate-500">No centers assigned yet.</p>
-        )}
-      </div>
+          ))}
+          {centers.length === 0 && !error && (
+            <p className="text-sm text-slate-500">No centers assigned yet.</p>
+          )}
+        </div>
+      )}
 
       {profile?.role === "SUPER_ADMIN" && (
         <div className="p-4">
@@ -228,18 +235,16 @@ export default function AdminDashboardPage() {
             Hazard management — flood, fire, earthquake
           </h2>
           <p className="mb-3 text-xs text-slate-500">
-            Use the Santa Rosa map to mark hazards and view evacuation centers.
+            Use the Santa Rosa map to mark hazards.
             Flood and earthquake reports snap to a nearby road; fire incidents
             use a point and radius. Existing records can be removed below.
           </p>
           <HazardPlacementMapWrapper
-            centers={centers}
             floodReports={floodReports}
             fireIncidents={fireIncidents}
             earthquakeEvents={earthquakeEvents}
             earthquakeRoadImpacts={earthquakeRoadImpacts}
             getAuthToken={getAuthToken}
-            onSelectCenter={handleSelectCenterOnMap}
             onCreated={() => {
               fetchFloodReports().then(setFloodReports).catch(() => {});
               fetchFireIncidents().then(setFireIncidents).catch(() => {});
@@ -264,13 +269,11 @@ function HazardPlacementMapWrapper({
   getAuthToken,
   ...rest
 }: {
-  centers: AdminCenter[];
   floodReports: FloodReport[];
   fireIncidents: FireIncident[];
   earthquakeEvents: EarthquakeEvent[];
   earthquakeRoadImpacts: EarthquakeRoadImpact[];
   getAuthToken: () => Promise<string | undefined>;
-  onSelectCenter: (id: string) => void;
   onCreated: () => void;
 }) {
   const [token, setToken] = useState<string | null>(null);

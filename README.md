@@ -487,6 +487,8 @@ supabase/migrations/0004_earthquake_events.sql
 supabase/migrations/0005_unique_constraints.sql
 supabase/migrations/0006_citywide_evacuation_admin.sql
 supabase/migrations/0007_remove_placeholder_data.sql
+supabase/migrations/0008_superadmin_delete_earthquake_events.sql
+supabase/migrations/0009_barangay_only_center_management.sql
 ```
 
 Seed the official barangay reference list:
