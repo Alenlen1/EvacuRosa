@@ -19,7 +19,7 @@ export function TravelModeSelector({ value, onChange }: {
           </label>;
         })}
       </div>
-      <details className="travel-mode-help"><summary>Routing information</summary><p>Routes use mapped access and one-way rules. After changing mode, find a new route. Turn restrictions and live traffic are not included.</p></details>
+      <details className="travel-mode-help"><summary>Routing information</summary><p>Routes use mapped access and one-way rules. Changing mode automatically recalculates an active route. Turn restrictions and live traffic are not included.</p></details>
     </fieldset>
   );
 }

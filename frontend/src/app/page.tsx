@@ -93,8 +93,11 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<"route" | "evacuation" | null>(null);
   const routeVersion = useRef(0);
+  const routeIntent = useRef<"route" | "evacuation" | null>(null);
+  const [resultMode, setResultMode] = useState<TravelMode>("walking");
 
   function clearDestination() {
+    routeIntent.current = null;
     setSearchSelection(null);
     // Ignore pending responses after removing their destination.
     routeVersion.current += 1;
@@ -194,12 +197,13 @@ export default function Home() {
   const passableFloodCount = floodReports.length - blockedFloodCount;
   const showOfflineBanner = !isOnline || usingCachedData;
 
-  async function handleFindRoute() {
+  async function handleFindRoute(mode: TravelMode = travelMode, keepPrevious = false) {
     if (!geolocation.position || !destination) return;
+    routeIntent.current = "route";
     const version = ++routeVersion.current;
     setLoading("route");
     setError(null);
-    setResult(null);
+    if (!keepPrevious) setResult(null);
     try {
       const data = await fetchRoute(
         {
@@ -207,39 +211,40 @@ export default function Home() {
           longitude: geolocation.position.longitude,
         },
         destination,
-        travelMode
+        mode
       );
-      if (version === routeVersion.current) setResult({ kind: "route", data });
+      if (version === routeVersion.current) { setResult({ kind: "route", data }); setResultMode(mode); }
     } catch (err) {
-      if (version === routeVersion.current) setError(err instanceof Error ? err.message : "Could not calculate a route.");
+      if (version === routeVersion.current) { setResult(null); setError(err instanceof Error ? err.message : "Could not calculate a route."); }
     } finally {
       if (version === routeVersion.current) setLoading(null);
     }
   }
 
-  async function handleFindEvacuationCenter() {
+  async function handleFindEvacuationCenter(mode: TravelMode = travelMode, keepPrevious = false) {
     if (!geolocation.position) return;
+    routeIntent.current = "evacuation";
     const version = ++routeVersion.current;
     setLoading("evacuation");
     setError(null);
-    setResult(null);
+    if (!keepPrevious) setResult(null);
     try {
       const data = await fetchEvacuationRoute({
         latitude: geolocation.position.latitude,
         longitude: geolocation.position.longitude,
-      }, travelMode);
-      if (version === routeVersion.current) setResult({ kind: "evacuation", data });
+      }, mode);
+      if (version === routeVersion.current) { setResult({ kind: "evacuation", data }); setResultMode(mode); }
     } catch (err) {
-      if (version === routeVersion.current) setError(
+      if (version === routeVersion.current) { setResult(null); setError(
         err instanceof Error ? err.message : "Could not find an evacuation center."
-      );
+      ); }
     } finally {
       if (version === routeVersion.current) setLoading(null);
     }
   }
 
   const activeRoutePoints =
-    result?.kind === "route" || result?.kind === "evacuation" ? result.data.route : null;
+    result && resultMode === travelMode ? result.data.route : null;
 
   // Route calculation genuinely requires the backend — there is no
   // client-side routing engine, so offline correctly means "can't
@@ -259,7 +264,7 @@ export default function Home() {
   const sheetTitle = panel === "hazards" ? "Hazard information"
     : panel === "centers" ? selectedCenter?.name ?? "Evacuation centers"
     : routeLabel?.title ?? "Plan your route";
-  const travelTime = result ? estimatedTravelTime(result.data.distance, travelMode) : null;
+  const travelTime = result ? estimatedTravelTime(result.data.distance, resultMode) : null;
   const sheetSummary = (loading ? "Calculating your route…" : panel === "map" && result && sheetState === "collapsed"
     ? `${(result.data.distance / 1000).toFixed(1)} km${travelTime ? ` · Est. ${TRAVEL_MODES[travelMode].label.toLowerCase()}: ${travelTime.toLowerCase()}` : ""} · ${routeRiskLabel(result.data.riskLevel)}`
     : undefined);
@@ -304,6 +309,7 @@ export default function Home() {
         </nav>
         <section className="map-workspace" aria-label="Santa Rosa evacuation map">
           <PlaceSearch centers={centers} online={isOnline} onSelect={place => {
+            routeIntent.current = null;
             routeVersion.current += 1;
             setLoading(null);
             setResult(null);
@@ -334,6 +340,7 @@ export default function Home() {
               earthquakeRoadImpacts={earthquakeRoadImpacts}
               onSelectCenter={(center) => { setSelectedCenter(center); setPanel("centers"); setSheetState("partial"); }}
               onMapClick={(latitude, longitude) => {
+                routeIntent.current = null;
                 setSearchSelection(null);
                 routeVersion.current += 1;
                 setLoading(null);
@@ -365,9 +372,16 @@ export default function Home() {
               if (mode === travelMode) return;
               routeVersion.current += 1;
               setTravelMode(mode);
-              setResult(null);
               setLoading(null);
               setError(null);
+              if (routeIntent.current && (!isOnline || !geolocation.position)) {
+                setResult(null);
+                setError(!isOnline ? "Connect to the internet to recalculate for this travel mode." : "Enable location access to recalculate for this travel mode.");
+              } else if (routeIntent.current === "evacuation") {
+                void handleFindEvacuationCenter(mode, true);
+              } else if (routeIntent.current === "route") {
+                void handleFindRoute(mode, true);
+              }
             }} />
             {routingDisabledReason && <p>{routingDisabledReason}</p>}
             {!destination && !result && <p>Tap the map to set your destination.</p>}
@@ -383,7 +397,8 @@ export default function Home() {
           {panel === "hazards" && <Link href="/admin/login" className="mobile-staff-access">Staff access · Admin sign in</Link>}
           </>
         }>
-            {panel === "map" && result && <RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={travelMode} hideHeading />}
+            {loading && <p role="status" className="route-update-status">Updating route for {TRAVEL_MODES[travelMode].label.toLowerCase()}…{result ? " Previous route details shown below until calculation finishes." : ""}</p>}
+            {panel === "map" && result && <RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={resultMode} hideHeading />}
             {panel === "map" && !result && !error && routeLabel && (
               <section className="destination-heading">
                 {routeLabel.subtitle && <p>{routeLabel.subtitle}</p>}
@@ -424,7 +439,7 @@ export default function Home() {
                 {centers.map(center => <button className="center-list-item" key={center.id} onClick={() => setSelectedCenter(center)} aria-pressed={selectedCenter?.id === center.id}><Building2 size={23} /><span><strong>{center.name}</strong><small>{center.currentOccupancy} / {center.capacity} occupied</small><StatusBadge status={center.status} /></span><ArrowRight size={16} /></button>)}
               </section>
             )}
-            {panel !== "map" && result && <details className="other-route"><summary>Active route</summary><RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={travelMode} /></details>}
+            {panel !== "map" && result && <details className="other-route"><summary>Active route</summary><RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={resultMode} /></details>}
             {!(panel === "map" && error) && <details className="route-failure-details"><summary>About this data</summary>
               {routeLabel?.source === "photon" && <p className="geocoder-credit">Approximate place name · <a href="https://photon.komoot.io" target="_blank" rel="noreferrer">Photon</a> / <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></p>}
               <p>Hazard and center data is cached for offline viewing. Calculating a route requires a connection.</p>

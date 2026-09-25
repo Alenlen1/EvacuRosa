@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+.route-update-status {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff7cc;
+  color: #584911;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .emergency-contact-trigger {
   display: inline-flex;
   align-items: center;
