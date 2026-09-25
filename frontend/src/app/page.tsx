@@ -7,6 +7,7 @@ import { MapPin, WifiOff, Map as MapIcon, Building2, ShieldAlert, ArrowRight, Us
 import { FloodIcon as Droplet, FireIcon as Flame, EarthquakeIcon as Activity } from "@/components/ui/HazardIcons";
 import { Brand } from "@/components/ui/Brand";
 import { MobileNavigation } from "@/components/ui/MobileNavigation";
+import { EmergencyContact } from "@/components/ui/EmergencyContact";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MapLegend } from "@/components/map/MapLegend";
 import { PlaceSearch } from "@/components/map/PlaceSearch";
@@ -264,6 +265,16 @@ export default function Home() {
     : undefined);
 
   const displayedCenter = selectedCenter ?? (result?.kind === "evacuation" ? result.data.recommendedCenter : null);
+  const emergencyContactProps = {
+    position: geolocation.position,
+    routingUnavailable: !geolocation.position ? "Enable location access to find a route" : !isOnline ? "A connection is required to calculate a route" : loading ? "Route calculation in progress" : null,
+    onFindCenter: () => {
+      setSelectedCenter(null);
+      setPanel("map");
+      setSheetState("partial");
+      void handleFindEvacuationCenter();
+    },
+  };
   const choosePanel = (value: "map" | "centers" | "hazards") => {
     setPanel(value);
     setSheetState(value === "map" ? "collapsed" : "partial");
@@ -277,6 +288,7 @@ export default function Home() {
         <span className="city-label"><MapPin size={16} /> Santa Rosa, Laguna</span>
         <Link href="/admin/login" className="admin-link">Admin sign in <ArrowRight size={15} /></Link>
         <MobileNavigation activeSection={panel} onSelect={choosePanel} />
+        <EmergencyContact {...emergencyContactProps} />
       </header>
       {showOfflineBanner && (
         <div className="offline-banner" role="status"><WifiOff size={17} />
@@ -332,7 +344,10 @@ export default function Home() {
               }}
             />
             <div className="map-location-status"><span className={geolocation.status === "active" ? "live-dot" : "inactive-dot"} />{locationLabel}</div>
-            <MapLegend />
+            <div className="map-secondary-controls">
+              <EmergencyContact placement="floating" {...emergencyContactProps} />
+              <MapLegend />
+            </div>
           </div>
         </section>
         <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} hideDetails={panel === "map" && !!error} onClearDestination={destination ? clearDestination : undefined} actions={
