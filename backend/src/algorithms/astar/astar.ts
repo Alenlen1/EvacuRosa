@@ -1,6 +1,7 @@
 import type { RoadGraph } from "./graph";
 import type { GraphEdge, RoadStatus } from "./edge";
 import { heuristic } from "./heuristic";
+import type { TravelMode } from "./access";
 
 export interface AstarResult {
   found: boolean;
@@ -14,6 +15,7 @@ export interface AstarResult {
 }
 
 export interface FindPathOptions {
+  travelMode?: TravelMode;
   /** Lets a hazard source (e.g. an active flood report) treat a road as
    * BLOCKED/FLOODED for this request without mutating the shared, cached
    * RoadGraph — keyed by roadId, checked in preference to the edge's own
@@ -125,6 +127,7 @@ export function findPath(
     }
 
     for (const edge of graph.neighbors(currentId)) {
+      if (edge.allowedModes && !edge.allowedModes.includes(options?.travelMode ?? "walking")) continue;
       if (effectiveStatus(edge) === "BLOCKED") continue;
       if (visited.has(edge.toNodeId)) continue;
 

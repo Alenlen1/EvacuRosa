@@ -1,3 +1,4 @@
+import type { TravelMode } from "./access";
 export type RoadStatus = "OPEN" | "FLOODED" | "DAMAGED" | "BLOCKED";
 export type RoadCondition = "GOOD" | "FAIR" | "POOR";
 
@@ -14,4 +15,7 @@ export interface GraphEdge {
    * unknown (never fabricate a worse condition than is actually reported). */
   condition?: RoadCondition;
   riskCost?: number;
+  osmTags?: Record<string, string>;
+  oneway?: boolean;
+  allowedModes?: TravelMode[];
 }

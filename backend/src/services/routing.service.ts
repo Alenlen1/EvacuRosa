@@ -9,6 +9,7 @@ import {
 import { edgeRisk, riskLevelRank } from "./riskWeighting.service";
 import type { RiskLevel } from "../algorithms/fuzzy/types";
 import type { RoadStatus, GraphEdge } from "../algorithms/astar/edge";
+import type { TravelMode } from "../algorithms/astar/access";
 
 export interface LatLng {
   latitude: number;
@@ -40,10 +41,10 @@ function mergeOverrides(
   return merged;
 }
 
-export async function computeRoute(start: LatLng, destination: LatLng): Promise<RouteResult> {
+export async function computeRoute(start: LatLng, destination: LatLng, travelMode: TravelMode = "walking"): Promise<RouteResult> {
   const graph = loadRoadGraph();
-  const startNode = graph.nearestNode(start.latitude, start.longitude);
-  const goalNode = graph.nearestNode(destination.latitude, destination.longitude);
+  const startNode = graph.nearestAccessibleNode(start.latitude, start.longitude, travelMode);
+  const goalNode = graph.nearestAccessibleNode(destination.latitude, destination.longitude, travelMode);
 
   if (!startNode || !goalNode) {
     return {
@@ -52,7 +53,7 @@ export async function computeRoute(start: LatLng, destination: LatLng): Promise<
       distanceMeters: 0,
       affectedRoads: 0,
       riskLevel: null,
-      warnings: ["No road graph data near one of the given points."],
+      warnings: ["No accessible road within 250 m of the start or destination for this travel mode."],
     };
   }
 
@@ -94,6 +95,7 @@ export async function computeRoute(start: LatLng, destination: LatLng): Promise<
   // proximity, verified earthquake impact, road condition), not raw
   // distance. BLOCKED status is still a hard exclusion regardless of cost.
   const result = findPath(graph, startNode.id, goalNode.id, {
+    travelMode,
     statusOverrides: overrides,
     edgeCost: (edge) => cachedEdgeRisk(edge).cost,
   });

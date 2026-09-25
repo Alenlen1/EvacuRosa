@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { computeEvacuationRoute } from "../services/evacuationRouting.service";
+import { isTravelMode } from "../algorithms/astar/access";
 
 function isValidPoint(value: unknown): value is { latitude: number; longitude: number } {
   if (typeof value !== "object" || value === null) return false;
@@ -8,7 +9,11 @@ function isValidPoint(value: unknown): value is { latitude: number; longitude: n
 }
 
 export async function postEvacuationRoute(req: Request, res: Response) {
-  const { start } = req.body ?? {};
+  const { start, travelMode = "walking" } = req.body ?? {};
+  if (!isTravelMode(travelMode)) {
+    res.status(400).json({ error: "Invalid travelMode. Use walking, biking, motorcycle, or car." });
+    return;
+  }
   if (!isValidPoint(start)) {
     res.status(400).json({
       error: "Request body must include start with numeric latitude and longitude.",
@@ -16,7 +21,7 @@ export async function postEvacuationRoute(req: Request, res: Response) {
     return;
   }
 
-  const result = await computeEvacuationRoute(start);
+  const result = await computeEvacuationRoute(start, travelMode);
 
   if (!result.found) {
     res.status(422).json({ warnings: result.warnings });
@@ -28,6 +33,7 @@ export async function postEvacuationRoute(req: Request, res: Response) {
   res.json({
     recommendedCenter: result.recommendedCenter,
     route: result.route,
+    travelMode,
     distance: result.distanceMeters,
     riskLevel: result.riskLevel,
     warnings: result.warnings,

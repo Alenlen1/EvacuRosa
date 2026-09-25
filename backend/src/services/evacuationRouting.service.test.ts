@@ -59,4 +59,11 @@ describe("computeEvacuationRoute", () => {
     expect(result.found).toBe(false);
     expect(result.recommendedCenter).toBeNull();
   });
+  it("uses the selected travel mode for candidate routes", async () => {
+    const start = { latitude: 14.3, longitude: 121.1 };
+    await computeEvacuationRoute(start, "car");
+    expect(mocks.computeRoute).toHaveBeenCalledWith(start, {
+      latitude: center.latitude, longitude: center.longitude,
+    }, "car");
+  });
 });

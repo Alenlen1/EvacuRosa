@@ -17,6 +17,7 @@ const HIGHWAY_TYPES = [
   "primary_link",
   "secondary_link",
   "tertiary_link",
+  "service", "living_street", "pedestrian", "footway", "path", "cycleway", "steps", "track",
 ];
 
 /**
@@ -138,6 +139,7 @@ interface OutEdge {
   status: "OPEN";
   condition: "GOOD";
   oneway?: boolean;
+  osmTags: Record<string, string>;
 }
 
 function buildQuery(): string {
@@ -247,8 +249,7 @@ async function main() {
 
   for (const way of ways) {
     const roadName = way.tags?.name ?? way.tags?.highway ?? "unnamed road";
-    // Recorded for future use; NOT currently enforced by the router — see
-    // the note printed at the end of this script.
+    // Preserve original way direction and tags for per-mode access checks.
     const oneway = way.tags?.oneway === "yes" || way.tags?.oneway === "1";
 
     for (let i = 0; i < way.nodes.length - 1; i++) {
@@ -287,6 +288,7 @@ async function main() {
         toNodeId: toKey,
         roadId: `W${way.id}`,
         roadName,
+        osmTags: way.tags ?? {},
         distanceMeters,
         status: "OPEN",
         // OSM has no reliable pavement-condition tag, so everything starts
@@ -314,13 +316,14 @@ async function main() {
   const output = {
     _meta: {
       source: "OpenStreetMap via Overpass API",
+      accessRulesVersion: 1,
       fetchedAt: new Date().toISOString(),
       attribution: "© OpenStreetMap contributors, https://www.openstreetmap.org/copyright",
       bounds: BOUNDS,
       note:
         "Generated automatically — every edge starts OPEN/GOOD. Road status and condition updates come from the CDRRMO admin workflow, not this script. Only the largest connected component is kept, so isolated fragments clipped by the bounding box are excluded.",
       onewayNote:
-        "The `oneway` flag is recorded but NOT currently enforced: RoadGraph treats every edge as bidirectional. Routes may therefore travel the wrong way down a one-way street. Acceptable for pedestrian evacuation on foot; fix before using this for vehicle turn-by-turn navigation.",
+        "Original OSM way direction and access tags are preserved. The router enforces access and one-way rules per travel mode. Turn-restriction relations are not included.",
     },
     nodes: [...pruned.nodes.values()],
     edges: pruned.edges,
@@ -334,7 +337,7 @@ async function main() {
     "The backend picks this up automatically on restart — no code change needed."
   );
   console.log(
-    "\nNote: `oneway` tags are recorded but not enforced; the router treats all roads as two-way."
+    "\nAccess and one-way rules are enforced per travel mode. Restart the backend to load this snapshot."
   );
 }
 

@@ -9,7 +9,7 @@ export function TravelModeSelector({ value, onChange }: {
 }) {
   return (
     <fieldset className="travel-mode-selector" aria-describedby="travel-mode-help">
-      <legend>Travel time estimate</legend>
+      <legend>Travel mode</legend>
       <div className="travel-mode-options">
         {(Object.keys(TRAVEL_MODES) as TravelMode[]).map(mode => {
           const Icon = icons[mode];
@@ -19,7 +19,7 @@ export function TravelModeSelector({ value, onChange }: {
           </label>;
         })}
       </div>
-      <p id="travel-mode-help">Changes estimated time only. Route is not checked for vehicle access. No live traffic.</p>
+      <p id="travel-mode-help">Routes use mapped access and one-way rules. After changing mode, find a new route. Turn restrictions and live traffic are not included.</p>
     </fieldset>
   );
 }

@@ -1,5 +1,6 @@
 import type { GraphNode } from "./node";
 import type { GraphEdge } from "./edge";
+import { permittedModes, type TravelMode } from "./access";
 import { haversineMeters, distanceMetersToSegment } from "./heuristic";
 
 export interface RoadGraphData {
@@ -13,8 +14,7 @@ export interface RoadGraphData {
  * mostly-empty overhead. */
 const GRID_CELL_DEGREES = 0.005;
 
-/** Undirected road graph: every edge is stored both ways so A* can travel
- * a road segment in either direction. */
+/** Both geometrical directions are retained, with separate mode permissions. */
 export class RoadGraph {
   private nodes = new Map<string, GraphNode>();
   private adjacency = new Map<string, GraphEdge[]>();
@@ -37,12 +37,13 @@ export class RoadGraph {
       else this.grid.set(key, [node]);
     }
     for (const edge of data.edges) {
-      this.addDirectedEdge(edge);
+      this.addDirectedEdge({ ...edge, allowedModes: edge.osmTags ? permittedModes(edge.osmTags, false) : edge.allowedModes });
       this.addDirectedEdge({
         ...edge,
         id: `${edge.id}-r`,
         fromNodeId: edge.toNodeId,
         toNodeId: edge.fromNodeId,
+        allowedModes: edge.osmTags ? permittedModes(edge.osmTags, true) : edge.oneway ? ["walking"] : edge.allowedModes,
       });
       const existing = this.edgesByRoad.get(edge.roadId);
       if (existing) existing.push(edge);
@@ -76,6 +77,27 @@ export class RoadGraph {
 
   allNodes(): GraphNode[] {
     return [...this.nodes.values()];
+  }
+
+  /** Snap to the nearest endpoint on an accessible segment, including sinks.
+   * Skipping a one-way sink would move the start upstream and bypass the rule. */
+  nearestAccessibleNode(latitude: number, longitude: number, mode: TravelMode): GraphNode | null {
+    const eligible = new Set<string>();
+    for (const edges of this.adjacency.values()) {
+      for (const edge of edges) {
+        if (edge.status === "BLOCKED" || (edge.allowedModes && !edge.allowedModes.includes(mode))) continue;
+        eligible.add(edge.fromNodeId);
+        eligible.add(edge.toNodeId);
+      }
+    }
+    let best: GraphNode | null = null;
+    let bestDistance = 250; // Never silently snap across town to bypass access rules.
+    for (const id of eligible) {
+      const node = this.nodes.get(id)!;
+      const distance = haversineMeters(latitude, longitude, node.latitude, node.longitude);
+      if (distance < bestDistance) { best = node; bestDistance = distance; }
+    }
+    return best;
   }
 
   /** All (forward-direction) edges sharing a roadId — used to look up the

@@ -3,6 +3,7 @@ import { computeRoute, type LatLng } from "./routing.service";
 import { RISK_WEIGHT, riskLevelRank } from "./riskWeighting.service";
 import type { RiskLevel } from "../algorithms/fuzzy/types";
 import type { EvacuationCenter } from "../types/evacuation";
+import type { TravelMode } from "../algorithms/astar/access";
 
 export interface EvacuationRouteResult {
   found: boolean;
@@ -21,7 +22,7 @@ export interface EvacuationRouteResult {
  * losing out to "Center B: 2.2km, LOW RISK" only happens once distance
  * alone stops being the sole criterion, which it now isn't.
  */
-export async function computeEvacuationRoute(start: LatLng): Promise<EvacuationRouteResult> {
+export async function computeEvacuationRoute(start: LatLng, travelMode: TravelMode = "walking"): Promise<EvacuationRouteResult> {
   const candidates = await getAvailableCenters();
 
   if (candidates.length === 0) {
@@ -47,7 +48,7 @@ export async function computeEvacuationRoute(start: LatLng): Promise<EvacuationR
     const result = await computeRoute(start, {
       latitude: center.latitude,
       longitude: center.longitude,
-    });
+    }, travelMode);
     if (!result.found || !result.riskLevel) continue;
 
     const normalizedRisk = riskLevelRank(result.riskLevel) / 4;

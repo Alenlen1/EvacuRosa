@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { computeRoute } from "../services/routing.service";
+import { isTravelMode } from "../algorithms/astar/access";
 
 function isValidPoint(
   value: unknown
@@ -10,7 +11,11 @@ function isValidPoint(
 }
 
 export async function postRoute(req: Request, res: Response) {
-  const { start, destination } = req.body ?? {};
+  const { start, destination, travelMode = "walking" } = req.body ?? {};
+  if (!isTravelMode(travelMode)) {
+    res.status(400).json({ error: "Invalid travelMode. Use walking, biking, motorcycle, or car." });
+    return;
+  }
 
   if (!isValidPoint(start) || !isValidPoint(destination)) {
     res.status(400).json({
@@ -20,7 +25,7 @@ export async function postRoute(req: Request, res: Response) {
     return;
   }
 
-  const result = await computeRoute(start, destination);
+  const result = await computeRoute(start, destination, travelMode);
 
   if (!result.found) {
     res.status(422).json({ route: [], warnings: result.warnings });
@@ -31,6 +36,7 @@ export async function postRoute(req: Request, res: Response) {
   // reports and road condition — see routing.service.ts.
   res.json({
     route: result.path,
+    travelMode,
     distance: result.distanceMeters,
     affectedRoads: result.affectedRoads,
     warnings: result.warnings,

@@ -205,7 +205,8 @@ export default function Home() {
           latitude: geolocation.position.latitude,
           longitude: geolocation.position.longitude,
         },
-        destination
+        destination,
+        travelMode
       );
       if (version === routeVersion.current) setResult({ kind: "route", data });
     } catch (err) {
@@ -225,7 +226,7 @@ export default function Home() {
       const data = await fetchEvacuationRoute({
         latitude: geolocation.position.latitude,
         longitude: geolocation.position.longitude,
-      });
+      }, travelMode);
       if (version === routeVersion.current) setResult({ kind: "evacuation", data });
     } catch (err) {
       if (version === routeVersion.current) setError(
@@ -338,7 +339,14 @@ export default function Home() {
           <>
           {destination && <button type="button" className="remove-destination-button" onClick={clearDestination}><X size={18} aria-hidden="true" />Remove destination</button>}
           <div className={`route-actions${destination ? " has-destination" : ""}`}>
-            <TravelModeSelector value={travelMode} onChange={setTravelMode} />
+            <TravelModeSelector value={travelMode} onChange={mode => {
+              if (mode === travelMode) return;
+              routeVersion.current += 1;
+              setTravelMode(mode);
+              setResult(null);
+              setLoading(null);
+              setError(null);
+            }} />
             {routingDisabledReason && <p>{routingDisabledReason}</p>}
             {destination && <p className="action-destination"><span>Map destination</span><strong>{destinationName.label?.title}</strong></p>}
             {!destination && !result && <p>Tap the map to set your destination.</p>}

@@ -1,3 +1,4 @@
+import type { TravelMode } from "@/lib/travelTime";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export interface LatLng {
@@ -16,12 +17,13 @@ export interface RouteResponse {
 
 export async function fetchRoute(
   start: LatLng,
-  destination: LatLng
+  destination: LatLng,
+  travelMode: TravelMode = "walking"
 ): Promise<RouteResponse> {
   const res = await fetch(`${API_URL}/api/route`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ start, destination }),
+    body: JSON.stringify({ start, destination, travelMode }),
   });
 
   if (!res.ok) {
@@ -69,12 +71,13 @@ export interface EvacuationRouteResponse {
 }
 
 export async function fetchEvacuationRoute(
-  start: LatLng
+  start: LatLng,
+  travelMode: TravelMode = "walking"
 ): Promise<EvacuationRouteResponse> {
   const res = await fetch(`${API_URL}/api/evacuation-route`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ start }),
+    body: JSON.stringify({ start, travelMode }),
   });
 
   if (!res.ok) {
