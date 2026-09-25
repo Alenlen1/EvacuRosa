@@ -508,6 +508,61 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   flex-direction: column;
   gap: 9px;
 }
+.travel-mode-selector {
+  min-width: 0;
+  grid-column: 1 / -1;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.travel-mode-selector legend {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.travel-mode-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.travel-mode-options label {
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+}
+.travel-mode-options input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.travel-mode-options span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 52px;
+  padding: 6px 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 10px;
+}
+.travel-mode-options input:checked + span {
+  background: #fcf2aa;
+  border-color: #b5a32d;
+  font-weight: 700;
+}
+.travel-mode-options input:focus-visible + span {
+  outline: 2px solid #4059ca;
+  outline-offset: 2px;
+}
+.travel-mode-selector > p {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+}
 .route-actions > p {
   font-size: 11px;
   color: var(--muted);

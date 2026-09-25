@@ -13,6 +13,8 @@ import { PlaceSearch } from "@/components/map/PlaceSearch";
 import type { PlaceResult } from "@/lib/placeSearch";
 import { RouteDetails, routeRiskLabel } from "@/components/map/RouteDetails";
 import { RouteSheet, type SheetState } from "@/components/map/RouteSheet";
+import { estimatedTravelTime, TRAVEL_MODES, type TravelMode } from "@/lib/travelTime";
+import { TravelModeSelector } from "@/components/map/TravelModeSelector";
 import { useDestinationLabel } from "@/hooks/useDestinationLabel";
 import type { DestinationLabel } from "@/lib/reverseGeocoding";
 import { useGeolocation } from "@/hooks/useGeolocation";
@@ -72,6 +74,7 @@ type ActiveResult =
 export default function Home() {
   const [panel, setPanel] = useState<"map" | "centers" | "hazards">("map");
   const [sheetState, setSheetState] = useState<SheetState>("collapsed");
+  const [travelMode, setTravelMode] = useState<TravelMode>("walking");
   const [selectedCenter, setSelectedCenter] = useState<EvacuationCenter | null>(null);
   const [searchSelection, setSearchSelection] = useState<PlaceResult | null>(null);
   const geolocation = useGeolocation();
@@ -254,8 +257,9 @@ export default function Home() {
   const sheetTitle = panel === "hazards" ? "Hazard information"
     : panel === "centers" ? selectedCenter?.name ?? "Evacuation centers"
     : routeLabel?.title ?? "Plan your route";
+  const travelTime = result ? estimatedTravelTime(result.data.distance, travelMode) : null;
   const sheetSummary = error ?? (loading ? "Calculating your route…" : panel === "map" && result && sheetState === "collapsed"
-    ? `${(result.data.distance / 1000).toFixed(1)} km · ${routeRiskLabel(result.data.riskLevel)}`
+    ? `${(result.data.distance / 1000).toFixed(1)} km${travelTime ? ` · Est. ${TRAVEL_MODES[travelMode].label.toLowerCase()}: ${travelTime.toLowerCase()}` : ""} · ${routeRiskLabel(result.data.riskLevel)}`
     : undefined);
 
   const displayedCenter = selectedCenter ?? (result?.kind === "evacuation" ? result.data.recommendedCenter : null);
@@ -334,6 +338,7 @@ export default function Home() {
           <>
           {destination && <button type="button" className="remove-destination-button" onClick={clearDestination}><X size={18} aria-hidden="true" />Remove destination</button>}
           <div className={`route-actions${destination ? " has-destination" : ""}`}>
+            <TravelModeSelector value={travelMode} onChange={setTravelMode} />
             {routingDisabledReason && <p>{routingDisabledReason}</p>}
             {destination && <p className="action-destination"><span>Map destination</span><strong>{destinationName.label?.title}</strong></p>}
             {!destination && !result && <p>Tap the map to set your destination.</p>}
@@ -350,7 +355,7 @@ export default function Home() {
           {panel === "hazards" && <Link href="/admin/login" className="mobile-staff-access">Staff access · Admin sign in</Link>}
           </>
         }>
-            {panel === "map" && result && <RouteDetails result={result} label={routeLabel} center={routeCenter} />}
+            {panel === "map" && result && <RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={travelMode} />}
             {panel === "map" && !result && routeLabel && (
               <section className="destination-heading">
                 <span className="eyebrow">DESTINATION</span>
@@ -393,7 +398,7 @@ export default function Home() {
                 {centers.map(center => <button className="center-list-item" key={center.id} onClick={() => setSelectedCenter(center)} aria-pressed={selectedCenter?.id === center.id}><Building2 size={23} /><span><strong>{center.name}</strong><small>{center.currentOccupancy} / {center.capacity} occupied</small><StatusBadge status={center.status} /></span><ArrowRight size={16} /></button>)}
               </section>
             )}
-            {panel !== "map" && result && <details className="other-route"><summary>Active route</summary><RouteDetails result={result} label={routeLabel} center={routeCenter} /></details>}
+            {panel !== "map" && result && <details className="other-route"><summary>Active route</summary><RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={travelMode} /></details>}
             {routeLabel?.source === "photon" && <p className="geocoder-credit">Approximate place name · <a href="https://photon.komoot.io" target="_blank" rel="noreferrer">Photon</a> / <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></p>}
             <p className="data-note">Hazard and center data is cached for offline viewing. Calculating a route requires a connection.</p>
         </RouteSheet>
