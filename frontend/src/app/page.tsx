@@ -254,7 +254,7 @@ export default function Home() {
   const sheetTitle = panel === "hazards" ? "Hazard information"
     : panel === "centers" ? selectedCenter?.name ?? "Evacuation centers"
     : routeLabel?.title ?? "Plan your route";
-  const sheetSummary = error ?? (loading ? "Calculating your route…" : panel === "map" && result
+  const sheetSummary = error ?? (loading ? "Calculating your route…" : panel === "map" && result && sheetState === "collapsed"
     ? `${(result.data.distance / 1000).toFixed(1)} km · ${routeRiskLabel(result.data.riskLevel)}`
     : undefined);
 
@@ -298,9 +298,9 @@ export default function Home() {
             setSheetState("partial");
           }} />
           <div className="hazard-strip">
-            <button onClick={() => choosePanel("hazards")}><Droplet className="flood-color" size={24} /><span><strong>Flood</strong><small>{floodReports.length} reports · {blockedFloodCount} blocked</small></span></button>
-            <button onClick={() => choosePanel("hazards")}><Flame className="fire-color" size={24} /><span><strong>Fire</strong><small>{fireIncidents.length} incidents loaded</small></span></button>
-            <button onClick={() => choosePanel("hazards")}><Activity className="earthquake-color" size={24} /><span><strong>Earthquake</strong><small>{earthquakeEvents.length} events loaded</small></span></button>
+            <button onClick={() => choosePanel("hazards")}><Droplet className="flood-color" size={24} /><span><strong>Flood</strong><small>{floodReports.length} {floodReports.length === 1 ? "report" : "reports"} · {blockedFloodCount} blocked</small></span></button>
+            <button onClick={() => choosePanel("hazards")}><Flame className="fire-color" size={24} /><span><strong>Fire</strong><small>{fireIncidents.length} {fireIncidents.length === 1 ? "incident" : "incidents"} loaded</small></span></button>
+            <button onClick={() => choosePanel("hazards")}><Activity className="earthquake-color" size={24} /><span><strong>Earthquake</strong><small>{earthquakeEvents.length} {earthquakeEvents.length === 1 ? "event" : "events"} loaded</small></span></button>
           </div>
           <div className="map-canvas">
             <Map

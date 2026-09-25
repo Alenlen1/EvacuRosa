@@ -22,7 +22,8 @@ export function RouteDetails({ result, label, center }: { result: ActiveRouteRes
       </>}
       <div className="route-metrics"><div><strong>{(result.data.distance / 1000).toFixed(1)} km</strong><small>Route distance</small></div></div>
       <p className="route-risk">{routeRiskLabel(result.data.riskLevel)}</p>
-      <p>Estimated travel time is unavailable.</p>
+      <p className="route-risk-context">Based on available reports, not a guarantee of safety.</p>
+      <p>Travel time unavailable.</p>
       {result.kind === "route" && <p>{result.data.affectedRoads === 0
           ? "No reported road restrictions along this route."
           : `Reported restrictions affect ${result.data.affectedRoads} ${result.data.affectedRoads === 1 ? "section" : "sections"} of this route.`}</p>}
