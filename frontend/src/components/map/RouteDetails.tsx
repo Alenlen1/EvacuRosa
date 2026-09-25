@@ -11,13 +11,13 @@ export function routeRiskLabel(level: string | null) {
   return `Route risk: ${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }
 
-export function RouteDetails({ result, label, center, travelMode }: { result: ActiveRouteResult; label: DestinationLabel | null; center?: EvacuationCenter; travelMode: TravelMode }) {
+export function RouteDetails({ result, label, center, travelMode, hideHeading = false }: { result: ActiveRouteResult; label: DestinationLabel | null; center?: EvacuationCenter; travelMode: TravelMode; hideHeading?: boolean }) {
   const travelTime = estimatedTravelTime(result.data.distance, travelMode);
   const mode = TRAVEL_MODES[travelMode];
   return (
     <section className="route-summary" aria-label="Active route details" aria-live="polite">
-      <span className="eyebrow">ROUTE DESTINATION</span>
-      <h3>{label?.title ?? "Selected destination"}</h3>
+      {!hideHeading && <><span className="eyebrow">ROUTE DESTINATION</span>
+      <h3>{label?.title ?? "Selected destination"}</h3></>}
       {label?.subtitle && <p>{label.subtitle}</p>}
       {center && <>
         <StatusBadge status={center.status} />

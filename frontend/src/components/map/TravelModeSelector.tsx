@@ -8,7 +8,7 @@ export function TravelModeSelector({ value, onChange }: {
   onChange: (mode: TravelMode) => void;
 }) {
   return (
-    <fieldset className="travel-mode-selector" aria-describedby="travel-mode-help">
+    <fieldset className="travel-mode-selector">
       <legend>Travel mode</legend>
       <div className="travel-mode-options">
         {(Object.keys(TRAVEL_MODES) as TravelMode[]).map(mode => {
@@ -19,7 +19,7 @@ export function TravelModeSelector({ value, onChange }: {
           </label>;
         })}
       </div>
-      <p id="travel-mode-help">Routes use mapped access and one-way rules. After changing mode, find a new route. Turn restrictions and live traffic are not included.</p>
+      <details className="travel-mode-help"><summary>Routing information</summary><p>Routes use mapped access and one-way rules. After changing mode, find a new route. Turn restrictions and live traffic are not included.</p></details>
     </fieldset>
   );
 }

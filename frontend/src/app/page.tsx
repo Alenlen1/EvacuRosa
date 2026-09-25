@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { MapPin, WifiOff, Map as MapIcon, Building2, ShieldAlert, ArrowRight, Users, X } from "lucide-react";
+import { MapPin, WifiOff, Map as MapIcon, Building2, ShieldAlert, ArrowRight, Users, X, Phone } from "lucide-react";
 import { FloodIcon as Droplet, FireIcon as Flame, EarthquakeIcon as Activity } from "@/components/ui/HazardIcons";
 import { Brand } from "@/components/ui/Brand";
 import { MobileNavigation } from "@/components/ui/MobileNavigation";
@@ -259,7 +259,7 @@ export default function Home() {
     : panel === "centers" ? selectedCenter?.name ?? "Evacuation centers"
     : routeLabel?.title ?? "Plan your route";
   const travelTime = result ? estimatedTravelTime(result.data.distance, travelMode) : null;
-  const sheetSummary = error ?? (loading ? "Calculating your route…" : panel === "map" && result && sheetState === "collapsed"
+  const sheetSummary = (loading ? "Calculating your route…" : panel === "map" && result && sheetState === "collapsed"
     ? `${(result.data.distance / 1000).toFixed(1)} km${travelTime ? ` · Est. ${TRAVEL_MODES[travelMode].label.toLowerCase()}: ${travelTime.toLowerCase()}` : ""} · ${routeRiskLabel(result.data.riskLevel)}`
     : undefined);
 
@@ -335,10 +335,17 @@ export default function Home() {
             <MapLegend />
           </div>
         </section>
-        <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} actions={
+        <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} hideDetails={panel === "map" && !!error} onClearDestination={destination ? clearDestination : undefined} actions={
           <>
-          {destination && <button type="button" className="remove-destination-button" onClick={clearDestination}><X size={18} aria-hidden="true" />Remove destination</button>}
-          <div className={`route-actions${destination ? " has-destination" : ""}`}>
+          <div className={`route-actions${destination ? " has-destination" : ""}${error ? " has-route-error" : ""}`}>
+            {error && <section className="route-emergency-help" aria-label="Emergency assistance">
+              <p className="error-message" role="alert">{error.startsWith("No ") ? `No route found for ${TRAVEL_MODES[travelMode].label.toLowerCase()}.` : "Unable to calculate a route."}</p>
+              <button type="button" className="emergency-contact-button" disabled aria-describedby="emergency-contact-pending">
+                <Phone size={18} aria-hidden="true" />Emergency contact
+              </button>
+              <p id="emergency-contact-pending">CDRRMO number pending verification. Calling unavailable.</p>
+              <details className="route-failure-details"><summary>Details</summary><p>{error}</p></details>
+            </section>}
             <TravelModeSelector value={travelMode} onChange={mode => {
               if (mode === travelMode) return;
               routeVersion.current += 1;
@@ -348,7 +355,6 @@ export default function Home() {
               setError(null);
             }} />
             {routingDisabledReason && <p>{routingDisabledReason}</p>}
-            {destination && <p className="action-destination"><span>Map destination</span><strong>{destinationName.label?.title}</strong></p>}
             {!destination && !result && <p>Tap the map to set your destination.</p>}
             {destinationName.loading && !recommendedCenter && <p role="status">Finding place name…</p>}
             <button type="button" className="primary-button" disabled={!destination || !geolocation.position || loading !== null || !isOnline} onClick={() => { setPanel("map"); setSheetState("partial"); handleFindRoute(); }}>
@@ -358,16 +364,13 @@ export default function Home() {
               <Building2 size={18} />{loading === "evacuation" ? "Searching…" : "Find evacuation center"}
             </button>
             {!geolocation.position && <p className="location-help">{locationLabel}. Enable location access to calculate a route.</p>}
-            {error && <p className="error-message" role="alert">{error}</p>}
           </div>
           {panel === "hazards" && <Link href="/admin/login" className="mobile-staff-access">Staff access · Admin sign in</Link>}
           </>
         }>
-            {panel === "map" && result && <RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={travelMode} />}
-            {panel === "map" && !result && routeLabel && (
+            {panel === "map" && result && <RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={travelMode} hideHeading />}
+            {panel === "map" && !result && !error && routeLabel && (
               <section className="destination-heading">
-                <span className="eyebrow">DESTINATION</span>
-                <h2>{routeLabel.title}</h2>
                 {routeLabel.subtitle && <p>{routeLabel.subtitle}</p>}
               </section>
             )}
@@ -407,8 +410,10 @@ export default function Home() {
               </section>
             )}
             {panel !== "map" && result && <details className="other-route"><summary>Active route</summary><RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={travelMode} /></details>}
-            {routeLabel?.source === "photon" && <p className="geocoder-credit">Approximate place name · <a href="https://photon.komoot.io" target="_blank" rel="noreferrer">Photon</a> / <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></p>}
-            <p className="data-note">Hazard and center data is cached for offline viewing. Calculating a route requires a connection.</p>
+            {!(panel === "map" && error) && <details className="route-failure-details"><summary>About this data</summary>
+              {routeLabel?.source === "photon" && <p className="geocoder-credit">Approximate place name · <a href="https://photon.komoot.io" target="_blank" rel="noreferrer">Photon</a> / <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></p>}
+              <p>Hazard and center data is cached for offline viewing. Calculating a route requires a connection.</p>
+            </details>}
         </RouteSheet>
       </div>
     </main>
