@@ -333,7 +333,7 @@ export default function Home() {
         <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} actions={
           <>
           {destination && <button type="button" className="remove-destination-button" onClick={clearDestination}><X size={18} aria-hidden="true" />Remove destination</button>}
-          <div className="route-actions">
+          <div className={`route-actions${destination ? " has-destination" : ""}`}>
             {routingDisabledReason && <p>{routingDisabledReason}</p>}
             {destination && <p className="action-destination"><span>Map destination</span><strong>{destinationName.label?.title}</strong></p>}
             {!destination && !result && <p>Tap the map to set your destination.</p>}

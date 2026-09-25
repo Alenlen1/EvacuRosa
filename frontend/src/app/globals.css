@@ -1388,6 +1388,19 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .sheet-collapsed .route-actions {
     display: none;
   }
+  .public-app .sheet-collapsed:has(.route-actions.has-destination) {
+    max-height: 45%;
+    overflow-y: auto;
+  }
+  .public-app .sheet-collapsed .route-actions.has-destination {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-height: none;
+    overflow: visible;
+  }
+  .public-app .sheet-collapsed .route-actions.has-destination .secondary-button {
+    display: none;
+  }
   .public-app .sheet-partial .route-extra, .public-app .sheet-partial .data-note {
     display: none;
   }
