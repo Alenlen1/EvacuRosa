@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { DEVELOPMENT_WORKER_RESET } from "@/lib/developmentWorkerReset";
 
 export const metadata: Metadata = {
   title: "EvacuRosa",
@@ -27,6 +29,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {process.env.NODE_ENV !== "production" && <Script id="development-worker-reset" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: DEVELOPMENT_WORKER_RESET }} />}
+      </head>
       <body className="antialiased bg-white text-slate-900">
         <ServiceWorkerRegistration />
         {children}

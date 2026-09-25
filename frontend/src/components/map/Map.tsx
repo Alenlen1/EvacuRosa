@@ -1,5 +1,9 @@
 "use client";
 
+// @refresh reset
+// Leaflet owns DOM nodes. Remount after edits instead of preserving a removed
+// map instance across Fast Refresh effect cleanup/replay.
+
 import "leaflet/dist/leaflet.css";
 import { useEffect, useState } from "react";
 import { DomEvent } from "leaflet";
