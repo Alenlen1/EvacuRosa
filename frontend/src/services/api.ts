@@ -1,6 +1,48 @@
 import type { TravelMode } from "@/lib/travelTime";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
+export class RoutingError extends Error {
+  constructor(message: string, public readonly failureReason?: string) {
+    super(message);
+    this.name = "RoutingError";
+  }
+}
+
+export interface AssistanceContext {
+  kind: "route" | "evacuation";
+  travelMode: TravelMode;
+  destination?: LatLng;
+}
+
+export async function shareAssistanceLocation(data: AssistanceContext & {
+  id: string; consent: true; start: LatLng; accuracy: number;
+  recordedAt: string; name?: string; contact?: string;
+}): Promise<{ id: string }> {
+  const response = await fetch(`${API_URL}/api/assistance-requests`, {
+    method: "POST", cache: "no-store", signal: AbortSignal.timeout(30000),
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error ?? "Could not confirm submission. Please retry.");
+  return body;
+}
+
+export interface AssistanceRequest {
+  id: string; latitude: number; longitude: number; accuracy_meters: number;
+  location_recorded_at: string; created_at: string;
+  display_name: string | null; contact_number: string | null;
+  travel_mode: TravelMode; route_kind: "route" | "evacuation";
+  destination_latitude: number | null; destination_longitude: number | null;
+}
+
+export async function fetchAssistanceRequests(token: string, signal?: AbortSignal): Promise<AssistanceRequest[]> {
+  const response = await fetch(`${API_URL}/api/admin/assistance-requests`, {
+    cache: "no-store", signal, headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error("Unable to load shared locations. Check your connection and CDRRMO access.");
+  return (await response.json()).requests;
+}
+
 export interface LatLng {
   latitude: number;
   longitude: number;
@@ -28,8 +70,9 @@ export async function fetchRoute(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(
-      body.warnings?.[0] ?? body.error ?? "Could not calculate a route."
+    throw new RoutingError(
+      body.warnings?.[0] ?? body.error ?? "Could not calculate a route.",
+      res.status === 422 ? body.failureReason : undefined
     );
   }
 
@@ -82,8 +125,9 @@ export async function fetchEvacuationRoute(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(
-      body.warnings?.[0] ?? body.error ?? "Could not find an evacuation center."
+    throw new RoutingError(
+      body.warnings?.[0] ?? body.error ?? "Could not find an evacuation center.",
+      res.status === 422 ? body.failureReason : undefined
     );
   }
 

@@ -1,4 +1,5 @@
 "use client";
+import { AssistanceRequests } from "@/components/admin/AssistanceRequests";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -305,6 +306,7 @@ export default function AdminDashboardPage() {
       )}
       </div>
 
+      {profile?.role === "SUPER_ADMIN" && <AssistanceRequests />}
       {profile?.role === "SUPER_ADMIN" && (
         <div className="admin-hazard-section">
           <h2 className="mb-2 text-sm font-semibold text-slate-700">

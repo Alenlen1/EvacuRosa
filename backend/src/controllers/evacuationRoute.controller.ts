@@ -24,7 +24,7 @@ export async function postEvacuationRoute(req: Request, res: Response) {
   const result = await computeEvacuationRoute(start, travelMode);
 
   if (!result.found) {
-    res.status(422).json({ warnings: result.warnings });
+    res.status(422).json({ warnings: result.warnings, failureReason: result.failureReason });
     return;
   }
 

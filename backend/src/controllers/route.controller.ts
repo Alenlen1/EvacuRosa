@@ -28,7 +28,7 @@ export async function postRoute(req: Request, res: Response) {
   const result = await computeRoute(start, destination, travelMode);
 
   if (!result.found) {
-    res.status(422).json({ route: [], warnings: result.warnings });
+    res.status(422).json({ route: [], warnings: result.warnings, failureReason: result.failureReason });
     return;
   }
 

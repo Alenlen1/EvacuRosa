@@ -17,6 +17,7 @@ export interface LatLng {
 }
 
 export interface RouteResult {
+  failureReason?: "HAZARD_BLOCKED";
   found: boolean;
   path: LatLng[];
   distanceMeters: number;
@@ -101,7 +102,12 @@ export async function computeRoute(start: LatLng, destination: LatLng, travelMod
   });
 
   if (!result.found) {
+    // Diagnostic only: keep access/one-way rules, remove hazard overrides.
+    // Never return this potentially unsafe path to the caller.
+    const hazardBlocked = [...overrides.values()].includes("BLOCKED") &&
+      findPath(graph, startNode.id, goalNode.id, { travelMode }).found;
     return {
+      failureReason: hazardBlocked ? "HAZARD_BLOCKED" : undefined,
       found: false,
       path: [],
       distanceMeters: 0,

@@ -8,6 +8,7 @@ import { FloodIcon as Droplet, FireIcon as Flame, EarthquakeIcon as Activity } f
 import { Brand } from "@/components/ui/Brand";
 import { MobileNavigation } from "@/components/ui/MobileNavigation";
 import { EmergencyContact } from "@/components/ui/EmergencyContact";
+import { AssistancePrompt } from "@/components/map/AssistancePrompt";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MapLegend } from "@/components/map/MapLegend";
 import { PlaceSearch } from "@/components/map/PlaceSearch";
@@ -35,6 +36,8 @@ import {
 } from "@/lib/offline/cache";
 import {
   fetchRoute,
+  RoutingError,
+  type AssistanceContext,
   fetchEvacuationCenters,
   fetchEvacuationRoute,
   fetchFloodReports,
@@ -91,6 +94,7 @@ export default function Home() {
   const [earthquakeRoadImpacts, setEarthquakeRoadImpacts] = useState<EarthquakeRoadImpact[]>([]);
   const [result, setResult] = useState<ActiveResult>(null);
   const [error, setError] = useState<string | null>(null);
+  const [assistanceContext, setAssistanceContext] = useState<AssistanceContext | null>(null);
   const [loading, setLoading] = useState<"route" | "evacuation" | null>(null);
   const routeVersion = useRef(0);
   const routeIntent = useRef<"route" | "evacuation" | null>(null);
@@ -215,7 +219,11 @@ export default function Home() {
       );
       if (version === routeVersion.current) { setResult({ kind: "route", data }); setResultMode(mode); }
     } catch (err) {
-      if (version === routeVersion.current) { setResult(null); setError(err instanceof Error ? err.message : "Could not calculate a route."); }
+      if (version === routeVersion.current) {
+        setResult(null); setError(err instanceof Error ? err.message : "Could not calculate a route.");
+        setAssistanceContext(err instanceof RoutingError && err.failureReason === "HAZARD_BLOCKED"
+          ? { kind: "route", travelMode: mode, destination } : null);
+      }
     } finally {
       if (version === routeVersion.current) setLoading(null);
     }
@@ -237,7 +245,10 @@ export default function Home() {
     } catch (err) {
       if (version === routeVersion.current) { setResult(null); setError(
         err instanceof Error ? err.message : "Could not find an evacuation center."
-      ); }
+      );
+        setAssistanceContext(err instanceof RoutingError && err.failureReason === "HAZARD_BLOCKED"
+          ? { kind: "evacuation", travelMode: mode } : null);
+      }
     } finally {
       if (version === routeVersion.current) setLoading(null);
     }
@@ -362,6 +373,7 @@ export default function Home() {
           <div className={`route-actions${destination ? " has-destination" : ""}${error ? " has-route-error" : ""}`}>
             {error && <section className="route-emergency-help" aria-label="Emergency assistance">
               <p className="error-message" role="alert">{error.startsWith("No ") ? `No route found for ${TRAVEL_MODES[travelMode].label.toLowerCase()}.` : "Unable to calculate a route."}</p>
+              {assistanceContext && <AssistancePrompt key={routeVersion.current} context={assistanceContext} />}
               <button type="button" className="emergency-contact-button" disabled aria-describedby="emergency-contact-pending">
                 <Phone size={18} aria-hidden="true" />Emergency contact
               </button>
@@ -372,6 +384,7 @@ export default function Home() {
               if (mode === travelMode) return;
               routeVersion.current += 1;
               setTravelMode(mode);
+              setAssistanceContext(null);
               setLoading(null);
               setError(null);
               if (routeIntent.current && (!isOnline || !geolocation.position)) {

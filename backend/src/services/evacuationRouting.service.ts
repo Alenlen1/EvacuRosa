@@ -6,6 +6,7 @@ import type { EvacuationCenter } from "../types/evacuation";
 import type { TravelMode } from "../algorithms/astar/access";
 
 export interface EvacuationRouteResult {
+  failureReason?: "HAZARD_BLOCKED";
   found: boolean;
   recommendedCenter: EvacuationCenter | null;
   route: LatLng[];
@@ -44,11 +45,13 @@ export async function computeEvacuationRoute(start: LatLng, travelMode: TravelMo
     score: number;
   } | null = null;
 
+  let hazardBlocked = false;
   for (const center of candidates) {
     const result = await computeRoute(start, {
       latitude: center.latitude,
       longitude: center.longitude,
     }, travelMode);
+    if (result.failureReason === "HAZARD_BLOCKED") hazardBlocked = true;
     if (!result.found || !result.riskLevel) continue;
 
     const normalizedRisk = riskLevelRank(result.riskLevel) / 4;
@@ -67,6 +70,7 @@ export async function computeEvacuationRoute(start: LatLng, travelMode: TravelMo
 
   if (!best) {
     return {
+      failureReason: hazardBlocked ? "HAZARD_BLOCKED" : undefined,
       found: false,
       recommendedCenter: null,
       route: [],

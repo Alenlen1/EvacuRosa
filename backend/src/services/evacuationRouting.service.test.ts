@@ -29,6 +29,19 @@ const center = {
 };
 
 describe("computeEvacuationRoute", () => {
+  it("only identifies hazard failure when no available center is reachable", async () => {
+    mocks.getAvailableCenters.mockResolvedValue([center]);
+    mocks.computeRoute.mockResolvedValue({ found: false, failureReason: "HAZARD_BLOCKED" });
+    expect((await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 })).failureReason).toBe("HAZARD_BLOCKED");
+    mocks.getAvailableCenters.mockResolvedValue([]);
+    expect((await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 })).failureReason).toBeUndefined();
+  });
+  it("does not offer assistance when another center can be reached", async () => {
+    mocks.getAvailableCenters.mockResolvedValue([center, { ...center, id: "second" }]);
+    mocks.computeRoute.mockResolvedValueOnce({ found: false, failureReason: "HAZARD_BLOCKED" });
+    const result = await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 });
+    expect(result.found).toBe(true); expect(result.failureReason).toBeUndefined();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAvailableCenters.mockResolvedValue([center]);
