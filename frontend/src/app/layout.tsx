@@ -32,7 +32,9 @@ export default function RootLayout({
       <head>
         {process.env.NODE_ENV !== "production" && <Script id="development-worker-reset" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: DEVELOPMENT_WORKER_RESET }} />}
       </head>
-      <body className="antialiased bg-white text-slate-900">
+      {/* Grammarly can inject body attributes before hydration. Suppress only
+          this element's mismatch; descendant hydration warnings remain active. */}
+      <body className="antialiased bg-white text-slate-900" suppressHydrationWarning>
         <ServiceWorkerRegistration />
         {children}
       </body>

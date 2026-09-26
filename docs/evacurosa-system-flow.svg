@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1120" role="img" aria-labelledby="title desc">
+  <title id="title">EvacuRosa evacuation recommendation system flow</title>
+  <desc id="desc">Barangay and city administrators maintain current shelter and hazard data. An evacuee requests a recommendation. The system checks shelter availability, calculates risk-weighted routes, and either presents a recommended center and route or explains why none is available.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L11 6 L1 11" fill="none" stroke="#45566D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      text{font-family:Inter,Arial,sans-serif;fill:#15263F} .title{font-size:46px;font-weight:800;letter-spacing:-1.2px}.subtitle{font-size:22px;fill:#50637D}.section{font-size:18px;font-weight:800;letter-spacing:2px;fill:#687B96}.eyebrow{font-size:17px;font-weight:800;letter-spacing:1.3px}.heading{font-size:26px;font-weight:800}.body{font-size:20px;fill:#45566D}.small{font-size:17px;fill:#586B82}.label{font-size:17px;font-weight:800;fill:#45566D}.line{fill:none;stroke:#45566D;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.source{fill:#F7FAFD;stroke:#C7D4E3;stroke-width:2}.flow{fill:white;stroke:#C5D4E3;stroke-width:2.5}.decision{fill:#FFF7E8;stroke:#DCAD58;stroke-width:2.5}.success{fill:#E8F8F1;stroke:#7CCBA6;stroke-width:2.5}.fallback{fill:#FFF1EE;stroke:#E7AAA1;stroke-width:2.5}
+    </style>
+  </defs>
+  <rect width="1800" height="1120" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="1800" height="18" fill="#167E91"/>
+  <text class="title" x="82" y="87">EvacuRosa system flow</text>
+  <text class="subtitle" x="84" y="127">From current field data to an evacuation center recommendation</text>
+
+  <text class="section" x="84" y="193">01  KEEP OPERATIONAL DATA CURRENT</text>
+  <rect class="source" x="80" y="220" width="510" height="155" rx="22"/>
+  <rect x="80" y="220" width="10" height="155" rx="5" fill="#2E91A6"/>
+  <text class="eyebrow" x="113" y="256" fill="#167E91">BARANGAY ADMIN</text>
+  <text class="heading" x="113" y="294">Update center occupancy</text>
+  <text class="body" x="113" y="331">Current occupancy and open spaces</text>
+
+  <rect class="source" x="644" y="220" width="510" height="155" rx="22"/>
+  <rect x="644" y="220" width="10" height="155" rx="5" fill="#8068BD"/>
+  <text class="eyebrow" x="677" y="256" fill="#7355AE">CITY / SUPER ADMIN</text>
+  <text class="heading" x="677" y="294">Manage hazard reports</text>
+  <text class="body" x="677" y="331">Flood, fire and verified road impacts</text>
+
+  <rect class="source" x="1208" y="220" width="510" height="155" rx="22"/>
+  <rect x="1208" y="220" width="10" height="155" rx="5" fill="#B68835"/>
+  <text class="eyebrow" x="1241" y="256" fill="#A0762B">SYSTEM MAP DATA</text>
+  <text class="heading" x="1241" y="294">Use mapped road network</text>
+  <text class="body" x="1241" y="331">Road connections and travel rules</text>
+
+  <path class="line" d="M335 375 V414"/><path class="line" d="M899 375 V414"/><path class="line" d="M1463 375 V414"/>
+  <rect x="80" y="426" width="1638" height="88" rx="20" fill="#E9F3F8" stroke="#A8C9D8" stroke-width="2"/>
+  <text class="eyebrow" x="115" y="460" fill="#167E91">ROUTING INPUTS</text>
+  <text class="body" x="115" y="490">Center capacity + active hazards + road restrictions + road graph</text>
+
+  <text class="section" x="84" y="578">02  REQUEST AND CALCULATE A RECOMMENDATION</text>
+  <rect class="flow" x="80" y="610" width="340" height="171" rx="22"/>
+  <circle cx="118" cy="648" r="18" fill="#D8F0F4"/><text x="111" y="655" font-size="20" font-weight="800" fill="#167E91">1</text>
+  <text class="heading" x="149" y="656">Evacuee requests</text>
+  <text class="heading" x="112" y="695">a center</text>
+  <text class="small" x="112" y="730">Current location + travel mode</text>
+  <text class="small" x="112" y="755">Public map shows center status</text>
+
+  <rect class="flow" x="492" y="610" width="316" height="171" rx="22"/>
+  <circle cx="530" cy="648" r="18" fill="#D8F0F4"/><text x="523" y="655" font-size="20" font-weight="800" fill="#167E91">2</text>
+  <text class="heading" x="561" y="656">Filter centers</text>
+  <text class="body" x="524" y="701">Keep open centers</text>
+  <text class="body" x="524" y="731">with available space</text>
+
+  <path class="decision" d="M943 612 L1060 695 L943 778 L826 695 Z"/>
+  <text class="heading" x="943" y="681" text-anchor="middle">Any centers</text>
+  <text class="heading" x="943" y="711" text-anchor="middle">available?</text>
+
+  <rect class="flow" x="1140" y="610" width="335" height="171" rx="22"/>
+  <circle cx="1178" cy="648" r="18" fill="#D8F0F4"/><text x="1171" y="655" font-size="20" font-weight="800" fill="#167E91">3</text>
+  <text class="heading" x="1209" y="656">Calculate routes</text>
+  <text class="small" x="1172" y="701">Fuzzy hazard risk + A*</text>
+  <text class="small" x="1172" y="729">Exclude blocked roads</text>
+  <text class="small" x="1172" y="757">Rank by risk and distance</text>
+
+  <path class="decision" d="M1598 613 L1710 695 L1598 777 L1486 695 Z"/>
+  <text class="heading" x="1598" y="681" text-anchor="middle">Reachable</text>
+  <text class="heading" x="1598" y="711" text-anchor="middle">center?</text>
+
+  <path class="line" d="M420 695 H480"/><path class="line" d="M808 695 H814"/><path class="line" d="M1060 695 H1128"/><path class="line" d="M1475 695 H1476"/>
+  <text class="label" x="1080" y="675">YES</text>
+  <path class="line" d="M650 514 V598"/><path class="line" d="M1308 514 V598"/>
+
+  <rect class="fallback" x="70" y="892" width="500" height="165" rx="23"/>
+  <text class="eyebrow" x="106" y="931" fill="#B45F53">NO AVAILABLE CENTER</text>
+  <text class="heading" x="106" y="972">Show availability message</text>
+  <text class="body" x="106" y="1007">All centers are full or closed</text>
+  <text class="small" x="106" y="1035">Check official emergency guidance</text>
+
+  <rect class="success" x="650" y="892" width="550" height="165" rx="23"/>
+  <text class="eyebrow" x="688" y="931" fill="#218A60">RECOMMENDATION FOUND</text>
+  <text class="heading" x="688" y="972">Show center + route on map</text>
+  <text class="body" x="688" y="1007">Distance, risk level and free spaces</text>
+  <text class="small" x="688" y="1035">Based on the latest available reports</text>
+
+  <rect class="fallback" x="1280" y="892" width="450" height="165" rx="23"/>
+  <text class="eyebrow" x="1316" y="931" fill="#B45F53">NO REACHABLE CENTER</text>
+  <text class="heading" x="1316" y="972">Show route warning</text>
+  <text class="body" x="1316" y="1007">No route found on the mapped network</text>
+  <text class="small" x="1316" y="1035">Check official emergency guidance</text>
+
+  <path class="line" d="M943 778 V809 H320 V880"/>
+  <text class="label" x="898" y="812">NO</text>
+  <path class="line" d="M1598 777 V851 H925 V880"/>
+  <text class="label" x="1561" y="841">YES</text>
+  <path class="line" d="M1708 736 H1753 V851 H1505 V880"/>
+  <text class="label" x="1724" y="721">NO</text>
+</svg>
