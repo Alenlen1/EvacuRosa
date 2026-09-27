@@ -21,6 +21,7 @@ import { useDestinationLabel } from "@/hooks/useDestinationLabel";
 import type { DestinationLabel } from "@/lib/reverseGeocoding";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { readRouteSelection, saveRouteSelection, clearRouteSelection } from "@/lib/routeSession";
 import { fetchWithCache } from "@/lib/offline/sync";
 import {
   cacheEvacuationCenters,
@@ -99,8 +100,33 @@ export default function Home() {
   const routeVersion = useRef(0);
   const routeIntent = useRef<"route" | "evacuation" | null>(null);
   const [resultMode, setResultMode] = useState<TravelMode>("walking");
+  const restoredOnce = useRef(false);
+  const pendingRestore = useRef<"route" | "evacuation" | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  useEffect(() => () => { routeVersion.current += 1; }, []);
+
+  function cancelRestore() {
+    pendingRestore.current = null;
+    setRestoring(false);
+  }
+
+  useEffect(() => {
+    // Read only after hydration; Strict Mode must not restore twice.
+    if (restoredOnce.current) return;
+    restoredOnce.current = true;
+    const saved = readRouteSelection();
+    if (!saved) return;
+    setDestination(saved.destination);
+    setTravelMode(saved.travelMode);
+    routeIntent.current = saved.intent;
+    pendingRestore.current = saved.intent;
+    setRestoring(saved.intent !== null);
+    if (saved.destination || saved.intent) setSheetState("partial");
+  }, []);
 
   function clearDestination() {
+    cancelRestore();
+    clearRouteSelection();
     routeIntent.current = null;
     setSearchSelection(null);
     // Ignore pending responses after removing their destination.
@@ -203,6 +229,8 @@ export default function Home() {
 
   async function handleFindRoute(mode: TravelMode = travelMode, keepPrevious = false) {
     if (!geolocation.position || !destination) return;
+    cancelRestore();
+    saveRouteSelection({ destination, travelMode: mode, intent: "route" });
     routeIntent.current = "route";
     const version = ++routeVersion.current;
     setLoading("route");
@@ -231,6 +259,8 @@ export default function Home() {
 
   async function handleFindEvacuationCenter(mode: TravelMode = travelMode, keepPrevious = false) {
     if (!geolocation.position) return;
+    cancelRestore();
+    saveRouteSelection({ destination: null, travelMode: mode, intent: "evacuation" });
     routeIntent.current = "evacuation";
     const version = ++routeVersion.current;
     setLoading("evacuation");
@@ -241,7 +271,11 @@ export default function Home() {
         latitude: geolocation.position.latitude,
         longitude: geolocation.position.longitude,
       }, mode);
-      if (version === routeVersion.current) { setResult({ kind: "evacuation", data }); setResultMode(mode); }
+      if (version === routeVersion.current) {
+        setResult({ kind: "evacuation", data }); setResultMode(mode);
+        setDestination({ latitude: data.recommendedCenter.latitude, longitude: data.recommendedCenter.longitude });
+        saveRouteSelection({ destination: { latitude: data.recommendedCenter.latitude, longitude: data.recommendedCenter.longitude }, travelMode: mode, intent: "evacuation" });
+      }
     } catch (err) {
       if (version === routeVersion.current) { setResult(null); setError(
         err instanceof Error ? err.message : "Could not find an evacuation center."
@@ -253,6 +287,17 @@ export default function Home() {
       if (version === routeVersion.current) setLoading(null);
     }
   }
+
+  // Deliberately inspect current render state each time. Consuming the ref
+  // synchronously prevents repeated calculations as GPS fixes arrive.
+  useEffect(() => {
+    const intent = pendingRestore.current;
+    if (!intent || !restoring || !isOnline || geolocation.status !== "active" || !geolocation.position) return;
+    if (intent === "route" && !destination) return;
+    pendingRestore.current = null;
+    if (intent === "evacuation") void handleFindEvacuationCenter();
+    else void handleFindRoute();
+  });
 
   const activeRoutePoints =
     result && resultMode === travelMode ? result.data.route : null;
@@ -320,6 +365,8 @@ export default function Home() {
         </nav>
         <section className="map-workspace" aria-label="Santa Rosa evacuation map">
           <PlaceSearch centers={centers} online={isOnline} onSelect={place => {
+            cancelRestore();
+            saveRouteSelection({ destination: { latitude: place.latitude, longitude: place.longitude }, travelMode, intent: null });
             routeIntent.current = null;
             routeVersion.current += 1;
             setLoading(null);
@@ -351,6 +398,8 @@ export default function Home() {
               earthquakeRoadImpacts={earthquakeRoadImpacts}
               onSelectCenter={(center) => { setSelectedCenter(center); setPanel("centers"); setSheetState("partial"); }}
               onMapClick={(latitude, longitude) => {
+                cancelRestore();
+                saveRouteSelection({ destination: { latitude, longitude }, travelMode, intent: null });
                 routeIntent.current = null;
                 setSearchSelection(null);
                 routeVersion.current += 1;
@@ -368,9 +417,12 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} hideDetails={panel === "map" && !!error} onClearDestination={destination ? clearDestination : undefined} actions={
+        <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} hideDetails={panel === "map" && !!error} onClearDestination={destination || restoring || result ? clearDestination : undefined} actions={
           <>
           <div className={`route-actions${destination ? " has-destination" : ""}${error ? " has-route-error" : ""}`}>
+            {restoring && <p role="status">{!isOnline
+              ? "Saved selection restored. Connect to the internet to recalculate."
+              : "Saved selection restored. Waiting for location access to recalculate."}</p>}
             {error && <section className="route-emergency-help" aria-label="Emergency assistance">
               <p className="error-message" role="alert">{error.startsWith("No ") ? `No route found for ${TRAVEL_MODES[travelMode].label.toLowerCase()}.` : "Unable to calculate a route."}</p>
               {assistanceContext && <AssistancePrompt key={routeVersion.current} context={assistanceContext} />}
@@ -382,11 +434,17 @@ export default function Home() {
             </section>}
             <TravelModeSelector value={travelMode} onChange={mode => {
               if (mode === travelMode) return;
+              const resumeWhenReady = pendingRestore.current;
+              saveRouteSelection({ destination, travelMode: mode, intent: routeIntent.current });
               routeVersion.current += 1;
               setTravelMode(mode);
               setAssistanceContext(null);
               setLoading(null);
               setError(null);
+              if (resumeWhenReady) {
+                // Keep waiting for a fresh location/connection, using the new mode.
+                return;
+              }
               if (routeIntent.current && (!isOnline || !geolocation.position)) {
                 setResult(null);
                 setError(!isOnline ? "Connect to the internet to recalculate for this travel mode." : "Enable location access to recalculate for this travel mode.");
