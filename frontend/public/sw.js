@@ -1,5 +1,5 @@
-const CACHE_NAME = "evacurosa-shell-v3";
-const APP_SHELL = ["/", "/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png"];
+const CACHE_NAME = "evacurosa-shell-v4";
+const APP_SHELL = ["/", "/manifest.json", "/icons/evacurosa.svg", "/icons/evacurosa-32.png", "/icons/evacurosa-180.png", "/icons/evacurosa-192.png", "/icons/evacurosa-512.png", "/icons/evacurosa-512-maskable.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));

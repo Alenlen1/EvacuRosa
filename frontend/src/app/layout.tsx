@@ -10,8 +10,11 @@ export const metadata: Metadata = {
     "Multi-hazard safe route recommendation system for Santa Rosa City, Laguna.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icons/favicon-32.png",
-    apple: "/icons/apple-touch-icon.png",
+    icon: [
+      { url: "/icons/evacurosa.svg", type: "image/svg+xml" },
+      { url: "/icons/evacurosa-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/icons/evacurosa-180.png",
   },
 };
 

@@ -249,11 +249,15 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 43px;
-  height: 43px;
-  background: var(--accent);
-  color: var(--ink);
-  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .brand-name {
   display: block;
@@ -1201,8 +1205,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
     gap: 10px;
   }
   .brand-mark {
-    width: 34px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
   }
   .brand-name {
     font-size: 21px;
@@ -1483,8 +1487,8 @@ strip that so our own SVG/HTML markers render without an extra frame. */
     font-size: 19px;
   }
   .public-app .brand-mark {
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
   }
   .public-app .navigation-rail > button {
     min-height: 44px;
