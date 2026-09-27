@@ -33,6 +33,19 @@ export interface AssistanceRequest {
   display_name: string | null; contact_number: string | null;
   travel_mode: TravelMode; route_kind: "route" | "evacuation";
   destination_latitude: number | null; destination_longitude: number | null;
+  location_name?: { roadName: string; distanceMeters: number } | null;
+  destination_name?: { roadName: string; distanceMeters: number } | null;
+}
+
+export async function deleteAssistanceRequest(token: string, id: string): Promise<void> {
+  const response = await fetch(`${API_URL}/api/admin/assistance-requests/${encodeURIComponent(id)}`, {
+    method: "DELETE", cache: "no-store", signal: AbortSignal.timeout(30000),
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error ?? "Could not confirm deletion. Refresh the list before trying again.");
+  }
 }
 
 export async function fetchAssistanceRequests(token: string, signal?: AbortSignal): Promise<AssistanceRequest[]> {

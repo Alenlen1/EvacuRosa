@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ db: vi.fn(), insert: vi.fn(), route: vi.fn(), 
 vi.mock("../database/supabase", () => ({ getSupabase: mocks.db }));
 vi.mock("../services/routing.service", () => ({ computeRoute: mocks.route }));
 vi.mock("../services/evacuationRouting.service", () => ({ computeEvacuationRoute: mocks.evacuation }));
-import { allowSubmission, listAssistance, postAssistance, validSubmission } from "./assistance.controller";
+import { allowSubmission, deleteAssistance, listAssistance, postAssistance, validSubmission } from "./assistance.controller";
 import { requireRole } from "../middleware/role.middleware";
 const now = Date.now();
 function data() { return {
@@ -14,10 +14,51 @@ function data() { return {
   accuracy: 20, recordedAt: new Date(now).toISOString(), travelMode: "walking", kind: "route",
 }; }
 function response() {
-  const r = { status: vi.fn(), json: vi.fn(), setHeader: vi.fn() };
+  const r = { status: vi.fn(), json: vi.fn(), setHeader: vi.fn(), end: vi.fn() };
   r.status.mockReturnValue(r); return r;
 }
 let ip = 0;
+describe("CDRRMO assistance deletion", () => {
+  function client(result: { data: unknown; error: unknown }) {
+    const select = vi.fn().mockResolvedValue(result);
+    const eq = vi.fn(() => ({ select }));
+    const remove = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ delete: remove }));
+    return { from, remove, eq, select };
+  }
+  async function remove(role: string | undefined, id: unknown, db: ReturnType<typeof client>) {
+    const r = response();
+    await deleteAssistance({ profile: role ? { role } : undefined, params: { id }, userSupabase: db } as unknown as RoleAwareRequest, r as unknown as Response);
+    return r;
+  }
+  it.each([undefined, "BARANGAY_ADMIN"])("denies deletion for %s", async role => {
+    const db = client({ data: [], error: null });
+    expect((await remove(role, data().id, db)).status).toHaveBeenCalledWith(403);
+    expect(db.from).not.toHaveBeenCalled();
+  });
+  it.each([undefined, "", "not-a-uuid", ["unexpected-array"]])("rejects malformed IDs %j", async id => {
+    const db = client({ data: [], error: null });
+    expect((await remove("SUPER_ADMIN", id, db)).status).toHaveBeenCalledWith(400);
+    expect(db.remove).not.toHaveBeenCalled();
+  });
+  it("deletes exactly the selected record using the authenticated client", async () => {
+    const db = client({ data: [{ id: data().id }], error: null });
+    const r = await remove("SUPER_ADMIN", data().id, db);
+    expect(db.from).toHaveBeenCalledWith("assistance_requests");
+    expect(db.eq).toHaveBeenCalledWith("id", data().id);
+    expect(db.select).toHaveBeenCalledWith("id");
+    expect(r.status).toHaveBeenCalledWith(204); expect(r.end).toHaveBeenCalled();
+    expect(r.setHeader).toHaveBeenCalledWith("Cache-Control", "no-store");
+  });
+  it("does not claim deletion if the row no longer exists", async () => {
+    expect((await remove("SUPER_ADMIN", data().id, client({ data: [], error: null }))).status).toHaveBeenCalledWith(404);
+  });
+  it("reports failures without exposing internal database errors", async () => {
+    const r = await remove("SUPER_ADMIN", data().id, client({ data: null, error: { message: "private database details" } }));
+    expect(r.status).toHaveBeenCalledWith(503);
+    expect(JSON.stringify(r.json.mock.calls)).not.toContain("private database details");
+  });
+});
 async function post(body: unknown) {
   const r = response();
   await postAssistance({ body, ip: `test-${ip++}` } as Request, r as unknown as Response);

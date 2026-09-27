@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listAssistance } from "../controllers/assistance.controller";
+import { deleteAssistance, listAssistance } from "../controllers/assistance.controller";
 import { requireAuth } from "../middleware/auth.middleware";
 import { attachProfile, requireRole } from "../middleware/role.middleware";
 import {
@@ -18,6 +18,7 @@ import {
 
 export const adminRouter = Router();
 adminRouter.get("/assistance-requests", requireAuth, attachProfile, requireRole("SUPER_ADMIN"), listAssistance);
+adminRouter.delete("/assistance-requests/:id", requireAuth, attachProfile, requireRole("SUPER_ADMIN"), deleteAssistance);
 
 adminRouter.put(
   "/evacuation-centers/:id",

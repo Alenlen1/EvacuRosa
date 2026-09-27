@@ -4,6 +4,7 @@ import { getSupabase } from "../database/supabase";
 import { computeRoute, type LatLng } from "../services/routing.service";
 import { computeEvacuationRoute } from "../services/evacuationRouting.service";
 import { isTravelMode, type TravelMode } from "../algorithms/astar/access";
+import { createAssistanceLocationLookup } from "../services/assistanceLocation.service";
 
 interface Submission {
   id: string;
@@ -100,5 +101,33 @@ export async function listAssistance(req: RoleAwareRequest, res: Response) {
     .select("id,latitude,longitude,accuracy_meters,location_recorded_at,display_name,contact_number,travel_mode,route_kind,destination_latitude,destination_longitude,created_at")
     .order("created_at", { ascending: false }).limit(100);
   if (error) { res.status(503).json({ error: "Could not load shared locations." }); return; }
-  res.json({ requests: data ?? [] });
+  const locationName = createAssistanceLocationLookup();
+  res.json({ requests: (data ?? []).map(row => ({
+    ...row,
+    location_name: locationName(row.latitude, row.longitude),
+    destination_name: locationName(row.destination_latitude, row.destination_longitude),
+  })) });
+}
+
+export async function deleteAssistance(req: RoleAwareRequest, res: Response) {
+  res.setHeader("Cache-Control", "no-store");
+  if (!req.userSupabase || req.profile?.role !== "SUPER_ADMIN") {
+    res.status(403).json({ error: "CDRRMO access required." }); return;
+  }
+  const id = req.params.id;
+  if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    res.status(400).json({ error: "Invalid assistance request ID." }); return;
+  }
+  try {
+    // Delete only the selected record, using the caller's JWT and RLS.
+    const { data, error } = await req.userSupabase.from("assistance_requests")
+      .delete().eq("id", id).select("id");
+    if (error) throw error;
+    if (!data?.length) {
+      res.status(404).json({ error: "This request no longer exists. Refresh the list." }); return;
+    }
+    res.status(204).end();
+  } catch {
+    res.status(503).json({ error: "Could not confirm deletion. Refresh the list before trying again." });
+  }
 }

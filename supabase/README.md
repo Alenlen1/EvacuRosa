@@ -14,7 +14,8 @@
    `migrations/0008_superadmin_delete_earthquake_events.sql`,
    `migrations/0009_barangay_only_center_management.sql`,
    `migrations/0010_add_santa_rosa_multipurpose_complex.sql`,
-   `migrations/0011_assistance_requests.sql`.
+   `migrations/0011_assistance_requests.sql`,
+   `migrations/0012_cdrrmo_delete_assistance_requests.sql`.
    Run `seed.sql` afterward to seed Santa Rosa City's 18 barangays and the
    Market Area Barangay Hall center record (capacity 500). Verify operational
    details with CDRRMO before relying on this record during an emergency.
@@ -70,7 +71,7 @@ This change does not seed personal data or automatically contact emergency servi
   conservative default may share the limit among users behind a proxy/NAT.
 - Before public rollout, agree with CDRRMO on monitoring, retention/deletion,
   privacy notice and incident-response procedures. No automatic deletion is
-  configured yet; service-role operators must manage retention. No verified
+  configured yet; operators must manage retention. No verified
   emergency numbers or rescue promises are introduced by this feature.
 
 ### Acceptance checks (use test data, not a real emergency)
@@ -88,3 +89,29 @@ This change does not seed personal data or automatically contact emergency servi
 5. Remove the hazard or pick an accessible alternative: normal routes should work
    without prompting. A disconnected road, forbidden travel mode, full centers,
    or network error alone must not be labeled a hazard-blocked route.
+
+### Removing a request after rescue
+
+The shared-location dashboard shows compact cards with optional names/contact,
+travel mode, GPS accuracy and coordinates. Nearby street names are resolved
+from the backend's existing local OSM road graph, never an external geocoder.
+They are displayed as **Near [road name]**, not verified addresses. If the
+nearest road is unnamed, farther than 150 m, or road data is unavailable, the
+card keeps the coordinates and displays **Street name unavailable**. This also
+works for existing submissions, without a database migration. Timestamps,
+destination and the reference ID are under **Request details**.
+
+Apply migration `0012_cdrrmo_delete_assistance_requests.sql` with
+`npx supabase db push`. Each CDRRMO request card has a **Delete after rescue**
+button. Staff must confirm that the person has been rescued and confirm the
+permanent deletion of the selected snapshot/contact details. There is no undo
+or rescue-history record in this feature; deletion does not notify the person.
+Only SUPER_ADMIN can delete, enforced by both the API and the database RLS
+policy. The backend uses the staff member's JWT, not the service-role key.
+
+Test cancel (row stays), confirm (only selected row disappears), and failed
+deletion (error shown, no success message). Ensure subsequent refreshes do not
+restore a deleted row. A barangay account must receive HTTP 403, and direct
+Supabase deletion by that account must not remove any rows. Anonymous clients
+must have no delete access. Use test records; no live requests are deleted by
+the migration.

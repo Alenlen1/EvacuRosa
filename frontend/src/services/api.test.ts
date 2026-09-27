@@ -1,9 +1,21 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchAssistanceRequests, fetchEvacuationRoute, fetchRoute, RoutingError, shareAssistanceLocation } from "./api";
+import { deleteAssistanceRequest, fetchAssistanceRequests, fetchEvacuationRoute, fetchRoute, RoutingError, shareAssistanceLocation } from "./api";
 const start = { latitude: 14.3, longitude: 121.1 };
 const destination = { latitude: 14.31, longitude: 121.11 };
 afterEach(() => vi.unstubAllGlobals());
 describe("location-sharing API", () => {
+  it("deletes only the selected request with authorization and no caching", async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetch);
+    await expect(deleteAssistanceRequest("admin-token", "selected-id")).resolves.toBeUndefined();
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/api/admin/assistance-requests/selected-id"), expect.objectContaining({
+      method: "DELETE", cache: "no-store", headers: { Authorization: "Bearer admin-token" },
+    }));
+  });
+  it.each([403, 404, 503])("does not claim deletion on HTTP %s", async status => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: "Delete failed" }), { status })));
+    await expect(deleteAssistanceRequest("token", "id")).rejects.toThrow("Delete failed");
+  });
   it.each(["route", "evacuation"])("preserves confirmed hazard failures for %s requests", async kind => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ warnings: ["No route"], failureReason: "HAZARD_BLOCKED" }), { status: 422 })));
     const call = kind === "route" ? fetchRoute(start, destination) : fetchEvacuationRoute(start);
