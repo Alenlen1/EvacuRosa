@@ -265,7 +265,13 @@ export default function HazardPlacementMap({
             : "Tap the map near the affected road."}
         </p>
 
-        {error && <p className="mb-2 text-xs text-red-600">{error}</p>}
+        {error && <p className="mb-2 text-xs text-red-600" role="alert">{error}</p>}
+        {!pendingPoint && <div className="hazard-form-empty">
+          <span className="eyebrow">START ON THE MAP</span>
+          <strong>Select the affected location</strong>
+          <p>{mode === "fire" ? "Choose the incident location, then enter the radius and severity." : "Choose a point near the affected road, then review the suggested road and report details."}</p>
+          <small>Only report observed or verified conditions. A confirmed blockage changes route availability.</small>
+        </div>}
 
         {pendingPoint && (
           <div className="space-y-2 rounded border border-slate-200 bg-slate-50 p-2">

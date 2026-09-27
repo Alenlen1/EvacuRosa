@@ -952,6 +952,45 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   display: none;
 }
 /* Admin pages share the public map's surfaces and controls. */
+.cdrrmo-workspace .cdrrmo-content { max-width: 1600px; margin: 0 auto; padding: 0 28px 40px; }
+.cdrrmo-workspace .admin-heading { padding: 32px 0 24px; align-items: flex-start; }
+.cdrrmo-workspace .admin-heading h1 { font-size: clamp(24px, 3vw, 32px); margin-top: 6px; letter-spacing: -.8px; }
+.cdrrmo-workspace .admin-heading p { font-size: 14px; line-height: 1.6; max-width: 650px; }
+.cdrrmo-access { display: inline-flex; align-items: center; gap: 7px; padding: 9px 12px; border: 1px solid #e0d3cf; border-radius: 30px; background: #faf5f3; color: #7e352a; font-size: 12px; white-space: nowrap; }
+.cdrrmo-section-anchor { scroll-margin-top: 20px; }
+.cdrrmo-workspace :is(a, button, input, select, summary):focus-visible, .cdrrmo-section-anchor:focus-visible { outline: 3px solid #9c7623; outline-offset: 3px; }
+.cdrrmo-workspace .admin-assistance { margin: 0 0 24px; box-shadow: 0 3px 14px #17202c04; }
+.cdrrmo-workspace .admin-hazard-section { padding: 24px; border: 1px solid #dce1e6; border-radius: 18px; background: white; }
+.cdrrmo-section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+.cdrrmo-section-heading h2 { margin-top: 4px; font-size: 22px; font-weight: 700; color: #252b31; }
+.cdrrmo-section-heading p { font-size: 13px; color: #647080; margin-top: 4px; }
+.cdrrmo-map-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #647080; }
+.cdrrmo-report-steps { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 14px 0 18px; list-style: none; }
+.cdrrmo-report-steps li { display: flex; align-items: center; gap: 8px; color: #526071; font-size: 12px; }
+.cdrrmo-report-steps li > span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #f0f2f5; color: #444f5c; font-weight: 700; }
+.cdrrmo-workspace .hazard-tabs { padding: 8px; gap: 8px; background: #f8f9fb; }
+.cdrrmo-workspace .hazard-tabs button { border-radius: 8px; min-height: 48px; border: 1px solid transparent; font-weight: 600; }
+.cdrrmo-workspace .hazard-tabs button[aria-pressed="true"] { border-color: #d7c66b; background: #fff8d8; box-shadow: 0 1px 3px #17202c0a; }
+.cdrrmo-workspace .hazard-form { background: #fbfcfd; padding: 22px; }
+.cdrrmo-workspace .hazard-form > h3 { font-size: 16px; line-height: 1.4; }
+.hazard-form-empty { margin-top: 24px; padding: 18px; border: 1px dashed #cdd4dc; border-radius: 12px; background: white; }
+.hazard-form-empty strong { display: block; margin: 8px 0; font-size: 14px; color: #34404d; }
+.hazard-form-empty p { font-size: 13px; color: #637080; line-height: 1.6; }
+.hazard-form-empty small { display: block; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e4e8ed; font-size: 11px; line-height: 1.6; color: #687180; }
+.cdrrmo-workspace .hazard-records { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; align-items: start; background: #fafbfc; }
+.cdrrmo-workspace .hazard-records > h3, .cdrrmo-workspace .hazard-records > p { grid-column: 1 / -1; margin: 0; }
+.cdrrmo-workspace .hazard-records h4 { margin: 0 0 8px; font-weight: 650; }
+.cdrrmo-workspace .hazard-records section > div { background: white; font-size: 13px; line-height: 1.5; }
+.cdrrmo-workspace .hazard-records button { font-size: 12px; }
+@media (max-width: 800px) {
+  .cdrrmo-workspace .cdrrmo-content { padding: 0 14px 24px; }
+  .cdrrmo-workspace .admin-heading { padding: 22px 0 18px; flex-direction: column; gap: 12px; }
+  .cdrrmo-workspace .admin-hazard-section, .cdrrmo-workspace .admin-assistance { padding: 16px; border-radius: 14px; }
+  .cdrrmo-workspace .hazard-form { padding: 16px; }
+  .cdrrmo-workspace .hazard-form :is(input:not([type="checkbox"]), select), .cdrrmo-workspace .hazard-event-selector select { font-size: 16px; }
+  .cdrrmo-report-steps { gap: 8px; flex-direction: column; }
+  .hazard-form-empty { margin-top: 12px; }
+}
 .admin-app {
   background: var(--surface);
   min-height: 100dvh;

@@ -4,6 +4,7 @@ import { AssistanceRequests } from "@/components/admin/AssistanceRequests";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Brand } from "@/components/ui/Brand";
+import { MapPin, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -197,17 +198,19 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <main className="admin-app">
+    <main className={`admin-app${profile?.role === "SUPER_ADMIN" ? " cdrrmo-workspace" : ""}`}>
       <header className="app-header"><Link href="/" aria-label="EvacuRosa public map"><Brand /></Link><span className="city-label">Santa Rosa, Laguna</span><Link href="/" className="admin-link">Back to public map →</Link></header>
+      <div className={profile?.role === "SUPER_ADMIN" ? "cdrrmo-content" : undefined}>
       <div className="admin-heading">
         <div><span className="eyebrow">{profile?.role === "SUPER_ADMIN" ? "CDRRMO WORKSPACE" : "BARANGAY WORKSPACE"}</span>
         <h1>
           {profile?.role === "SUPER_ADMIN"
-            ? "CDRRMO — Hazard Management"
+            ? "City response workspace"
             : "Assigned evacuation centers"}
         </h1>
-        <p>{profile?.role === "SUPER_ADMIN" ? "Monitor and report hazards across Santa Rosa." : "View assigned shelters and keep occupancy information up to date."}</p>
+        <p>{profile?.role === "SUPER_ADMIN" ? "Review shared locations and manage reported hazards across Santa Rosa." : "View assigned shelters and keep occupancy information up to date."}</p>
         {error && <p className="error-message" role="alert">{error}</p>}</div>
+        {profile?.role === "SUPER_ADMIN" && <span className="cdrrmo-access"><ShieldCheck size={17} aria-hidden="true" />CDRRMO staff access</span>}
       </div>
 
       <div className={profile?.role !== "SUPER_ADMIN" ? "admin-center-layout" : undefined}>
@@ -306,17 +309,16 @@ export default function AdminDashboardPage() {
       )}
       </div>
 
-      {profile?.role === "SUPER_ADMIN" && <AssistanceRequests />}
+      {profile?.role === "SUPER_ADMIN" && <div id="shared-locations" className="cdrrmo-section-anchor" tabIndex={-1}><AssistanceRequests /></div>}
       {profile?.role === "SUPER_ADMIN" && (
-        <div className="admin-hazard-section">
-          <h2 className="mb-2 text-sm font-semibold text-slate-700">
-            Hazard management — flood, fire, earthquake
-          </h2>
-          <p className="mb-3 text-xs text-slate-500">
-            Use the Santa Rosa map to mark hazards.
-            Flood and earthquake reports snap to a nearby road; fire incidents
-            use a point and radius. Existing records can be removed below.
-          </p>
+        <section id="hazard-management" className="admin-hazard-section cdrrmo-section-anchor" tabIndex={-1} aria-labelledby="hazard-management-title">
+          <div className="cdrrmo-section-heading"><div><span className="eyebrow">CITYWIDE REPORTING</span>
+            <h2 id="hazard-management-title">Hazard management</h2>
+            <p>Flood, fire and verified earthquake road impacts.</p>
+          </div><span className="cdrrmo-map-label"><MapPin size={15} aria-hidden="true" />Santa Rosa, Laguna</span></div>
+          <ol className="cdrrmo-report-steps" aria-label="How to report a hazard">
+            <li><span>1</span>Choose a hazard type</li><li><span>2</span>Select a point on the map</li><li><span>3</span>Review details and save</li>
+          </ol>
           <HazardPlacementMapWrapper
             floodReports={floodReports}
             fireIncidents={fireIncidents}
@@ -334,8 +336,9 @@ export default function AdminDashboardPage() {
                 .catch(() => {});
             }}
           />
-        </div>
+        </section>
       )}
+      </div>
     </main>
   );
 }
