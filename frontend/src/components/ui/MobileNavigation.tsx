@@ -1,4 +1,6 @@
 "use client";
+import { useLanguage } from "@/components/LanguageProvider";
+
 
 import { useEffect, useId, useRef, useState } from "react";
 import { Building2, Check, Map, Menu, ShieldAlert, X } from "lucide-react";
@@ -14,6 +16,7 @@ export function MobileNavigation({ activeSection, onSelect }: {
   activeSection: Section;
   onSelect: (section: Section) => void;
 }) {
+  const { t } = useLanguage();
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -34,7 +37,7 @@ export function MobileNavigation({ activeSection, onSelect }: {
         ref={trigger}
         type="button"
         className="mobile-menu-trigger"
-        aria-label="Open navigation menu"
+        aria-label={t("Open navigation menu")}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={id}
@@ -74,13 +77,13 @@ export function MobileNavigation({ activeSection, onSelect }: {
         }}
       >
         <div className="mobile-drawer-heading">
-          <h2 id={`${id}-title`}>Explore EvacuRosa</h2>
-          <button type="button" className="mobile-menu-trigger" aria-label="Close navigation menu" autoFocus onClick={() => dialog.current?.close()}>
+          <h2 id={`${id}-title`}>{t("Explore EvacuRosa")}</h2>
+          <button type="button" className="mobile-menu-trigger" aria-label={t("Close navigation menu")} autoFocus onClick={() => dialog.current?.close()}>
             <X size={22} aria-hidden="true" />
           </button>
         </div>
         <p className="mobile-drawer-description">Santa Rosa, Laguna</p>
-        <nav aria-label="Mobile map views">
+        <nav aria-label={t("Mobile map views")}>
           {sections.map(({ id: section, label, icon: Icon }) => (
             <button
               key={section}
@@ -89,7 +92,7 @@ export function MobileNavigation({ activeSection, onSelect }: {
               onClick={() => { onSelect(section); dialog.current?.close(); }}
             >
               <Icon size={21} aria-hidden="true" />
-              <span>{label}</span>
+              <span>{t(label)}</span>
               {activeSection === section && <Check size={18} aria-hidden="true" />}
             </button>
           ))}

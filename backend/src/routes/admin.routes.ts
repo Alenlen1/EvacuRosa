@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { deleteAssistance, listAssistance } from "../controllers/assistance.controller";
+import { deleteAssistance, listAssistance, updateAssistanceStatus } from "../controllers/assistance.controller";
 import { requireAuth } from "../middleware/auth.middleware";
 import { attachProfile, requireRole } from "../middleware/role.middleware";
 import {
@@ -17,6 +17,7 @@ import {
 } from "../controllers/admin.controller";
 
 export const adminRouter = Router();
+adminRouter.patch("/assistance-requests/:id", requireAuth, attachProfile, requireRole("SUPER_ADMIN"), updateAssistanceStatus);
 adminRouter.get("/assistance-requests", requireAuth, attachProfile, requireRole("SUPER_ADMIN"), listAssistance);
 adminRouter.delete("/assistance-requests/:id", requireAuth, attachProfile, requireRole("SUPER_ADMIN"), deleteAssistance);
 

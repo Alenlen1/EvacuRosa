@@ -98,7 +98,7 @@ export async function listAssistance(req: RoleAwareRequest, res: Response) {
   }
   // The caller's JWT enforces RLS, not the service-role client.
   const { data, error } = await req.userSupabase.from("assistance_requests")
-    .select("id,latitude,longitude,accuracy_meters,location_recorded_at,display_name,contact_number,travel_mode,route_kind,destination_latitude,destination_longitude,created_at")
+    .select("id,latitude,longitude,accuracy_meters,location_recorded_at,display_name,contact_number,travel_mode,route_kind,destination_latitude,destination_longitude,created_at,status,status_updated_at,status_updated_by")
     .order("created_at", { ascending: false }).limit(100);
   if (error) { res.status(503).json({ error: "Could not load shared locations." }); return; }
   const locationName = createAssistanceLocationLookup();
@@ -107,6 +107,33 @@ export async function listAssistance(req: RoleAwareRequest, res: Response) {
     location_name: locationName(row.latitude, row.longitude),
     destination_name: locationName(row.destination_latitude, row.destination_longitude),
   })) });
+}
+
+export async function updateAssistanceStatus(req: RoleAwareRequest, res: Response) {
+  res.setHeader("Cache-Control", "no-store");
+  if (!req.userSupabase || req.profile?.role !== "SUPER_ADMIN") {
+    res.status(403).json({ error: "CDRRMO access required." }); return;
+  }
+  const id = req.params.id;
+  const status = req.body?.status;
+  if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id) ||
+      !["ACKNOWLEDGED", "RESOLVED"].includes(status)) {
+    res.status(400).json({ error: "A valid request ID and status are required." }); return;
+  }
+  try {
+    // Conditional update prevents stale clients from reversing newer work.
+    const { data, error } = await req.userSupabase.from("assistance_requests")
+      .update({ status }).eq("id", id)
+      .eq("status", status === "ACKNOWLEDGED" ? "NEW" : "ACKNOWLEDGED")
+      .select("id,status,status_updated_at").maybeSingle();
+    if (error) throw error;
+    if (!data) {
+      res.status(409).json({ error: "This request changed or no longer exists. Refresh before updating it." }); return;
+    }
+    res.json({ request: data });
+  } catch {
+    res.status(503).json({ error: "Could not confirm status update. Refresh before trying again." });
+  }
 }
 
 export async function deleteAssistance(req: RoleAwareRequest, res: Response) {

@@ -11,6 +11,16 @@ export async function updateEvacuationCenter(req: RoleAwareRequest, res: Respons
   }
 
   const updates: Record<string, unknown> = {};
+  for (const [field, column] of [["waterStatus", "water_status"], ["foodStatus", "food_status"], ["medicalStatus", "medical_status"]]) {
+    const value = req.body?.[field];
+    if (value !== undefined) {
+      if (typeof value !== "string" || !["unknown", "adequate", "low", "unavailable"].includes(value)) {
+        res.status(400).json({ error: "Invalid supply status." }); return;
+      }
+      updates[column] = value;
+      updates.supplies_updated_at = new Date().toISOString();
+    }
+  }
   if (typeof currentOccupancy === "number") updates.current_occupancy = currentOccupancy;
   if (typeof capacity === "number") updates.capacity = capacity;
   if (typeof status === "string") updates.status = status;
