@@ -2,12 +2,37 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { deleteAssistanceRequest, fetchAssistanceRequests, type AssistanceRequest } from "@/services/api";
+import { deleteAssistanceRequest, fetchAssistanceRequests, updateAssistanceStatus, type AssistanceRequest, type AssistanceStatus } from "@/services/api";
 import { TRAVEL_MODES } from "@/lib/travelTime";
 import { MapPin, Phone, RefreshCw, ShieldAlert, Trash2 } from "lucide-react";
 
 export function AssistanceRequests() {
   const [requests, setRequests] = useState<AssistanceRequest[]>([]);
+  const [updating, setUpdating] = useState<string | null>(null);
+  const mutationVersion = useRef(0);
+  const mutationPending = useRef(false);
+
+  async function changeStatus(item: AssistanceRequest, status: AssistanceStatus) {
+    if (mutationPending.current || pendingDelete.current) return;
+    mutationPending.current = true;
+    mutationVersion.current++;
+    setUpdating(item.id); setDeleteError(null); setNotice(null);
+    try {
+      const session = await supabase?.auth.getSession();
+      const token = session?.data.session?.access_token;
+      if (!token) throw new Error("Sign in again to update this request.");
+      const updated = await updateAssistanceStatus(token, item.id, status);
+      if (!mounted.current) return;
+      setRequests(items => items.map(row => row.id === item.id ? { ...row, ...updated } : row));
+      setNotice(status === "ACKNOWLEDGED" ? "Request acknowledged. This does not indicate responder dispatch." : "Request marked resolved. Its details remain until explicitly deleted.");
+    } catch (cause) {
+      if (mounted.current) setDeleteError(cause instanceof Error ? cause.message : "Could not update status.");
+    } finally {
+      mutationVersion.current++;
+      mutationPending.current = false;
+      if (mounted.current) { setUpdating(null); setRefresh(n => n + 1); }
+    }
+  }
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [updated, setUpdated] = useState<string | null>(null);
@@ -22,7 +47,7 @@ export function AssistanceRequests() {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
   async function removeAfterRescue(item: AssistanceRequest) {
-    if (pendingDelete.current) return;
+    if (pendingDelete.current || mutationPending.current) return;
     const confirmed = window.confirm(
       `Confirm the person has been rescued before deleting this request.\n\n${item.display_name || "Name not provided"}\nLocation: ${item.latitude.toFixed(6)}, ${item.longitude.toFixed(6)}\nReference: ${item.id}\n\nThis permanently deletes their shared location and contact details. It cannot be undone in the app.`,
     );
@@ -54,14 +79,15 @@ export function AssistanceRequests() {
     let timer: ReturnType<typeof setTimeout>;
     const controller = new AbortController();
     async function load() {
+      const version = mutationVersion.current;
       try {
         const session = await supabase?.auth.getSession();
         const token = session?.data.session?.access_token;
         if (!token) throw new Error("Sign in again to view shared locations.");
         const items = await fetchAssistanceRequests(token, AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]));
-        if (!cancelled) { setRequests(items.filter(item => !removedIds.current.has(item.id))); setError(null); setUpdated(new Date().toLocaleTimeString()); }
+        if (!cancelled && version === mutationVersion.current && !mutationPending.current) { setRequests(items.filter(item => !removedIds.current.has(item.id))); setError(null); setUpdated(new Date().toLocaleTimeString()); }
       } catch (cause) {
-        if (!cancelled) {
+        if (!cancelled && version === mutationVersion.current && !mutationPending.current) {
           setRequests([]);
           setError(cause instanceof Error ? cause.message : "Could not refresh shared locations.");
         }
@@ -84,12 +110,14 @@ export function AssistanceRequests() {
     </div>
     <div className="assistance-toolbar"><span role="status">{loading ? "Loading requests…" : error ? "Refresh failed" : `Updated ${updated}`}</span><span>Auto-refresh 30s · Latest 100</span></div>
     <div className="assistance-disclaimer"><ShieldAlert size={17} aria-hidden="true" /><span>User-reported snapshots, not live tracking or confirmed rescue dispatch. Road names are approximate references from local OpenStreetMap data.</span></div>
+    <p className="assistance-caption">Loaded requests: {requests.filter(item => item.status === "NEW").length} new · {requests.filter(item => item.status !== "RESOLVED").length} unresolved</p>
     {error && <p className="assistance-feedback is-error" role="alert">{error}</p>}
     {deleteError && <p className="assistance-feedback is-error" role="alert">{deleteError}</p>}
     {notice && <p className="assistance-feedback is-success" role="status">{notice}</p>}
     {!loading && !error && requests.length === 0 && <div className="assistance-empty"><MapPin size={24} aria-hidden="true" /><strong>No shared locations</strong><span>New submissions will appear here automatically.</span></div>}
     <div className="assistance-list">{requests.map(item => <article className="assistance-record" key={item.id}>
       <header className="assistance-record-heading"><h3>{item.display_name || "Name not provided"}</h3><span className="assistance-mode">{TRAVEL_MODES[item.travel_mode].label}</span></header>
+      <p><strong>{item.status?.replaceAll("_", " ") ?? "NEW"}</strong>{item.status_updated_at && <> · <time dateTime={item.status_updated_at}>{new Date(item.status_updated_at).toLocaleString()}</time></>}</p>
       <div className="assistance-location"><MapPin size={20} aria-hidden="true" /><div>
         <span className="assistance-field-label">Shared location</span>
         <strong>{item.location_name ? `Near ${item.location_name.roadName}` : "Street name unavailable"}</strong>
@@ -111,7 +139,11 @@ export function AssistanceRequests() {
         </dl>
       </details>
       <div className="assistance-record-actions">
-        <button type="button" className="secondary-button assistance-delete-button" disabled={deleting !== null || loading}
+        {item.status !== "RESOLVED" && <button type="button" className="secondary-button" disabled={updating !== null || deleting !== null || loading}
+          onClick={() => void changeStatus(item, item.status === "NEW" ? "ACKNOWLEDGED" : "RESOLVED")}>
+          {updating === item.id ? "Saving…" : item.status === "NEW" ? "Acknowledge" : "Mark resolved"}
+        </button>}
+        <button type="button" className="secondary-button assistance-delete-button" disabled={updating !== null || deleting !== null || loading}
           aria-label={`Delete after rescue: ${item.display_name || "unnamed person"}, request ${item.id}`}
           onClick={() => void removeAfterRescue(item)}>
           <Trash2 size={15} aria-hidden="true" />{deleting === item.id ? "Deleting…" : "Delete after rescue"}

@@ -1858,3 +1858,17 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .sheet-collapsed .route-actions.has-route-error .secondary-button { display: inline-flex; }
   .public-app .route-emergency-help { grid-column: 1 / -1; }
 }
+/* Public language selector and shelter operations. */
+.language-toggle select { min-height: 44px; max-width: 105px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px; background: white; color: #172033; font-size: 13px; }
+.shelter-supplies { margin: 14px 0; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+.shelter-supplies h4 { font-weight: 700; }
+.shelter-supplies dl > div { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; }
+.shelter-supplies dd { font-weight: 600; }
+.shelter-supplies p { font-size: 12px; margin-top: 10px; }
+.shelter-supplies-form { margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+.shelter-supplies-form legend { font-weight: 700; margin-bottom: 8px; }
+.shelter-supplies-form label { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+.shelter-supplies-form select { min-height: 44px; border: 1px solid #cbd5e1; padding: 6px; border-radius: 6px; }
+.shelter-supplies-form p { margin-top: 8px; font-size: 13px; }
+.assistance-record-actions { flex-wrap: wrap; gap: 8px; }
+@media (max-width: 480px) { .public-app .app-header { gap: 6px; } .language-toggle select { max-width: 82px; } }

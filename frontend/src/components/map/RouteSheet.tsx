@@ -1,3 +1,5 @@
+"use client";
+import { useLanguage } from "@/components/LanguageProvider";
 import type { ReactNode } from "react";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 
@@ -13,8 +15,9 @@ export function RouteSheet({ state, onChange, title, summary, children, actions,
   onClearDestination?: () => void;
   hideDetails?: boolean;
 }) {
+  const { t } = useLanguage();
   return (
-    <aside className={`information-panel route-sheet sheet-${state}`} aria-label="Navigation information">
+    <aside className={`information-panel route-sheet sheet-${state}`} aria-label={t("Navigation information")}>
       <div className="sheet-controls">
         <h2 className="sheet-desktop-title">{title}</h2>
         <button className="sheet-toggle" onClick={() => onChange(state === "collapsed" ? "partial" : "collapsed")} aria-expanded={state !== "collapsed"} aria-controls="panel-details">
@@ -22,7 +25,7 @@ export function RouteSheet({ state, onChange, title, summary, children, actions,
           <span className="sheet-preview"><strong>{title}</strong>{summary && <small>{summary}</small>}</span>
           {state === "collapsed" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
-        {onClearDestination && <button type="button" className="sheet-clear" onClick={onClearDestination} aria-label="Remove destination" title="Remove destination"><X size={18} aria-hidden="true" /></button>}
+        {onClearDestination && <button type="button" className="sheet-clear" onClick={onClearDestination} aria-label={t("Remove destination")} title={t("Remove destination")}><X size={18} aria-hidden="true" /></button>}
       </div>
       <div className="sheet-body">
         <div className={`panel-scroll${hideDetails ? " panel-details-hidden" : ""}`} id="panel-details">{children}</div>
