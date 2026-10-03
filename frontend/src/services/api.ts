@@ -27,7 +27,22 @@ export async function shareAssistanceLocation(data: AssistanceContext & {
   return body;
 }
 
+export type AssistanceStatus = "NEW" | "ACKNOWLEDGED" | "RESOLVED";
+
+export async function updateAssistanceStatus(token: string, id: string, status: AssistanceStatus) {
+  const response = await fetch(API_URL + "/api/admin/assistance-requests/" + encodeURIComponent(id), {
+    method: "PATCH", cache: "no-store", signal: AbortSignal.timeout(30000),
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error ?? "Could not update request status. Refresh and try again.");
+  return body.request as Pick<AssistanceRequest, "id" | "status" | "status_updated_at">;
+}
+
 export interface AssistanceRequest {
+  status: AssistanceStatus;
+  status_updated_at: string | null;
   id: string; latitude: number; longitude: number; accuracy_meters: number;
   location_recorded_at: string; created_at: string;
   display_name: string | null; contact_number: string | null;
@@ -105,6 +120,10 @@ export interface EvacuationCenter {
   capacity: number;
   currentOccupancy: number;
   status: EvacuationCenterStatus;
+  waterStatus?: "unknown" | "adequate" | "low" | "unavailable";
+  foodStatus?: "unknown" | "adequate" | "low" | "unavailable";
+  medicalStatus?: "unknown" | "adequate" | "low" | "unavailable";
+  suppliesUpdatedAt?: string | null;
   contactInformation?: string;
   notes?: string;
   updatedAt: string;

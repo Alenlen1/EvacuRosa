@@ -1,6 +1,7 @@
 "use client";
 import { AssistanceRequests } from "@/components/admin/AssistanceRequests";
 
+import { ShelterSuppliesForm, type ShelterSupplyRecord } from "@/components/admin/ShelterSuppliesForm";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Brand } from "@/components/ui/Brand";
@@ -36,7 +37,7 @@ const HazardPlacementMap = dynamic(() => import("@/components/admin/HazardPlacem
   ),
 });
 
-interface AdminCenter {
+interface AdminCenter extends ShelterSupplyRecord {
   id: string;
   name: string;
   capacity: number;
@@ -120,7 +121,7 @@ export default function AdminDashboardPage() {
 
     let query = supabase
       .from("evacuation_centers")
-      .select("id, name, capacity, current_occupancy, status, latitude, longitude");
+      .select("id, name, capacity, current_occupancy, status, latitude, longitude, water_status, food_status, medical_status, supplies_updated_at");
     if (profileRow?.role === "BARANGAY_ADMIN" && profileRow.barangay_id) {
       query = query.eq("barangay_id", profileRow.barangay_id);
     }
@@ -297,6 +298,7 @@ export default function AdminDashboardPage() {
                   </>
                 );
               })()}
+              <ShelterSuppliesForm key={center.id} center={center} />
             </div>
           ))}
           {centers.length === 0 && !error && (
