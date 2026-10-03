@@ -16,6 +16,17 @@ function report(overrides: Partial<FloodReport>): FloodReport {
 }
 
 describe("roadStatusOverridesForReports", () => {
+  it.each(["LOW", "MODERATE"] as const)("keeps %s routable even with an outdated impassable flag", severity => {
+    expect(roadStatusOverridesForReports([report({ severity, roadImpassable: true })]).get("R1")).toBe("FLOODED");
+  });
+
+  it.each(["HIGH", "SEVERE"] as const)("blocks %s even without the old checkbox", severity => {
+    expect(roadStatusOverridesForReports([report({ severity, roadImpassable: false })]).get("R1")).toBe("BLOCKED");
+  });
+
+  it("does not restrict NONE or reports without a road", () => {
+    expect(roadStatusOverridesForReports([report({ severity: "NONE", roadImpassable: true }), report({ roadId: "", severity: "SEVERE" })]).size).toBe(0);
+  });
   it("marks a confirmed-impassable road as BLOCKED", () => {
     const overrides = roadStatusOverridesForReports([
       report({ roadId: "R-BLOCKED", severity: "SEVERE", roadImpassable: true }),
@@ -32,9 +43,12 @@ describe("roadStatusOverridesForReports", () => {
 
   it("never downgrades a blocked road", () => {
     const overrides = roadStatusOverridesForReports([
-      report({ roadId: "R1", roadImpassable: true }),
+      report({ roadId: "R1", severity: "HIGH", roadImpassable: true }),
       report({ id: "flood-2", roadId: "R1", roadImpassable: false }),
     ]);
     expect(overrides.get("R1")).toBe("BLOCKED");
+  });
+  it("blocks a road regardless of report order", () => {
+    expect(roadStatusOverridesForReports([report({ severity: "LOW" }), report({ severity: "SEVERE" })]).get("R1")).toBe("BLOCKED");
   });
 });

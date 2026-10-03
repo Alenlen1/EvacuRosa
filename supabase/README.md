@@ -15,7 +15,9 @@
    `migrations/0009_barangay_only_center_management.sql`,
    `migrations/0010_add_santa_rosa_multipurpose_complex.sql`,
    `migrations/0011_assistance_requests.sql`,
-   `migrations/0012_cdrrmo_delete_assistance_requests.sql`.
+   `migrations/0012_cdrrmo_delete_assistance_requests.sql`,
+   `migrations/0013_supplies_and_assistance_status.sql`,
+   `migrations/0014_flood_severity_passability.sql`.
    Run `seed.sql` afterward to seed Santa Rosa City's 18 barangays and the
    Market Area Barangay Hall center record (capacity 500). Verify operational
    details with CDRRMO before relying on this record during an emergency.
@@ -115,3 +117,10 @@ restore a deleted row. A barangay account must receive HTTP 403, and direct
 Supabase deletion by that account must not remove any rows. Anonymous clients
 must have no delete access. Use test records; no live requests are deleted by
 the migration.
+# Flood severity and routing
+
+Apply `0014_flood_severity_passability.sql` to align existing reports and future
+writes: LOW/MODERATE remain routable with flood-risk penalties; HIGH/SEVERE
+hard-block the road. NONE adds no flood restriction. Passability is derived
+from severity, not an independently editable checkbox. Other hazards and road
+access rules can still block a road. Routable does not mean guaranteed safe.

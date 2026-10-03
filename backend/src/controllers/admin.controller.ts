@@ -1,5 +1,6 @@
 import type { Response } from "express";
 import type { RoleAwareRequest } from "../middleware/role.middleware";
+import { isFloodImpassable, isFloodSeverity } from "../types/floodPassability";
 
 export async function updateEvacuationCenter(req: RoleAwareRequest, res: Response) {
   const { id } = req.params;
@@ -52,15 +53,15 @@ export async function updateEvacuationCenter(req: RoleAwareRequest, res: Respons
 }
 
 export async function createFloodReport(req: RoleAwareRequest, res: Response) {
-  const { roadId, barangayId, severity, waterLevelMeters, roadImpassable, notes } =
+  const { roadId, barangayId, severity, waterLevelMeters, notes } =
     req.body ?? {};
 
   if (!req.userSupabase) {
     res.status(401).json({ error: "Not authenticated." });
     return;
   }
-  if (typeof roadId !== "string" || typeof severity !== "string") {
-    res.status(400).json({ error: "roadId and severity are required." });
+  if (typeof roadId !== "string" || !isFloodSeverity(severity)) {
+    res.status(400).json({ error: "roadId and a valid flood severity are required." });
     return;
   }
 
@@ -73,7 +74,7 @@ export async function createFloodReport(req: RoleAwareRequest, res: Response) {
       barangay_id: barangayId ?? null,
       severity,
       water_level_meters: typeof waterLevelMeters === "number" ? waterLevelMeters : null,
-      road_impassable: Boolean(roadImpassable),
+      road_impassable: isFloodImpassable(severity),
       status: "ACTIVE",
       notes: typeof notes === "string" ? notes : null,
       reported_by: req.profile?.id,
@@ -91,7 +92,7 @@ export async function createFloodReport(req: RoleAwareRequest, res: Response) {
 
 export async function updateFloodReport(req: RoleAwareRequest, res: Response) {
   const { id } = req.params;
-  const { severity, waterLevelMeters, roadImpassable, status, notes } = req.body ?? {};
+  const { severity, waterLevelMeters, status, notes } = req.body ?? {};
 
   if (!req.userSupabase) {
     res.status(401).json({ error: "Not authenticated." });
@@ -99,9 +100,15 @@ export async function updateFloodReport(req: RoleAwareRequest, res: Response) {
   }
 
   const updates: Record<string, unknown> = {};
-  if (typeof severity === "string") updates.severity = severity;
+  if (severity !== undefined) {
+    if (!isFloodSeverity(severity)) {
+      res.status(400).json({ error: "Invalid flood severity." });
+      return;
+    }
+    updates.severity = severity;
+    updates.road_impassable = isFloodImpassable(severity);
+  }
   if (typeof waterLevelMeters === "number") updates.water_level_meters = waterLevelMeters;
-  if (typeof roadImpassable === "boolean") updates.road_impassable = roadImpassable;
   if (typeof status === "string") updates.status = status;
   if (typeof notes === "string") updates.notes = notes;
 

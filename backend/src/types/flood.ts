@@ -8,8 +8,7 @@ export interface FloodReport {
   barangayName?: string;
   severity: FloodSeverity;
   waterLevelMeters?: number | null;
-  /** The section-29 hard rule: only THIS triggers a routing BLOCKED
-   * status. Severity alone never does. */
+  /** Derived from severity: HIGH/SEVERE block routing. */
   roadImpassable: boolean;
   status: FloodReportStatus;
   notes?: string;
