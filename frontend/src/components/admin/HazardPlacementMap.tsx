@@ -79,7 +79,7 @@ export default function HazardPlacementMap({
   const [severity, setSeverity] = useState("MODERATE");
   const [radiusMeters, setRadiusMeters] = useState(200);
   const [waterLevelMeters, setWaterLevelMeters] = useState<string>("");
-  const [impassable, setImpassable] = useState(false);
+  const impassable = severity === "HIGH" || severity === "SEVERE";
   const [confirmedBlocked, setConfirmedBlocked] = useState(false);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -111,7 +111,6 @@ export default function HazardPlacementMap({
     setNearestRoads([]);
     setSelectedRoadId("");
     setWaterLevelMeters("");
-    setImpassable(false);
     setConfirmedBlocked(false);
     setNotes("");
   }
@@ -373,14 +372,10 @@ export default function HazardPlacementMap({
             )}
 
             {mode === "flood" && (
-              <label className="flex items-center gap-2 text-xs text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={impassable}
-                  onChange={(e) => setImpassable(e.target.checked)}
-                />
-                Confirmed impassable — hard-blocks this road for routing
-              </label>
+              <div className="text-xs text-slate-700" role="status">
+                <strong>{impassable ? "Impassable — blocked for routing" : "Passable for routing — flood risk still applies"}</strong>
+                <p className="mt-1">Low/Moderate: passable. High/Severe: impassable. Passable does not guarantee safety.</p>
+              </div>
             )}
 
             {mode === "earthquake" && (

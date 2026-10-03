@@ -1,6 +1,7 @@
 import { getSupabase } from "../database/supabase";
 import type { FloodReport } from "../types/flood";
 import type { RoadStatus } from "../algorithms/astar/edge";
+import { isFloodImpassable } from "../types/floodPassability";
 
 export async function getActiveFloodReports(): Promise<FloodReport[]> {
   const supabase = getSupabase();
@@ -26,7 +27,7 @@ export async function getActiveFloodReports(): Promise<FloodReport[]> {
     barangayName: row.barangays?.name,
     severity: row.severity,
     waterLevelMeters: row.water_level_meters,
-    roadImpassable: row.road_impassable,
+    roadImpassable: isFloodImpassable(row.severity),
     status: row.status,
     notes: row.notes,
     reportedAt: row.reported_at,
@@ -35,10 +36,8 @@ export async function getActiveFloodReports(): Promise<FloodReport[]> {
 }
 
 /**
- * The spec's hard rule (section 29): a severe flood does NOT automatically
- * block a road — only a confirmed-impassable report does. Everything else
- * just marks the road FLOODED (shows up in affected-road counts; has no
- * effect on route selection until fuzzy-logic risk weighting exists).
+ * HIGH/SEVERE floods block routing; LOW/MODERATE remain FLOODED and
+ * receive fuzzy risk penalties. NONE adds no flood restriction.
  * A BLOCKED override from one report is never downgraded by another.
  */
 export async function buildRoadStatusOverrides(): Promise<Map<string, RoadStatus>> {
@@ -53,7 +52,7 @@ export function roadStatusOverridesForReports(
 
   for (const report of reports) {
     if (!report.roadId) continue;
-    if (report.roadImpassable) {
+    if (isFloodImpassable(report.severity)) {
       overrides.set(report.roadId, "BLOCKED");
     } else if (report.severity !== "NONE" && overrides.get(report.roadId) !== "BLOCKED") {
       overrides.set(report.roadId, "FLOODED");
