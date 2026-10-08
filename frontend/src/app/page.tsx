@@ -55,7 +55,11 @@ import {
   type EarthquakeRoadImpact,
 } from "@/services/api";
 
-const Map = dynamic(() => import("@/components/map/Map"), {
+const Map = dynamic(async () => {
+  const { loadMapRotation } = await import("@/lib/loadMapRotation");
+  await loadMapRotation();
+  return import("@/components/map/Map");
+}, {
   ssr: false,
   loading: () => (
     <div className="flex h-full w-full items-center justify-center bg-slate-100 text-sm text-slate-500">
@@ -435,6 +439,10 @@ function PublicHome() {
           <div className="desktop-hazard-overview">{hazardOverview}</div>
           <div className="map-canvas">
             <Map
+              navigationCenter={routeCenter}
+              travelMode={travelMode}
+              onNavigationRoute={data => { setResult({ kind: "route", data }); setResultMode(travelMode); }}
+              onNavigationStart={() => { setPanel("map"); setSheetState("collapsed"); }}
               offlineReady={offlineStatus.state === "ready"}
               geolocation={geolocation}
               destination={destination}
