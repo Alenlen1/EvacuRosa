@@ -10,7 +10,7 @@ let warned = false;
 
 const REAL_GRAPH_PATH = path.join(__dirname, "..", "data", "santaRosaRoadGraph.json");
 
-interface RawGraphFile {
+export interface RawGraphFile {
   _meta?: { source?: string; fetchedAt?: string; accessRulesVersion?: number };
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -21,8 +21,10 @@ interface RawGraphFile {
  * scripts/fetch-santa-rosa-roads.ts). It is read at runtime, so replacing
  * the generated file only requires a backend restart.
  */
-export function loadRoadGraph(): RoadGraph {
-  if (cachedGraph) return cachedGraph;
+let cachedData: RawGraphFile | null = null;
+
+export function loadRoadGraphData(): RawGraphFile {
+  if (cachedData) return cachedData;
 
   if (!existsSync(REAL_GRAPH_PATH)) {
     throw new Error(
@@ -42,6 +44,11 @@ export function loadRoadGraph(): RoadGraph {
     warned = true;
   }
 
-  cachedGraph = new RoadGraph({ nodes: data.nodes, edges: applyLocalRoadAccess(data.edges) });
+  cachedData = { ...data, edges: applyLocalRoadAccess(data.edges) };
+  return cachedData;
+}
+
+export function loadRoadGraph(): RoadGraph {
+  if (!cachedGraph) cachedGraph = new RoadGraph(loadRoadGraphData());
   return cachedGraph;
 }

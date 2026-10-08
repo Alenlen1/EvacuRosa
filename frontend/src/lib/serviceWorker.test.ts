@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 const source = readFileSync(new URL("../../public/sw.js", import.meta.url), "utf8");
 function worker(cached?: Response) {
   const listeners: Record<string, (event: any) => void> = {};
-  const cache = { match: vi.fn().mockResolvedValue(cached), put: vi.fn().mockResolvedValue(undefined) };
+  const cache = { match: vi.fn().mockResolvedValue(cached), put: vi.fn().mockResolvedValue(undefined), add: vi.fn().mockResolvedValue(undefined) };
   const fetch = vi.fn().mockResolvedValue(new Response("new build"));
   runInNewContext(source, {
     URL, fetch,
@@ -17,10 +17,37 @@ function worker(cached?: Response) {
     listeners.fetch({ request: { url: new URL(path, "https://evacurosa.test").href, method: "GET", mode }, respondWith });
     return respondWith;
   }
-  return { request, fetch, cache };
+  async function prepare() {
+    let pending: Promise<void> | undefined;
+    const postMessage = vi.fn();
+    listeners.message({ data: { type: "PREPARE_OFFLINE" }, ports: [{ postMessage }], waitUntil: (task: Promise<void>) => { pending = task; } });
+    await pending;
+    return postMessage;
+  }
+  return { request, fetch, cache, prepare };
 }
 
 describe("public app cache", () => {
+  it("saves lazy map and routing worker files before reporting readiness", async () => {
+    const w = worker();
+    const assets = ["/_next/static/chunks/map.js", "/_next/static/chunks/routing.worker.js"];
+    w.fetch.mockResolvedValue(new Response(JSON.stringify({ assets })));
+    expect(await w.prepare()).toHaveBeenCalledWith({ ok: true });
+    for (const path of [...assets, "/"]) expect(w.cache.add).toHaveBeenCalledWith(path);
+    expect(w.cache.put).toHaveBeenCalledWith("/offline-assets.json", expect.any(Response));
+  });
+  it("does not claim readiness when an essential worker file fails to cache", async () => {
+    const w = worker();
+    w.fetch.mockResolvedValue(new Response(JSON.stringify({ assets: ["/_next/static/chunks/routing.worker.js"] })));
+    w.cache.add.mockRejectedValue(new Error("Storage full"));
+    expect(await w.prepare()).toHaveBeenCalledWith({ ok: false });
+  });
+  it("rejects manifests containing API or admin documents", async () => {
+    const w = worker();
+    w.fetch.mockResolvedValue(new Response(JSON.stringify({ assets: ["/api/roads", "/admin/login"] })));
+    expect(await w.prepare()).toHaveBeenCalledWith({ ok: false });
+    expect(w.cache.add).not.toHaveBeenCalled();
+  });
   it("loads fresh page HTML instead of a previous build", async () => {
     const w = worker(new Response("old build"));
     const response = await w.request("/", "navigate").mock.calls[0][0];

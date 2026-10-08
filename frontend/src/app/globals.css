@@ -330,6 +330,30 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   overflow: hidden;
   background: var(--surface);
 }
+.offline-readiness {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #eef5f2;
+  color: #244b3b;
+  font-size: 0.75rem;
+}
+.offline-readiness button {
+  flex-shrink: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.offline-readiness-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+}
+.offline-readiness-copy strong { font-weight: 600; }
+.offline-readiness-copy small { font-size: inherit; opacity: 0.8; }
 .offline-banner {
   display: flex;
   align-items: center;

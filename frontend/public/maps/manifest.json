@@ -1,0 +1,17 @@
+{
+  "formatVersion": 1,
+  "url": "/maps/santa-rosa.pmtiles",
+  "sha256": "be46faa1fdfa8ed1c306f73011467d0ab496150748843b82d25a4485a4036d75",
+  "bytes": 4084722,
+  "bounds": [
+    121.04,
+    14.26,
+    121.16,
+    14.37
+  ],
+  "maxDataZoom": 15,
+  "dataUpdatedAt": "2026-10-07T04:00:00Z",
+  "source": "https://build.protomaps.com/20261007.pmtiles",
+  "sourceVersion": "4.15.2",
+  "attribution": "OpenStreetMap contributors and Protomaps"
+}

@@ -2,7 +2,7 @@
 
 EvacuRosa is a multi-hazard evacuation decision-support web application for Santa Rosa City, Laguna, Philippines. It combines a fuzzy-logic risk assessment engine with A* pathfinding to recommend safer routes and available evacuation centers based on road conditions, active hazards, distance, and evacuation-center availability.
 
-The system is designed as a responsive web application with support for desktop and mobile browsers. It also includes offline viewing for previously cached hazard and evacuation-center data through IndexedDB and PWA support.
+The system is designed as a responsive web application with support for desktop and mobile browsers. It also calculates routes offline using a downloaded Santa Rosa road network, saved hazard and evacuation-center data, and a browser Web Worker.
 
 EvacuRosa is a decision-support system. It does not guarantee that a route is completely safe and should not replace official emergency instructions from the City Disaster Risk Reduction and Management Office (CDRRMO), barangay officials, or other authorized emergency agencies.
 
@@ -93,7 +93,15 @@ The frontend caches the following data in IndexedDB:
 
 When the network is unavailable, the application can display previously cached data together with its last-updated timestamp.
 
-Route calculation remains online-only because the routing engine runs on the backend.
+When first opened online, the app automatically downloads its road network and a complete public routing snapshot into IndexedDB. The road network is compressed in transit and downloaded again only when its version changes. Hazard and center snapshots refresh on an online visit/reconnection when more than 30 minutes old; users can also choose **Update offline data**.
+
+Wait for **Offline maps and routes ready** before disconnecting. Destination routes and evacuation-center recommendations then work without data or Wi-Fi, using the same A*, travel-mode access rules and fuzzy risk engine as the backend. Online, the map uses the original OpenStreetMap tiles. Offline, it switches automatically to the saved detailed Santa Rosa basemap with streets, labels, buildings, water, and land colors. Users can tap the map or select a saved center; online place search still needs a connection.
+
+The detailed basemap is a 4.1 MB regional Protomaps archive bundled in `frontend/public/maps`. It downloads automatically once, is checked against its SHA-256 and coverage metadata, and is stored as a complete file in IndexedDB. Rendering reads that file directly without tile, font, or sprite requests. The offline style uses OpenStreetMap-inspired land, water, building, and road colors; labels and symbols can differ from the original OpenStreetMap tiles used online. Changed map versions download automatically on a later online visit. If the detailed download fails, offline routing continues with the basic road-only map and the status offers a retry. Source, attribution, and refresh instructions are in `frontend/public/maps/README.md`.
+
+Offline results show the saved-data timestamp and warn that hazards and center availability may have changed. Missing hazard data produces unknown risk. The app needs an initial connection to prepare; clearing browser storage requires another download. GPS still requires location permission and an available position.
+
+Offline reopening requires a production build served over HTTPS (localhost is also supported). Run `npm run build --workspace=frontend`, which generates the offline asset manifest through its `postbuild` step. Development mode supports local calculation but intentionally does not register a service worker. The backend build's `postbuild` step copies its road data into `dist/data`.
 
 ### PWA Support
 
@@ -864,14 +872,14 @@ IndexedDB cache
 Frontend
  |
  v
-Cached hazard and center information
+Cached hazard and center information + local worker route calculation
 ```
 
 The interface displays an offline indicator and the age of cached information.
 
 The application does not pretend that cached information is current.
 
-Route calculation is disabled while offline because A* runs on the backend and there is no client-side copy of the complete routing engine.
+Online route requests use the backend. Without a connection, or after a network/server failure, the frontend uses its saved routing package in a Web Worker. An authoritative backend rejection (including a hazard-blocked 422 response) is preserved and never bypassed using stale offline data. The service worker saves all versioned build assets, including lazy map and worker code, before reporting offline readiness.
 
 ---
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "evacurosa-shell-v4";
+const CACHE_NAME = "evacurosa-shell-v5";
 const APP_SHELL = ["/", "/manifest.json", "/icons/evacurosa.svg", "/icons/evacurosa-32.png", "/icons/evacurosa-180.png", "/icons/evacurosa-192.png", "/icons/evacurosa-512.png", "/icons/evacurosa-512-maskable.png"];
 
 self.addEventListener("install", (event) => {
@@ -13,6 +13,41 @@ self.addEventListener("activate", (event) => {
       .then((keys) => Promise.all(keys.filter((k) => k.startsWith("evacurosa-shell-") && k !== CACHE_NAME).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "PREPARE_OFFLINE") return;
+  event.waitUntil((async () => {
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      let manifest;
+      try {
+        const response = await fetch("/offline-assets.json", { cache: "no-store" });
+        if (!response.ok) throw new Error("Missing offline build manifest");
+        manifest = await response.clone().json();
+        await cache.put("/offline-assets.json", response);
+      } catch {
+        const cached = await cache.match("/offline-assets.json");
+        if (!cached) throw new Error("No offline build manifest");
+        manifest = await cached.json();
+      }
+      if (!Array.isArray(manifest.assets) || manifest.assets.length === 0) throw new Error("Empty offline build");
+      // Only public build files, never admin documents or API/user data.
+      const assets = manifest.assets.filter(path => typeof path === "string" &&
+        path.startsWith("/_next/static/") && !path.includes("..") && !path.includes("?"));
+      if (assets.length !== manifest.assets.length) throw new Error("Invalid offline build");
+      // Small batches avoid flooding mobile connections.
+      for (let i = 0; i < assets.length; i += 6) {
+        await Promise.all(assets.slice(i, i + 6).map(async path => {
+          if (!await cache.match(path)) await cache.add(path);
+        }));
+      }
+      try { await cache.add("/"); } catch { if (!await cache.match("/")) throw new Error("No offline page"); }
+      event.ports[0]?.postMessage({ ok: true });
+    } catch {
+      event.ports[0]?.postMessage({ ok: false });
+    }
+  })());
 });
 
 self.addEventListener("fetch", (event) => {
