@@ -1,9 +1,30 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteAssistanceRequest, fetchAssistanceRequests, fetchEvacuationRoute, fetchRoute, RoutingError, shareAssistanceLocation } from "./api";
 const start = { latitude: 14.3, longitude: 121.1 };
 const destination = { latitude: 14.31, longitude: 121.11 };
+const offline = vi.hoisted(() => ({ getOfflinePackage: vi.fn(), calculateOfflineRoute: vi.fn(), calculateOfflineEvacuationRoute: vi.fn() }));
+vi.mock("../lib/offline/routing", () => offline);
+beforeEach(() => { vi.clearAllMocks(); offline.getOfflinePackage.mockResolvedValue(null); });
 afterEach(() => vi.unstubAllGlobals());
 describe("location-sharing API", () => {
+  it("calculates locally without any request when disconnected", async () => {
+    vi.stubGlobal("navigator", { onLine: false });
+    const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
+    offline.calculateOfflineRoute.mockResolvedValue({ source: "offline" });
+    offline.calculateOfflineEvacuationRoute.mockResolvedValue({ source: "offline" });
+    await expect(fetchRoute(start, destination, "car")).resolves.toMatchObject({ source: "offline" });
+    await expect(fetchEvacuationRoute(start, "walking")).resolves.toMatchObject({ source: "offline" });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(offline.calculateOfflineRoute).toHaveBeenCalledWith(start, destination, "car");
+  });
+  it.each(["network", "server"])("uses saved routing after a %s failure", async failure => {
+    vi.stubGlobal("navigator", { onLine: true });
+    offline.getOfflinePackage.mockResolvedValue({});
+    offline.calculateOfflineRoute.mockResolvedValue({ source: "offline" });
+    vi.stubGlobal("fetch", failure === "network" ? vi.fn().mockRejectedValue(new TypeError("Disconnected"))
+      : vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
+    await expect(fetchRoute(start, destination)).resolves.toMatchObject({ source: "offline" });
+  });
   it("deletes only the selected request with authorization and no caching", async () => {
     const fetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
     vi.stubGlobal("fetch", fetch);
@@ -20,6 +41,8 @@ describe("location-sharing API", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ warnings: ["No route"], failureReason: "HAZARD_BLOCKED" }), { status: 422 })));
     const call = kind === "route" ? fetchRoute(start, destination) : fetchEvacuationRoute(start);
     await expect(call).rejects.toMatchObject({ name: "RoutingError", failureReason: "HAZARD_BLOCKED" });
+    expect(offline.calculateOfflineRoute).not.toHaveBeenCalled();
+    expect(offline.calculateOfflineEvacuationRoute).not.toHaveBeenCalled();
   });
   it("does not offer hazard assistance for server/network failures", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: "Unavailable", failureReason: "HAZARD_BLOCKED" }), { status: 503 })));
