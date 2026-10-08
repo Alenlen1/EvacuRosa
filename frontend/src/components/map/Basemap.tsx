@@ -41,6 +41,8 @@ export function Basemap({ online, routingReady }: { online: boolean; routingRead
   return <>
     {!online && !detailed && <OfflineRoadLayer ready={routingReady} />}
     {online && <TileLayer
+      maxZoom={19}
+      maxNativeZoom={19}
       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />}
   </>;

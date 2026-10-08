@@ -10,6 +10,9 @@ npm test --workspace=backend
 The suites cover A* routing, fuzzy inference, hazard rules, evacuation-center
 ranking, authorization, and offline caching.
 
+See [evacuation navigation checks](NAVIGATION.md) for camera behavior, GPS and
+compass filtering, route progress, and mobile device acceptance checks.
+
 ## Route restoration after refresh
 
 `frontend/src/lib/routeSession.test.ts` covers session serialization, validation,

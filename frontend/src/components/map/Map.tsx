@@ -22,10 +22,11 @@ import type {
   EarthquakeEvent,
   EarthquakeRoadImpact,
 } from "@/services/api";
-import { UserLocationMarker } from "./UserLocationMarker";
+import { EvacuationNavigation } from "./EvacuationNavigation";
+import type { TravelMode } from "@/lib/travelTime";
+import type { RouteResponse } from "@/services/api";
 import { DestinationMarker } from "./DestinationMarker";
 import { MapControls } from "./MapControls";
-import { RoutePolyline } from "./RoutePolyline";
 import { EvacuationCenterLayer } from "./EvacuationCenterLayer";
 import { FloodLayer } from "./FloodLayer";
 import { FireLayer } from "./FireLayer";
@@ -34,6 +35,10 @@ import { Basemap } from "./Basemap";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 interface MapProps {
+  navigationCenter?: EvacuationCenter;
+  travelMode: TravelMode;
+  onNavigationRoute: (data: RouteResponse) => void;
+  onNavigationStart: () => void;
   offlineReady?: boolean;
   geolocation: GeolocationState;
   destination: { latitude: number; longitude: number } | null;
@@ -165,6 +170,7 @@ function LayerToggle({
 }
 
 export default function Map({
+  navigationCenter, travelMode, onNavigationRoute, onNavigationStart,
   offlineReady = false,
   geolocation,
   destination,
@@ -182,6 +188,8 @@ export default function Map({
 }: MapProps) {
   const isOnline = useOnlineStatus();
   const [following, setFollowing] = useState(false);
+  const [navigating, setNavigating] = useState(false);
+  useEffect(() => { if (navigating) setFollowing(false); }, [navigating]);
   useEffect(() => { if (searchFocus) setFollowing(false); }, [searchFocus]);
   const [showFlood, setShowFlood] = useState(true);
   const [showFire, setShowFire] = useState(true);
@@ -194,6 +202,11 @@ export default function Map({
       maxBounds={SANTA_ROSA_CITY_BOUNDS}
       maxBoundsViscosity={0.8}
       minZoom={12}
+      maxZoom={19}
+      rotate
+      rotateControl={false}
+      touchRotate
+      shiftKeyRotate={false}
       className="h-full w-full"
     >
       <Basemap online={isOnline} routingReady={offlineReady} />
@@ -203,13 +216,8 @@ export default function Map({
         <EarthquakeLayer events={earthquakeEvents} roadImpacts={earthquakeRoadImpacts} />
       )}
       <EvacuationCenterLayer centers={centers} onSelectCenter={onSelectCenter} />
-      {geolocation.status === "active" && geolocation.position && (
-        <UserLocationMarker
-          latitude={geolocation.position.latitude}
-          longitude={geolocation.position.longitude}
-          accuracy={geolocation.position.accuracy}
-        />
-      )}
+      <EvacuationNavigation route={route} center={navigationCenter} mode={travelMode} geolocation={geolocation}
+        onRoute={onNavigationRoute} onStart={onNavigationStart} onActiveChange={setNavigating} />
       {destination && (
         <DestinationMarker
           label={destinationLabel}
@@ -218,23 +226,22 @@ export default function Map({
           longitude={destination.longitude}
         />
       )}
-      {route && <RoutePolyline points={route} />}
-      <ClickToSetDestination onMapClick={onMapClick} />
+      {!navigating && <ClickToSetDestination onMapClick={onMapClick} />}
       <ResizeMap />
-      <FollowUser position={geolocation.position} following={following} />
-      <FocusSearchResult target={searchFocus} />
-      <LayerToggle
+      <FollowUser position={geolocation.position} following={following && !navigating} />
+      {!navigating && <FocusSearchResult target={searchFocus} />}
+      {!navigating && <LayerToggle
         showFlood={showFlood}
         onToggleFlood={() => setShowFlood((v) => !v)}
         showFire={showFire}
         onToggleFire={() => setShowFire((v) => !v)}
         showEarthquakes={showEarthquakes}
         onToggleEarthquakes={() => setShowEarthquakes((v) => !v)}
-      />
-      <MapControls
+      />}
+      {!navigating && <MapControls
         isFollowing={following}
         onFollowMe={() => setFollowing((f) => !f)}
-      />
+      />}
     </MapContainer>
   );
 }
