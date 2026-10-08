@@ -1,0 +1,69 @@
+/* CSS applies the device preference before JavaScript loads, including offline. */
+:root { color-scheme: light dark; }
+body { background: var(--theme-panel, white); }
+
+@media (prefers-color-scheme: dark) {
+  :root, .public-app {
+    --ink: #eef2f6;
+    --muted: #b7c2d0;
+    --border: #3c4858;
+    --surface: #202b38;
+    --brand-maroon: #ffaaa0;
+    --brand-maroon-dark: #ffc1b8;
+    --brand-cream: #1d2733;
+    --brand-soft: #293342;
+    --theme-panel: #151c26;
+    --theme-subtle: #202b38;
+    --theme-text: #eef2f6;
+    --theme-muted: #b7c2d0;
+    --theme-border: #3c4858;
+    --theme-warning-bg: #3d3420;
+    --theme-warning-text: #f5d689;
+    --theme-danger-bg: #3a252c;
+    --theme-danger-text: #ffaaa0;
+    --theme-success-bg: #20392f;
+    --theme-success-text: #a1deb8;
+    --theme-blue-bg: #233950;
+    --theme-blue-text: #9cc6ff;
+    --theme-selected: #d6bd53;
+  }
+  input, select, textarea { background-color: var(--theme-panel); color: var(--ink); border-color: var(--border); }
+  input::placeholder, textarea::placeholder { color: #a4b0c0; opacity: 1; }
+  option { background: var(--theme-panel); color: var(--ink); }
+  .bg-white { background-color: var(--theme-panel); }
+  .bg-slate-100 { background-color: var(--surface); }
+  :is(.text-slate-400, .text-slate-500, .text-slate-600) { color: var(--muted); }
+  :is(.text-slate-700, .text-slate-900) { color: var(--ink); }
+  .text-blue-600 { color: #87b4ff; }
+  .text-red-600 { color: #ffaaa0; }
+  .text-amber-700 { color: #f5d689; }
+  .primary-button:not(:disabled) { color: var(--button-ink); }
+  .earthquake-color { color: var(--theme-warning-text); }
+  .flood-color { color: #87b4ff; }
+  dialog::backdrop { background: rgb(0 0 0 / 60%); }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible {
+    outline-color: #f4d84b;
+  }
+  /* Filter only original raster tiles; route, GPS and hazard overlays keep their colors. */
+  .online-basemap { filter: invert(1) hue-rotate(180deg) brightness(.8) saturate(.65); }
+  .admin-app .leaflet-tile-pane img.leaflet-tile { filter: invert(1) hue-rotate(180deg) brightness(.8) saturate(.65); }
+  .public-app .leaflet-container { background: #171f29 !important; color: var(--ink); }
+  .public-app .leaflet-bar a,
+  .public-app .leaflet-popup-content-wrapper,
+  .public-app .leaflet-popup-tip,
+  .public-app .leaflet-tooltip,
+  .public-app .leaflet-control-attribution {
+    background: var(--theme-panel); color: var(--ink); border-color: var(--border);
+  }
+  .public-app .leaflet-bar a:hover { background: var(--surface); }
+  .public-app .map-location-status,
+  .leaflet-container .navigation-controls .navigation-card { background: var(--theme-panel); }
+  .public-app .leaflet-bar a.leaflet-disabled { background: var(--surface); color: var(--muted); }
+  .public-app .leaflet-control-attribution a,
+  .public-app .leaflet-popup-content a { color: var(--theme-blue-text); }
+  .public-app .leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
+  .public-app .leaflet-tooltip-top::before { border-top-color: var(--theme-panel); }
+  .public-app .leaflet-tooltip-bottom::before { border-bottom-color: var(--theme-panel); }
+  .brand-name > span { color: #ffaaa0; }
+  .login-page, .admin-app { color: var(--ink); }
+}
