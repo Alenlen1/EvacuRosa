@@ -1,5 +1,6 @@
 "use client";
 import { useLanguage, LanguageProvider, LanguageToggle } from "@/components/LanguageProvider";
+import { LocationRecovery } from "@/components/LocationRecovery";
 import { ShelterSupplies } from "@/components/map/ShelterSupplies";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -414,6 +415,7 @@ function PublicHome() {
         {isOnline && offlineStatus.state !== "downloading" && offlineStatus.state !== "checking" &&
           <button type="button" onClick={() => setOfflineRetry(value => value + 1)}>{t(offlineStatus.state === "ready" ? "Update offline data" : "Retry download")}</button>}
       </div>
+      <LocationRecovery location={geolocation} onRetry={geolocation.retry} />
       <div className="public-workspace">
         <nav className="navigation-rail" aria-label={t("Map views")}>
           <button onClick={() => choosePanel("map")} aria-pressed={panel === "map"}><MapIcon size={23} /><span>{t("Map")}</span></button>
@@ -445,6 +447,7 @@ function PublicHome() {
               onNavigationStart={() => { setPanel("map"); setSheetState("collapsed"); }}
               offlineReady={offlineStatus.state === "ready"}
               geolocation={geolocation}
+              onRetryLocation={geolocation.retry}
               destination={destination}
               destinationLabel={destinationName.label?.title}
               searchFocus={searchSelection}
