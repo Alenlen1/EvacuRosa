@@ -28,11 +28,13 @@ export function RouteDetails({ result, label, center, travelMode, hideHeading = 
         <ShelterSupplies center={center} />
         <p className="route-occupancy"><Users size={18} />{center.currentOccupancy} / {center.capacity} {t("occupied")}</p>
       </>}
-      <div className="route-metrics"><div><strong>{(result.data.distance / 1000).toFixed(1)} km</strong><small>{t("Route distance")}</small></div></div>
+      <div className="route-metrics">
+        <div><strong>{(result.data.distance / 1000).toFixed(1)} km</strong><small>{t("Route distance")}</small></div>
+        <div><strong>{travelTime ?? t("unavailable")}</strong><small>{t("Estimated time")} · {t(mode.label)}</small></div>
+      </div>
       <p className="route-risk">{t("Route risk")}: {t((result.data.riskLevel ?? "UNKNOWN").replaceAll("_", " "))}</p>
       <p className="route-risk-context">{t("Based on available reports, not a guarantee of safety.")}</p>
-      <p><strong>{t("Estimated time")} ({t(mode.label)}): {travelTime ? `${t("about")} ${travelTime.toLowerCase()}` : t("unavailable")}.</strong></p>
-      {travelTime && <p className="route-risk-context">{t("Assumes {speed} km/h over the calculated route. Pace, traffic, stops, and hazardous conditions may increase travel time.", { speed: mode.speedKmh })}</p>}
+      {!travelTime && <p>{t("Estimated travel time is unavailable.")}</p>}
       {result.kind === "route" && <p>{result.data.affectedRoads === 0
           ? t("No reported road restrictions along this route.")
           : t("Reported restrictions affect {count} sections of this route.", { count: result.data.affectedRoads })}</p>}
@@ -40,6 +42,7 @@ export function RouteDetails({ result, label, center, travelMode, hideHeading = 
         {result.kind === "evacuation" && <p>{result.data.recommendedCenter.capacity - result.data.recommendedCenter.currentOccupancy} {t("slots available")}</p>}
       </div>
       {result.data.warnings.map((warning, index) => <p className="warning-message" key={index}><ShieldAlert size={16} />{warning}</p>)}
+      {travelTime && <details className="route-estimate-details"><summary>{t("How this time is estimated")}</summary><p className="route-risk-context">{t("Assumes {speed} km/h over the calculated route. Pace, traffic, stops, and hazardous conditions may increase travel time.", { speed: mode.speedKmh })}</p></details>}
     </section>
   );
 }

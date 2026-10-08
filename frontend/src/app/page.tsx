@@ -14,7 +14,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MapLegend } from "@/components/map/MapLegend";
 import { PlaceSearch } from "@/components/map/PlaceSearch";
 import type { PlaceResult } from "@/lib/placeSearch";
-import { RouteDetails, routeRiskLabel } from "@/components/map/RouteDetails";
+import { RouteDetails } from "@/components/map/RouteDetails";
 import { RouteSheet, type SheetState } from "@/components/map/RouteSheet";
 import { estimatedTravelTime, TRAVEL_MODES, type TravelMode } from "@/lib/travelTime";
 import { TravelModeSelector } from "@/components/map/TravelModeSelector";
@@ -254,6 +254,7 @@ function PublicHome() {
       if (version === routeVersion.current) { setResult({ kind: "route", data }); setResultMode(mode); }
     } catch (err) {
       if (version === routeVersion.current) {
+        setSheetState("partial");
         setResult(null); setError(err instanceof Error ? err.message : "Could not calculate a route.");
         setAssistanceContext(err instanceof RoutingError && err.failureReason === "HAZARD_BLOCKED"
           ? { kind: "route", travelMode: mode, destination } : null);
@@ -283,7 +284,7 @@ function PublicHome() {
         saveRouteSelection({ destination: { latitude: data.recommendedCenter.latitude, longitude: data.recommendedCenter.longitude }, travelMode: mode, intent: "evacuation" });
       }
     } catch (err) {
-      if (version === routeVersion.current) { setResult(null); setError(
+      if (version === routeVersion.current) { setSheetState("partial"); setResult(null); setError(
         err instanceof Error ? err.message : "Could not find an evacuation center."
       );
         setAssistanceContext(err instanceof RoutingError && err.failureReason === "HAZARD_BLOCKED"
@@ -327,9 +328,11 @@ function PublicHome() {
     : panel === "centers" ? selectedCenter?.name ?? t("Evacuation centers")
     : routeLabel?.title ?? t("Plan your route");
   const travelTime = result ? estimatedTravelTime(result.data.distance, resultMode) : null;
-  const sheetSummary = (loading ? t("Calculating your route…") : panel === "map" && result && sheetState === "collapsed"
-    ? `${(result.data.distance / 1000).toFixed(1)} km${travelTime ? ` · Est. ${TRAVEL_MODES[travelMode].label.toLowerCase()}: ${travelTime.toLowerCase()}` : ""} · ${routeRiskLabel(result.data.riskLevel)}`
-    : undefined);
+  const sheetSummary = loading ? t("Calculating your route…") : error ? t("Unable to calculate a route.")
+    : panel === "map" && result
+    ? `${(result.data.distance / 1000).toFixed(1)} km${travelTime ? ` · ${travelTime}` : ""} · ${t("Route risk")}: ${t((result.data.riskLevel ?? "UNKNOWN").replaceAll("_", " "))}`
+    : panel === "map" ? `${t(TRAVEL_MODES[travelMode].label)} · ${t("Tap for travel options")}`
+    : panel === "centers" ? t("Capacity, supplies and contact details") : t("Reported conditions and verified road impacts.");
 
   const displayedCenter = selectedCenter ?? (result?.kind === "evacuation" ? result.data.recommendedCenter : null);
   const emergencyContactProps = {
@@ -347,8 +350,24 @@ function PublicHome() {
     setSheetState(value === "map" ? "collapsed" : "partial");
   };
 
+  const routeButtons = <>
+            <button type="button" className="primary-button" disabled={!destination || !geolocation.position || loading !== null || !isOnline} onClick={() => { setPanel("map"); setSheetState("collapsed"); handleFindRoute(); }}>
+              {loading === "route" ? t("Calculating…") : t("Find safer route")}<ArrowRight size={18} />
+            </button>
+            <button type="button" className="secondary-button" disabled={!geolocation.position || loading !== null || !isOnline} onClick={() => { setSelectedCenter(null); setPanel("map"); setSheetState("collapsed"); handleFindEvacuationCenter(); }}>
+              <Building2 size={18} />{loading === "evacuation" ? t("Searching…") : t("Find evacuation center")}
+            </button>
+  </>;
+  const hazardOverview = (
+          <div className="hazard-strip">
+            <button onClick={() => choosePanel("hazards")}><Droplet className="flood-color" size={24} /><span><strong>{t("Flood")}</strong><small>{t("{count} reports · {blocked} blocked", { count: floodReports.length, blocked: blockedFloodCount })}</small></span></button>
+            <button onClick={() => choosePanel("hazards")}><Flame className="fire-color" size={24} /><span><strong>{t("Fire")}</strong><small>{t("{count} incidents loaded", { count: fireIncidents.length })}</small></span></button>
+            <button onClick={() => choosePanel("hazards")}><Activity className="earthquake-color" size={24} /><span><strong>{t("Earthquake")}</strong><small>{t("{count} events loaded", { count: earthquakeEvents.length })}</small></span></button>
+          </div>
+  );
+
   return (
-    <main className="public-app">
+    <main className={`public-app public-view-${panel}`}>
       <header className="app-header">
         <h1><Brand /></h1>
         <p className="brand-promise">{t("Safe routes. Safe shelters.")}<br /><strong>{t("A safer Santa Rosa.")}</strong></p>
@@ -383,13 +402,9 @@ function PublicHome() {
             setDestination({ latitude: place.latitude, longitude: place.longitude });
             setSearchSelection({ ...place });
             setPanel("map");
-            setSheetState("partial");
+            setSheetState("collapsed");
           }} />
-          <div className="hazard-strip">
-            <button onClick={() => choosePanel("hazards")}><Droplet className="flood-color" size={24} /><span><strong>{t("Flood")}</strong><small>{t("{count} reports · {blocked} blocked", { count: floodReports.length, blocked: blockedFloodCount })}</small></span></button>
-            <button onClick={() => choosePanel("hazards")}><Flame className="fire-color" size={24} /><span><strong>{t("Fire")}</strong><small>{t("{count} incidents loaded", { count: fireIncidents.length })}</small></span></button>
-            <button onClick={() => choosePanel("hazards")}><Activity className="earthquake-color" size={24} /><span><strong>{t("Earthquake")}</strong><small>{t("{count} events loaded", { count: earthquakeEvents.length })}</small></span></button>
-          </div>
+          <div className="desktop-hazard-overview">{hazardOverview}</div>
           <div className="map-canvas">
             <Map
               geolocation={geolocation}
@@ -415,6 +430,7 @@ function PublicHome() {
                 setResult(null);
                 setError(null);
                 setPanel("map");
+                setSheetState("collapsed");
               }}
             />
             <div className="map-location-status"><span className={geolocation.status === "active" ? "live-dot" : "inactive-dot"} />{locationLabel}</div>
@@ -424,7 +440,12 @@ function PublicHome() {
             </div>
           </div>
         </section>
-        <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} hideDetails={panel === "map" && !!error} onClearDestination={destination || restoring || result ? clearDestination : undefined} actions={
+        <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} hideDetails={panel === "map" && !!error} onClearDestination={destination || restoring || result ? clearDestination : undefined} mobileActions={
+          <>
+            {routeButtons}
+            <p className="mobile-routing-hint" role="status">{routingDisabledReason ?? (!geolocation.position ? locationLabel : !destination ? t("Tap the map to set your destination.") : t(TRAVEL_MODES[travelMode].label))}</p>
+          </>
+        } actions={
           <>
           <div className={`route-actions${destination ? " has-destination" : ""}${error ? " has-route-error" : ""}`}>
             {restoring && <p role="status">{!isOnline
@@ -463,17 +484,13 @@ function PublicHome() {
             {routingDisabledReason && <p>{routingDisabledReason}</p>}
             {!destination && !result && <p>{t("Tap the map to set your destination.")}</p>}
             {destinationName.loading && !recommendedCenter && <p role="status">{t("Finding place name…")}</p>}
-            <button type="button" className="primary-button" disabled={!destination || !geolocation.position || loading !== null || !isOnline} onClick={() => { setPanel("map"); setSheetState("partial"); handleFindRoute(); }}>
-              {loading === "route" ? t("Calculating…") : t("Find safer route")}<ArrowRight size={18} />
-            </button>
-            <button type="button" className="secondary-button" disabled={!geolocation.position || loading !== null || !isOnline} onClick={() => { setSelectedCenter(null); setPanel("map"); setSheetState("partial"); handleFindEvacuationCenter(); }}>
-              <Building2 size={18} />{loading === "evacuation" ? t("Searching…") : t("Find evacuation center")}
-            </button>
+            <div className="desktop-route-buttons">{routeButtons}</div>
             {!geolocation.position && <p className="location-help">{locationLabel}. {t("Enable location access to calculate a route.")}</p>}
           </div>
           {panel === "hazards" && <Link href="/admin/login" className="mobile-staff-access">{t("Staff access · Admin sign in")}</Link>}
           </>
         }>
+            <div className="mobile-hazard-overview">{hazardOverview}</div>
             {loading && <p role="status" className="route-update-status">{t("Updating route for {mode}…", { mode: t(TRAVEL_MODES[travelMode].label) })}{result ? " " + t("Previous route details shown below until calculation finishes.") : ""}</p>}
             {panel === "map" && result && <RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={resultMode} hideHeading />}
             {panel === "map" && !result && !error && routeLabel && (
@@ -482,8 +499,12 @@ function PublicHome() {
               </section>
             )}
             <div className={`panel-heading ${panel === "map" && (result || destination) ? "route-intro" : ""}`}><span className="eyebrow">SANTA ROSA · LAGUNA</span><h2>{panel === "hazards" ? t("Hazard information") : panel === "centers" ? t("Evacuation centers") : result ? t("Your route") : t("Find your way to safety")}</h2>
-              <p>{panel === "hazards" ? t("Reported conditions and verified road impacts.") : t("Choose a point on the map or find a recommended evacuation center.")}</p>
+              <p>{panel === "hazards" ? t("Reported conditions and verified road impacts.") : panel === "centers" ? t("Choose a center to review capacity, supplies, and location.") : t("Choose a point on the map or find a recommended evacuation center.")}</p>
             </div>
+            {panel === "map" && !destination && !result && !error && <div className="route-onboarding">
+              <span className="route-onboarding-icon"><MapPin size={22} aria-hidden="true" /></span>
+              <div><strong>{t("Where do you need to go?")}</strong><p>{t("Search above or tap the map. No destination? Find an evacuation center below.")}</p></div>
+            </div>}
             {panel === "hazards" && (
               <section className="hazard-details">
                 <div className="info-notice">{t("Loaded reports are not an all-clear. Conditions can change; follow local emergency guidance.")}</div>
@@ -509,6 +530,18 @@ function PublicHome() {
                 {displayedCenter.contactInformation && <p>{displayedCenter.contactInformation}</p>}
                 <ShelterSupplies center={displayedCenter} />
                 {displayedCenter.notes && <p>{displayedCenter.notes}</p>}
+                <button type="button" className="secondary-button center-route-button" disabled={displayedCenter.status === "CLOSED" || displayedCenter.status === "FULL"} onClick={() => {
+                  cancelRestore();
+                  const point = { latitude: displayedCenter.latitude, longitude: displayedCenter.longitude };
+                  saveRouteSelection({ destination: point, travelMode, intent: null });
+                  routeVersion.current += 1;
+                  routeIntent.current = null;
+                  setDestination(point);
+                  setSearchSelection({ id: `center-${displayedCenter.id}`, ...point, label: { title: displayedCenter.name, subtitle: displayedCenter.address, source: "center" } });
+                  setResult(null); setError(null); setAssistanceContext(null); setLoading(null);
+                  setPanel("map"); setSheetState("partial");
+                }}><MapPin size={18} aria-hidden="true" />{t("Use as destination")}</button>
+                {(displayedCenter.status === "CLOSED" || displayedCenter.status === "FULL") && <p>{t("This center is not accepting arrivals. Choose another center.")}</p>}
               </section>
             )}
             {panel === "centers" && (

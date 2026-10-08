@@ -1,5 +1,5 @@
 "use client";
-import { useLanguage } from "@/components/LanguageProvider";
+import { LanguageToggle, useLanguage } from "@/components/LanguageProvider";
 
 
 import { useEffect, useId, useRef, useState } from "react";
@@ -97,6 +97,7 @@ export function MobileNavigation({ activeSection, onSelect }: {
             </button>
           ))}
         </nav>
+        <div className="mobile-drawer-language"><LanguageToggle expanded /></div>
       </dialog>
     </div>
   );

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { translate } from "./translations";
 describe("public language selection", () => {
+  it("translates the new planning and sheet controls", () => {
+    for (const text of ["Where do you need to go?", "Use as destination", "Full details", "Show less", "How this time is estimated", "This center is not accepting arrivals. Choose another center."]) {
+      expect(translate(text, "fil")).not.toBe(text);
+    }
+  });
   it("translates controls while leaving recorded names unchanged", () => {
     expect(translate("Find safer route", "fil")).toBe("Maghanap ng mas ligtas na ruta");
     expect(translate("Santa Rosa Multipurpose Complex", "fil")).toBe("Santa Rosa Multipurpose Complex");

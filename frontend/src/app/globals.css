@@ -213,6 +213,13 @@
 @keyframes mobile-drawer-enter { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @media (prefers-reduced-motion: reduce) { .mobile-navigation-drawer[open] { animation: none; } }
 :root {
+  --brand-maroon: #800000;
+  --brand-maroon-dark: #600000;
+  --brand-cream: #fffaf3;
+  --brand-soft: #f6eee7;
+  --button-yellow: #f4d84b;
+  --button-yellow-hover: #e8c630;
+  --button-ink: #3b250a;
   --accent: #f4d84b;
   --ink: #252b31;
   --muted: #5d6875;
@@ -252,6 +259,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   width: 48px;
   height: 48px;
   flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
 }
 .brand-mark img {
   display: block;
@@ -1860,11 +1869,33 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 }
 /* Public language selector and shelter operations. */
 .language-toggle select { min-height: 44px; max-width: 105px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px; background: white; color: #172033; font-size: 13px; }
-.shelter-supplies { margin: 14px 0; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
-.shelter-supplies h4 { font-weight: 700; }
-.shelter-supplies dl > div { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; }
-.shelter-supplies dd { font-weight: 600; }
-.shelter-supplies p { font-size: 12px; margin-top: 10px; }
+.shelter-supplies { margin: 16px 0; padding: 14px; border: 1px solid #dfe5e8; border-radius: 14px; background: white; }
+.supply-heading { display: flex; align-items: center; gap: 8px; color: #334155; margin-bottom: 12px; }
+.supply-heading h4 { font-size: 14px; font-weight: 700; }
+.supply-list { display: grid; gap: 8px; }
+.supply-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 10px; background: #f6f8fa; border: 1px solid #edf0f3; border-radius: 10px; }
+.supply-row dt { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; }
+.supply-icon { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; background: white; color: #526579; }
+.supply-status { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 5px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; line-height: 1.4; text-transform: capitalize; }
+.supply-status > span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.supply-adequate { color: #23613e; background: #e6f3e9; }
+.supply-low { color: #85500b; background: #fff0cd; }
+.supply-unavailable { color: #9b352d; background: #fde9e6; }
+.supply-unknown { color: #536170; background: #e8edf2; }
+.supply-updated { display: flex; align-items: flex-start; gap: 7px; margin-top: 12px; color: #647184; }
+.supply-updated > svg { margin-top: 2px; flex-shrink: 0; }
+.shelter-supplies .supply-updated p { margin: 0; font-size: 11px; line-height: 1.6; }
+.supply-updated span, .supply-updated time, .supply-updated strong { display: block; }
+.supply-updated time, .supply-updated strong { font-weight: 500; color: #435266; }
+.supply-stale { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding: 10px; border: 1px solid #f0dcac; border-radius: 9px; background: #fffaeb; color: #805416; }
+.supply-stale > svg { flex-shrink: 0; margin-top: 2px; }
+.shelter-supplies .supply-stale p { margin: 0; font-size: 12px; line-height: 1.5; color: inherit; }
+.mobile-drawer-language { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+.language-options legend { font-size: 12px; font-weight: 700; color: #526071; margin-bottom: 10px; }
+.language-options > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.language-options button { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; border: 1px solid #dce1e6; border-radius: 10px; padding: 10px 12px; font-size: 14px; background: #f8fafc; }
+.language-options button[aria-pressed="true"] { border-color: #bca219; background: #fff6bf; font-weight: 700; }
+@media (max-width: 800px) { .public-app .app-header > .language-toggle { display: none; } }
 .shelter-supplies-form { margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
 .shelter-supplies-form legend { font-weight: 700; margin-bottom: 8px; }
 .shelter-supplies-form label { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
@@ -1872,3 +1903,178 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .shelter-supplies-form p { margin-top: 8px; font-size: 13px; }
 .assistance-record-actions { flex-wrap: wrap; gap: 8px; }
 @media (max-width: 480px) { .public-app .app-header { gap: 6px; } .language-toggle select { max-width: 82px; } }
+
+/* Public map: compact navigation, readable route metrics, thumb-friendly actions. */
+.sheet-mobile-actions, .mobile-hazard-overview { display: none; }
+.desktop-route-buttons { display: contents; }
+.desktop-hazard-overview { flex-shrink: 0; }
+.public-app { background: #f4f6f8; }
+.public-app :is(button, a, input, select, summary):focus-visible { outline: 3px solid #185fa5; outline-offset: 3px; }
+.public-app .app-header { gap: 18px; }
+.public-app .place-search-field { border-radius: 14px; box-shadow: 0 2px 8px #17232f06; }
+.public-app .hazard-strip button { min-height: 60px; padding: 10px 14px; border-radius: 12px; transition: background-color .15s; }
+.public-app .hazard-strip button:hover { background: #f9fafb; }
+.public-app .hazard-strip strong { font-size: 13px; }
+.public-app .hazard-strip small { font-size: 11px; line-height: 1.4; }
+.public-app .navigation-rail { border-radius: 16px; }
+.public-app .navigation-rail > button { text-transform: none; font-size: 12px; min-height: 88px; }
+.public-app .information-panel { border-radius: 16px; box-shadow: 0 4px 16px #17232f04; }
+.public-app .sheet-controls { padding: 12px 16px; }
+.public-app .sheet-desktop-title { font-size: 19px; line-height: 1.35; }
+.public-app .panel-scroll { padding: 18px 18px 12px; }
+.public-app .panel-heading h2 { font-size: 25px; letter-spacing: -.5px; }
+.public-app .panel-heading p { font-size: 14px; line-height: 1.6; }
+.route-onboarding { display: flex; align-items: flex-start; gap: 12px; margin: 18px 0 4px; padding: 14px; border: 1px solid #e5e9ee; border-radius: 12px; background: #f8fafc; }
+.route-onboarding-icon { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 10px; color: #897621; background: #f6efc4; }
+.route-onboarding strong { font-size: 14px; }
+.route-onboarding p { font-size: 13px; line-height: 1.6; color: #5c6573; margin-top: 4px; }
+.public-app .route-summary { padding: 18px; background: #fffef7; border-radius: 14px; }
+.public-app .route-summary p { font-size: 13px; line-height: 1.6; }
+.public-app .route-metrics { gap: 14px; margin: 18px 0; }
+.public-app .route-metrics > div + div { border-left: 1px solid #e8e2bd; padding-left: 14px; }
+.public-app .route-metrics strong { font-size: clamp(20px, 2vw, 28px); line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.public-app .route-metrics small { font-size: 12px; line-height: 1.5; }
+.public-app .route-risk { display: inline-block; padding: 5px 9px; border-radius: 6px; background: #f0edda; }
+.public-app .route-risk-context { color: #5c6573; }
+.public-app .route-estimate-details { margin-top: 12px; border-top: 1px solid #e8e2bd; font-size: 12px; color: #5c6573; }
+.public-app .route-estimate-details summary { min-height: 44px; padding: 12px 0; cursor: pointer; }
+.public-app .route-actions { gap: 10px; padding: 16px 18px; }
+.public-app .route-actions > :is(.primary-button, .secondary-button) { min-height: 48px; font-size: 14px; border-radius: 12px; }
+.public-app .travel-mode-selector legend { font-size: 13px; }
+.public-app .travel-mode-options { gap: 6px; }
+.public-app .travel-mode-options span { min-height: 58px; padding: 8px 3px; gap: 5px; font-size: 12px; border-radius: 10px; }
+.public-app .center-list-item { padding: 14px 10px; min-height: 76px; border-radius: 12px; }
+.public-app .center-list-item strong { font-size: 14px; line-height: 1.4; }
+.public-app .center-list-item small { font-size: 12px; }
+.public-app .center-route-button { width: 100%; min-height: 48px; margin-top: 14px; gap: 8px; }
+.public-app .record-card { border-radius: 12px; padding: 14px; }
+@media (min-width: 801px) {
+  .public-app .public-workspace { grid-template-columns: 76px minmax(0, 1fr) clamp(320px, 27vw, 390px); gap: 12px; padding: 12px; }
+  .public-app .sheet-size-button { display: none; }
+  .public-app .app-header { min-height: 72px; padding: 10px 24px; }
+  .public-app .navigation-rail > button { min-height: 82px; padding: 12px 6px; font-size: 11px; }
+  .public-app .map-workspace { gap: 10px; }
+  .public-app .hazard-strip button { min-height: 52px; padding: 8px 12px; }
+  .public-app .sheet-controls { background: #fafbf8; border-radius: 16px 16px 0 0; }
+  .public-app .sheet-body { flex: 1; scrollbar-gutter: stable; }
+  .public-app .route-actions { background: #fafbf8; border-top: 1px solid var(--border); }
+  .public-app .center-list-item[aria-pressed="true"] { background: #fff8d6; box-shadow: inset 3px 0 #bca219; }
+}
+@media (min-width: 801px) and (max-width: 1100px) {
+  .public-app .brand-promise, .public-app .city-label { display: none; }
+  .public-app .admin-link { margin-left: auto; }
+  .public-app .public-workspace { grid-template-columns: 72px minmax(0, 1fr) 310px; gap: 10px; padding: 10px; }
+  .public-app .hazard-strip button { gap: 6px; padding: 8px; }
+}
+@media (max-width: 800px) {
+  .public-app .app-header { gap: 8px; }
+  .public-app .map-workspace { gap: 0; position: relative; }
+  .public-app .place-search { position: absolute; top: 10px; left: 10px; right: 10px; margin: 0; }
+  .public-app .map-canvas .leaflet-top { top: 64px; }
+  .public-app .map-location-status { top: 76px; }
+  .public-app .desktop-hazard-overview { display: none; }
+  .public-app .mobile-hazard-overview { display: block; margin: 0 -6px 12px; }
+  .public-app .place-search-field { border-radius: 12px; }
+  .public-app .hazard-strip { padding: 0 8px 6px; gap: 4px; background: white; }
+  .public-app .hazard-strip button { min-height: 44px; padding: 4px 6px; border-radius: 8px; gap: 5px; background: #f5f7f9; }
+  .public-app .hazard-strip strong { font-size: 11px; }
+  .public-app .hazard-strip small { font-size: 10px; }
+  .public-app .information-panel { border-radius: 18px 18px 0 0; box-shadow: 0 -4px 18px #17232f14; }
+  .public-app .sheet-controls { padding: 0 8px; gap: 0; }
+  .public-app .sheet-toggle { padding: 16px 6px 8px; min-height: 58px; }
+  .public-app .sheet-preview strong { font-size: 14px; }
+  .public-app .sheet-preview small { font-size: 11px; line-height: 1.4; }
+  .public-app .sheet-size-button { max-width: 90px; padding: 8px; font-size: 12px; color: #526071; }
+  .public-app .sheet-body .panel-scroll { padding: 12px 16px; }
+  .public-app .sheet-body .route-actions { padding: 12px 14px; gap: 8px; }
+  .public-app .route-actions > :is(.primary-button, .secondary-button) { font-size: 13px; }
+  /* Actions live outside the scrolling details in every mobile sheet state. */
+  .public-app .sheet-collapsed,
+  .public-app .sheet-collapsed:has(.route-actions.has-destination) { height: auto; max-height: 45%; }
+  .public-app .sheet-collapsed .sheet-body { display: none; }
+  .public-app .sheet-mobile-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px 12px; flex-shrink: 0; border-top: 1px solid var(--border); background: white; }
+  .public-app .sheet-mobile-actions > button { min-width: 0; min-height: 48px; padding: 8px 6px; border-radius: 10px; font-size: 12px; line-height: 1.35; }
+  .public-app .sheet-mobile-actions > button svg { display: none; }
+  .public-app .mobile-routing-hint { grid-column: 1 / -1; color: var(--muted); font-size: 11px; line-height: 1.35; text-align: center; }
+  .public-app .desktop-route-buttons { display: none; }
+  .public-app .sheet-partial .route-extra, .public-app .sheet-partial .data-note { display: block; }
+  .public-app .route-summary { padding: 14px; }
+  .public-app .route-metrics strong { font-size: 25px; }
+  .public-app .route-summary .route-risk-context { font-size: 12px; }
+  .public-app .route-onboarding { margin-top: 12px; }
+  .public-app .sheet-partial { height: 42%; max-height: 42%; }
+  .public-app .sheet-expanded { height: 76%; max-height: 76%; }
+  /* Full details cover the map instead of squeezing its controls together. */
+  .public-app .sheet-expanded { position: absolute; inset: auto 0 0; z-index: 700; }
+  .public-app .sheet-body { flex: 1; }
+  .public-app .map-location-status { background: #fffffff2; border-radius: 8px; min-height: 30px; padding: 6px 8px; font-size: 10px; }
+  .public-app .travel-mode-options span { min-height: 48px; padding: 5px 2px; }
+}
+@media (max-width: 800px) and (orientation: landscape) {
+  .public-app .route-sheet,
+  .public-app .sheet-collapsed:has(.route-actions.has-destination) { position: relative; inset: auto; z-index: auto; height: 100%; max-height: 100%; border-radius: 12px 0 0 12px; }
+  .public-app .sheet-toggle { min-height: 52px; }
+  .public-app .sheet-collapsed .sheet-body { display: block; }
+  .public-app .sheet-mobile-actions { padding: 6px 8px; }
+  .public-app .sheet-collapsed .route-actions > .travel-mode-selector { display: block; }
+  .public-app .sheet-collapsed .route-actions .secondary-button { display: inline-flex; }
+  .public-app .sheet-size-button { display: none; }
+}
+@media (max-width: 800px) and (max-height: 650px) and (orientation: portrait) {
+  /* Keep report counts readable without spending two lines on each label. */
+  .public-app .hazard-strip button { gap: 3px; padding: 3px; }
+  .public-app .hazard-strip small { font-size: 9px; }
+  .public-app .hazard-strip button > svg { display: none; }
+  .public-app .sheet-toggle { min-height: 52px; padding-top: 12px; padding-bottom: 6px; }
+  .public-app .sheet-mobile-actions { padding: 6px 8px; }
+}
+
+/* Light neutral surfaces, yellow actions, and restrained logo accents. */
+.public-app { background: #f5f6f7; --border: #e1e5e8; --surface: #f8f9fa; }
+.public-app .app-header { background: white; color: var(--ink); border-bottom: 2px solid var(--button-yellow); }
+.public-app .brand-name { color: var(--ink); }
+.public-app .brand-caption { color: var(--muted); }
+.public-app .brand-name > span { color: var(--brand-maroon); }
+.public-app .brand-promise { border-color: var(--border); }
+.public-app .city-label { color: var(--muted); background: #f5f6f7; }
+.public-app .admin-link { color: var(--ink); }
+.public-app .language-toggle select { border-color: var(--border); background: white; color: var(--ink); }
+.public-app .information-panel, .public-app .mobile-navigation-drawer { background: white; }
+.public-app .sheet-controls { background: white; }
+.public-app .sheet-desktop-title, .public-app .sheet-preview strong,
+.public-app .panel-heading h2, .public-app .selected-center h3,
+.public-app .mobile-drawer-heading h2, .public-app .supply-heading { color: var(--ink); }
+.public-app .sheet-size-button, .public-app .sheet-clear { color: var(--muted); }
+.public-app .sheet-handle { background: #bac1c7; }
+.public-app .route-actions, .public-app .sheet-mobile-actions { background: white; }
+.public-app .primary-button, .public-app .secondary-button {
+  background: var(--button-yellow); color: var(--button-ink); border-color: #c4a51c;
+}
+.public-app :is(.primary-button, .secondary-button):hover:not(:disabled) { background: var(--button-yellow-hover); }
+.public-app :is(.primary-button, .secondary-button):active:not(:disabled) { background: #dbb722; }
+.public-app :is(.primary-button, .secondary-button):disabled { background: #eef0f2; color: #68717b; border-color: #e0e4e8; }
+.public-app .navigation-rail { background: white; }
+.public-app .navigation-rail > button { color: var(--muted); }
+.public-app .navigation-rail > button[aria-pressed="true"] { background: #fff0ad; border-color: #b59a23; color: var(--button-ink); }
+.public-app .navigation-rail > button:hover { background: #fff4ce; }
+.public-app .route-onboarding { background: #f8fafc; border-color: var(--border); }
+.public-app .route-onboarding-icon, .public-app .supply-icon { background: #fff4cf; color: #786119; }
+.public-app .route-summary { background: #fffbed; border-color: #ecddb2; }
+.public-app .travel-mode-options input:checked + span { background: #fff0ad; border-color: #b59a23; color: var(--button-ink); }
+.public-app .mobile-navigation-drawer nav button[aria-current="page"],
+.public-app .language-options button[aria-pressed="true"] { background: #fff0ad; border-color: #b59a23; color: var(--button-ink); }
+.public-app .language-options button { background: white; }
+.public-app .emergency-contact-trigger { background: #fff8f6; color: var(--brand-maroon); border-color: #e3c5bf; }
+.public-app .emergency-contact-trigger:hover { background: #f9eae6; }
+.public-app .emergency-contact-floating .emergency-contact-trigger { background: white; color: var(--brand-maroon); border-color: #e3c5bf; }
+.public-app .emergency-contact-floating .emergency-contact-trigger:hover { background: #f9eae6; }
+.public-app :is(button, a, input, select, summary):focus-visible { outline-color: var(--brand-maroon); }
+.public-app .app-header > :is(a, button):focus-visible,
+.public-app .app-header > .language-toggle select:focus-visible,
+.public-app .app-header > .mobile-navigation > button:focus-visible,
+.public-app .app-header > .emergency-contact > button:focus-visible { outline-color: var(--brand-maroon); }
+@media (max-width: 800px) {
+  .public-app .app-header > .mobile-navigation > .mobile-menu-trigger { background: var(--button-yellow); color: var(--button-ink); border-color: #c4a51c; border-radius: 10px; }
+  .public-app .app-header > .mobile-navigation > .mobile-menu-trigger:hover { background: var(--button-yellow-hover); }
+  .public-app .mobile-navigation-drawer { color: var(--ink); }
+}
