@@ -3,12 +3,10 @@ import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import { canvas, polyline, type LatLngTuple } from "leaflet";
 import { getOfflinePackage } from "@/lib/offline/routing";
-import { useSystemDarkMode } from "@/hooks/useSystemDarkMode";
 
 // A local road-only basemap: no remote tiles or tile downloads are needed.
 export function OfflineRoadLayer({ ready }: { ready: boolean }) {
   const map = useMap();
-  const dark = useSystemDarkMode();
   useEffect(() => {
     if (!ready) return;
     let cancelled = false;
@@ -28,10 +26,10 @@ export function OfflineRoadLayer({ ready }: { ready: boolean }) {
         if (start && end) lines.push([[start.latitude, start.longitude], [end.latitude, end.longitude]]);
       }
       layer = polyline(lines, { renderer: canvas({ pane: "offline-roads" }),
-        pane: "offline-roads", color: dark ? "#899aae" : "#7c8b9b", weight: 2, opacity: 0.85, interactive: false }).addTo(map);
+        pane: "offline-roads", color: "#7c8b9b", weight: 2, opacity: 0.85, interactive: false }).addTo(map);
       map.attributionControl.addAttribution(attribution);
     }).catch(() => {});
     return () => { cancelled = true; layer?.remove(); map.attributionControl.removeAttribution(attribution); };
-  }, [map, ready, dark]);
+  }, [map, ready]);
   return null;
 }

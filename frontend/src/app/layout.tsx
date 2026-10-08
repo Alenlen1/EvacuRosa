@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
-import "./theme.css";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { DEVELOPMENT_WORKER_RESET } from "@/lib/developmentWorkerReset";
 
@@ -23,10 +22,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4d84b" },
-    { media: "(prefers-color-scheme: dark)", color: "#151c26" },
-  ],
+  themeColor: "#f4d84b",
 };
 
 export default function RootLayout({
@@ -41,7 +37,7 @@ export default function RootLayout({
       </head>
       {/* Grammarly can inject body attributes before hydration. Suppress only
           this element's mismatch; descendant hydration warnings remain active. */}
-      <body className="antialiased" suppressHydrationWarning>
+      <body className="antialiased bg-white text-slate-900" suppressHydrationWarning>
         <ServiceWorkerRegistration />
         {children}
       </body>
