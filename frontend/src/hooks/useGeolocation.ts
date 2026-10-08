@@ -12,7 +12,7 @@ export type GeolocationStatus =
 
 export interface GeolocationState {
   status: GeolocationStatus;
-  position: { latitude: number; longitude: number; accuracy: number } | null;
+  position: { latitude: number; longitude: number; accuracy: number; timestamp: number; heading: number | null; speed: number | null } | null;
   error: string | null;
 }
 
@@ -48,6 +48,9 @@ export function useGeolocation(): GeolocationState {
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
             accuracy: pos.coords.accuracy,
+            timestamp: pos.timestamp,
+            heading: pos.coords.heading,
+            speed: pos.coords.speed,
           },
           error: null,
         });

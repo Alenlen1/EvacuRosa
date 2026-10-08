@@ -978,8 +978,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
   display: block;
   margin-bottom: 4px;
 }
-.hazard-layer-controls {
-  bottom: 25px !important;
+.public-app .hazard-layer-controls {
+  bottom: 25px;
 }
 .sheet-toggle {
   display: none;
@@ -2101,4 +2101,37 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .app-header > .mobile-navigation > .mobile-menu-trigger { background: var(--button-yellow); color: var(--button-ink); border-color: #c4a51c; border-radius: 10px; }
   .public-app .app-header > .mobile-navigation > .mobile-menu-trigger:hover { background: var(--button-yellow-hover); }
   .public-app .mobile-navigation-drawer { color: var(--ink); }
+}
+
+/* Walking navigation: camera controls stay separate from route planning. */
+.leaflet-container .navigation-controls { left: 10px; right: 10px; bottom: 24px; z-index: 1100; pointer-events: none; }
+.leaflet-container .navigation-controls .navigation-card { float: none; margin: 0; width: min(100%, 390px); border: 1px solid #dbe3ec; border-radius: 14px; padding: 10px; background: #fffffff5; box-shadow: 0 3px 16px #17232f20; pointer-events: auto; color: #243345; overflow-wrap: anywhere; }
+.navigation-card > .primary-button { width: 100%; }
+.navigation-card > small { display: block; font-size: 11px; line-height: 1.4; margin: 4px 0; }
+.navigation-card > p { display: flex; gap: 8px; font-size: 12px; line-height: 1.45; }
+.navigation-progress { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.navigation-progress strong { font-size: 21px; font-variant-numeric: tabular-nums; }
+.navigation-progress span { font-size: 12px; }
+.navigation-status { margin: 5px 0; }
+.navigation-buttons { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 5px; }
+.navigation-card button { min-height: 44px; }
+.navigation-buttons button { display: flex; justify-content: center; align-items: center; gap: 5px; border: 1px solid #d8e0e9; border-radius: 8px; background: #f7f9fc; font-size: 11px; padding: 6px; }
+.navigation-buttons button[aria-pressed="true"] { background: #eaf2ff; border-color: #98b9e9; color: #174b9f; }
+.navigation-buttons button:first-child { background: #f4d84b; color: #3b250a; border-color: #c4a51c; }
+.navigation-direction { position: relative; width: 32px; height: 32px; transform-origin: center; }
+.navigation-arrow { position: absolute; inset: 3px; background: #2563eb; clip-path: polygon(50% 0, 100% 100%, 50% 76%, 0 100%); filter: drop-shadow(0 1px 2px white); }
+.navigation-cone { position: absolute; width: 90px; height: 80px; bottom: 16px; left: -29px; clip-path: polygon(50% 100%, 0 0, 100% 0); background: linear-gradient(to top, #2563eb60, #2563eb00); }
+.navigation-direction.heading-unknown .navigation-cone { display: none; }
+.navigation-direction.heading-unknown .navigation-arrow { clip-path: none; border: 3px solid white; border-radius: 50%; }
+.map-canvas:has(.navigation-controls) .hazard-layer-controls { bottom: auto; top: 64px; left: 56px; }
+.map-canvas:has(.navigation-controls) .map-secondary-controls { bottom: auto; top: 124px; flex-direction: row; gap: 6px; }
+.map-canvas:has(.navigation-controls) .map-location-status { display: none; }
+.map-canvas:has(.navigation-card.is-active) .map-location-status { display: none; }
+@media (max-width: 800px) {
+  .map-workspace:has(.navigation-card.is-active) > .place-search { display: none; }
+  .public-app .map-canvas:has(.navigation-card.is-active) .leaflet-top { top: 0; }
+  .public-app .map-canvas:has(.navigation-card.is-active) .map-secondary-controls { top: 10px; }
+  .leaflet-container .navigation-controls .navigation-card { width: 100%; }
+  .navigation-buttons button { flex-direction: column; gap: 2px; }
+  .public-app:has(.navigation-card.is-active) .offline-readiness { display: none; }
 }
