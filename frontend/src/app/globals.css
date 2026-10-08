@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+.location-recovery {
+  display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0;
+  padding: 10px 16px; border-bottom: 1px solid #dfca83;
+  background: #fff7dc; color: #584511; font-size: 12px; line-height: 1.45;
+  max-height: 30dvh; overflow-y: auto;
+}
+.location-recovery > svg { flex-shrink: 0; margin-top: 2px; }
+.location-recovery > div { flex: 1; min-width: 0; }
+.location-recovery strong { display: block; }
+.location-recovery p { margin: 3px 0; }
+.location-recovery summary { text-decoration: underline; min-height: 28px; }
+.location-recovery > button {
+  flex-shrink: 0; min-height: 44px; border: 1px solid #bfa448;
+  background: #f4d84b; color: #3b250a; border-radius: 8px; padding: 8px 12px; font-weight: 600;
+}
+.location-recovery > button:disabled { opacity: .65; }
+@media (max-width: 800px) {
+  .location-recovery { display: grid; grid-template-columns: 20px minmax(0, 1fr); padding: 8px; gap: 8px; font-size: 11px; }
+  .location-recovery > button { grid-column: 2; justify-self: start; min-height: 44px; }
+}
+
 .route-update-status {
   margin-bottom: 12px;
   padding: 10px 12px;
