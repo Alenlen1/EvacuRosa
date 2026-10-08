@@ -1,4 +1,13 @@
 export const filipino: Record<string, string> = {
+  "Where do you need to go?": "Saan mo kailangang pumunta?",
+  "Search above or tap the map. No destination? Find an evacuation center below.": "Maghanap sa itaas o pindutin ang mapa. Walang destinasyon? Maghanap ng evacuation center sa ibaba.",
+  "Choose a center to review capacity, supplies, and location.": "Pumili ng center upang tingnan ang kapasidad, suplay, at lokasyon.",
+  "Use as destination": "Gawing destinasyon",
+  "This center is not accepting arrivals. Choose another center.": "Hindi tumatanggap ang center na ito. Pumili ng ibang center.",
+  "How this time is estimated": "Paano tinatantiya ang oras na ito",
+  "Show less": "Ipakita ang mas kaunti",
+  "Full details": "Buong detalye",
+  "Estimated travel time is unavailable.": "Hindi makuha ang tinatayang oras ng paglalakbay.",
   "Search a place in Santa Rosa…": "Maghanap ng lugar sa Santa Rosa…",
   "{count} reports · {blocked} blocked": "{count} ulat · {blocked} sarado",
   "{count} incidents loaded": "{count} na-load na insidente", "{count} events loaded": "{count} na-load na pangyayari",

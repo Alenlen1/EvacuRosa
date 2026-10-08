@@ -348,7 +348,7 @@ function PublicHome() {
   };
 
   return (
-    <main className="public-app">
+    <main className={`public-app public-view-${panel}`}>
       <header className="app-header">
         <h1><Brand /></h1>
         <p className="brand-promise">{t("Safe routes. Safe shelters.")}<br /><strong>{t("A safer Santa Rosa.")}</strong></p>
@@ -415,6 +415,7 @@ function PublicHome() {
                 setResult(null);
                 setError(null);
                 setPanel("map");
+                setSheetState("partial");
               }}
             />
             <div className="map-location-status"><span className={geolocation.status === "active" ? "live-dot" : "inactive-dot"} />{locationLabel}</div>
@@ -482,8 +483,12 @@ function PublicHome() {
               </section>
             )}
             <div className={`panel-heading ${panel === "map" && (result || destination) ? "route-intro" : ""}`}><span className="eyebrow">SANTA ROSA · LAGUNA</span><h2>{panel === "hazards" ? t("Hazard information") : panel === "centers" ? t("Evacuation centers") : result ? t("Your route") : t("Find your way to safety")}</h2>
-              <p>{panel === "hazards" ? t("Reported conditions and verified road impacts.") : t("Choose a point on the map or find a recommended evacuation center.")}</p>
+              <p>{panel === "hazards" ? t("Reported conditions and verified road impacts.") : panel === "centers" ? t("Choose a center to review capacity, supplies, and location.") : t("Choose a point on the map or find a recommended evacuation center.")}</p>
             </div>
+            {panel === "map" && !destination && !result && !error && <div className="route-onboarding">
+              <span className="route-onboarding-icon"><MapPin size={22} aria-hidden="true" /></span>
+              <div><strong>{t("Where do you need to go?")}</strong><p>{t("Search above or tap the map. No destination? Find an evacuation center below.")}</p></div>
+            </div>}
             {panel === "hazards" && (
               <section className="hazard-details">
                 <div className="info-notice">{t("Loaded reports are not an all-clear. Conditions can change; follow local emergency guidance.")}</div>
@@ -509,6 +514,18 @@ function PublicHome() {
                 {displayedCenter.contactInformation && <p>{displayedCenter.contactInformation}</p>}
                 <ShelterSupplies center={displayedCenter} />
                 {displayedCenter.notes && <p>{displayedCenter.notes}</p>}
+                <button type="button" className="secondary-button center-route-button" disabled={displayedCenter.status === "CLOSED" || displayedCenter.status === "FULL"} onClick={() => {
+                  cancelRestore();
+                  const point = { latitude: displayedCenter.latitude, longitude: displayedCenter.longitude };
+                  saveRouteSelection({ destination: point, travelMode, intent: null });
+                  routeVersion.current += 1;
+                  routeIntent.current = null;
+                  setDestination(point);
+                  setSearchSelection({ id: `center-${displayedCenter.id}`, ...point, label: { title: displayedCenter.name, subtitle: displayedCenter.address, source: "center" } });
+                  setResult(null); setError(null); setAssistanceContext(null); setLoading(null);
+                  setPanel("map"); setSheetState("partial");
+                }}><MapPin size={18} aria-hidden="true" />{t("Use as destination")}</button>
+                {(displayedCenter.status === "CLOSED" || displayedCenter.status === "FULL") && <p>{t("This center is not accepting arrivals. Choose another center.")}</p>}
               </section>
             )}
             {panel === "centers" && (
