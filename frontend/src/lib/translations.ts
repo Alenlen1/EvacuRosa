@@ -1,4 +1,6 @@
 export const filipino: Record<string, string> = {
+  "Waiting for a GPS location": "Naghihintay ng lokasyon mula sa GPS",
+  "Your phone has not provided a location yet. If Location Services are already on, wait for a GPS signal or try again. You do not need to turn location on again.": "Wala pang lokasyon mula sa telepono. Kung naka-on na ang Location Services, maghintay ng signal ng GPS o subukang muli. Hindi kailangang i-on muli ang lokasyon.",
   "Location help": "Tulong sa lokasyon",
   "Enable location to find a route": "I-on ang lokasyon para makahanap ng ruta",
   "Checking your location…": "Sinusuri ang iyong lokasyon…",

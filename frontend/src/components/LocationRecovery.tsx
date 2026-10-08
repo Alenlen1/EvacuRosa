@@ -8,11 +8,14 @@ export function LocationRecovery({ location, onRetry }: { location: GeolocationS
   const { t } = useLanguage();
   if (!location.error || location.status === "active") return null;
   const locating = location.status === "locating";
+  const denied = location.status === "denied";
   return <section className="location-recovery" aria-label={t("Location help")}>
     <MapPin size={20} aria-hidden="true" />
     <div>
-      <strong role="status">{t(locating ? "Checking your location…" : "Enable location to find a route")}</strong>
-      <p>{t("Turn on your phone's Location Services and allow location access for your browser or EvacuRosa. Return here; your location will reconnect automatically.")}</p>
+      <strong role="status">{t(denied ? "Enable location to find a route" : "Waiting for a GPS location")}</strong>
+      <p>{t(denied
+        ? "Turn on your phone's Location Services and allow location access for your browser or EvacuRosa. Return here; your location will reconnect automatically."
+        : "Your phone has not provided a location yet. If Location Services are already on, wait for a GPS signal or try again. You do not need to turn location on again.")}</p>
       <details><summary>{t("How to enable location")}</summary>
         <p>{t("iPhone: Settings → Privacy & Security → Location Services. Turn it on and allow access for Safari Websites or your browser.")}</p>
         <p>{t("Android: Settings → Location. Turn it on, then allow location for Chrome or your browser and this website.")}</p>
