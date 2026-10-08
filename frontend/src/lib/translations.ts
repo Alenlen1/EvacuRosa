@@ -1,4 +1,8 @@
 export const filipino: Record<string, string> = {
+  "More map": "Palakihin ang mapa",
+  "Tap for travel options": "Pindutin para sa mga opsyon",
+  "Capacity, supplies and contact details": "Kapasidad, suplay at mga detalye ng kontak",
+  "Review route and assistance": "Tingnan ang ruta at tulong",
   "Where do you need to go?": "Saan mo kailangang pumunta?",
   "Search above or tap the map. No destination? Find an evacuation center below.": "Maghanap sa itaas o pindutin ang mapa. Walang destinasyon? Maghanap ng evacuation center sa ibaba.",
   "Choose a center to review capacity, supplies, and location.": "Pumili ng center upang tingnan ang kapasidad, suplay, at lokasyon.",
