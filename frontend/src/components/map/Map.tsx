@@ -41,6 +41,7 @@ interface MapProps {
   onNavigationStart: () => void;
   offlineReady?: boolean;
   geolocation: GeolocationState;
+  onRetryLocation?: () => void;
   destination: { latitude: number; longitude: number } | null;
   destinationLabel?: string;
   searchFocus?: { latitude: number; longitude: number } | null;
@@ -173,6 +174,7 @@ export default function Map({
   navigationCenter, travelMode, onNavigationRoute, onNavigationStart,
   offlineReady = false,
   geolocation,
+  onRetryLocation,
   destination,
   destinationLabel,
   searchFocus,
@@ -240,7 +242,10 @@ export default function Map({
       />}
       {!navigating && <MapControls
         isFollowing={following}
-        onFollowMe={() => setFollowing((f) => !f)}
+        onFollowMe={() => {
+          if (geolocation.status !== "active") { onRetryLocation?.(); setFollowing(true); }
+          else setFollowing((f) => !f);
+        }}
       />}
     </MapContainer>
   );
