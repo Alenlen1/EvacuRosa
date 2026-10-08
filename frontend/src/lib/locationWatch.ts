@@ -16,7 +16,7 @@ export function watchDeviceLocation(update: (state: GeolocationState) => void, e
   let timer: ReturnType<typeof setTimeout> | null = null;
   let permission: PermissionStatus | null = null;
   let state: GeolocationState = { status: "idle", position: null, error: null };
-  let returningFromBackground = false;
+  let startedAt = -Infinity;
 
   const publish = (next: GeolocationState) => { state = next; update(next); };
   const cancel = () => {
@@ -28,20 +28,19 @@ export function watchDeviceLocation(update: (state: GeolocationState) => void, e
   };
   const schedule = () => {
     if (disposed || page.visibilityState === "hidden" || permission?.state === "denied") return;
-    // Do not reopen a browser/OS permission dialog on a timer. Recovery comes
-    // from changed permission, returning from settings, or the retry button.
-    if (state.status === "denied") return;
+    // A dismissed browser prompt should require another user gesture.
+    if (state.status === "denied" && permission?.state === "prompt") return;
     if (timer !== null) clearTimeout(timer);
     timer = setTimeout(() => { timer = null; start(); }, 15_000);
   };
-  const start = (manual = false) => {
+  const start = () => {
     if (disposed || !geolocation || page.visibilityState === "hidden") return;
-    // Permission dialogs, keyboard interactions and window focus must not
-    // discard a working fix or interrupt a GPS acquisition in progress.
-    if (!manual && watch !== null && (state.status === "locating" || state.status === "active")) return;
+    // Focus and visibilitychange commonly arrive together when returning to a PWA.
+    if (watch !== null && state.status === "locating" && Date.now() - startedAt < 1_000) return;
     cancel();
+    startedAt = Date.now();
     const current = generation;
-    publish({ status: "locating", position: null, error: null });
+    publish({ status: "locating", position: null, error: state.error });
     const failed = (code: number) => {
       if (disposed || current !== generation) return;
       publish({ status: code === 1 ? "denied" : code === 3 ? "timeout" : "unavailable",
@@ -59,7 +58,7 @@ export function watchDeviceLocation(update: (state: GeolocationState) => void, e
           accuracy: position.coords.accuracy, timestamp: position.timestamp,
           heading: position.coords.heading, speed: position.coords.speed,
         }, error: null });
-      }, error => failed(error.code), { enableHighAccuracy: true, maximumAge: 10_000, timeout: 15_000 });
+      }, error => failed(error.code), { enableHighAccuracy: true, maximumAge: 0, timeout: 15_000 });
     } catch { failed(2); }
   };
   const permissionChanged = () => {
@@ -70,17 +69,9 @@ export function watchDeviceLocation(update: (state: GeolocationState) => void, e
     } else start();
   };
   const resume = () => {
-    if (page.visibilityState === "hidden") return;
-    const returned = returningFromBackground;
-    returningFromBackground = false;
-    if (permission?.state === "denied") return;
-    if (state.status === "denied" && !returned) return;
-    start();
+    if (page.visibilityState !== "hidden" && permission?.state !== "denied") start();
   };
-  const visibilityChanged = () => {
-    if (page.visibilityState === "hidden") { returningFromBackground = true; cancel(); }
-    else resume();
-  };
+  const visibilityChanged = () => { if (page.visibilityState === "hidden") cancel(); else resume(); };
   if (!geolocation) {
     publish({ status: "unavailable", position: null, error: "Geolocation is not supported on this device." });
     return { retry: () => {}, dispose: () => { disposed = true; } };
@@ -99,7 +90,7 @@ export function watchDeviceLocation(update: (state: GeolocationState) => void, e
       else if (["denied", "unavailable", "timeout"].includes(state.status)) schedule();
     }).catch(() => {});
   } catch { /* Resume events and manual retry work without the Permissions API. */ }
-  return { retry: () => start(true), dispose: () => {
+  return { retry: start, dispose: () => {
     disposed = true;
     cancel();
     permission?.removeEventListener("change", permissionChanged);

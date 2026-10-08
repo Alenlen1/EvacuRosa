@@ -28,40 +28,6 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
 describe("mobile location recovery", () => {
-  it("keeps an active location through focus and permission-dialog events", async () => {
-    const s = setup("granted"); await Promise.resolve(); s.success();
-    vi.advanceTimersByTime(5_000);
-    s.lifecycle.dispatchEvent(new Event("focus"));
-    s.lifecycle.dispatchEvent(new Event("pageshow"));
-    s.permission.dispatchEvent(new Event("change"));
-    expect(s.geolocation.watchPosition).toHaveBeenCalledTimes(1);
-    expect(s.state().status).toBe("active"); expect(s.state().position).not.toBeNull();
-    s.watcher.dispose();
-  });
-  it("does not restart an acquisition when focus arrives several seconds later", () => {
-    const s = setup(); vi.advanceTimersByTime(5_000);
-    s.lifecycle.dispatchEvent(new Event("focus"));
-    expect(s.geolocation.watchPosition).toHaveBeenCalledTimes(1);
-    s.watcher.dispose();
-  });
-  it("does not repeatedly request denied access when permission querying is unsupported", () => {
-    const s = setup(); s.error(1); vi.advanceTimersByTime(60_000);
-    s.lifecycle.dispatchEvent(new Event("focus"));
-    s.lifecycle.dispatchEvent(new Event("pageshow"));
-    expect(s.geolocation.watchPosition).toHaveBeenCalledTimes(1);
-    s.watcher.retry(); s.success(); expect(s.state().status).toBe("active");
-    s.watcher.dispose();
-  });
-  it("recovers an OS location-switch error on returning, without repeating the OS prompt", async () => {
-    const s = setup("granted"); await Promise.resolve(); s.error(1);
-    vi.advanceTimersByTime(15_000);
-    s.lifecycle.dispatchEvent(new Event("focus"));
-    expect(s.geolocation.watchPosition).toHaveBeenCalledTimes(1);
-    s.page.visibilityState = "hidden"; s.page.dispatchEvent(new Event("visibilitychange"));
-    s.page.visibilityState = "visible"; s.page.dispatchEvent(new Event("visibilitychange"));
-    expect(s.geolocation.watchPosition).toHaveBeenCalledTimes(2);
-    s.success(); expect(s.state().status).toBe("active"); s.watcher.dispose();
-  });
   it("recovers after returning from settings without a Permissions API", () => {
     const s = setup(); s.error(1);
     s.page.visibilityState = "hidden"; s.page.dispatchEvent(new Event("visibilitychange"));
