@@ -7,7 +7,7 @@
 import "leaflet/dist/leaflet.css";
 import { useEffect, useState } from "react";
 import { DomEvent } from "leaflet";
-import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, useMap, useMapEvents } from "react-leaflet";
 import { FloodIcon as Droplet, FireIcon as Flame, EarthquakeIcon as Activity } from "@/components/ui/HazardIcons";
 import {
   SANTA_ROSA_CITY_BOUNDS,
@@ -30,8 +30,11 @@ import { EvacuationCenterLayer } from "./EvacuationCenterLayer";
 import { FloodLayer } from "./FloodLayer";
 import { FireLayer } from "./FireLayer";
 import { EarthquakeLayer } from "./EarthquakeLayer";
+import { Basemap } from "./Basemap";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 interface MapProps {
+  offlineReady?: boolean;
   geolocation: GeolocationState;
   destination: { latitude: number; longitude: number } | null;
   destinationLabel?: string;
@@ -162,6 +165,7 @@ function LayerToggle({
 }
 
 export default function Map({
+  offlineReady = false,
   geolocation,
   destination,
   destinationLabel,
@@ -176,6 +180,7 @@ export default function Map({
   onMapClick,
   onSelectCenter,
 }: MapProps) {
+  const isOnline = useOnlineStatus();
   const [following, setFollowing] = useState(false);
   useEffect(() => { if (searchFocus) setFollowing(false); }, [searchFocus]);
   const [showFlood, setShowFlood] = useState(true);
@@ -191,10 +196,7 @@ export default function Map({
       minZoom={12}
       className="h-full w-full"
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <Basemap online={isOnline} routingReady={offlineReady} />
       {showFlood && <FloodLayer reports={floodReports} />}
       {showFire && <FireLayer incidents={fireIncidents} />}
       {showEarthquakes && (

@@ -12,6 +12,7 @@ import { roadRouter } from "./routes/road.routes";
 import { adminRouter } from "./routes/admin.routes";
 import { errorHandler } from "./middleware/error.middleware";
 import { postAssistance } from "./controllers/assistance.controller";
+import { offlineRouter } from "./routes/offline.routes";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(express.json());
 
 app.use("/api/health", healthRouter);
 app.use("/api/route", routeRouter);
+app.use("/api/offline-routing", offlineRouter);
 app.use("/api/evacuation-centers", evacuationCentersRouter);
 app.use("/api/evacuation-route", evacuationRouteRouter);
 app.use("/api/floods", floodRouter);

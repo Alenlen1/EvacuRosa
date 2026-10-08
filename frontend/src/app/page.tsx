@@ -23,6 +23,7 @@ import type { DestinationLabel } from "@/lib/reverseGeocoding";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { readRouteSelection, saveRouteSelection, clearRouteSelection } from "@/lib/routeSession";
+import { prepareOfflineRouting, getOfflinePackage, type OfflineStatus } from "@/lib/offline/routing";
 import { fetchWithCache } from "@/lib/offline/sync";
 import {
   cacheEvacuationCenters,
@@ -90,11 +91,28 @@ function PublicHome() {
   const [searchSelection, setSearchSelection] = useState<PlaceResult | null>(null);
   const geolocation = useGeolocation();
   const isOnline = useOnlineStatus();
+  const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>({ state: "checking" });
+  const [offlineRetry, setOfflineRetry] = useState(0);
+  const canRoute = isOnline || offlineStatus.state === "ready";
+  useEffect(() => {
+    let cancelled = false;
+    const update = (status: OfflineStatus) => { if (!cancelled) setOfflineStatus(status); };
+    void prepareOfflineRouting(isOnline, offlineRetry > 0, update).then(update);
+    return () => { cancelled = true; };
+  }, [isOnline, offlineRetry]);
+
   const [destination, setDestination] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
   const [centers, setCenters] = useState<EvacuationCenter[]>([]);
+  useEffect(() => {
+    if (isOnline || offlineStatus.state !== "ready") return;
+    let cancelled = false;
+    void getOfflinePackage().then(data => { if (!cancelled && data) setCenters(data.snapshot.centers); });
+    return () => { cancelled = true; };
+  }, [isOnline, offlineStatus]);
+
   const [floodReports, setFloodReports] = useState<FloodReport[]>([]);
   const [fireIncidents, setFireIncidents] = useState<FireIncident[]>([]);
   const [earthquakeEvents, setEarthquakeEvents] = useState<EarthquakeEvent[]>([]);
@@ -299,7 +317,7 @@ function PublicHome() {
   // synchronously prevents repeated calculations as GPS fixes arrive.
   useEffect(() => {
     const intent = pendingRestore.current;
-    if (!intent || !restoring || !isOnline || geolocation.status !== "active" || !geolocation.position) return;
+    if (!intent || !restoring || !canRoute || geolocation.status !== "active" || !geolocation.position) return;
     if (intent === "route" && !destination) return;
     pendingRestore.current = null;
     if (intent === "evacuation") void handleFindEvacuationCenter();
@@ -309,11 +327,8 @@ function PublicHome() {
   const activeRoutePoints =
     result && resultMode === travelMode ? result.data.route : null;
 
-  // Route calculation genuinely requires the backend — there is no
-  // client-side routing engine, so offline correctly means "can't
-  // calculate a route" rather than a confusing failed request.
-  const routingDisabledReason = !isOnline
-    ? t("Route calculation needs a connection.")
+  const routingDisabledReason = !canRoute
+    ? t("Connect once to download offline routing data.")
     : null;
 
   const recommendedCenter = result?.kind === "evacuation" ? result.data.recommendedCenter : undefined;
@@ -330,14 +345,14 @@ function PublicHome() {
   const travelTime = result ? estimatedTravelTime(result.data.distance, resultMode) : null;
   const sheetSummary = loading ? t("Calculating your route…") : error ? t("Unable to calculate a route.")
     : panel === "map" && result
-    ? `${(result.data.distance / 1000).toFixed(1)} km${travelTime ? ` · ${travelTime}` : ""} · ${t("Route risk")}: ${t((result.data.riskLevel ?? "UNKNOWN").replaceAll("_", " "))}`
+    ? `${result.data.source === "offline" ? t("Offline route") + " · " : ""}${(result.data.distance / 1000).toFixed(1)} km${travelTime ? ` · ${travelTime}` : ""} · ${t("Route risk")}: ${t((result.data.riskLevel ?? "UNKNOWN").replaceAll("_", " "))}`
     : panel === "map" ? `${t(TRAVEL_MODES[travelMode].label)} · ${t("Tap for travel options")}`
     : panel === "centers" ? t("Capacity, supplies and contact details") : t("Reported conditions and verified road impacts.");
 
   const displayedCenter = selectedCenter ?? (result?.kind === "evacuation" ? result.data.recommendedCenter : null);
   const emergencyContactProps = {
     position: geolocation.position,
-    routingUnavailable: !geolocation.position ? t("Enable location access to find a route") : !isOnline ? t("A connection is required to calculate a route") : loading ? t("Route calculation in progress") : null,
+    routingUnavailable: !geolocation.position ? t("Enable location access to find a route") : !canRoute ? t("Connect once to download offline routing data.") : loading ? t("Route calculation in progress") : null,
     onFindCenter: () => {
       setSelectedCenter(null);
       setPanel("map");
@@ -351,10 +366,10 @@ function PublicHome() {
   };
 
   const routeButtons = <>
-            <button type="button" className="primary-button" disabled={!destination || !geolocation.position || loading !== null || !isOnline} onClick={() => { setPanel("map"); setSheetState("collapsed"); handleFindRoute(); }}>
+            <button type="button" className="primary-button" disabled={!destination || !geolocation.position || loading !== null || !canRoute} onClick={() => { setPanel("map"); setSheetState("collapsed"); handleFindRoute(); }}>
               {loading === "route" ? t("Calculating…") : t("Find safer route")}<ArrowRight size={18} />
             </button>
-            <button type="button" className="secondary-button" disabled={!geolocation.position || loading !== null || !isOnline} onClick={() => { setSelectedCenter(null); setPanel("map"); setSheetState("collapsed"); handleFindEvacuationCenter(); }}>
+            <button type="button" className="secondary-button" disabled={!geolocation.position || loading !== null || !canRoute} onClick={() => { setSelectedCenter(null); setPanel("map"); setSheetState("collapsed"); handleFindEvacuationCenter(); }}>
               <Building2 size={18} />{loading === "evacuation" ? t("Searching…") : t("Find evacuation center")}
             </button>
   </>;
@@ -382,6 +397,19 @@ function PublicHome() {
           <span>{t("Offline / cached data")}{dataAsOf && ` · updated ${timeAgo(dataAsOf)}`}. {t("Hazard information may be outdated.")}</span>
         </div>
       )}
+      <div className="offline-readiness" role="status">
+        <span className="offline-readiness-copy"><strong>{offlineStatus.state === "ready"
+          ? t(process.env.NODE_ENV !== "production" ? "Offline ready for this session"
+            : offlineStatus.mapReady ? "Offline maps and routes ready" : "Offline routes ready")
+          : offlineStatus.state === "downloading" || offlineStatus.state === "checking"
+          ? t("Preparing offline routing… Keep the app open.")
+          : t("Offline routing is not ready.")}</strong>
+          {offlineStatus.updatedAt && <small title={new Date(offlineStatus.updatedAt).toLocaleString()}>{t("Saved {time}", { time: timeAgo(offlineStatus.updatedAt) })}</small>}
+          {offlineStatus.message && <span>{t(offlineStatus.message)}</span>}
+        </span>
+        {isOnline && offlineStatus.state !== "downloading" && offlineStatus.state !== "checking" &&
+          <button type="button" onClick={() => setOfflineRetry(value => value + 1)}>{t(offlineStatus.state === "ready" ? "Update offline data" : "Retry download")}</button>}
+      </div>
       <div className="public-workspace">
         <nav className="navigation-rail" aria-label={t("Map views")}>
           <button onClick={() => choosePanel("map")} aria-pressed={panel === "map"}><MapIcon size={23} /><span>{t("Map")}</span></button>
@@ -407,6 +435,7 @@ function PublicHome() {
           <div className="desktop-hazard-overview">{hazardOverview}</div>
           <div className="map-canvas">
             <Map
+              offlineReady={offlineStatus.state === "ready"}
               geolocation={geolocation}
               destination={destination}
               destinationLabel={destinationName.label?.title}
@@ -448,7 +477,7 @@ function PublicHome() {
         } actions={
           <>
           <div className={`route-actions${destination ? " has-destination" : ""}${error ? " has-route-error" : ""}`}>
-            {restoring && <p role="status">{!isOnline
+            {restoring && <p role="status">{!canRoute
               ? t("Saved selection restored. Connect to the internet to recalculate.")
               : t("Saved selection restored. Waiting for location access to recalculate.")}</p>}
             {error && <section className="route-emergency-help" aria-label={t("Emergency assistance")}>
@@ -472,9 +501,9 @@ function PublicHome() {
                 // Keep waiting for a fresh location/connection, using the new mode.
                 return;
               }
-              if (routeIntent.current && (!isOnline || !geolocation.position)) {
+              if (routeIntent.current && (!canRoute || !geolocation.position)) {
                 setResult(null);
-                setError(!isOnline ? t("Connect to the internet to recalculate for this travel mode.") : t("Enable location access to recalculate for this travel mode."));
+                setError(!canRoute ? t("Connect once to download offline routing data.") : t("Enable location access to recalculate for this travel mode."));
               } else if (routeIntent.current === "evacuation") {
                 void handleFindEvacuationCenter(mode, true);
               } else if (routeIntent.current === "route") {
@@ -553,7 +582,9 @@ function PublicHome() {
             {panel !== "map" && result && <details className="other-route"><summary>{t("Active route")}</summary><RouteDetails result={result} label={routeLabel} center={routeCenter} travelMode={resultMode} /></details>}
             {!(panel === "map" && error) && <details className="route-failure-details"><summary>{t("About this data")}</summary>
               {routeLabel?.source === "photon" && <p className="geocoder-credit">Approximate place name · <a href="https://photon.komoot.io" target="_blank" rel="noreferrer">Photon</a> / <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></p>}
-              <p>{t("Hazard and center data is cached for offline viewing. Calculating a route requires a connection.")}</p>
+              <p>{t("Roads and routing are saved automatically while online. Offline routes use the last saved hazard and center data.")}</p>
+              {offlineStatus.updatedAt && <p>{t("Saved data")}: {new Date(offlineStatus.updatedAt).toLocaleString()}</p>}
+              {process.env.NODE_ENV !== "production" && <p>{t("Development mode: keep this page open. Offline reload requires a production build.")}</p>}
             </details>}
         </RouteSheet>
       </div>

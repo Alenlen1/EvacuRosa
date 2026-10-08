@@ -83,6 +83,7 @@ export interface RouteResponse {
   warnings: string[];
   riskLevel: string | null;
   updatedAt: string;
+  source?: "online" | "offline";
 }
 
 export async function fetchRoute(
@@ -90,11 +91,25 @@ export async function fetchRoute(
   destination: LatLng,
   travelMode: TravelMode = "walking"
 ): Promise<RouteResponse> {
-  const res = await fetch(`${API_URL}/api/route`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ start, destination, travelMode }),
-  });
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    const offline = await import("../lib/offline/routing");
+    return offline.calculateOfflineRoute(start, destination, travelMode);
+  }
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/route`, {
+      method: "POST",
+      signal: AbortSignal.timeout(12000),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start, destination, travelMode }),
+    });
+    if (res.status >= 500) throw new RoutingError("Routing server unavailable.");
+  } catch (error) {
+    const offline = await import("../lib/offline/routing");
+    const saved = await offline.getOfflinePackage().catch(() => null);
+    if (!saved) throw error;
+    return offline.calculateOfflineRoute(start, destination, travelMode);
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -143,17 +158,32 @@ export interface EvacuationRouteResponse {
   riskLevel: string | null;
   warnings: string[];
   lastUpdated: string;
+  source?: "online" | "offline";
 }
 
 export async function fetchEvacuationRoute(
   start: LatLng,
   travelMode: TravelMode = "walking"
 ): Promise<EvacuationRouteResponse> {
-  const res = await fetch(`${API_URL}/api/evacuation-route`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ start, travelMode }),
-  });
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    const offline = await import("../lib/offline/routing");
+    return offline.calculateOfflineEvacuationRoute(start, travelMode);
+  }
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/api/evacuation-route`, {
+      method: "POST",
+      signal: AbortSignal.timeout(12000),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start, travelMode }),
+    });
+    if (res.status >= 500) throw new RoutingError("Routing server unavailable.");
+  } catch (error) {
+    const offline = await import("../lib/offline/routing");
+    const saved = await offline.getOfflinePackage().catch(() => null);
+    if (!saved) throw error;
+    return offline.calculateOfflineEvacuationRoute(start, travelMode);
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
