@@ -383,15 +383,14 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 }
 .offline-readiness {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.5rem 1rem;
-  background: #eef5f2;
+  padding: 0 12px;
+  background: #eef5f280;
   color: #244b3b;
-  font-size: 0.75rem;
+  font-size: 11px;
 }
+.offline-readiness > summary { padding: 8px 0; cursor: pointer; line-height: 1.4; }
+.offline-readiness-details { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 0 8px; }
+.offline-readiness-details > button { min-height: 44px; }
 .offline-readiness button {
   flex-shrink: 0;
   text-decoration: underline;
