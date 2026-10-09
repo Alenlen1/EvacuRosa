@@ -26,7 +26,7 @@ export function RouteSheet({ state, onChange, title, summary, children, actions,
           <span className="sheet-preview"><strong>{title}</strong>{summary && <small>{summary}</small>}</span>
           {state === "collapsed" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
-        <button type="button" className="sheet-size-button" onClick={() => onChange(state === "expanded" ? "collapsed" : "expanded")} aria-controls="sheet-details" aria-expanded={state === "expanded"}>{t(state === "expanded" ? "More map" : "Full details")}</button>
+        <button type="button" className="sheet-size-button" onClick={() => onChange(state === "expanded" ? "collapsed" : "expanded")} aria-controls="sheet-details" aria-expanded={state === "expanded"}>{t(state === "expanded" ? "More map" : "View full details")}</button>
         {onClearDestination && <button type="button" className="sheet-clear" onClick={onClearDestination} aria-label={t("Remove destination")} title={t("Remove destination")}><X size={18} aria-hidden="true" /></button>}
       </div>
       <div className="sheet-body" id="sheet-details">

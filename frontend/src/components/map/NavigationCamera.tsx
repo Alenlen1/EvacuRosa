@@ -62,7 +62,7 @@ export function NavigationCamera({ active, position, heading, headingUp, fresh, 
       // Put the user at 65% of the visible map height; the top 35% remains
       // available for the route ahead. Rotation-aware world-space offset.
       const card = map.getContainer().querySelector<HTMLElement>(".navigation-card.is-active");
-      const usableBottom = card ? Math.max(100, size.y - card.offsetHeight - 42) : size.y;
+      const usableBottom = card ? Math.max(100, card.getBoundingClientRect().top - map.getContainer().getBoundingClientRect().top - 18) : size.y;
       const verticalOffset = Math.min(size.y * .65, usableBottom * .72) - size.y / 2;
       const offset = point(-Math.sin(angle) * verticalOffset, Math.cos(angle) * verticalOffset);
       let desired = user.subtract(offset);

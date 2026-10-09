@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { DomEvent } from "leaflet";
-import { Compass, LocateFixed, Navigation, Square, CheckCircle } from "lucide-react";
+import { Compass, LocateFixed, Navigation, Square, CheckCircle, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useEvacuationNavigation, type NavigationDestination } from "@/hooks/useEvacuationNavigation";
 import type { GeolocationState } from "@/hooks/useGeolocation";
@@ -31,13 +31,15 @@ export function EvacuationNavigation({ route, center, mode, geolocation, onRoute
     <NavigationCamera active={nav.active} position={nav.position} heading={nav.heading} headingUp={headingUp}
       fresh={nav.fresh} near={nav.near && !nav.offRoute} lookAhead={nav.offRoute ? null : nav.lookAhead} recenter={recenter} onFollowing={setFollowing} />
     {(validRoute || nav.arrived) && <div className="leaflet-bottom leaflet-left navigation-controls" ref={element => { if (element) { DomEvent.disableClickPropagation(element); DomEvent.disableScrollPropagation(element); } }}>
-      <section className={`leaflet-control navigation-card${nav.active ? " is-active" : ""}`} aria-label={t("Evacuation navigation")}>
+      <section className={`leaflet-control navigation-card${nav.active ? " is-active" : ""}${collapsed ? " is-collapsed" : ""}`} aria-label={t("Evacuation navigation")}>
         {nav.arrived ? <><p role="status"><CheckCircle size={18} />{t(center?.id ? "You have arrived at the evacuation center." : "You have arrived at your destination.")}</p><button type="button" onClick={nav.dismissArrival}>{t("Dismiss")}</button></>
-          : !nav.active ? <><button type="button" className="primary-button" disabled={!nav.canStart} onClick={() => { setCollapsed(false); nav.start(); onStart(); }}><Navigation size={18} />{t("Start Navigation")}</button>
+          : !nav.active ? <><button type="button" className="primary-button" disabled={!nav.canStart} onClick={() => { setCollapsed(window.matchMedia("(max-width: 800px)").matches); nav.start(); onStart(); }}><Navigation size={18} />{t("Start Navigation")}</button>
             {!nav.canStart && <small>{t(center?.id ? "A fresh, accurate location and an available center are needed to start." : "A fresh, accurate location is needed to start.")}</small>}</>
           : <>
-            <button type="button" className="navigation-toggle" aria-expanded={!collapsed} onClick={() => setCollapsed(value => !value)}>{t(collapsed ? "Show navigation controls" : "Hide navigation controls")}</button>
-            <div className="navigation-details" hidden={collapsed}>
+            <button type="button" className="navigation-toggle" aria-label={t(collapsed ? "Show navigation controls" : "Hide navigation controls")} title={t(collapsed ? "Show navigation controls" : "Hide navigation controls")} aria-expanded={!collapsed} aria-controls="navigation-details" onClick={() => setCollapsed(value => !value)}>{collapsed ? <SlidersHorizontal size={18} /> : <ChevronDown size={18} />}<span>{t(collapsed ? "Show navigation controls" : "Hide navigation controls")}</span></button>
+            {collapsed && <div className="navigation-compact-summary"><strong>{nav.remaining < 1000 ? `${Math.round(nav.remaining)} m` : `${(nav.remaining / 1000).toFixed(1)} km`}</strong><span>{estimatedTravelTime(nav.remaining, mode)}</span></div>}
+            {collapsed && (!nav.fresh || nav.offRoute) && <p className="navigation-compact-warning" role="status">{t(!nav.fresh ? "Waiting for a fresh, accurate GPS location." : "You are away from the planned route.")}</p>}
+            <div className="navigation-details" id="navigation-details" hidden={collapsed}>
             <div className="navigation-progress"><strong>{nav.remaining < 1000 ? `${Math.round(nav.remaining)} m` : `${(nav.remaining / 1000).toFixed(1)} km`}</strong><span>{t("Estimated time")}: {estimatedTravelTime(nav.remaining, mode)}</span></div>
             <small>{center?.name}</small>
             <p className="navigation-status" role="status">{t(!nav.fresh ? "Waiting for a fresh, accurate GPS location."

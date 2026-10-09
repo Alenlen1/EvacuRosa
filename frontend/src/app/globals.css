@@ -2159,3 +2159,24 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .navigation-buttons button { flex-direction: column; gap: 2px; }
   .public-app:has(.navigation-card.is-active) .offline-readiness { display: none; }
 }
+/* Give walking navigation the mobile viewport; details remain one tap away. */
+.navigation-toggle { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.navigation-compact-summary { display: flex; align-items: baseline; gap: 10px; font-size: 12px; }
+.navigation-compact-summary strong { font-size: 18px; }
+@media (max-width: 800px) {
+  .leaflet-container .navigation-card.is-active .navigation-toggle { width: 44px; height: 44px; padding: 0; margin: 0 0 6px auto; flex-shrink: 0; }
+  .navigation-card.is-active .navigation-toggle > span { display: none; }
+  .leaflet-container .navigation-controls .navigation-card.is-active.is-collapsed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: fit-content; max-width: 100%; padding: 4px 10px 4px 4px; }
+  .leaflet-container .navigation-card.is-active.is-collapsed .navigation-toggle { margin: 0; }
+  .navigation-compact-warning { flex-basis: 100%; max-width: 260px; margin: 0 4px 4px; }
+  .public-app .sheet-controls .sheet-toggle { display: none; }
+  .public-app .sheet-controls .sheet-size-button { display: block; max-width: none; flex: 1; min-height: 44px; padding: 10px; font-size: 13px; }
+  .public-app:has(.navigation-card.is-active) .public-workspace { display: flex; flex-direction: column; }
+  .public-app:has(.navigation-card.is-active) .map-workspace { flex: 1; min-height: 0; }
+  .public-app:has(.navigation-card.is-active) .route-sheet { position: absolute; inset: auto 0 0; z-index: 1200; width: 100%; border-radius: 14px 14px 0 0; }
+  .public-app:has(.navigation-card.is-active) .route-sheet.sheet-collapsed { height: auto; max-height: none; }
+  .public-app:has(.navigation-card.is-active) .sheet-collapsed .sheet-body,
+  .public-app:has(.navigation-card.is-active) .sheet-mobile-actions,
+  .public-app:has(.navigation-card.is-active) .sheet-clear { display: none; }
+  .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: 76px; }
+}
