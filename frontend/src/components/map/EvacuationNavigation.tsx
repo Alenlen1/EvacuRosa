@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { DomEvent } from "leaflet";
+import { useMap } from "react-leaflet";
 import { Compass, LocateFixed, Navigation, Square, CheckCircle, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useEvacuationNavigation, type NavigationDestination } from "@/hooks/useEvacuationNavigation";
@@ -17,12 +18,40 @@ export function EvacuationNavigation({ route, center, mode, geolocation, onRoute
   onRoute: (data: RouteResponse) => void; onActiveChange: (active: boolean) => void; onStart: () => void;
 }) {
   const { t } = useLanguage();
+  const map = useMap();
   const nav = useEvacuationNavigation({ route, center, mode, geolocation, onRoute });
   const [headingUp, setHeadingUp] = useState(true);
   const [following, setFollowing] = useState(true);
   const [recenter, setRecenter] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => { onActiveChange(nav.active); }, [nav.active, onActiveChange]);
+  useEffect(() => {
+    if (!nav.active) return;
+    const container = map.getContainer();
+    const sheet = container.closest(".public-app")?.querySelector<HTMLElement>(".route-sheet");
+    if (!sheet) return;
+    // Measure the actual overlap: text wrapping, safe areas, and browser zoom
+    // can all make the transport panel taller than its nominal CSS height.
+    const update = () => {
+      const mapBounds = container.getBoundingClientRect();
+      const sheetBounds = sheet.getBoundingClientRect();
+      const overlaps = sheetBounds.left < mapBounds.right && sheetBounds.right > mapBounds.left;
+      const inset = overlaps ? Math.max(0, mapBounds.bottom - sheetBounds.top) : 0;
+      container.style.setProperty("--navigation-panel-inset", `${inset + 12}px`);
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(sheet, { box: "border-box" });
+    observer.observe(container, { box: "border-box" });
+    window.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
+    update();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
+      container.style.removeProperty("--navigation-panel-inset");
+    };
+  }, [map, nav.active]);
   const validRoute = !!center && !!route && route.length >= 2;
   return <>
     {nav.active && nav.position ? <NavigationLocation position={nav.position} heading={nav.heading} />

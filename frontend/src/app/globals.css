@@ -2178,7 +2178,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app:has(.navigation-card.is-active) .sheet-collapsed .sheet-body,
   .public-app:has(.navigation-card.is-active) .sheet-mobile-actions,
   .public-app:has(.navigation-card.is-active) .sheet-clear { display: none; }
-  .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: 76px; }
 }
 .mobile-travel-mode { display: none; }
 .desktop-travel-mode { grid-column: 1 / -1; min-width: 0; }
@@ -2190,7 +2189,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .mobile-travel-mode .travel-mode-options { gap: 4px; }
   .public-app .mobile-travel-mode .travel-mode-options span { min-height: 44px; padding: 3px 1px; gap: 2px; border-radius: 8px; font-size: 10px; line-height: 1.2; }
   .public-app .mobile-travel-mode .travel-mode-options svg { width: 16px; height: 16px; }
-  .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: 126px; }
 }
 .navigation-quick-actions { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .navigation-recenter { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 44px; padding: 0; border: 1px solid #c4a51c; border-radius: 8px; background: #f4d84b; color: #3b250a; }
@@ -2221,5 +2219,8 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .sheet-controls .sheet-size-button { text-decoration: none; font-weight: 600; color: #526071; }
   .public-app .sheet-mobile-actions { border-top: 0; padding-top: 4px; }
   .public-app .mobile-routing-hint { margin: 0; }
-  .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: 110px; }
+}
+
+@media (max-width: 800px) {
+  .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: var(--navigation-panel-inset, 126px); }
 }
