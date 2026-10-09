@@ -37,7 +37,7 @@ export function EvacuationNavigation({ route, center, mode, geolocation, onRoute
       const sheetBounds = sheet.getBoundingClientRect();
       const overlaps = sheetBounds.left < mapBounds.right && sheetBounds.right > mapBounds.left;
       const inset = overlaps ? Math.max(0, mapBounds.bottom - sheetBounds.top) : 0;
-      container.style.setProperty("--navigation-panel-inset", `${inset + 12}px`);
+      container.style.setProperty("--navigation-panel-inset", `${inset}px`);
     };
     const observer = new ResizeObserver(update);
     observer.observe(sheet, { box: "border-box" });
