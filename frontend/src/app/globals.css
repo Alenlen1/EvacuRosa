@@ -1,5 +1,33 @@
 @import "tailwindcss";
 
+.app-launch {
+  display: none; position: fixed; inset: 0; z-index: 10000;
+  place-items: center; padding: 32px 24px;
+  background: #fffdf7; color: #392924;
+  animation: app-launch-dismiss 180ms ease 1300ms forwards;
+}
+@media (display-mode: standalone) { .app-launch { display: grid; } }
+.app-launch[data-installed] { display: grid; }
+.app-launch-content { width: min(100%, 320px); text-align: center; }
+.app-launch-logo { display: block; margin: 0 auto 18px; border-radius: 50%; }
+.app-launch-brand { margin: 0; font-size: 30px; font-weight: 850; letter-spacing: -.8px; }
+.app-launch-brand span { color: #800000; }
+.app-launch-city { margin: 6px 0 20px; font-size: 10px; letter-spacing: 2.8px; color: #776a62; }
+.app-launch-map { display: block; width: 100%; height: auto; }
+.app-launch-route { stroke-dasharray: 1; stroke-dashoffset: 1; animation: app-launch-draw 950ms ease-out 100ms forwards; }
+.app-launch-shelter { transform-origin: 225px 45px; animation: app-launch-arrive 400ms ease-out 700ms both; }
+.app-launch-tagline { margin: 24px 0 8px; font-size: 18px; line-height: 1.5; font-weight: 400; }
+.app-launch-tagline strong { font-weight: 750; }
+.app-launch-status { margin: 0; font-size: 12px; color: #776a62; }
+@keyframes app-launch-draw { to { stroke-dashoffset: 0; } }
+@keyframes app-launch-arrive { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: scale(1); } }
+/* CSS also dismisses the overlay if hydration fails, so access never depends on it. */
+@keyframes app-launch-dismiss { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .app-launch { animation-delay: 0ms; animation-duration: 1ms; }
+  .app-launch-route, .app-launch-shelter { animation: none; stroke-dashoffset: 0; }
+}
+
 .location-recovery {
   display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0;
   padding: 10px 16px; border-bottom: 1px solid #dfca83;
