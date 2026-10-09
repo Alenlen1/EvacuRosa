@@ -69,6 +69,11 @@ Browser acceptance checks (simulated GPS first, then real Android/iOS):
     and check Recenter and Stop. Repeat with Filipino selected.
 12. With a rotated map, zoom repeatedly between 14 and 19. The yellow route
     must retain its road vertices and align with the basemap at each zoom.
+    Check alignment during the gesture, not only after zoom settles. Repeat
+    with two-finger pinch in/out and zoom buttons, before and during navigation.
+    Pinch must not change the bearing; compass heading still rotates the map
+    while following. Button zooms intentionally skip CSS zoom animation to
+    avoid the rotation plugin's vector drift during transitions.
 
 References: [Leaflet rotation extension](https://github.com/Raruto/leaflet-rotate)
 and [device orientation permission](https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent/requestPermission_static).

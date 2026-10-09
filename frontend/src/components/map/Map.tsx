@@ -207,7 +207,12 @@ export default function Map({
       maxZoom={19}
       rotate
       rotateControl={false}
-      touchRotate
+      // leaflet-rotate can drift vector overlays during CSS zoom transitions.
+      // Apply discrete zooms atomically; pinch zoom still tracks the fingers.
+      zoomAnimation={false}
+      // Keep pinch gestures dedicated to zoom. Heading rotation is controlled
+      // by NavigationCamera and pauses while a zoom gesture is in progress.
+      touchRotate={false}
       shiftKeyRotate={false}
       className="h-full w-full"
     >
