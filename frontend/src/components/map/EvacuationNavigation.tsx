@@ -36,7 +36,10 @@ export function EvacuationNavigation({ route, center, mode, geolocation, onRoute
           : !nav.active ? <><button type="button" className="primary-button" disabled={!nav.canStart} onClick={() => { setCollapsed(window.matchMedia("(max-width: 800px)").matches); nav.start(); onStart(); }}><Navigation size={18} />{t("Start Navigation")}</button>
             {!nav.canStart && <small>{t(center?.id ? "A fresh, accurate location and an available center are needed to start." : "A fresh, accurate location is needed to start.")}</small>}</>
           : <>
+            <div className="navigation-quick-actions">
+            <button type="button" className="navigation-recenter" aria-label={t("Recenter Navigation")} title={t("Recenter Navigation")} onClick={() => setRecenter(value => value + 1)}><LocateFixed size={18} aria-hidden="true" /></button>
             <button type="button" className="navigation-toggle" aria-label={t(collapsed ? "Show navigation controls" : "Hide navigation controls")} title={t(collapsed ? "Show navigation controls" : "Hide navigation controls")} aria-expanded={!collapsed} aria-controls="navigation-details" onClick={() => setCollapsed(value => !value)}>{collapsed ? <SlidersHorizontal size={18} /> : <ChevronDown size={18} />}<span>{t(collapsed ? "Show navigation controls" : "Hide navigation controls")}</span></button>
+            </div>
             {collapsed && <div className="navigation-compact-summary"><strong>{nav.remaining < 1000 ? `${Math.round(nav.remaining)} m` : `${(nav.remaining / 1000).toFixed(1)} km`}</strong><span>{estimatedTravelTime(nav.remaining, mode)}</span></div>}
             {collapsed && (!nav.fresh || nav.offRoute) && <p className="navigation-compact-warning" role="status">{t(!nav.fresh ? "Waiting for a fresh, accurate GPS location." : "You are away from the planned route.")}</p>}
             <div className="navigation-details" id="navigation-details" hidden={collapsed}>
@@ -49,7 +52,6 @@ export function EvacuationNavigation({ route, center, mode, geolocation, onRoute
             {nav.heading === null && <small>{t("Compass unavailable. North-up until a movement direction is available.")}</small>}
             {nav.headingSource === "movement" && <small>{t("Using GPS movement direction; phone compass is unavailable.")}</small>}
             <div className="navigation-buttons">
-              <button type="button" onClick={() => setRecenter(value => value + 1)}><LocateFixed size={17} />{t("Recenter Navigation")}</button>
               <button type="button" aria-pressed={headingUp} onClick={() => { if (!headingUp) void nav.compass.request(); setHeadingUp(value => !value); }}><Compass size={17} />{t(headingUp ? "Heading up" : "North up")}</button>
               <button type="button" onClick={nav.stop}><Square size={16} />{t("Stop Navigation")}</button>
             </div>

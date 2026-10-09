@@ -2192,3 +2192,8 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .mobile-travel-mode .travel-mode-options svg { width: 16px; height: 16px; }
   .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: 126px; }
 }
+.navigation-quick-actions { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.navigation-recenter { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 44px; padding: 0; border: 1px solid #c4a51c; border-radius: 8px; background: #f4d84b; color: #3b250a; }
+.leaflet-container .navigation-card.is-active .navigation-quick-actions .navigation-toggle { margin: 0; }
+.navigation-card.is-collapsed .navigation-quick-actions { margin-bottom: 0; }
+.navigation-buttons { grid-template-columns: 1fr 1fr; }
