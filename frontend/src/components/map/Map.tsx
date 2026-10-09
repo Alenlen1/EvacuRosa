@@ -6,6 +6,8 @@
 
 import "leaflet/dist/leaflet.css";
 import { useEffect, useState } from "react";
+import { Layers } from "lucide-react";
+import { useLanguage } from "@/components/LanguageProvider";
 import { DomEvent } from "leaflet";
 import { MapContainer, useMap, useMapEvents } from "react-leaflet";
 import { FloodIcon as Droplet, FireIcon as Flame, EarthquakeIcon as Activity } from "@/components/ui/HazardIcons";
@@ -126,9 +128,12 @@ function LayerToggle({
   showEarthquakes: boolean;
   onToggleEarthquakes: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const { t } = useLanguage();
   return (
-    <div className="leaflet-bottom leaflet-left hazard-layer-controls" ref={(element) => { if (element) DomEvent.disableClickPropagation(element); }}>
-      <div className="leaflet-control leaflet-bar flex">
+    <div className={`leaflet-bottom leaflet-left hazard-layer-controls${expanded ? " is-expanded" : ""}`} ref={(element) => { if (element) DomEvent.disableClickPropagation(element); }}>
+      <button type="button" className="leaflet-control hazard-layer-toggle" aria-label={t("Hazard layers")} title={t("Hazard layers")} aria-expanded={expanded} aria-controls="hazard-layer-options" onClick={() => setExpanded(value => !value)}><Layers size={18} aria-hidden="true" /></button>
+      <div id="hazard-layer-options" className="leaflet-control leaflet-bar flex">
         <button
           type="button"
           onClick={onToggleFlood}

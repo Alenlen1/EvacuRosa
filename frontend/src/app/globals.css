@@ -2197,3 +2197,29 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .leaflet-container .navigation-card.is-active .navigation-quick-actions .navigation-toggle { margin: 0; }
 .navigation-card.is-collapsed .navigation-quick-actions { margin-bottom: 0; }
 .navigation-buttons { grid-template-columns: 1fr 1fr; }
+/* Quieter mobile controls, with secondary map options available on demand. */
+.hazard-layer-toggle, .map-legend-icon { display: none; }
+@media (max-width: 800px) {
+  .public-app .hazard-layer-toggle { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid #dce1e6; border-radius: 10px; background: white; color: #43505e; box-shadow: 0 2px 8px #17232f12; }
+  .public-app .hazard-layer-controls:not(.is-expanded) #hazard-layer-options { display: none; }
+  .public-app .hazard-layer-controls.is-expanded #hazard-layer-options { display: flex; clear: both; margin-top: 6px; border: 1px solid #dce1e6; border-radius: 10px; overflow: hidden; }
+  .public-app #hazard-layer-options button { width: 44px; height: 44px; }
+  .public-app .map-legend summary { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; list-style: none; }
+  .public-app .map-legend summary::-webkit-details-marker { display: none; }
+  .public-app .map-legend summary > span { display: none; }
+  .public-app .map-legend-icon { display: block; }
+  .public-app .map-legend { border: 1px solid #dce1e6; border-radius: 10px; padding: 0; box-shadow: 0 2px 8px #17232f12; }
+  .public-app .map-legend[open] ul { position: absolute; right: 0; width: 240px; max-width: calc(100vw - 28px); max-height: 35dvh; overflow: auto; margin-top: 6px; padding: 12px; background: white; border: 1px solid #dce1e6; border-radius: 10px; box-shadow: 0 3px 12px #17232f18; }
+  .public-app .emergency-contact-floating .emergency-contact-trigger { min-height: 44px; border-radius: 10px; padding: 8px 12px; font-size: 12px; box-shadow: 0 2px 8px #17232f12; }
+  .public-app .navigation-toggle { background: #f4f6f8; border-color: #dce1e6; color: #43505e; }
+  .public-app .navigation-buttons button { background: #f4f6f8; border-color: #dce1e6; color: #43505e; }
+  .public-app .navigation-buttons button[aria-pressed="true"] { background: #fff4cf; border-color: #d6bd40; }
+  .public-app .navigation-card.is-collapsed .navigation-compact-summary { margin-left: auto; gap: 6px; }
+  .public-app .navigation-compact-summary > span { color: #657180; }
+  .public-app .mobile-travel-mode .travel-mode-options span { background: #f7f8fa; border-color: transparent; }
+  .public-app .mobile-travel-mode .travel-mode-options input:checked + span { background: #fff0ad; border-color: #d6bd40; }
+  .public-app .sheet-controls .sheet-size-button { text-decoration: none; font-weight: 600; color: #526071; }
+  .public-app .sheet-mobile-actions { border-top: 0; padding-top: 4px; }
+  .public-app .mobile-routing-hint { margin: 0; }
+  .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: 110px; }
+}

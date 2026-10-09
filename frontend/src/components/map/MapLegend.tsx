@@ -1,10 +1,11 @@
 "use client";
 import { useLanguage } from "@/components/LanguageProvider";
+import { Info } from "lucide-react";
 export function MapLegend() {
   const { t } = useLanguage();
   return (
     <details className="map-legend">
-      <summary>{t("Map legend")}</summary>
+      <summary aria-label={t("Map legend")} title={t("Map legend")}><Info className="map-legend-icon" size={18} aria-hidden="true" /><span>{t("Map legend")}</span></summary>
       <ul>
         <li><span className="legend-dot location" />{t("Your location")}</li>
         <li><span className="legend-dot destination" />{t("Selected destination")}</li>

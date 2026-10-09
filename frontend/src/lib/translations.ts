@@ -1,4 +1,5 @@
 export const filipino: Record<string, string> = {
+  "Hazard layers": "Mga layer ng panganib",
   "View full details": "Tingnan ang buong detalye",
   "Approaching your destination.": "Papalapit sa iyong destinasyon.",
   "Show navigation controls": "Ipakita ang mga kontrol sa pag-navigate",
