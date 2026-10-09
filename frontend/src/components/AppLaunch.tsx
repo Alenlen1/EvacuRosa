@@ -13,7 +13,7 @@ export function AppLaunch() {
     if (!standalone) { setVisible(false); return; }
     setInstalled(true);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timer = window.setTimeout(() => setVisible(false), reducedMotion ? 150 : 1600);
+    const timer = window.setTimeout(() => setVisible(false), reducedMotion ? 150 : 2000);
     return () => window.clearTimeout(timer);
   }, []);
 
