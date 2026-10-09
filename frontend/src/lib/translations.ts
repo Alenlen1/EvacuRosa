@@ -7,7 +7,6 @@ export const filipino: Record<string, string> = {
   "You have arrived at your destination.": "Nakarating ka na sa iyong destinasyon.",
   "A fresh, accurate location is needed to start.": "Kailangan ng bago at tumpak na lokasyon upang magsimula.",
   "Location is not available": "Hindi available ang lokasyon",
-  "If you selected No thanks, turn on Location in your phone settings, then tap Try location again. A slow GPS signal can also prevent a location fix.": "Kung pinili mo ang No thanks, i-on ang Location sa settings ng telepono at pindutin ang Try location again. Maaari ring wala pang lokasyon dahil mahina ang signal ng GPS.",
   "Location help": "Tulong sa lokasyon",
   "Enable location to find a route": "I-on ang lokasyon para makahanap ng ruta",
   "Checking your location…": "Sinusuri ang iyong lokasyon…",
