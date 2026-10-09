@@ -249,7 +249,7 @@ function PublicHome() {
       : geolocation.status === "denied"
       ? t("Location permission denied")
       : geolocation.status === "timeout"
-      ? t("Location request timed out")
+      ? t("Location unavailable")
       : t("Location unavailable");
 
   const blockedFloodCount = floodReports.filter((r) => r.roadImpassable).length;

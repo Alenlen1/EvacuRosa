@@ -18,6 +18,7 @@
 .location-recovery > button:disabled { opacity: .65; }
 @media (max-width: 800px) {
   .location-recovery { display: grid; grid-template-columns: 20px minmax(0, 1fr); padding: 8px; gap: 8px; font-size: 11px; }
+  .location-recovery > div { max-height: 18dvh; overflow-y: auto; }
   .location-recovery > button { grid-column: 2; justify-self: start; min-height: 44px; }
 }
 
