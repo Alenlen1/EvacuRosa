@@ -2252,3 +2252,31 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 @media (max-width: 800px) {
   .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: var(--navigation-panel-inset, 126px); }
 }
+/* Dock navigation and transport controls as one mobile panel. */
+@media (max-width: 800px) {
+  .public-app:has(.navigation-card.is-active) .navigation-controls { left: 0; right: 0; }
+  .public-app .leaflet-container .navigation-controls .navigation-card.is-active,
+  .public-app .leaflet-container .navigation-controls .navigation-card.is-active.is-collapsed {
+    width: 100%; max-width: none; padding: 10px 12px;
+    border: 0; border-radius: 16px 16px 0 0; background: white;
+    box-shadow: 0 -4px 14px #17232f10;
+  }
+  .public-app .navigation-card.is-active.is-collapsed { column-gap: 12px; }
+  .public-app .navigation-card.is-collapsed .navigation-compact-summary { order: -1; flex: 1; margin-left: 0; }
+  .public-app .navigation-card.is-collapsed .navigation-compact-summary strong { font-size: 20px; }
+  .public-app .navigation-card.is-collapsed .navigation-compact-summary > span { font-size: 12px; }
+  .public-app .navigation-quick-actions { gap: 8px; }
+  .public-app .navigation-recenter,
+  .public-app .navigation-card.is-active .navigation-toggle { border-radius: 10px; }
+  .public-app .navigation-card.is-active .navigation-details { max-height: 28dvh; overflow-y: auto; overscroll-behavior: contain; padding-top: 4px; }
+  .public-app .navigation-card.is-active .navigation-buttons button { min-height: 44px; border-radius: 10px; flex-direction: row; gap: 6px; }
+  .public-app:has(.navigation-card.is-active) .route-sheet.sheet-collapsed {
+    border: 0; border-radius: 0; box-shadow: none; background: white;
+  }
+  .public-app:has(.navigation-card.is-active) .mobile-travel-mode { padding: 0 12px; }
+  .public-app:has(.navigation-card.is-active) .sheet-controls { padding: 0 12px; }
+  .public-app .mobile-travel-mode .travel-mode-options { gap: 6px; }
+  .public-app .mobile-travel-mode .travel-mode-options span { border-radius: 10px; }
+  .public-app .sheet-mobile-actions > button { border-radius: 10px; }
+  .public-app .navigation-compact-warning { max-width: none; }
+}
