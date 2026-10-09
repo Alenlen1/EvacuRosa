@@ -4,7 +4,7 @@
   display: none; position: fixed; inset: 0; z-index: 10000;
   place-items: center; padding: 32px 24px;
   background: #fffdf7; color: #392924;
-  animation: app-launch-dismiss 180ms ease 1300ms forwards;
+  animation: app-launch-dismiss 200ms ease 1800ms forwards;
 }
 @media (display-mode: standalone) { .app-launch { display: grid; } }
 .app-launch[data-installed] { display: grid; }
@@ -14,8 +14,8 @@
 .app-launch-brand span { color: #800000; }
 .app-launch-city { margin: 6px 0 20px; font-size: 10px; letter-spacing: 2.8px; color: #776a62; }
 .app-launch-map { display: block; width: 100%; height: auto; }
-.app-launch-route { stroke-dasharray: 1; stroke-dashoffset: 1; animation: app-launch-draw 950ms ease-out 100ms forwards; }
-.app-launch-shelter { transform-origin: 225px 45px; animation: app-launch-arrive 400ms ease-out 700ms both; }
+.app-launch-route { stroke-dasharray: 1; stroke-dashoffset: 1; animation: app-launch-draw 1600ms linear 100ms forwards; }
+.app-launch-shelter { transform-origin: 225px 45px; animation: app-launch-arrive 500ms ease-out 1250ms both; }
 .app-launch-tagline { margin: 24px 0 8px; font-size: 18px; line-height: 1.5; font-weight: 400; }
 .app-launch-tagline strong { font-weight: 750; }
 .app-launch-status { margin: 0; font-size: 12px; color: #776a62; }
