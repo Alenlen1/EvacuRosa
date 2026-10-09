@@ -36,17 +36,23 @@ export function RoutePolyline({ points, navigating = false }: RoutePolylineProps
 
   if (points.length < 2) return null;
 
+  // Preserve every road vertex at every zoom. Avoid viewport clipping while
+  // the rotation plugin transforms the renderer during camera transitions.
   return (
     <>
       <Polyline
         ref={outline}
+        noClip
+        smoothFactor={0}
         positions={positions}
         pathOptions={{ color: navigating ? "white" : "#252b31", weight: 9, opacity: 1, interactive: false }}
       />
       <Polyline
         ref={line}
+        noClip
+        smoothFactor={0}
         positions={positions}
-        pathOptions={{ color: navigating ? "#2563eb" : "#f4d84b", weight: 5, opacity: 1, interactive: false }}
+        pathOptions={{ color: "#f4d84b", weight: 5, opacity: 1, interactive: false }}
       />
     </>
   );

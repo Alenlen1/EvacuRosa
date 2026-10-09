@@ -22,6 +22,11 @@ export function NavigationCamera({ active, position, heading, headingUp, fresh, 
     if (!active) return;
     oldView.current = { center: map.getCenter(), zoom: map.getZoom() };
     const bounds = map.options.maxBounds;
+    let zooming = false;
+    const zoomStart = () => { zooming = true; };
+    const zoomEnd = () => { zooming = false; };
+    map.on("zoomstart", zoomStart);
+    map.on("zoomend", zoomEnd);
     // City bounds restrict planning, but must not pin a walking camera against
     // their edge. Restore them when returning to planning.
     map.setMaxBounds([]);
@@ -43,7 +48,9 @@ export function NavigationCamera({ active, position, heading, headingUp, fresh, 
       if (time - last < 32) return;
       const elapsed = Math.min(100, time - last); last = time;
       const current = target.current;
-      if (!following.current || !current.fresh || !current.position) return;
+      // Leaflet owns the renderer transform during zoom; changing the bearing
+      // or pixel origin mid-transition can detach paths from the basemap.
+      if (zooming || !following.current || !current.fresh || !current.position) return;
       // Exponential damping is independent of sensor update frequency.
       const amount = reduced() ? 1 : 1 - Math.exp(-elapsed / 220);
       const desiredBearing = current.headingUp && current.heading !== null ? -current.heading : 0;
@@ -72,6 +79,8 @@ export function NavigationCamera({ active, position, heading, headingUp, fresh, 
     frame = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(frame); setReady(false);
+      map.off("zoomstart", zoomStart);
+      map.off("zoomend", zoomEnd);
       container.removeEventListener("pointerdown", gesture); container.removeEventListener("wheel", gesture); container.removeEventListener("keydown", gesture); map.off("dragstart", pause);
       map.stop();
       if (bounds) map.setMaxBounds(bounds);

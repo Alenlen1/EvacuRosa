@@ -218,7 +218,7 @@ export default function Map({
         <EarthquakeLayer events={earthquakeEvents} roadImpacts={earthquakeRoadImpacts} />
       )}
       <EvacuationCenterLayer centers={centers} onSelectCenter={onSelectCenter} />
-      <EvacuationNavigation route={route} center={navigationCenter} mode={travelMode} geolocation={geolocation}
+      <EvacuationNavigation route={route} center={navigationCenter ?? (destination ? { ...destination, name: destinationLabel } : undefined)} mode={travelMode} geolocation={geolocation}
         onRoute={onNavigationRoute} onStart={onNavigationStart} onActiveChange={setNavigating} />
       {destination && (
         <DestinationMarker

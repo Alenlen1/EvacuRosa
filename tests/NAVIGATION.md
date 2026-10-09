@@ -62,6 +62,13 @@ Browser acceptance checks (simulated GPS first, then real Android/iOS):
    must still follow GPS. Test permission denial/expiry for GPS separately.
 9. Check 320 px phones, landscape and desktop; retain the planning actions,
    center supplies, hazard layers, search, language controls and emergency menu.
+10. Select a destination that is not a shelter, use Find safer route, then
+    Start Navigation. Verify GPS following, rerouting to that destination and
+    the generic destination arrival message.
+11. Hide navigation controls, verify guidance continues, then show them again
+    and check Recenter and Stop. Repeat with Filipino selected.
+12. With a rotated map, zoom repeatedly between 14 and 19. The yellow route
+    must retain its road vertices and align with the basemap at each zoom.
 
 References: [Leaflet rotation extension](https://github.com/Raruto/leaflet-rotate)
 and [device orientation permission](https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent/requestPermission_static).
