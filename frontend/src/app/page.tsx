@@ -425,19 +425,22 @@ function PublicHome() {
           <span>{t("Offline / cached data")}{dataAsOf && ` · updated ${timeAgo(dataAsOf)}`}. {t("Hazard information may be outdated.")}</span>
         </div>
       )}
-      <div className="offline-readiness" role="status">
-        <span className="offline-readiness-copy"><strong>{offlineStatus.state === "ready"
+      <details className="offline-readiness" open={offlineStatus.state !== "ready"}>
+        <summary><strong role="status">{offlineStatus.state === "ready"
           ? t(process.env.NODE_ENV !== "production" ? "Offline ready for this session"
             : offlineStatus.mapReady ? "Offline maps and routes ready" : "Offline routes ready")
           : offlineStatus.state === "downloading" || offlineStatus.state === "checking"
           ? t("Preparing offline routing… Keep the app open.")
-          : t("Offline routing is not ready.")}</strong>
+          : t("Offline routing is not ready.")}</strong></summary>
+        <div className="offline-readiness-details">
+        <span className="offline-readiness-copy">
           {offlineStatus.updatedAt && <small title={new Date(offlineStatus.updatedAt).toLocaleString()}>{t("Saved {time}", { time: timeAgo(offlineStatus.updatedAt) })}</small>}
           {offlineStatus.message && <span>{t(offlineStatus.message)}</span>}
         </span>
         {isOnline && offlineStatus.state !== "downloading" && offlineStatus.state !== "checking" &&
           <button type="button" onClick={() => setOfflineRetry(value => value + 1)}>{t(offlineStatus.state === "ready" ? "Update offline data" : "Retry download")}</button>}
-      </div>
+        </div>
+      </details>
       <LocationRecovery location={geolocation} onRetry={geolocation.retry} />
       <div className="public-workspace">
         <nav className="navigation-rail" aria-label={t("Map views")}>

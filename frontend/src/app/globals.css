@@ -4,7 +4,7 @@
   display: none; position: fixed; inset: 0; z-index: 10000;
   place-items: center; padding: 32px 24px;
   background: #fffdf7; color: #392924;
-  animation: app-launch-dismiss 180ms ease 1300ms forwards;
+  animation: app-launch-dismiss 200ms ease 1800ms forwards;
 }
 @media (display-mode: standalone) { .app-launch { display: grid; } }
 .app-launch[data-installed] { display: grid; }
@@ -14,8 +14,8 @@
 .app-launch-brand span { color: #800000; }
 .app-launch-city { margin: 6px 0 20px; font-size: 10px; letter-spacing: 2.8px; color: #776a62; }
 .app-launch-map { display: block; width: 100%; height: auto; }
-.app-launch-route { stroke-dasharray: 1; stroke-dashoffset: 1; animation: app-launch-draw 950ms ease-out 100ms forwards; }
-.app-launch-shelter { transform-origin: 225px 45px; animation: app-launch-arrive 400ms ease-out 700ms both; }
+.app-launch-route { stroke-dasharray: 1; stroke-dashoffset: 1; animation: app-launch-draw 1600ms linear 100ms forwards; }
+.app-launch-shelter { transform-origin: 225px 45px; animation: app-launch-arrive 500ms ease-out 1250ms both; }
 .app-launch-tagline { margin: 24px 0 8px; font-size: 18px; line-height: 1.5; font-weight: 400; }
 .app-launch-tagline strong { font-weight: 750; }
 .app-launch-status { margin: 0; font-size: 12px; color: #776a62; }
@@ -30,9 +30,9 @@
 
 .location-recovery {
   display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0;
-  padding: 10px 16px; border-bottom: 1px solid #dfca83;
-  background: #fff7dc; color: #584511; font-size: 12px; line-height: 1.45;
-  max-height: 30dvh; overflow-y: auto;
+  padding: 6px 12px; border-bottom: 1px solid #e7dfc6;
+  background: rgb(255 247 220 / 75%); color: #584511; font-size: 12px; line-height: 1.45;
+  max-height: 24dvh; overflow-y: auto;
 }
 .location-recovery > svg { flex-shrink: 0; margin-top: 2px; }
 .location-recovery > div { flex: 1; min-width: 0; }
@@ -45,9 +45,10 @@
 }
 .location-recovery > button:disabled { opacity: .65; }
 @media (max-width: 800px) {
-  .location-recovery { display: grid; grid-template-columns: 20px minmax(0, 1fr); padding: 8px; gap: 8px; font-size: 11px; }
-  .location-recovery > div { max-height: 18dvh; overflow-y: auto; }
-  .location-recovery > button { grid-column: 2; justify-self: start; min-height: 44px; }
+  .location-recovery { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; padding: 6px 10px; gap: 6px; font-size: 11px; }
+  .location-recovery > svg { width: 16px; height: 16px; }
+  .location-recovery > div { min-width: 0; }
+  .location-recovery > button { grid-column: 3; align-self: start; min-height: 44px; padding: 6px 10px; }
 }
 
 .route-update-status {
@@ -382,15 +383,14 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 }
 .offline-readiness {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.5rem 1rem;
-  background: #eef5f2;
+  padding: 0 12px;
+  background: #eef5f280;
   color: #244b3b;
-  font-size: 0.75rem;
+  font-size: 11px;
 }
+.offline-readiness > summary { padding: 8px 0; cursor: pointer; line-height: 1.4; }
+.offline-readiness-details { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 0 8px; }
+.offline-readiness-details > button { min-height: 44px; }
 .offline-readiness button {
   flex-shrink: 0;
   text-decoration: underline;
