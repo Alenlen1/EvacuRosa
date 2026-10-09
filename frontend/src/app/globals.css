@@ -2180,3 +2180,15 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app:has(.navigation-card.is-active) .sheet-clear { display: none; }
   .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: 76px; }
 }
+.mobile-travel-mode { display: none; }
+.desktop-travel-mode { grid-column: 1 / -1; min-width: 0; }
+@media (max-width: 800px) {
+  .public-app .desktop-travel-mode { display: none; }
+  .public-app .mobile-travel-mode { display: block; flex-shrink: 0; padding: 6px 10px 0; }
+  .public-app .mobile-travel-mode legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .public-app .mobile-travel-mode .travel-mode-help { display: none; }
+  .public-app .mobile-travel-mode .travel-mode-options { gap: 4px; }
+  .public-app .mobile-travel-mode .travel-mode-options span { min-height: 44px; padding: 3px 1px; gap: 2px; border-radius: 8px; font-size: 10px; line-height: 1.2; }
+  .public-app .mobile-travel-mode .travel-mode-options svg { width: 16px; height: 16px; }
+  .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: 126px; }
+}

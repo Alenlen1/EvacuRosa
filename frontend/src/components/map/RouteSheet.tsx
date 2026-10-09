@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, X } from "lucide-react";
 
 export type SheetState = "collapsed" | "partial" | "expanded";
 
-export function RouteSheet({ state, onChange, title, summary, children, actions, mobileActions, onClearDestination, hideDetails = false }: {
+export function RouteSheet({ state, onChange, title, summary, children, actions, mobileActions, mobileTravelMode, onClearDestination, hideDetails = false }: {
   state: SheetState;
   onChange: (value: SheetState) => void;
   title: string;
@@ -13,12 +13,14 @@ export function RouteSheet({ state, onChange, title, summary, children, actions,
   children: ReactNode;
   actions: ReactNode;
   mobileActions?: ReactNode;
+  mobileTravelMode?: ReactNode;
   onClearDestination?: () => void;
   hideDetails?: boolean;
 }) {
   const { t } = useLanguage();
   return (
     <aside className={`information-panel route-sheet sheet-${state}`} aria-label={t("Navigation information")}>
+      <div className="mobile-travel-mode">{mobileTravelMode}</div>
       <div className="sheet-controls">
         <h2 className="sheet-desktop-title">{title}</h2>
         <button type="button" className="sheet-toggle" onClick={() => onChange(state === "collapsed" ? "partial" : "collapsed")} aria-expanded={state !== "collapsed"} aria-controls="sheet-details">
