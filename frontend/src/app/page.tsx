@@ -249,7 +249,7 @@ function PublicHome() {
       : geolocation.status === "denied"
       ? t("Location permission denied")
       : geolocation.status === "timeout"
-      ? t("Location request timed out")
+      ? t("Location unavailable")
       : t("Location unavailable");
 
   const blockedFloodCount = floodReports.filter((r) => r.roadImpassable).length;
@@ -386,6 +386,29 @@ function PublicHome() {
           </div>
   );
 
+  const travelModeSelector = (<TravelModeSelector value={travelMode} onChange={mode => {
+              if (mode === travelMode) return;
+              const resumeWhenReady = pendingRestore.current;
+              saveRouteSelection({ destination, travelMode: mode, intent: routeIntent.current });
+              routeVersion.current += 1;
+              setTravelMode(mode);
+              setAssistanceContext(null);
+              setLoading(null);
+              setError(null);
+              if (resumeWhenReady) {
+                // Keep waiting for a fresh location/connection, using the new mode.
+                return;
+              }
+              if (routeIntent.current && (!canRoute || !geolocation.position)) {
+                setResult(null);
+                setError(!canRoute ? t("Connect once to download offline routing data.") : t("Enable location access to recalculate for this travel mode."));
+              } else if (routeIntent.current === "evacuation") {
+                void handleFindEvacuationCenter(mode, true);
+              } else if (routeIntent.current === "route") {
+                void handleFindRoute(mode, true);
+              }
+            }} />);
+
   return (
     <main className={`public-app public-view-${panel}`}>
       <header className="app-header">
@@ -480,7 +503,7 @@ function PublicHome() {
             </div>
           </div>
         </section>
-        <RouteSheet state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} hideDetails={panel === "map" && !!error} onClearDestination={destination || restoring || result ? clearDestination : undefined} mobileActions={
+        <RouteSheet mobileTravelMode={travelModeSelector} state={sheetState} onChange={setSheetState} title={sheetTitle} summary={sheetSummary} hideDetails={panel === "map" && !!error} onClearDestination={destination || restoring || result ? clearDestination : undefined} mobileActions={
           <>
             {routeButtons}
             <p className="mobile-routing-hint" role="status">{routingDisabledReason ?? (!geolocation.position ? locationLabel : !destination ? t("Tap the map to set your destination.") : t(TRAVEL_MODES[travelMode].label))}</p>
@@ -499,28 +522,7 @@ function PublicHome() {
               <p id="emergency-contact-pending">{t("CDRRMO number pending verification. Calling unavailable.")}</p>
               <details className="route-failure-details"><summary>{t("Details")}</summary><p>{error}</p></details>
             </section>}
-            <TravelModeSelector value={travelMode} onChange={mode => {
-              if (mode === travelMode) return;
-              const resumeWhenReady = pendingRestore.current;
-              saveRouteSelection({ destination, travelMode: mode, intent: routeIntent.current });
-              routeVersion.current += 1;
-              setTravelMode(mode);
-              setAssistanceContext(null);
-              setLoading(null);
-              setError(null);
-              if (resumeWhenReady) {
-                // Keep waiting for a fresh location/connection, using the new mode.
-                return;
-              }
-              if (routeIntent.current && (!canRoute || !geolocation.position)) {
-                setResult(null);
-                setError(!canRoute ? t("Connect once to download offline routing data.") : t("Enable location access to recalculate for this travel mode."));
-              } else if (routeIntent.current === "evacuation") {
-                void handleFindEvacuationCenter(mode, true);
-              } else if (routeIntent.current === "route") {
-                void handleFindRoute(mode, true);
-              }
-            }} />
+            <div className="desktop-travel-mode">{travelModeSelector}</div>
             {routingDisabledReason && <p>{routingDisabledReason}</p>}
             {!destination && !result && <p>{t("Tap the map to set your destination.")}</p>}
             {destinationName.loading && !recommendedCenter && <p role="status">{t("Finding place name…")}</p>}

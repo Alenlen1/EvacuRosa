@@ -1,5 +1,6 @@
 "use client";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useId } from "react";
 import { Bike, Car, Footprints, Motorbike } from "lucide-react";
 import { TRAVEL_MODES, type TravelMode } from "@/lib/travelTime";
 
@@ -10,6 +11,7 @@ export function TravelModeSelector({ value, onChange }: {
   onChange: (mode: TravelMode) => void;
 }) {
   const { t } = useLanguage();
+  const group = useId();
   return (
     <fieldset className="travel-mode-selector">
       <legend>{t("Travel mode")}</legend>
@@ -17,7 +19,7 @@ export function TravelModeSelector({ value, onChange }: {
         {(Object.keys(TRAVEL_MODES) as TravelMode[]).map(mode => {
           const Icon = icons[mode];
           return <label key={mode}>
-            <input type="radio" name="travel-mode" value={mode} checked={value === mode} onChange={() => onChange(mode)} />
+            <input type="radio" name={group} value={mode} checked={value === mode} onChange={() => onChange(mode)} />
             <span><Icon size={20} aria-hidden="true" />{t(TRAVEL_MODES[mode].label)}</span>
           </label>;
         })}

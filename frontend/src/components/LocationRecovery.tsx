@@ -6,13 +6,15 @@ import type { GeolocationState } from "@/hooks/useGeolocation";
 
 export function LocationRecovery({ location, onRetry }: { location: GeolocationState; onRetry: () => void }) {
   const { t } = useLanguage();
-  if (!location.error || location.status === "active") return null;
+  const unavailable = ["denied", "unavailable", "timeout"].includes(location.status);
+  if (location.status === "active" || (!unavailable && !location.error)) return null;
   const locating = location.status === "locating";
   return <section className="location-recovery" aria-label={t("Location help")}>
     <MapPin size={20} aria-hidden="true" />
     <div>
-      <strong role="status">{t(locating ? "Checking your location…" : "Enable location to find a route")}</strong>
+      <strong role="status">{t(locating ? "Checking your location…" : "Location is not available")}</strong>
       <p>{t("Turn on your phone's Location Services and allow location access for your browser or EvacuRosa. Return here; your location will reconnect automatically.")}</p>
+      {!locating && <p>{t("If you selected No thanks, turn on Location in your phone settings, then tap Try location again. A slow GPS signal can also prevent a location fix.")}</p>}
       <details><summary>{t("How to enable location")}</summary>
         <p>{t("iPhone: Settings → Privacy & Security → Location Services. Turn it on and allow access for Safari Websites or your browser.")}</p>
         <p>{t("Android: Settings → Location. Turn it on, then allow location for Chrome or your browser and this website.")}</p>

@@ -7,8 +7,9 @@ import { bearing, matchRoute, meters, plausibleFix, pointAlong, remainingRoute, 
 import type { TravelMode } from "@/lib/travelTime";
 
 const maxSpeed = { walking: 4, biking: 15, motorcycle: 40, car: 40 };
+export type NavigationDestination = LatLng & Partial<Pick<EvacuationCenter, "id" | "name" | "status">>;
 export function useEvacuationNavigation({ route, center, mode, geolocation, onRoute }: {
-  route: LatLng[] | null; center?: EvacuationCenter; mode: TravelMode; geolocation: GeolocationState;
+  route: LatLng[] | null; center?: NavigationDestination; mode: TravelMode; geolocation: GeolocationState;
   onRoute: (route: RouteResponse) => void;
 }) {
   const [active, setActive] = useState(false);
