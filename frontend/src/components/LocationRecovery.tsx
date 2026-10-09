@@ -14,7 +14,6 @@ export function LocationRecovery({ location, onRetry }: { location: GeolocationS
     <div>
       <strong role="status">{t(locating ? "Checking your location…" : "Location is not available")}</strong>
       <p>{t("Turn on your phone's Location Services and allow location access for your browser or EvacuRosa. Return here; your location will reconnect automatically.")}</p>
-      {!locating && <p>{t("If you selected No thanks, turn on Location in your phone settings, then tap Try location again. A slow GPS signal can also prevent a location fix.")}</p>}
       <details><summary>{t("How to enable location")}</summary>
         <p>{t("iPhone: Settings → Privacy & Security → Location Services. Turn it on and allow access for Safari Websites or your browser.")}</p>
         <p>{t("Android: Settings → Location. Turn it on, then allow location for Chrome or your browser and this website.")}</p>
