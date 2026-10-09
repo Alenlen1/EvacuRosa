@@ -2129,14 +2129,16 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .leaflet-container .navigation-controls { left: 10px; right: 10px; bottom: 24px; z-index: 1100; pointer-events: none; }
 .leaflet-container .navigation-controls .navigation-card { float: none; margin: 0; width: min(100%, 390px); border: 1px solid #dbe3ec; border-radius: 14px; padding: 10px; background: #fffffff5; box-shadow: 0 3px 16px #17232f20; pointer-events: auto; color: #243345; overflow-wrap: anywhere; }
 .navigation-card > .primary-button { width: 100%; }
-.navigation-card > small { display: block; font-size: 11px; line-height: 1.4; margin: 4px 0; }
-.navigation-card > p { display: flex; gap: 8px; font-size: 12px; line-height: 1.45; }
+.navigation-card > small, .navigation-details > small { display: block; font-size: 11px; line-height: 1.4; margin: 4px 0; }
+.navigation-card > p, .navigation-details > p { display: flex; gap: 8px; font-size: 12px; line-height: 1.45; }
 .navigation-progress { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .navigation-progress strong { font-size: 21px; font-variant-numeric: tabular-nums; }
 .navigation-progress span { font-size: 12px; }
 .navigation-status { margin: 5px 0; }
 .navigation-buttons { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 5px; }
 .navigation-card button { min-height: 44px; }
+.navigation-toggle { width: 100%; margin-bottom: 4px; border: 1px solid #c4a51c; border-radius: 8px; background: #f4d84b; color: #3b250a; }
+.navigation-card [hidden] { display: none; }
 .navigation-buttons button { display: flex; justify-content: center; align-items: center; gap: 5px; border: 1px solid #d8e0e9; border-radius: 8px; background: #f7f9fc; font-size: 11px; padding: 6px; }
 .navigation-buttons button[aria-pressed="true"] { background: #eaf2ff; border-color: #98b9e9; color: #174b9f; }
 .navigation-buttons button:first-child { background: #f4d84b; color: #3b250a; border-color: #c4a51c; }
@@ -2156,4 +2158,69 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .leaflet-container .navigation-controls .navigation-card { width: 100%; }
   .navigation-buttons button { flex-direction: column; gap: 2px; }
   .public-app:has(.navigation-card.is-active) .offline-readiness { display: none; }
+}
+/* Give walking navigation the mobile viewport; details remain one tap away. */
+.navigation-toggle { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.navigation-compact-summary { display: flex; align-items: baseline; gap: 10px; font-size: 12px; }
+.navigation-compact-summary strong { font-size: 18px; }
+@media (max-width: 800px) {
+  .leaflet-container .navigation-card.is-active .navigation-toggle { width: 44px; height: 44px; padding: 0; margin: 0 0 6px auto; flex-shrink: 0; }
+  .navigation-card.is-active .navigation-toggle > span { display: none; }
+  .leaflet-container .navigation-controls .navigation-card.is-active.is-collapsed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: fit-content; max-width: 100%; padding: 4px 10px 4px 4px; }
+  .leaflet-container .navigation-card.is-active.is-collapsed .navigation-toggle { margin: 0; }
+  .navigation-compact-warning { flex-basis: 100%; max-width: 260px; margin: 0 4px 4px; }
+  .public-app .sheet-controls .sheet-toggle { display: none; }
+  .public-app .sheet-controls .sheet-size-button { display: block; max-width: none; flex: 1; min-height: 44px; padding: 10px; font-size: 13px; }
+  .public-app:has(.navigation-card.is-active) .public-workspace { display: flex; flex-direction: column; }
+  .public-app:has(.navigation-card.is-active) .map-workspace { flex: 1; min-height: 0; }
+  .public-app:has(.navigation-card.is-active) .route-sheet { position: absolute; inset: auto 0 0; z-index: 1200; width: 100%; border-radius: 14px 14px 0 0; }
+  .public-app:has(.navigation-card.is-active) .route-sheet.sheet-collapsed { height: auto; max-height: none; }
+  .public-app:has(.navigation-card.is-active) .sheet-collapsed .sheet-body,
+  .public-app:has(.navigation-card.is-active) .sheet-mobile-actions,
+  .public-app:has(.navigation-card.is-active) .sheet-clear { display: none; }
+}
+.mobile-travel-mode { display: none; }
+.desktop-travel-mode { grid-column: 1 / -1; min-width: 0; }
+@media (max-width: 800px) {
+  .public-app .desktop-travel-mode { display: none; }
+  .public-app .mobile-travel-mode { display: block; flex-shrink: 0; padding: 6px 10px 0; }
+  .public-app .mobile-travel-mode legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .public-app .mobile-travel-mode .travel-mode-help { display: none; }
+  .public-app .mobile-travel-mode .travel-mode-options { gap: 4px; }
+  .public-app .mobile-travel-mode .travel-mode-options span { min-height: 44px; padding: 3px 1px; gap: 2px; border-radius: 8px; font-size: 10px; line-height: 1.2; }
+  .public-app .mobile-travel-mode .travel-mode-options svg { width: 16px; height: 16px; }
+}
+.navigation-quick-actions { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.navigation-recenter { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 44px; padding: 0; border: 1px solid #c4a51c; border-radius: 8px; background: #f4d84b; color: #3b250a; }
+.leaflet-container .navigation-card.is-active .navigation-quick-actions .navigation-toggle { margin: 0; }
+.navigation-card.is-collapsed .navigation-quick-actions { margin-bottom: 0; }
+.navigation-buttons { grid-template-columns: 1fr 1fr; }
+/* Quieter mobile controls, with secondary map options available on demand. */
+.hazard-layer-toggle, .map-legend-icon { display: none; }
+@media (max-width: 800px) {
+  .public-app .hazard-layer-toggle { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid #dce1e6; border-radius: 10px; background: white; color: #43505e; box-shadow: 0 2px 8px #17232f12; }
+  .public-app .hazard-layer-controls:not(.is-expanded) #hazard-layer-options { display: none; }
+  .public-app .hazard-layer-controls.is-expanded #hazard-layer-options { display: flex; clear: both; margin-top: 6px; border: 1px solid #dce1e6; border-radius: 10px; overflow: hidden; }
+  .public-app #hazard-layer-options button { width: 44px; height: 44px; }
+  .public-app .map-legend summary { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; list-style: none; }
+  .public-app .map-legend summary::-webkit-details-marker { display: none; }
+  .public-app .map-legend summary > span { display: none; }
+  .public-app .map-legend-icon { display: block; }
+  .public-app .map-legend { border: 1px solid #dce1e6; border-radius: 10px; padding: 0; box-shadow: 0 2px 8px #17232f12; }
+  .public-app .map-legend[open] ul { position: absolute; right: 0; width: 240px; max-width: calc(100vw - 28px); max-height: 35dvh; overflow: auto; margin-top: 6px; padding: 12px; background: white; border: 1px solid #dce1e6; border-radius: 10px; box-shadow: 0 3px 12px #17232f18; }
+  .public-app .emergency-contact-floating .emergency-contact-trigger { min-height: 44px; border-radius: 10px; padding: 8px 12px; font-size: 12px; box-shadow: 0 2px 8px #17232f12; }
+  .public-app .navigation-toggle { background: #f4f6f8; border-color: #dce1e6; color: #43505e; }
+  .public-app .navigation-buttons button { background: #f4f6f8; border-color: #dce1e6; color: #43505e; }
+  .public-app .navigation-buttons button[aria-pressed="true"] { background: #fff4cf; border-color: #d6bd40; }
+  .public-app .navigation-card.is-collapsed .navigation-compact-summary { margin-left: auto; gap: 6px; }
+  .public-app .navigation-compact-summary > span { color: #657180; }
+  .public-app .mobile-travel-mode .travel-mode-options span { background: #f7f8fa; border-color: transparent; }
+  .public-app .mobile-travel-mode .travel-mode-options input:checked + span { background: #fff0ad; border-color: #d6bd40; }
+  .public-app .sheet-controls .sheet-size-button { text-decoration: none; font-weight: 600; color: #526071; }
+  .public-app .sheet-mobile-actions { border-top: 0; padding-top: 4px; }
+  .public-app .mobile-routing-hint { margin: 0; }
+}
+
+@media (max-width: 800px) {
+  .public-app:has(.navigation-card.is-active) .navigation-controls { bottom: var(--navigation-panel-inset, 126px); }
 }

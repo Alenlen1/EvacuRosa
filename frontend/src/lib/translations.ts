@@ -1,4 +1,11 @@
 export const filipino: Record<string, string> = {
+  "Hazard layers": "Mga layer ng panganib",
+  "View full details": "Tingnan ang buong detalye",
+  "Approaching your destination.": "Papalapit sa iyong destinasyon.",
+  "Show navigation controls": "Ipakita ang mga kontrol sa pag-navigate",
+  "Hide navigation controls": "Itago ang mga kontrol sa pag-navigate",
+  "You have arrived at your destination.": "Nakarating ka na sa iyong destinasyon.",
+  "A fresh, accurate location is needed to start.": "Kailangan ng bago at tumpak na lokasyon upang magsimula.",
   "Location is not available": "Hindi available ang lokasyon",
   "Location help": "Tulong sa lokasyon",
   "Enable location to find a route": "I-on ang lokasyon para makahanap ng ruta",
