@@ -28,6 +28,20 @@ function worker(cached?: Response) {
 }
 
 describe("public app cache", () => {
+  it("refreshes the app manifest instead of retaining the old portrait lock", async () => {
+    const w = worker(new Response('{"orientation":"portrait-primary"}'));
+    w.fetch.mockResolvedValue(new Response('{"orientation":"any"}'));
+    const response = await w.request("/manifest.json").mock.calls[0][0];
+    expect(await response.json()).toEqual({ orientation: "any" });
+    expect(w.fetch).toHaveBeenCalledWith(expect.anything(), { cache: "no-cache" });
+    expect(w.cache.put).toHaveBeenCalled();
+  });
+  it("keeps the saved manifest available offline", async () => {
+    const w = worker(new Response('{"orientation":"any"}'));
+    w.fetch.mockRejectedValue(new Error("offline"));
+    const response = await w.request("/manifest.json").mock.calls[0][0];
+    expect(await response.json()).toEqual({ orientation: "any" });
+  });
   it("saves lazy map and routing worker files before reporting readiness", async () => {
     const w = worker();
     const assets = ["/_next/static/chunks/map.js", "/_next/static/chunks/routing.worker.js"];

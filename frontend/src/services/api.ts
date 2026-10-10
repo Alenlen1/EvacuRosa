@@ -140,6 +140,7 @@ export interface EvacuationCenter {
   medicalStatus?: "unknown" | "adequate" | "low" | "unavailable";
   suppliesUpdatedAt?: string | null;
   contactInformation?: string;
+  entranceInformation?: string;
   notes?: string;
   updatedAt: string;
 }

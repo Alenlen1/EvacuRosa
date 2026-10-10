@@ -229,7 +229,8 @@ export default function Map({
       )}
       <EvacuationCenterLayer centers={centers} onSelectCenter={onSelectCenter} />
       <EvacuationNavigation route={route} center={navigationCenter ?? (destination ? { ...destination, name: destinationLabel } : undefined)} mode={travelMode} geolocation={geolocation}
-        onRoute={onNavigationRoute} onStart={onNavigationStart} onActiveChange={setNavigating} />
+        onRoute={onNavigationRoute} onStart={onNavigationStart} onActiveChange={setNavigating}
+        onDetails={navigationCenter && onSelectCenter ? () => onSelectCenter(navigationCenter) : undefined} />
       {destination && (
         <DestinationMarker
           label={destinationLabel}
