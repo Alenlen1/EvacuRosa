@@ -2304,3 +2304,19 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .map-legend-trigger { justify-content: center; width: 44px; height: 44px; padding: 0; }
   .public-app .map-legend-trigger > span { display: none; }
 }
+/* Keep enlarged text readable without covering neighboring controls. */
+@media (max-width: 800px) {
+  .public-app .mobile-travel-mode .travel-mode-options span { overflow-wrap: anywhere; text-align: center; height: 100%; }
+  .public-app .navigation-compact-summary { flex-wrap: wrap; min-width: 0; }
+  .public-app .app-header { flex-wrap: wrap; height: auto; min-height: 54px; }
+  .public-app .app-header > .mobile-navigation { flex-shrink: 0; }
+}
+@media (max-width: 800px) {
+  .public-app .app-header > h1 { min-width: 0; max-width: calc(100% - 56px); }
+  .public-app .app-header .brand { max-width: 100%; white-space: normal; }
+  .public-app .app-header .brand > :last-child { min-width: 0; }
+  .public-app .app-header .brand-name { overflow-wrap: anywhere; }
+}
+@media (max-width: 800px) {
+  .public-app .app-header { padding-top: 8px; padding-bottom: 8px; }
+}
