@@ -18,15 +18,21 @@ function centerIcon(status: string) {
   const symbol = status === "AVAILABLE" ? '<path d="m7 12 3 3 7-7"/>'
     : status === "NEARLY_FULL" ? '<path d="m12 4 9 16H3Z"/><path d="M12 9v5m0 3v.2"/>'
     : status === "FULL" ? '<circle cx="12" cy="12" r="8"/><path d="M7 12h10"/>'
-    : '<rect x="6" y="10" width="12" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>';
+    : status === "CLOSED" ? '<rect x="6" y="10" width="12" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'
+    : '<path d="M9 8a3 3 0 0 1 6 0c0 3-3 2-3 5m0 4v.2"/>';
   return createDivIcon(
-    `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="3" y="9" width="18" height="12" rx="2" fill="${color}" stroke="white" stroke-width="1.5"/>
-      <path d="M3 9 L12 3 L21 9" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-      <circle cx="12" cy="13" r="9" fill="${color}"/>
-      <g transform="translate(4 5) scale(.67)" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${symbol}</g>
+    `<svg class="shelter-map-marker" width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="21" cy="23" r="18" fill="#17232f" fill-opacity=".15"/>
+      <circle cx="21" cy="21" r="18" fill="white" stroke="${color}" stroke-width="2"/>
+      <circle cx="21" cy="21" r="14.5" fill="${color}" fill-opacity=".10"/>
+      <g stroke="#344454" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m10 19 11-9 11 9M13 18v13h16V18" fill="white"/>
+        <path d="M18 31v-8h6v8M16 20h1m8 0h1"/>
+      </g>
+      <circle cx="34" cy="33" r="9" fill="${color}" stroke="white" stroke-width="2"/>
+      <g transform="translate(27 26) scale(.58)" stroke="white" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round">${symbol}</g>
     </svg>`,
-    26
+    44
   );
 }
 
