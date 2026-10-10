@@ -12,7 +12,7 @@ export async function getActiveFloodReports(): Promise<FloodReport[]> {
   const { data, error } = await supabase
     .from("flood_reports")
     .select(
-      "id, road_id, barangay_id, severity, water_level_meters, road_impassable, status, notes, reported_at, updated_at, barangays(name)"
+      "id, road_id, barangay_id, severity, water_level_meters, road_impassable, status, notes, reported_at, updated_at, barangays(name)",
     )
     .eq("status", "ACTIVE");
 
@@ -40,13 +40,15 @@ export async function getActiveFloodReports(): Promise<FloodReport[]> {
  * receive fuzzy risk penalties. NONE adds no flood restriction.
  * A BLOCKED override from one report is never downgraded by another.
  */
-export async function buildRoadStatusOverrides(): Promise<Map<string, RoadStatus>> {
+export async function buildRoadStatusOverrides(): Promise<
+  Map<string, RoadStatus>
+> {
   const reports = await getActiveFloodReports();
   return roadStatusOverridesForReports(reports);
 }
 
 export function roadStatusOverridesForReports(
-  reports: FloodReport[]
+  reports: FloodReport[],
 ): Map<string, RoadStatus> {
   const overrides = new Map<string, RoadStatus>();
 
@@ -54,7 +56,10 @@ export function roadStatusOverridesForReports(
     if (!report.roadId) continue;
     if (isFloodImpassable(report.severity)) {
       overrides.set(report.roadId, "BLOCKED");
-    } else if (report.severity !== "NONE" && overrides.get(report.roadId) !== "BLOCKED") {
+    } else if (
+      report.severity !== "NONE" &&
+      overrides.get(report.roadId) !== "BLOCKED"
+    ) {
       overrides.set(report.roadId, "FLOODED");
     }
   }

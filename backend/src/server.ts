@@ -19,7 +19,7 @@ const app = express();
 app.use(
   cors({
     origin: env.allowedOrigins,
-  })
+  }),
 );
 app.use(express.json());
 

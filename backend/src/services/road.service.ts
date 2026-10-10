@@ -8,7 +8,12 @@ import { applyLocalRoadAccess } from "../data/localRoadAccess";
 let cachedGraph: RoadGraph | null = null;
 let warned = false;
 
-const REAL_GRAPH_PATH = path.join(__dirname, "..", "data", "santaRosaRoadGraph.json");
+const REAL_GRAPH_PATH = path.join(
+  __dirname,
+  "..",
+  "data",
+  "santaRosaRoadGraph.json",
+);
 
 export interface RawGraphFile {
   _meta?: { source?: string; fetchedAt?: string; accessRulesVersion?: number };
@@ -28,18 +33,25 @@ export function loadRoadGraphData(): RawGraphFile {
 
   if (!existsSync(REAL_GRAPH_PATH)) {
     throw new Error(
-      "OpenStreetMap road data is missing. Run `npm run fetch:roads --workspace=backend`."
+      "OpenStreetMap road data is missing. Run `npm run fetch:roads --workspace=backend`.",
     );
   }
 
-  const data = JSON.parse(readFileSync(REAL_GRAPH_PATH, "utf-8")) as RawGraphFile;
-  if (data._meta?.accessRulesVersion !== 1 || data.edges.some(edge => !edge.osmTags?.highway)) {
-    throw new Error("Road access data is outdated. Run `npm run fetch:roads --workspace=backend` and restart the backend.");
+  const data = JSON.parse(
+    readFileSync(REAL_GRAPH_PATH, "utf-8"),
+  ) as RawGraphFile;
+  if (
+    data._meta?.accessRulesVersion !== 1 ||
+    data.edges.some((edge) => !edge.osmTags?.highway)
+  ) {
+    throw new Error(
+      "Road access data is outdated. Run `npm run fetch:roads --workspace=backend` and restart the backend.",
+    );
   }
   if (!warned) {
     const fetchedAt = data._meta?.fetchedAt ?? "unknown date";
     console.log(
-      `[road-graph] Using OpenStreetMap road data (${data.nodes.length} nodes, ${data.edges.length} edges, fetched ${fetchedAt}).`
+      `[road-graph] Using OpenStreetMap road data (${data.nodes.length} nodes, ${data.edges.length} edges, fetched ${fetchedAt}).`,
     );
     warned = true;
   }

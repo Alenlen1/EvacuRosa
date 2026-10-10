@@ -21,7 +21,7 @@ export interface SyncResult<T> {
 export async function fetchWithCache<T>(
   fetchLive: () => Promise<T>,
   readCache: () => Promise<CachedValue<T> | null>,
-  writeCache: (data: T) => Promise<void>
+  writeCache: (data: T) => Promise<void>,
 ): Promise<SyncResult<T>> {
   try {
     const data = await fetchLive();

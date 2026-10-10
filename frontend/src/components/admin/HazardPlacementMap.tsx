@@ -4,7 +4,11 @@ import "leaflet/dist/leaflet.css";
 import { useState } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import { Trash2 } from "lucide-react";
-import { FloodIcon, FireIcon, EarthquakeIcon } from "@/components/ui/HazardIcons";
+import {
+  FloodIcon,
+  FireIcon,
+  EarthquakeIcon,
+} from "@/components/ui/HazardIcons";
 import {
   SANTA_ROSA_CITY_BOUNDS,
   SANTA_ROSA_CITY_CENTER,
@@ -37,10 +41,14 @@ const pendingIcon = createDivIcon(
     <circle cx="12" cy="12" r="9" fill="#185FA5" fill-opacity="0.25" stroke="#185FA5" stroke-width="2"/>
     <circle cx="12" cy="12" r="3" fill="#185FA5"/>
   </svg>`,
-  22
+  22,
 );
 
-function ClickCapture({ onClick }: { onClick: (lat: number, lng: number) => void }) {
+function ClickCapture({
+  onClick,
+}: {
+  onClick: (lat: number, lng: number) => void;
+}) {
   useMapEvents({
     click: (e) => onClick(e.latlng.lat, e.latlng.lng),
   });
@@ -72,7 +80,10 @@ export default function HazardPlacementMap({
   onCreated,
 }: HazardPlacementMapProps) {
   const [mode, setMode] = useState<Mode>("flood");
-  const [pendingPoint, setPendingPoint] = useState<{ lat: number; lng: number } | null>(null);
+  const [pendingPoint, setPendingPoint] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [nearestRoads, setNearestRoads] = useState<NearestRoad[]>([]);
   const [selectedRoadId, setSelectedRoadId] = useState<string>("");
   const [selectedEarthquakeId, setSelectedEarthquakeId] = useState<string>("");
@@ -125,7 +136,9 @@ export default function HazardPlacementMap({
         await createFloodReport(authToken, {
           roadId: selectedRoadId,
           severity: severity as FloodReport["severity"],
-          waterLevelMeters: waterLevelMeters ? Number(waterLevelMeters) : undefined,
+          waterLevelMeters: waterLevelMeters
+            ? Number(waterLevelMeters)
+            : undefined,
           roadImpassable: impassable,
           notes: notes || undefined,
         });
@@ -139,7 +152,8 @@ export default function HazardPlacementMap({
         });
       } else {
         if (!selectedRoadId) throw new Error("Select a road first.");
-        if (!selectedEarthquakeId) throw new Error("Select an earthquake event first.");
+        if (!selectedEarthquakeId)
+          throw new Error("Select an earthquake event first.");
         await createEarthquakeRoadImpact(authToken, {
           earthquakeEventId: selectedEarthquakeId,
           roadId: selectedRoadId,
@@ -151,25 +165,34 @@ export default function HazardPlacementMap({
       resetForm();
       onCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save this report.");
+      setError(
+        err instanceof Error ? err.message : "Could not save this report.",
+      );
     } finally {
       setLoading(false);
     }
   }
 
-  async function removeHazard(kind: "flood" | "fire" | "earthquake" | "impact", id: string) {
-    const label = kind === "impact" ? "earthquake road impact" : `${kind} record`;
+  async function removeHazard(
+    kind: "flood" | "fire" | "earthquake" | "impact",
+    id: string,
+  ) {
+    const label =
+      kind === "impact" ? "earthquake road impact" : `${kind} record`;
     if (!window.confirm(`Remove this ${label}?`)) return;
     setRemovingId(id);
     setError(null);
     try {
       if (kind === "flood") await deleteFloodReport(authToken, id);
       else if (kind === "fire") await deleteFireIncident(authToken, id);
-      else if (kind === "impact") await deleteEarthquakeRoadImpact(authToken, id);
+      else if (kind === "impact")
+        await deleteEarthquakeRoadImpact(authToken, id);
       else await deleteEarthquakeEvent(authToken, id);
       onCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not remove this record.");
+      setError(
+        err instanceof Error ? err.message : "Could not remove this record.",
+      );
     } finally {
       setRemovingId(null);
     }
@@ -178,13 +201,15 @@ export default function HazardPlacementMap({
   return (
     <div className="hazard-editor">
       <div className="hazard-tabs" aria-label="Hazard type">
-        {(
-          [
-            { key: "flood" as const, label: "Flood", icon: FloodIcon },
-            { key: "fire" as const, label: "Fire", icon: FireIcon },
-            { key: "earthquake" as const, label: "Earthquake", icon: EarthquakeIcon },
-          ]
-        ).map(({ key, label, icon: Icon }) => (
+        {[
+          { key: "flood" as const, label: "Flood", icon: FloodIcon },
+          { key: "fire" as const, label: "Fire", icon: FireIcon },
+          {
+            key: "earthquake" as const,
+            label: "Earthquake",
+            icon: EarthquakeIcon,
+          },
+        ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             type="button"
@@ -213,7 +238,10 @@ export default function HazardPlacementMap({
 
       {mode === "earthquake" && (
         <div className="hazard-event-selector">
-          <label htmlFor="earthquake-event" className="mb-1 block text-xs text-slate-600">
+          <label
+            htmlFor="earthquake-event"
+            className="mb-1 block text-xs text-slate-600"
+          >
             Earthquake event to verify impact for
           </label>
           <select
@@ -225,8 +253,8 @@ export default function HazardPlacementMap({
             <option value="">Select an event…</option>
             {earthquakeEvents.map((ev) => (
               <option key={ev.id} value={ev.id}>
-                M{ev.magnitude.toFixed(1)} — {new Date(ev.occurredAt).toLocaleDateString()} (
-                {ev.status})
+                M{ev.magnitude.toFixed(1)} —{" "}
+                {new Date(ev.occurredAt).toLocaleDateString()} ({ev.status})
               </option>
             ))}
           </select>
@@ -248,39 +276,70 @@ export default function HazardPlacementMap({
           />
           <FloodLayer reports={floodReports} />
           <FireLayer incidents={fireIncidents} />
-          <EarthquakeLayer events={earthquakeEvents} roadImpacts={earthquakeRoadImpacts} />
+          <EarthquakeLayer
+            events={earthquakeEvents}
+            roadImpacts={earthquakeRoadImpacts}
+          />
           {pendingPoint && (
-            <Marker position={[pendingPoint.lat, pendingPoint.lng]} icon={pendingIcon} />
+            <Marker
+              position={[pendingPoint.lat, pendingPoint.lng]}
+              icon={pendingIcon}
+            />
           )}
           <ClickCapture onClick={handleMapClick} />
         </MapContainer>
       </div>
 
       <div className="hazard-form">
-        <h3 className="mb-3 text-sm font-semibold">Report {mode === "earthquake" ? "a verified road impact" : `a ${mode}`}</h3>
+        <h3 className="mb-3 text-sm font-semibold">
+          Report{" "}
+          {mode === "earthquake" ? "a verified road impact" : `a ${mode}`}
+        </h3>
         <p className="mb-2 text-xs text-slate-500">
           {mode === "fire"
             ? "Tap the map where the fire is."
             : "Tap the map near the affected road."}
         </p>
 
-        {error && <p className="mb-2 text-xs text-red-600" role="alert">{error}</p>}
-        {!pendingPoint && <div className="hazard-form-empty">
-          <span className="eyebrow">START ON THE MAP</span>
-          <strong>Select the affected location</strong>
-          <p>{mode === "fire" ? "Choose the incident location, then enter the radius and severity." : "Choose a point near the affected road, then review the suggested road and report details."}</p>
-          <small>Only report observed or verified conditions. A confirmed blockage changes route availability.</small>
-        </div>}
+        {error && (
+          <p className="mb-2 text-xs text-red-600" role="alert">
+            {error}
+          </p>
+        )}
+        {!pendingPoint && (
+          <div className="hazard-form-empty">
+            <span className="eyebrow">START ON THE MAP</span>
+            <strong>Select the affected location</strong>
+            <p>
+              {mode === "fire"
+                ? "Choose the incident location, then enter the radius and severity."
+                : "Choose a point near the affected road, then review the suggested road and report details."}
+            </p>
+            <small>
+              Only report observed or verified conditions. A confirmed blockage
+              changes route availability.
+            </small>
+          </div>
+        )}
 
         {pendingPoint && (
           <div className="space-y-2 rounded border border-slate-200 bg-slate-50 p-2">
             {mode !== "fire" && (
               <div>
-                <label htmlFor="hazard-road" className="mb-1 block text-xs text-slate-600">Nearest road</label>
+                <label
+                  htmlFor="hazard-road"
+                  className="mb-1 block text-xs text-slate-600"
+                >
+                  Nearest road
+                </label>
                 {lookingUpRoads ? (
-                  <p className="text-xs text-slate-400">Looking up nearby roads…</p>
+                  <p className="text-xs text-slate-400">
+                    Looking up nearby roads…
+                  </p>
                 ) : nearestRoads.length === 0 ? (
-                  <p className="text-xs text-red-600">No road found near this point.</p>
+                  <p className="text-xs text-red-600">
+                    No road found near this point.
+                  </p>
                 ) : (
                   <select
                     id="hazard-road"
@@ -300,7 +359,12 @@ export default function HazardPlacementMap({
 
             {mode !== "earthquake" && (
               <div>
-                <label htmlFor="hazard-severity" className="mb-1 block text-xs text-slate-600">Severity</label>
+                <label
+                  htmlFor="hazard-severity"
+                  className="mb-1 block text-xs text-slate-600"
+                >
+                  Severity
+                </label>
                 <select
                   id="hazard-severity"
                   value={severity}
@@ -324,7 +388,10 @@ export default function HazardPlacementMap({
 
             {mode === "earthquake" && (
               <div>
-                <label htmlFor="impact-level" className="mb-1 block text-xs text-slate-600">
+                <label
+                  htmlFor="impact-level"
+                  className="mb-1 block text-xs text-slate-600"
+                >
                   Verified impact level
                 </label>
                 <select
@@ -344,7 +411,10 @@ export default function HazardPlacementMap({
 
             {mode === "flood" && (
               <div>
-                <label htmlFor="water-level" className="mb-1 block text-xs text-slate-600">
+                <label
+                  htmlFor="water-level"
+                  className="mb-1 block text-xs text-slate-600"
+                >
                   Water level in meters (optional — leave blank if unmeasured)
                 </label>
                 <input
@@ -360,7 +430,12 @@ export default function HazardPlacementMap({
 
             {mode === "fire" && (
               <div>
-                <label htmlFor="fire-radius" className="mb-1 block text-xs text-slate-600">Radius (meters)</label>
+                <label
+                  htmlFor="fire-radius"
+                  className="mb-1 block text-xs text-slate-600"
+                >
+                  Radius (meters)
+                </label>
                 <input
                   id="fire-radius"
                   type="number"
@@ -373,8 +448,15 @@ export default function HazardPlacementMap({
 
             {mode === "flood" && (
               <div className="text-xs text-slate-700" role="status">
-                <strong>{impassable ? "Impassable — blocked for routing" : "Passable for routing — flood risk still applies"}</strong>
-                <p className="mt-1">Low/Moderate: passable. High/Severe: impassable. Passable does not guarantee safety.</p>
+                <strong>
+                  {impassable
+                    ? "Impassable — blocked for routing"
+                    : "Passable for routing — flood risk still applies"}
+                </strong>
+                <p className="mt-1">
+                  Low/Moderate: passable. High/Severe: impassable. Passable does
+                  not guarantee safety.
+                </p>
               </div>
             )}
 
@@ -390,7 +472,12 @@ export default function HazardPlacementMap({
             )}
 
             <div>
-              <label htmlFor="hazard-notes" className="mb-1 block text-xs text-slate-600">Notes (optional)</label>
+              <label
+                htmlFor="hazard-notes"
+                className="mb-1 block text-xs text-slate-600"
+              >
+                Notes (optional)
+              </label>
               <input
                 id="hazard-notes"
                 type="text"
@@ -422,18 +509,34 @@ export default function HazardPlacementMap({
       </div>
 
       <div className="hazard-records space-y-3">
-        <h3 className="text-sm font-semibold text-slate-700">Active hazard records</h3>
-        {floodReports.length === 0 && fireIncidents.length === 0 && earthquakeEvents.length === 0 && (
-          <p className="text-xs text-slate-500">No active hazard records.</p>
-        )}
+        <h3 className="text-sm font-semibold text-slate-700">
+          Active hazard records
+        </h3>
+        {floodReports.length === 0 &&
+          fireIncidents.length === 0 &&
+          earthquakeEvents.length === 0 && (
+            <p className="text-xs text-slate-500">No active hazard records.</p>
+          )}
         {floodReports.length > 0 && (
           <section className="space-y-1">
             <h4 className="text-xs font-medium text-amber-800">Floods</h4>
             {floodReports.map((report) => (
-              <div key={report.id} className="flex items-center justify-between gap-3 rounded border border-slate-200 px-2 py-1.5 text-xs">
-                <span>{report.severity} · {report.roadId}{report.roadImpassable ? " · blocked" : ""}</span>
-                <button type="button" onClick={() => removeHazard("flood", report.id)} disabled={removingId === report.id} className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50">
-                  <Trash2 size={13} /> {removingId === report.id ? "Removing…" : "Remove"}
+              <div
+                key={report.id}
+                className="flex items-center justify-between gap-3 rounded border border-slate-200 px-2 py-1.5 text-xs"
+              >
+                <span>
+                  {report.severity} · {report.roadId}
+                  {report.roadImpassable ? " · blocked" : ""}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeHazard("flood", report.id)}
+                  disabled={removingId === report.id}
+                  className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
+                >
+                  <Trash2 size={13} />{" "}
+                  {removingId === report.id ? "Removing…" : "Remove"}
                 </button>
               </div>
             ))}
@@ -443,10 +546,21 @@ export default function HazardPlacementMap({
           <section className="space-y-1">
             <h4 className="text-xs font-medium text-red-800">Fires</h4>
             {fireIncidents.map((incident) => (
-              <div key={incident.id} className="flex items-center justify-between gap-3 rounded border border-slate-200 px-2 py-1.5 text-xs">
-                <span>{incident.severity} fire · {incident.radiusMeters}m radius</span>
-                <button type="button" onClick={() => removeHazard("fire", incident.id)} disabled={removingId === incident.id} className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50">
-                  <Trash2 size={13} /> {removingId === incident.id ? "Removing…" : "Remove"}
+              <div
+                key={incident.id}
+                className="flex items-center justify-between gap-3 rounded border border-slate-200 px-2 py-1.5 text-xs"
+              >
+                <span>
+                  {incident.severity} fire · {incident.radiusMeters}m radius
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeHazard("fire", incident.id)}
+                  disabled={removingId === incident.id}
+                  className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
+                >
+                  <Trash2 size={13} />{" "}
+                  {removingId === incident.id ? "Removing…" : "Remove"}
                 </button>
               </div>
             ))}
@@ -454,22 +568,52 @@ export default function HazardPlacementMap({
         )}
         {earthquakeEvents.length > 0 && (
           <section className="space-y-1">
-            <h4 className="text-xs font-medium text-amber-900">Earthquakes and verified impacts</h4>
+            <h4 className="text-xs font-medium text-amber-900">
+              Earthquakes and verified impacts
+            </h4>
             {earthquakeEvents.map((event) => {
-              const impacts = earthquakeRoadImpacts.filter((impact) => impact.earthquakeEventId === event.id);
+              const impacts = earthquakeRoadImpacts.filter(
+                (impact) => impact.earthquakeEventId === event.id,
+              );
               return (
-                <div key={event.id} className="rounded border border-slate-200 px-2 py-1.5 text-xs">
+                <div
+                  key={event.id}
+                  className="rounded border border-slate-200 px-2 py-1.5 text-xs"
+                >
                   <div className="flex items-center justify-between gap-3">
-                    <span>M{event.magnitude.toFixed(1)} · {new Date(event.occurredAt).toLocaleDateString()} · {event.status}</span>
-                    <button type="button" onClick={() => removeHazard("earthquake", event.id)} disabled={removingId === event.id} className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50">
-                      <Trash2 size={13} /> {removingId === event.id ? "Removing…" : "Remove event"}
+                    <span>
+                      M{event.magnitude.toFixed(1)} ·{" "}
+                      {new Date(event.occurredAt).toLocaleDateString()} ·{" "}
+                      {event.status}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeHazard("earthquake", event.id)}
+                      disabled={removingId === event.id}
+                      className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
+                    >
+                      <Trash2 size={13} />{" "}
+                      {removingId === event.id ? "Removing…" : "Remove event"}
                     </button>
                   </div>
                   {impacts.map((impact) => (
-                    <div key={impact.id} className="mt-1 flex items-center justify-between gap-3 border-t border-slate-100 pt-1">
-                      <span>{impact.impactLevel} impact · {impact.roadId}{impact.confirmedBlocked ? " · blocked" : ""}</span>
-                      <button type="button" onClick={() => removeHazard("impact", impact.id)} disabled={removingId === impact.id} className="text-red-700 disabled:opacity-50">
-                        {removingId === impact.id ? "Removing…" : "Remove impact"}
+                    <div
+                      key={impact.id}
+                      className="mt-1 flex items-center justify-between gap-3 border-t border-slate-100 pt-1"
+                    >
+                      <span>
+                        {impact.impactLevel} impact · {impact.roadId}
+                        {impact.confirmedBlocked ? " · blocked" : ""}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeHazard("impact", impact.id)}
+                        disabled={removingId === impact.id}
+                        className="text-red-700 disabled:opacity-50"
+                      >
+                        {removingId === impact.id
+                          ? "Removing…"
+                          : "Remove impact"}
                       </button>
                     </div>
                   ))}

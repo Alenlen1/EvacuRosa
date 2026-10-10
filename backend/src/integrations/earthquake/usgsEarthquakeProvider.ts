@@ -1,4 +1,7 @@
-import type { EarthquakeProvider, RawEarthquakeEvent } from "./earthquakeProvider";
+import type {
+  EarthquakeProvider,
+  RawEarthquakeEvent,
+} from "./earthquakeProvider";
 
 /**
  * PHIVOLCS is the spec's preferred source, but as of this writing it has
@@ -36,7 +39,9 @@ export class UsgsEarthquakeProvider implements EarthquakeProvider {
 
     const response = await fetch(url.toString());
     if (!response.ok) {
-      throw new Error(`USGS request failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `USGS request failed: ${response.status} ${response.statusText}`,
+      );
     }
 
     const data = (await response.json()) as {

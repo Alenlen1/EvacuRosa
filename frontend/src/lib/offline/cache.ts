@@ -31,15 +31,20 @@ export const cacheEvacuationCenters = (data: EvacuationCenter[]) =>
 export const getCachedEvacuationCenters = () =>
   idbGet<EvacuationCenter[]>(KEYS.evacuationCenters);
 
-export const cacheFloodReports = (data: FloodReport[]) => idbSet(KEYS.floodReports, data);
-export const getCachedFloodReports = () => idbGet<FloodReport[]>(KEYS.floodReports);
+export const cacheFloodReports = (data: FloodReport[]) =>
+  idbSet(KEYS.floodReports, data);
+export const getCachedFloodReports = () =>
+  idbGet<FloodReport[]>(KEYS.floodReports);
 
-export const cacheFireIncidents = (data: FireIncident[]) => idbSet(KEYS.fireIncidents, data);
-export const getCachedFireIncidents = () => idbGet<FireIncident[]>(KEYS.fireIncidents);
+export const cacheFireIncidents = (data: FireIncident[]) =>
+  idbSet(KEYS.fireIncidents, data);
+export const getCachedFireIncidents = () =>
+  idbGet<FireIncident[]>(KEYS.fireIncidents);
 
 export const cacheEarthquakeEvents = (data: EarthquakeEvent[]) =>
   idbSet(KEYS.earthquakeEvents, data);
-export const getCachedEarthquakeEvents = () => idbGet<EarthquakeEvent[]>(KEYS.earthquakeEvents);
+export const getCachedEarthquakeEvents = () =>
+  idbGet<EarthquakeEvent[]>(KEYS.earthquakeEvents);
 
 export const cacheEarthquakeRoadImpacts = (data: EarthquakeRoadImpact[]) =>
   idbSet(KEYS.earthquakeRoadImpacts, data);

@@ -10,7 +10,10 @@ export function loadBasemapRenderer() {
       // This Leaflet plugin expects the browser global even in module builds.
       window.L = leaflet;
       return import("protomaps-leaflet");
-    })().catch(error => { loading = null; throw error; });
+    })().catch((error) => {
+      loading = null;
+      throw error;
+    });
   }
   return loading;
 }

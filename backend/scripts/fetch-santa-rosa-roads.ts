@@ -17,7 +17,14 @@ const HIGHWAY_TYPES = [
   "primary_link",
   "secondary_link",
   "tertiary_link",
-  "service", "living_street", "pedestrian", "footway", "path", "cycleway", "steps", "track",
+  "service",
+  "living_street",
+  "pedestrian",
+  "footway",
+  "path",
+  "cycleway",
+  "steps",
+  "track",
 ];
 
 /**
@@ -58,7 +65,9 @@ async function fetchFromOverpass(query: string): Promise<OverpassResponse> {
     const host = new URL(url).host;
     for (let attempt = 1; attempt <= ATTEMPTS_PER_MIRROR; attempt++) {
       try {
-        console.log(`  trying ${host} (attempt ${attempt}/${ATTEMPTS_PER_MIRROR})...`);
+        console.log(
+          `  trying ${host} (attempt ${attempt}/${ATTEMPTS_PER_MIRROR})...`,
+        );
         const response = await fetch(url, {
           method: "POST",
           headers: {
@@ -99,7 +108,7 @@ async function fetchFromOverpass(query: string): Promise<OverpassResponse> {
     `All Overpass mirrors failed. Last error: ${lastError}\n` +
       "The public servers are shared and free, so this happens. Wait a few " +
       "minutes and run the command again — the data itself is fine, the " +
-      "servers are just busy."
+      "servers are just busy.",
   );
 }
 
@@ -145,12 +154,17 @@ interface OutEdge {
 function buildQuery(): string {
   const wayFilter = HIGHWAY_TYPES.map(
     (t) =>
-      `way["highway"="${t}"](${BOUNDS.south},${BOUNDS.west},${BOUNDS.north},${BOUNDS.east});`
+      `way["highway"="${t}"](${BOUNDS.south},${BOUNDS.west},${BOUNDS.north},${BOUNDS.east});`,
   ).join("\n  ");
   return `[out:json][timeout:180];\n(\n  ${wayFilter}\n);\nout body;\n>;\nout skel qt;\n`;
 }
 
-function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+function haversineMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
   const R = 6371000;
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
@@ -172,8 +186,13 @@ function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number)
  */
 function largestConnectedComponent(
   nodes: Map<string, OutNode>,
-  edges: OutEdge[]
-): { nodes: Map<string, OutNode>; edges: OutEdge[]; droppedNodes: number; components: number } {
+  edges: OutEdge[],
+): {
+  nodes: Map<string, OutNode>;
+  edges: OutEdge[];
+  droppedNodes: number;
+  components: number;
+} {
   const adjacency = new Map<string, string[]>();
   for (const id of nodes.keys()) adjacency.set(id, []);
   for (const e of edges) {
@@ -210,7 +229,7 @@ function largestConnectedComponent(
     if (node) keptNodes.set(id, node);
   }
   const keptEdges = edges.filter(
-    (e) => best.has(e.fromNodeId) && best.has(e.toNodeId)
+    (e) => best.has(e.fromNodeId) && best.has(e.toNodeId),
   );
 
   return {
@@ -224,7 +243,7 @@ function largestConnectedComponent(
 async function main() {
   console.log("Querying Overpass API for Santa Rosa City roads...");
   console.log(
-    "This hits a free, donation-funded public server and can take 30-90s — please don't run it repeatedly in a loop."
+    "This hits a free, donation-funded public server and can take 30-90s — please don't run it repeatedly in a loop.",
   );
 
   const data = await fetchFromOverpass(buildQuery());
@@ -238,7 +257,7 @@ async function main() {
 
   if (ways.length === 0) {
     throw new Error(
-      "Overpass returned no ways. Check the BOUNDS constant and that the query wasn't rate-limited."
+      "Overpass returned no ways. Check the BOUNDS constant and that the query wasn't rate-limited.",
     );
   }
 
@@ -259,7 +278,7 @@ async function main() {
       if (fromNode.id === toNode.id) continue;
 
       const distanceMeters = Math.round(
-        haversineMeters(fromNode.lat, fromNode.lon, toNode.lat, toNode.lon)
+        haversineMeters(fromNode.lat, fromNode.lon, toNode.lat, toNode.lon),
       );
       // Zero-length segments (duplicate coordinates in the source data)
       // add nothing and can only confuse cost calculations.
@@ -301,7 +320,7 @@ async function main() {
   }
 
   console.log(
-    `Parsed ${graphNodes.size} nodes and ${graphEdges.length} edges from ${ways.length} ways.`
+    `Parsed ${graphNodes.size} nodes and ${graphEdges.length} edges from ${ways.length} ways.`,
   );
   if (skippedZeroLength > 0) {
     console.log(`Skipped ${skippedZeroLength} zero-length segment(s).`);
@@ -310,7 +329,7 @@ async function main() {
   const pruned = largestConnectedComponent(graphNodes, graphEdges);
   console.log(
     `Found ${pruned.components} connected component(s); keeping the largest ` +
-      `(${pruned.nodes.size} nodes, ${pruned.edges.length} edges), dropping ${pruned.droppedNodes} unreachable node(s).`
+      `(${pruned.nodes.size} nodes, ${pruned.edges.length} edges), dropping ${pruned.droppedNodes} unreachable node(s).`,
   );
 
   const output = {
@@ -318,10 +337,10 @@ async function main() {
       source: "OpenStreetMap via Overpass API",
       accessRulesVersion: 1,
       fetchedAt: new Date().toISOString(),
-      attribution: "© OpenStreetMap contributors, https://www.openstreetmap.org/copyright",
+      attribution:
+        "© OpenStreetMap contributors, https://www.openstreetmap.org/copyright",
       bounds: BOUNDS,
-      note:
-        "Generated automatically — every edge starts OPEN/GOOD. Road status and condition updates come from the CDRRMO admin workflow, not this script. Only the largest connected component is kept, so isolated fragments clipped by the bounding box are excluded.",
+      note: "Generated automatically — every edge starts OPEN/GOOD. Road status and condition updates come from the CDRRMO admin workflow, not this script. Only the largest connected component is kept, so isolated fragments clipped by the bounding box are excluded.",
       onewayNote:
         "Original OSM way direction and access tags are preserved. The router enforces access and one-way rules per travel mode. Turn-restriction relations are not included.",
     },
@@ -329,15 +348,21 @@ async function main() {
     edges: pruned.edges,
   };
 
-  const outPath = path.join(__dirname, "..", "src", "data", "santaRosaRoadGraph.json");
+  const outPath = path.join(
+    __dirname,
+    "..",
+    "src",
+    "data",
+    "santaRosaRoadGraph.json",
+  );
   writeFileSync(outPath, JSON.stringify(output, null, 2));
 
   console.log(`\nWrote ${outPath}`);
   console.log(
-    "The backend picks this up automatically on restart — no code change needed."
+    "The backend picks this up automatically on restart — no code change needed.",
   );
   console.log(
-    "\nAccess and one-way rules are enforced per travel mode. Restart the backend to load this snapshot."
+    "\nAccess and one-way rules are enforced per travel mode. Restart the backend to load this snapshot.",
   );
 }
 

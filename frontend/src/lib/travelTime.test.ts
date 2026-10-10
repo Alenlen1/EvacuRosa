@@ -16,7 +16,12 @@ describe("estimatedTravelTime", () => {
 
   it("does not invent an estimate for invalid distances", () => {
     for (const distance of [-1, NaN, Infinity]) {
-      for (const mode of ["walking", "biking", "motorcycle", "car"] as TravelMode[]) {
+      for (const mode of [
+        "walking",
+        "biking",
+        "motorcycle",
+        "car",
+      ] as TravelMode[]) {
         expect(estimatedTravelTime(distance, mode)).toBeNull();
       }
     }

@@ -1,10 +1,23 @@
 import { loadRoadGraph } from "./road.service";
-import { buildRoadStatusOverrides, getActiveFloodReports } from "./flood.service";
-import { buildFireStatusOverrides, getActiveFireIncidents } from "./fire.service";
-import { buildEarthquakeStatusOverrides, buildEarthquakeImpactByRoadId } from "./earthquake.service";
+import {
+  buildRoadStatusOverrides,
+  getActiveFloodReports,
+} from "./flood.service";
+import {
+  buildFireStatusOverrides,
+  getActiveFireIncidents,
+} from "./fire.service";
+import {
+  buildEarthquakeStatusOverrides,
+  buildEarthquakeImpactByRoadId,
+} from "./earthquake.service";
 import type { RoadStatus } from "../algorithms/astar/edge";
 import type { TravelMode } from "../algorithms/astar/access";
-import { calculateRoute, type LatLng, type RouteResult } from "../algorithms/routing";
+import {
+  calculateRoute,
+  type LatLng,
+  type RouteResult,
+} from "../algorithms/routing";
 export type { LatLng, RouteResult } from "../algorithms/routing";
 
 function mergeOverrides(
@@ -23,7 +36,11 @@ function mergeOverrides(
   return merged;
 }
 
-export async function computeRoute(start: LatLng, destination: LatLng, travelMode: TravelMode = "walking"): Promise<RouteResult> {
+export async function computeRoute(
+  start: LatLng,
+  destination: LatLng,
+  travelMode: TravelMode = "walking",
+): Promise<RouteResult> {
   const graph = loadRoadGraph();
   const [
     floodOverrides,
@@ -41,7 +58,11 @@ export async function computeRoute(start: LatLng, destination: LatLng, travelMod
     buildEarthquakeImpactByRoadId(),
   ]);
   return calculateRoute(graph, start, destination, travelMode, {
-    statusOverrides: [...mergeOverrides(floodOverrides, fireOverrides, earthquakeOverrides)],
-    floodReports, fireIncidents, earthquakeImpacts: [...earthquakeImpactByRoadId],
+    statusOverrides: [
+      ...mergeOverrides(floodOverrides, fireOverrides, earthquakeOverrides),
+    ],
+    floodReports,
+    fireIncidents,
+    earthquakeImpacts: [...earthquakeImpactByRoadId],
   });
 }

@@ -18,9 +18,11 @@ async function main() {
   console.log(`Fetched ${events.length} events from USGS.`);
 
   const { inserted, updated } = await upsertEarthquakeEvents(events);
-  console.log(`Inserted ${inserted} new event(s), updated ${updated} existing event(s).`);
   console.log(
-    "New events default to status UNREVIEWED and have zero effect on routing until CDRRMO records a verified road impact for them."
+    `Inserted ${inserted} new event(s), updated ${updated} existing event(s).`,
+  );
+  console.log(
+    "New events default to status UNREVIEWED and have zero effect on routing until CDRRMO records a verified road impact for them.",
   );
 }
 

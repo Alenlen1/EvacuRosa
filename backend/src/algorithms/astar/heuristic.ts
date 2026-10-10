@@ -4,7 +4,7 @@ export function haversineMeters(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number {
   const R = 6371000;
   const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -30,7 +30,7 @@ export function toLocalMeters(
   latitude: number,
   longitude: number,
   refLatitude: number,
-  refLongitude: number
+  refLongitude: number,
 ): { x: number; y: number } {
   const R = 6371000;
   const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -44,19 +44,19 @@ export function toLocalMeters(
 export function distanceMetersToSegment(
   point: { latitude: number; longitude: number },
   segmentStart: { latitude: number; longitude: number },
-  segmentEnd: { latitude: number; longitude: number }
+  segmentEnd: { latitude: number; longitude: number },
 ): number {
   const a = toLocalMeters(
     segmentStart.latitude,
     segmentStart.longitude,
     point.latitude,
-    point.longitude
+    point.longitude,
   );
   const b = toLocalMeters(
     segmentEnd.latitude,
     segmentEnd.longitude,
     point.latitude,
-    point.longitude
+    point.longitude,
   );
 
   const dx = b.x - a.x;

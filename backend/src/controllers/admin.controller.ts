@@ -2,7 +2,10 @@ import type { Response } from "express";
 import type { RoleAwareRequest } from "../middleware/role.middleware";
 import { isFloodImpassable, isFloodSeverity } from "../types/floodPassability";
 
-export async function updateEvacuationCenter(req: RoleAwareRequest, res: Response) {
+export async function updateEvacuationCenter(
+  req: RoleAwareRequest,
+  res: Response,
+) {
   const { id } = req.params;
   const { currentOccupancy, capacity, status, notes } = req.body ?? {};
 
@@ -12,17 +15,26 @@ export async function updateEvacuationCenter(req: RoleAwareRequest, res: Respons
   }
 
   const updates: Record<string, unknown> = {};
-  for (const [field, column] of [["waterStatus", "water_status"], ["foodStatus", "food_status"], ["medicalStatus", "medical_status"]]) {
+  for (const [field, column] of [
+    ["waterStatus", "water_status"],
+    ["foodStatus", "food_status"],
+    ["medicalStatus", "medical_status"],
+  ]) {
     const value = req.body?.[field];
     if (value !== undefined) {
-      if (typeof value !== "string" || !["unknown", "adequate", "low", "unavailable"].includes(value)) {
-        res.status(400).json({ error: "Invalid supply status." }); return;
+      if (
+        typeof value !== "string" ||
+        !["unknown", "adequate", "low", "unavailable"].includes(value)
+      ) {
+        res.status(400).json({ error: "Invalid supply status." });
+        return;
       }
       updates[column] = value;
       updates.supplies_updated_at = new Date().toISOString();
     }
   }
-  if (typeof currentOccupancy === "number") updates.current_occupancy = currentOccupancy;
+  if (typeof currentOccupancy === "number")
+    updates.current_occupancy = currentOccupancy;
   if (typeof capacity === "number") updates.capacity = capacity;
   if (typeof status === "string") updates.status = status;
   if (typeof notes === "string") updates.notes = notes;
@@ -44,7 +56,8 @@ export async function updateEvacuationCenter(req: RoleAwareRequest, res: Respons
 
   if (error) {
     res.status(403).json({
-      error: "Update rejected — check that this center belongs to your barangay.",
+      error:
+        "Update rejected — check that this center belongs to your barangay.",
     });
     return;
   }
@@ -61,7 +74,9 @@ export async function createFloodReport(req: RoleAwareRequest, res: Response) {
     return;
   }
   if (typeof roadId !== "string" || !isFloodSeverity(severity)) {
-    res.status(400).json({ error: "roadId and a valid flood severity are required." });
+    res
+      .status(400)
+      .json({ error: "roadId and a valid flood severity are required." });
     return;
   }
 
@@ -73,7 +88,8 @@ export async function createFloodReport(req: RoleAwareRequest, res: Response) {
       road_id: roadId,
       barangay_id: barangayId ?? null,
       severity,
-      water_level_meters: typeof waterLevelMeters === "number" ? waterLevelMeters : null,
+      water_level_meters:
+        typeof waterLevelMeters === "number" ? waterLevelMeters : null,
       road_impassable: isFloodImpassable(severity),
       status: "ACTIVE",
       notes: typeof notes === "string" ? notes : null,
@@ -83,7 +99,9 @@ export async function createFloodReport(req: RoleAwareRequest, res: Response) {
     .single();
 
   if (error) {
-    res.status(403).json({ error: "Could not create flood report — check permissions." });
+    res
+      .status(403)
+      .json({ error: "Could not create flood report — check permissions." });
     return;
   }
 
@@ -108,7 +126,8 @@ export async function updateFloodReport(req: RoleAwareRequest, res: Response) {
     updates.severity = severity;
     updates.road_impassable = isFloodImpassable(severity);
   }
-  if (typeof waterLevelMeters === "number") updates.water_level_meters = waterLevelMeters;
+  if (typeof waterLevelMeters === "number")
+    updates.water_level_meters = waterLevelMeters;
   if (typeof status === "string") updates.status = status;
   if (typeof notes === "string") updates.notes = notes;
 
@@ -140,7 +159,10 @@ export async function deleteFloodReport(req: RoleAwareRequest, res: Response) {
     return;
   }
 
-  const { error } = await req.userSupabase.from("flood_reports").delete().eq("id", id);
+  const { error } = await req.userSupabase
+    .from("flood_reports")
+    .delete()
+    .eq("id", id);
 
   if (error) {
     res.status(403).json({ error: "Delete rejected." });
@@ -187,7 +209,9 @@ export async function createFireIncident(req: RoleAwareRequest, res: Response) {
     .single();
 
   if (error) {
-    res.status(403).json({ error: "Could not create fire incident — check permissions." });
+    res
+      .status(403)
+      .json({ error: "Could not create fire incident — check permissions." });
     return;
   }
 
@@ -241,7 +265,10 @@ export async function deleteFireIncident(req: RoleAwareRequest, res: Response) {
     return;
   }
 
-  const { error } = await req.userSupabase.from("fire_incidents").delete().eq("id", id);
+  const { error } = await req.userSupabase
+    .from("fire_incidents")
+    .delete()
+    .eq("id", id);
 
   if (error) {
     res.status(403).json({ error: "Delete rejected." });
@@ -251,7 +278,10 @@ export async function deleteFireIncident(req: RoleAwareRequest, res: Response) {
   res.status(204).send();
 }
 
-export async function updateEarthquakeEvent(req: RoleAwareRequest, res: Response) {
+export async function updateEarthquakeEvent(
+  req: RoleAwareRequest,
+  res: Response,
+) {
   const { id } = req.params;
   const { status, notes } = req.body ?? {};
 
@@ -284,7 +314,10 @@ export async function updateEarthquakeEvent(req: RoleAwareRequest, res: Response
   res.json({ event: data });
 }
 
-export async function deleteEarthquakeEvent(req: RoleAwareRequest, res: Response) {
+export async function deleteEarthquakeEvent(
+  req: RoleAwareRequest,
+  res: Response,
+) {
   const { id } = req.params;
 
   if (!req.userSupabase) {
@@ -305,8 +338,12 @@ export async function deleteEarthquakeEvent(req: RoleAwareRequest, res: Response
   res.status(204).send();
 }
 
-export async function createEarthquakeRoadImpact(req: RoleAwareRequest, res: Response) {
-  const { earthquakeEventId, roadId, impactLevel, confirmedBlocked, notes } = req.body ?? {};
+export async function createEarthquakeRoadImpact(
+  req: RoleAwareRequest,
+  res: Response,
+) {
+  const { earthquakeEventId, roadId, impactLevel, confirmedBlocked, notes } =
+    req.body ?? {};
 
   if (!req.userSupabase) {
     res.status(401).json({ error: "Not authenticated." });
@@ -340,14 +377,19 @@ export async function createEarthquakeRoadImpact(req: RoleAwareRequest, res: Res
     .single();
 
   if (error) {
-    res.status(403).json({ error: "Could not record road impact — check permissions." });
+    res
+      .status(403)
+      .json({ error: "Could not record road impact — check permissions." });
     return;
   }
 
   res.status(201).json({ roadImpact: data });
 }
 
-export async function deleteEarthquakeRoadImpact(req: RoleAwareRequest, res: Response) {
+export async function deleteEarthquakeRoadImpact(
+  req: RoleAwareRequest,
+  res: Response,
+) {
   const { id } = req.params;
 
   if (!req.userSupabase) {
@@ -355,7 +397,10 @@ export async function deleteEarthquakeRoadImpact(req: RoleAwareRequest, res: Res
     return;
   }
 
-  const { error } = await req.userSupabase.from("earthquake_road_impacts").delete().eq("id", id);
+  const { error } = await req.userSupabase
+    .from("earthquake_road_impacts")
+    .delete()
+    .eq("id", id);
 
   if (error) {
     res.status(403).json({ error: "Delete rejected." });

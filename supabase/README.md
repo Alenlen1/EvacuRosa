@@ -117,6 +117,7 @@ restore a deleted row. A barangay account must receive HTTP 403, and direct
 Supabase deletion by that account must not remove any rows. Anonymous clients
 must have no delete access. Use test records; no live requests are deleted by
 the migration.
+
 # Flood severity and routing
 
 Apply `0014_flood_severity_passability.sql` to align existing reports and future

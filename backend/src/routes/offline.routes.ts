@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { getOfflineGraphResponse, getOfflineSnapshot } from "../services/offlineRouting.service";
+import {
+  getOfflineGraphResponse,
+  getOfflineSnapshot,
+} from "../services/offlineRouting.service";
 
 export const offlineRouter = Router();
 offlineRouter.get("/snapshot", async (_req, res) => {

@@ -24,7 +24,7 @@ function centerIcon(status: string) {
       <path d="M3 9 L12 3 L21 9" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
       <path d="M10 21v-7h4v7M7 11v3M17 11v3" stroke="white" stroke-width="1.5"/>
     </svg>`,
-    26
+    26,
   );
 }
 
@@ -50,7 +50,7 @@ export default function AdminEvacuationMap({
 }: AdminEvacuationMapProps) {
   const withCoords = centers.filter(
     (c): c is MapCenter & { latitude: number; longitude: number } =>
-      c.latitude != null && c.longitude != null
+      c.latitude != null && c.longitude != null,
   );
 
   return (
@@ -74,7 +74,12 @@ export default function AdminEvacuationMap({
           icon={centerIcon(c.status)}
           eventHandlers={{ click: () => onSelectCenter(c.id) }}
         >
-          <Popup><div className="center-popup"><strong>{c.name}</strong><span>{c.status.replaceAll("_", " ")}</span></div></Popup>
+          <Popup>
+            <div className="center-popup">
+              <strong>{c.name}</strong>
+              <span>{c.status.replaceAll("_", " ")}</span>
+            </div>
+          </Popup>
         </Marker>
       ))}
     </MapContainer>

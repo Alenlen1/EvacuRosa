@@ -45,7 +45,9 @@ describe("RoadGraph.nearestRoads", () => {
   it("includes distance for every returned road, closest first", () => {
     const results = makeGraph().nearestRoads(14.3005, 121.105, 5);
     expect(results.length).toBe(2);
-    expect(results[0].distanceMeters).toBeLessThanOrEqual(results[1].distanceMeters);
+    expect(results[0].distanceMeters).toBeLessThanOrEqual(
+      results[1].distanceMeters,
+    );
   });
 
   it("respects the limit parameter", () => {
