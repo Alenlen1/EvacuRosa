@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { attachProfile, requireRole, type RoleAwareRequest } from "./role.middleware";
+import {
+  attachProfile,
+  requireRole,
+  type RoleAwareRequest,
+} from "./role.middleware";
 
 function makeRes() {
   const res: any = {};
@@ -35,7 +39,10 @@ describe("attachProfile", () => {
   it("rejects when the authenticated user has no matching profiles row", async () => {
     const req = {
       supabaseUser: { id: "user-1" },
-      userSupabase: makeSupabaseReturning({ data: null, error: { message: "not found" } }),
+      userSupabase: makeSupabaseReturning({
+        data: null,
+        error: { message: "not found" },
+      }),
     } as unknown as RoleAwareRequest;
     const res = makeRes();
     const next = vi.fn();
@@ -47,7 +54,12 @@ describe("attachProfile", () => {
   });
 
   it("attaches the profile and continues when one exists", async () => {
-    const profile = { id: "user-1", role: "SUPER_ADMIN", barangay_id: null, full_name: "Test" };
+    const profile = {
+      id: "user-1",
+      role: "SUPER_ADMIN",
+      barangay_id: null,
+      full_name: "Test",
+    };
     const req = {
       supabaseUser: { id: "user-1" },
       userSupabase: makeSupabaseReturning({ data: profile, error: null }),
@@ -66,7 +78,12 @@ describe("attachProfile", () => {
 describe("requireRole", () => {
   it("rejects a BARANGAY_ADMIN from a SUPER_ADMIN-only action", () => {
     const req = {
-      profile: { id: "u1", role: "BARANGAY_ADMIN", barangay_id: "b1", full_name: null },
+      profile: {
+        id: "u1",
+        role: "BARANGAY_ADMIN",
+        barangay_id: "b1",
+        full_name: null,
+      },
     } as RoleAwareRequest;
     const res = makeRes();
     const next = vi.fn();
@@ -79,7 +96,12 @@ describe("requireRole", () => {
 
   it("allows a SUPER_ADMIN through a SUPER_ADMIN-only action", () => {
     const req = {
-      profile: { id: "u1", role: "SUPER_ADMIN", barangay_id: null, full_name: null },
+      profile: {
+        id: "u1",
+        role: "SUPER_ADMIN",
+        barangay_id: null,
+        full_name: null,
+      },
     } as RoleAwareRequest;
     const res = makeRes();
     const next = vi.fn();

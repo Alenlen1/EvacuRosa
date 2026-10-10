@@ -5,7 +5,9 @@ import {
 } from "./earthquake.service";
 import type { EarthquakeRoadImpact } from "../types/earthquake";
 
-function impact(overrides: Partial<EarthquakeRoadImpact> = {}): EarthquakeRoadImpact {
+function impact(
+  overrides: Partial<EarthquakeRoadImpact> = {},
+): EarthquakeRoadImpact {
   return {
     id: "impact-1",
     earthquakeEventId: "event-1",

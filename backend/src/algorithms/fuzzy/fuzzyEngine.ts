@@ -45,7 +45,7 @@ export function evaluateRoadRisk(input: FuzzyRiskInput): FuzzyRiskResult {
 }
 
 export function severityToNumeric(
-  severity: "NONE" | "LOW" | "MODERATE" | "HIGH" | "SEVERE"
+  severity: "NONE" | "LOW" | "MODERATE" | "HIGH" | "SEVERE",
 ): number {
   return { NONE: 0, LOW: 1, MODERATE: 2, HIGH: 3, SEVERE: 4 }[severity];
 }

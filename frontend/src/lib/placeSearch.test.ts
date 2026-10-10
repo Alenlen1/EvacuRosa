@@ -16,11 +16,26 @@ describe("Santa Rosa place search", () => {
     expect(result.label.subtitle).toBe("Santa Rosa, Laguna");
   });
   it("rejects out-of-bounds and malformed results and removes duplicates", () => {
-    expect(parsePlaceResults({ features: [null, {}, feature("Outside", 120.9, 14.6), feature("Invalid", NaN), feature("Here"), feature("Here")] })).toHaveLength(1);
+    expect(
+      parsePlaceResults({
+        features: [
+          null,
+          {},
+          feature("Outside", 120.9, 14.6),
+          feature("Invalid", NaN),
+          feature("Here"),
+          feature("Here"),
+        ],
+      }),
+    ).toHaveLength(1);
     expect(parsePlaceResults(null)).toEqual([]);
   });
   it("sends the existing map bounds and caches repeat queries", async () => {
-    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ features: [feature("Test place")] })));
+    const request = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ features: [feature("Test place")] })),
+      );
     vi.stubGlobal("fetch", request);
     const signal = new AbortController().signal;
     await searchPlaces("Test place", signal);
@@ -35,11 +50,18 @@ describe("Santa Rosa place search", () => {
     vi.stubGlobal("fetch", request);
     const controller = new AbortController();
     controller.abort();
-    await expect(searchPlaces("cancelled", controller.signal)).rejects.toMatchObject({ name: "AbortError" });
+    await expect(
+      searchPlaces("cancelled", controller.signal),
+    ).rejects.toMatchObject({ name: "AbortError" });
     expect(request).not.toHaveBeenCalled();
   });
   it("reports provider errors instead of treating them as no matches", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 429 })));
-    await expect(searchPlaces("rate limited", new AbortController().signal)).rejects.toThrow("temporarily unavailable");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(null, { status: 429 })),
+    );
+    await expect(
+      searchPlaces("rate limited", new AbortController().signal),
+    ).rejects.toThrow("temporarily unavailable");
   });
 });

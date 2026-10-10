@@ -11,7 +11,7 @@ export async function getActiveFireIncidents(): Promise<FireIncident[]> {
   const { data, error } = await supabase
     .from("fire_incidents")
     .select(
-      "id, barangay_id, latitude, longitude, severity, radius_meters, status, confirmed_blocked_road_ids, notes, reported_at, updated_at, barangays(name)"
+      "id, barangay_id, latitude, longitude, severity, radius_meters, status, confirmed_blocked_road_ids, notes, reported_at, updated_at, barangays(name)",
     )
     .eq("status", "ACTIVE");
 
@@ -38,13 +38,15 @@ export async function getActiveFireIncidents(): Promise<FireIncident[]> {
 /** Mirrors flood.service.ts's buildRoadStatusOverrides — the only thing
  * that ever hard-blocks a road here is an explicit confirmation, never
  * proximity to the fire itself. */
-export async function buildFireStatusOverrides(): Promise<Map<string, RoadStatus>> {
+export async function buildFireStatusOverrides(): Promise<
+  Map<string, RoadStatus>
+> {
   const incidents = await getActiveFireIncidents();
   return fireStatusOverridesForIncidents(incidents);
 }
 
 export function fireStatusOverridesForIncidents(
-  incidents: FireIncident[]
+  incidents: FireIncident[],
 ): Map<string, RoadStatus> {
   const overrides = new Map<string, RoadStatus>();
 

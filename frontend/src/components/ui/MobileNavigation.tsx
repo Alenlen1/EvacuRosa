@@ -1,7 +1,6 @@
 "use client";
 import { LanguageToggle, useLanguage } from "@/components/LanguageProvider";
 
-
 import { useEffect, useId, useRef, useState } from "react";
 import { Building2, Check, Map, Menu, ShieldAlert, X } from "lucide-react";
 
@@ -12,7 +11,10 @@ const sections = [
   { id: "hazards", label: "Hazard Information", icon: ShieldAlert },
 ] as const;
 
-export function MobileNavigation({ activeSection, onSelect }: {
+export function MobileNavigation({
+  activeSection,
+  onSelect,
+}: {
   activeSection: Section;
   onSelect: (section: Section) => void;
 }) {
@@ -41,7 +43,10 @@ export function MobileNavigation({ activeSection, onSelect }: {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={id}
-        onClick={() => { dialog.current?.showModal(); setOpen(true); }}
+        onClick={() => {
+          dialog.current?.showModal();
+          setOpen(true);
+        }}
       >
         <Menu size={24} aria-hidden="true" />
       </button>
@@ -53,12 +58,24 @@ export function MobileNavigation({ activeSection, onSelect }: {
         aria-labelledby={`${id}-title`}
         onClose={() => {
           setOpen(false);
-          if (window.matchMedia("(max-width: 800px)").matches) trigger.current?.focus();
-          else document.querySelector<HTMLButtonElement>('.public-app .navigation-rail button[aria-pressed="true"]')?.focus();
+          if (window.matchMedia("(max-width: 800px)").matches)
+            trigger.current?.focus();
+          else
+            document
+              .querySelector<HTMLButtonElement>(
+                '.public-app .navigation-rail button[aria-pressed="true"]',
+              )
+              ?.focus();
         }}
         onClick={(event) => {
           const bounds = event.currentTarget.getBoundingClientRect();
-          if (event.target === event.currentTarget && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) {
+          if (
+            event.target === event.currentTarget &&
+            (event.clientX < bounds.left ||
+              event.clientX > bounds.right ||
+              event.clientY < bounds.top ||
+              event.clientY > bounds.bottom)
+          ) {
             event.currentTarget.close();
           }
         }}
@@ -66,19 +83,28 @@ export function MobileNavigation({ activeSection, onSelect }: {
           // showModal makes the rest of the document inert. Explicit wrapping
           // also keeps keyboard focus inside the menu rather than browser chrome.
           if (event.key !== "Tab") return;
-          const buttons = event.currentTarget.querySelectorAll<HTMLButtonElement>("button");
+          const buttons =
+            event.currentTarget.querySelectorAll<HTMLButtonElement>("button");
           const first = buttons[0];
           const last = buttons[buttons.length - 1];
           if (event.shiftKey && document.activeElement === first) {
-            event.preventDefault(); last?.focus();
+            event.preventDefault();
+            last?.focus();
           } else if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault(); first?.focus();
+            event.preventDefault();
+            first?.focus();
           }
         }}
       >
         <div className="mobile-drawer-heading">
           <h2 id={`${id}-title`}>{t("Explore EvacuRosa")}</h2>
-          <button type="button" className="mobile-menu-trigger" aria-label={t("Close navigation menu")} autoFocus onClick={() => dialog.current?.close()}>
+          <button
+            type="button"
+            className="mobile-menu-trigger"
+            aria-label={t("Close navigation menu")}
+            autoFocus
+            onClick={() => dialog.current?.close()}
+          >
             <X size={22} aria-hidden="true" />
           </button>
         </div>
@@ -89,15 +115,22 @@ export function MobileNavigation({ activeSection, onSelect }: {
               key={section}
               type="button"
               aria-current={activeSection === section ? "page" : undefined}
-              onClick={() => { onSelect(section); dialog.current?.close(); }}
+              onClick={() => {
+                onSelect(section);
+                dialog.current?.close();
+              }}
             >
               <Icon size={21} aria-hidden="true" />
               <span>{t(label)}</span>
-              {activeSection === section && <Check size={18} aria-hidden="true" />}
+              {activeSection === section && (
+                <Check size={18} aria-hidden="true" />
+              )}
             </button>
           ))}
         </nav>
-        <div className="mobile-drawer-language"><LanguageToggle expanded /></div>
+        <div className="mobile-drawer-language">
+          <LanguageToggle expanded />
+        </div>
       </dialog>
     </div>
   );

@@ -4,9 +4,19 @@ type IconProps = SVGProps<SVGSVGElement> & { size?: number };
 
 function HazardSymbol({ size = 24, children, ...props }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"
-      aria-hidden="true" focusable="false" {...props}>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+      {...props}
+    >
       {children}
     </svg>
   );
@@ -23,8 +33,16 @@ export function FloodIcon(props: IconProps) {
 export function FireIcon(props: IconProps) {
   return (
     <HazardSymbol {...props}>
-      <path d="M13 2c1 5-4 6-3 10-2-1-3-3-3-5-2 3-4 6-3 9a8 8 0 0 0 16 0c1-5-2-9-7-14Z" fill="currentColor" stroke="none" />
-      <path d="M12 12c0 3-3 4-2 6a2.3 2.3 0 0 0 4 0c1-2-1-4-2-6Z" fill="white" stroke="none" />
+      <path
+        d="M13 2c1 5-4 6-3 10-2-1-3-3-3-5-2 3-4 6-3 9a8 8 0 0 0 16 0c1-5-2-9-7-14Z"
+        fill="currentColor"
+        stroke="none"
+      />
+      <path
+        d="M12 12c0 3-3 4-2 6a2.3 2.3 0 0 0 4 0c1-2-1-4-2-6Z"
+        fill="white"
+        stroke="none"
+      />
     </HazardSymbol>
   );
 }

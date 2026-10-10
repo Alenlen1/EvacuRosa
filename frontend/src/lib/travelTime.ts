@@ -8,9 +8,14 @@ export const TRAVEL_MODES = {
 
 export type TravelMode = keyof typeof TRAVEL_MODES;
 
-export function estimatedTravelTime(distanceMeters: number, mode: TravelMode): string | null {
+export function estimatedTravelTime(
+  distanceMeters: number,
+  mode: TravelMode,
+): string | null {
   if (!Number.isFinite(distanceMeters) || distanceMeters < 0) return null;
-  const minutes = Math.ceil((distanceMeters / 1000 / TRAVEL_MODES[mode].speedKmh) * 60);
+  const minutes = Math.ceil(
+    (distanceMeters / 1000 / TRAVEL_MODES[mode].speedKmh) * 60,
+  );
   if (minutes < 1) return "Less than 1 min";
   if (minutes < 60) return `${minutes} min`;
   const hours = Math.floor(minutes / 60);

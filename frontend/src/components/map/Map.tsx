@@ -10,7 +10,11 @@ import { Layers } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { DomEvent } from "leaflet";
 import { MapContainer, useMap, useMapEvents } from "react-leaflet";
-import { FloodIcon as Droplet, FireIcon as Flame, EarthquakeIcon as Activity } from "@/components/ui/HazardIcons";
+import {
+  FloodIcon as Droplet,
+  FireIcon as Flame,
+  EarthquakeIcon as Activity,
+} from "@/components/ui/HazardIcons";
 import {
   SANTA_ROSA_CITY_BOUNDS,
   SANTA_ROSA_CITY_CENTER,
@@ -82,7 +86,9 @@ function FollowUser({
 function ResizeMap() {
   const map = useMap();
   useEffect(() => {
-    const observer = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+    const observer = new ResizeObserver(() =>
+      map.invalidateSize({ pan: false }),
+    );
     observer.observe(map.getContainer());
     return () => observer.disconnect();
   }, [map]);
@@ -102,10 +108,18 @@ function ClickToSetDestination({
   return null;
 }
 
-function FocusSearchResult({ target }: { target?: { latitude: number; longitude: number } | null }) {
+function FocusSearchResult({
+  target,
+}: {
+  target?: { latitude: number; longitude: number } | null;
+}) {
   const map = useMap();
   useEffect(() => {
-    if (target) map.setView([target.latitude, target.longitude], Math.max(map.getZoom(), 15));
+    if (target)
+      map.setView(
+        [target.latitude, target.longitude],
+        Math.max(map.getZoom(), 15),
+      );
   }, [target, map]);
   return null;
 }
@@ -131,9 +145,27 @@ function LayerToggle({
   const [expanded, setExpanded] = useState(false);
   const { t } = useLanguage();
   return (
-    <div className={`leaflet-bottom leaflet-left hazard-layer-controls${expanded ? " is-expanded" : ""}`} ref={(element) => { if (element) DomEvent.disableClickPropagation(element); }}>
-      <button type="button" className="leaflet-control hazard-layer-toggle" aria-label={t("Hazard layers")} title={t("Hazard layers")} aria-expanded={expanded} aria-controls="hazard-layer-options" onClick={() => setExpanded(value => !value)}><Layers size={18} aria-hidden="true" /></button>
-      <div id="hazard-layer-options" className="leaflet-control leaflet-bar flex">
+    <div
+      className={`leaflet-bottom leaflet-left hazard-layer-controls${expanded ? " is-expanded" : ""}`}
+      ref={(element) => {
+        if (element) DomEvent.disableClickPropagation(element);
+      }}
+    >
+      <button
+        type="button"
+        className="leaflet-control hazard-layer-toggle"
+        aria-label={t("Hazard layers")}
+        title={t("Hazard layers")}
+        aria-expanded={expanded}
+        aria-controls="hazard-layer-options"
+        onClick={() => setExpanded((value) => !value)}
+      >
+        <Layers size={18} aria-hidden="true" />
+      </button>
+      <div
+        id="hazard-layer-options"
+        className="leaflet-control leaflet-bar flex"
+      >
         <button
           type="button"
           onClick={onToggleFlood}
@@ -176,7 +208,10 @@ function LayerToggle({
 }
 
 export default function Map({
-  navigationCenter, travelMode, onNavigationRoute, onNavigationStart,
+  navigationCenter,
+  travelMode,
+  onNavigationRoute,
+  onNavigationStart,
   offlineReady = false,
   geolocation,
   onRetryLocation,
@@ -196,8 +231,12 @@ export default function Map({
   const isOnline = useOnlineStatus();
   const [following, setFollowing] = useState(false);
   const [navigating, setNavigating] = useState(false);
-  useEffect(() => { if (navigating) setFollowing(false); }, [navigating]);
-  useEffect(() => { if (searchFocus) setFollowing(false); }, [searchFocus]);
+  useEffect(() => {
+    if (navigating) setFollowing(false);
+  }, [navigating]);
+  useEffect(() => {
+    if (searchFocus) setFollowing(false);
+  }, [searchFocus]);
   const [showFlood, setShowFlood] = useState(true);
   const [showFire, setShowFire] = useState(true);
   const [showEarthquakes, setShowEarthquakes] = useState(true);
@@ -225,12 +264,32 @@ export default function Map({
       {showFlood && <FloodLayer reports={floodReports} />}
       {showFire && <FireLayer incidents={fireIncidents} />}
       {showEarthquakes && (
-        <EarthquakeLayer events={earthquakeEvents} roadImpacts={earthquakeRoadImpacts} />
+        <EarthquakeLayer
+          events={earthquakeEvents}
+          roadImpacts={earthquakeRoadImpacts}
+        />
       )}
-      <EvacuationCenterLayer centers={centers} onSelectCenter={onSelectCenter} />
-      <EvacuationNavigation route={route} center={navigationCenter ?? (destination ? { ...destination, name: destinationLabel } : undefined)} mode={travelMode} geolocation={geolocation}
-        onRoute={onNavigationRoute} onStart={onNavigationStart} onActiveChange={setNavigating}
-        onDetails={navigationCenter && onSelectCenter ? () => onSelectCenter(navigationCenter) : undefined} />
+      <EvacuationCenterLayer
+        centers={centers}
+        onSelectCenter={onSelectCenter}
+      />
+      <EvacuationNavigation
+        route={route}
+        center={
+          navigationCenter ??
+          (destination ? { ...destination, name: destinationLabel } : undefined)
+        }
+        mode={travelMode}
+        geolocation={geolocation}
+        onRoute={onNavigationRoute}
+        onStart={onNavigationStart}
+        onActiveChange={setNavigating}
+        onDetails={
+          navigationCenter && onSelectCenter
+            ? () => onSelectCenter(navigationCenter)
+            : undefined
+        }
+      />
       {destination && (
         <DestinationMarker
           label={destinationLabel}
@@ -241,23 +300,32 @@ export default function Map({
       )}
       {!navigating && <ClickToSetDestination onMapClick={onMapClick} />}
       <ResizeMap />
-      <FollowUser position={geolocation.position} following={following && !navigating} />
+      <FollowUser
+        position={geolocation.position}
+        following={following && !navigating}
+      />
       {!navigating && <FocusSearchResult target={searchFocus} />}
-      {!navigating && <LayerToggle
-        showFlood={showFlood}
-        onToggleFlood={() => setShowFlood((v) => !v)}
-        showFire={showFire}
-        onToggleFire={() => setShowFire((v) => !v)}
-        showEarthquakes={showEarthquakes}
-        onToggleEarthquakes={() => setShowEarthquakes((v) => !v)}
-      />}
-      {!navigating && <MapControls
-        isFollowing={following}
-        onFollowMe={() => {
-          if (geolocation.status !== "active") { onRetryLocation?.(); setFollowing(true); }
-          else setFollowing((f) => !f);
-        }}
-      />}
+      {!navigating && (
+        <LayerToggle
+          showFlood={showFlood}
+          onToggleFlood={() => setShowFlood((v) => !v)}
+          showFire={showFire}
+          onToggleFire={() => setShowFire((v) => !v)}
+          showEarthquakes={showEarthquakes}
+          onToggleEarthquakes={() => setShowEarthquakes((v) => !v)}
+        />
+      )}
+      {!navigating && (
+        <MapControls
+          isFollowing={following}
+          onFollowMe={() => {
+            if (geolocation.status !== "active") {
+              onRetryLocation?.();
+              setFollowing(true);
+            } else setFollowing((f) => !f);
+          }}
+        />
+      )}
     </MapContainer>
   );
 }

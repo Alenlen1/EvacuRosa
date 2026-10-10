@@ -14,6 +14,10 @@ export function getNearestRoads(req: Request, res: Response) {
   }
 
   const graph = loadRoadGraph();
-  const roads = graph.nearestRoads(lat, lng, Number.isFinite(limit) ? limit : 5);
+  const roads = graph.nearestRoads(
+    lat,
+    lng,
+    Number.isFinite(limit) ? limit : 5,
+  );
   res.json({ roads });
 }

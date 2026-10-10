@@ -15,11 +15,16 @@ const statusColor: Record<string, string> = {
 
 function centerIcon(status: string) {
   const color = statusColor[status] ?? statusColor.CLOSED;
-  const symbol = status === "AVAILABLE" ? '<path d="m7 12 3 3 7-7"/>'
-    : status === "NEARLY_FULL" ? '<path d="m12 4 9 16H3Z"/><path d="M12 9v5m0 3v.2"/>'
-    : status === "FULL" ? '<circle cx="12" cy="12" r="8"/><path d="M7 12h10"/>'
-    : status === "CLOSED" ? '<rect x="6" y="10" width="12" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'
-    : '<path d="M9 8a3 3 0 0 1 6 0c0 3-3 2-3 5m0 4v.2"/>';
+  const symbol =
+    status === "AVAILABLE"
+      ? '<path d="m7 12 3 3 7-7"/>'
+      : status === "NEARLY_FULL"
+        ? '<path d="m12 4 9 16H3Z"/><path d="M12 9v5m0 3v.2"/>'
+        : status === "FULL"
+          ? '<circle cx="12" cy="12" r="8"/><path d="M7 12h10"/>'
+          : status === "CLOSED"
+            ? '<rect x="6" y="10" width="12" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'
+            : '<path d="M9 8a3 3 0 0 1 6 0c0 3-3 2-3 5m0 4v.2"/>';
   return createDivIcon(
     `<svg class="shelter-map-marker" width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
       <circle cx="21" cy="23" r="18" fill="#17232f" fill-opacity=".15"/>
@@ -32,7 +37,7 @@ function centerIcon(status: string) {
       <circle cx="34" cy="33" r="9" fill="${color}" stroke="white" stroke-width="2"/>
       <g transform="translate(27 26) scale(.58)" stroke="white" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round">${symbol}</g>
     </svg>`,
-    44
+    44,
   );
 }
 
@@ -41,7 +46,10 @@ interface EvacuationCenterLayerProps {
   onSelectCenter?: (center: EvacuationCenter) => void;
 }
 
-export function EvacuationCenterLayer({ centers, onSelectCenter }: EvacuationCenterLayerProps) {
+export function EvacuationCenterLayer({
+  centers,
+  onSelectCenter,
+}: EvacuationCenterLayerProps) {
   const { t } = useLanguage();
   return (
     <>

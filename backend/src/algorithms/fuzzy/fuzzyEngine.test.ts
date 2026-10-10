@@ -18,7 +18,10 @@ describe("evaluateRoadRisk", () => {
   });
 
   it("is VERY_HIGH for a severe flood regardless of everything else (rule R5)", () => {
-    const result = evaluateRoadRisk({ ...baseline, floodWaterLevelMeters: 0.9 });
+    const result = evaluateRoadRisk({
+      ...baseline,
+      floodWaterLevelMeters: 0.9,
+    });
     expect(result.riskLevel).toBe("VERY_HIGH");
   });
 
@@ -35,7 +38,10 @@ describe("evaluateRoadRisk", () => {
   it("increases monotonically as flood level rises, all else equal", () => {
     const none = evaluateRoadRisk({ ...baseline, floodWaterLevelMeters: 0 });
     const low = evaluateRoadRisk({ ...baseline, floodWaterLevelMeters: 0.1 });
-    const moderate = evaluateRoadRisk({ ...baseline, floodWaterLevelMeters: 0.3 });
+    const moderate = evaluateRoadRisk({
+      ...baseline,
+      floodWaterLevelMeters: 0.3,
+    });
     const high = evaluateRoadRisk({ ...baseline, floodWaterLevelMeters: 0.5 });
     expect(none.riskScore).toBeLessThan(low.riskScore);
     expect(low.riskScore).toBeLessThanOrEqual(moderate.riskScore);
@@ -43,7 +49,10 @@ describe("evaluateRoadRisk", () => {
   });
 
   it("reports which rules fired, for an eventual 'why this route' explanation", () => {
-    const result = evaluateRoadRisk({ ...baseline, floodWaterLevelMeters: 0.9 });
+    const result = evaluateRoadRisk({
+      ...baseline,
+      floodWaterLevelMeters: 0.9,
+    });
     expect(result.firedRules.length).toBeGreaterThan(0);
     expect(result.firedRules[0].id).toBe("R5");
   });

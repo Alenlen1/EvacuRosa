@@ -20,7 +20,7 @@ export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
   for (const impact of roadImpacts) {
     impactCountByEvent.set(
       impact.earthquakeEventId,
-      (impactCountByEvent.get(impact.earthquakeEventId) ?? 0) + 1
+      (impactCountByEvent.get(impact.earthquakeEventId) ?? 0) + 1,
     );
   }
 
@@ -49,7 +49,8 @@ export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
           >
             <Tooltip sticky className="hazard-tooltip">
               M{event.magnitude.toFixed(1)}
-              {event.depthKm ? ` · ${event.depthKm}km deep` : ""} · {event.status}
+              {event.depthKm ? ` · ${event.depthKm}km deep` : ""} ·{" "}
+              {event.status}
               {impactCount > 0
                 ? ` · ${impactCount} verified road impact(s)`
                 : " · no verified road impact"}

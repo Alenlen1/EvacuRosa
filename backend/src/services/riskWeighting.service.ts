@@ -1,4 +1,7 @@
-import { evaluateRoadRisk, severityToNumeric } from "../algorithms/fuzzy/fuzzyEngine";
+import {
+  evaluateRoadRisk,
+  severityToNumeric,
+} from "../algorithms/fuzzy/fuzzyEngine";
 import type { FuzzyRiskResult } from "../algorithms/fuzzy/fuzzyEngine";
 import type { RiskLevel } from "../algorithms/fuzzy/types";
 import type { GraphEdge } from "../algorithms/astar/edge";
@@ -25,7 +28,13 @@ export const RISK_WEIGHT = 2;
  * treated as sharply as flood water actually touching a road. */
 const FIRE_INFLUENCE_MULTIPLIER = 1.5;
 
-const RISK_LEVEL_ORDER: RiskLevel[] = ["VERY_LOW", "LOW", "MODERATE", "HIGH", "VERY_HIGH"];
+const RISK_LEVEL_ORDER: RiskLevel[] = [
+  "VERY_LOW",
+  "LOW",
+  "MODERATE",
+  "HIGH",
+  "VERY_HIGH",
+];
 
 export function riskLevelRank(level: RiskLevel): number {
   return RISK_LEVEL_ORDER.indexOf(level);
@@ -41,7 +50,7 @@ function approximateWaterLevelFromSeverity(level: number): number {
 function fireSeverityForEdge(
   fromNode: { latitude: number; longitude: number },
   toNode: { latitude: number; longitude: number },
-  fireIncidents: FireIncident[]
+  fireIncidents: FireIncident[],
 ): number {
   let worst = 0;
   for (const fire of fireIncidents) {
@@ -73,17 +82,20 @@ export function edgeRisk(
   graph: RoadGraph,
   floodReportsByRoadId: Map<string, FloodReport>,
   fireIncidents: FireIncident[],
-  earthquakeImpactByRoadId: Map<string, number> = new Map()
+  earthquakeImpactByRoadId: Map<string, number> = new Map(),
 ): EdgeRisk {
   const floodReport = floodReportsByRoadId.get(edge.roadId);
   const floodLevel = floodReport ? severityToNumeric(floodReport.severity) : 0;
   const floodWaterLevelMeters =
-    floodReport?.waterLevelMeters ?? approximateWaterLevelFromSeverity(floodLevel);
+    floodReport?.waterLevelMeters ??
+    approximateWaterLevelFromSeverity(floodLevel);
 
   const fromNode = graph.getNode(edge.fromNodeId);
   const toNode = graph.getNode(edge.toNodeId);
   const fireLevel =
-    fromNode && toNode ? fireSeverityForEdge(fromNode, toNode, fireIncidents) : 0;
+    fromNode && toNode
+      ? fireSeverityForEdge(fromNode, toNode, fireIncidents)
+      : 0;
 
   const earthquakeImpactLevel = earthquakeImpactByRoadId.get(edge.roadId) ?? 0;
 

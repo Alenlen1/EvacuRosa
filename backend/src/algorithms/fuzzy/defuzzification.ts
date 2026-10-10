@@ -8,7 +8,13 @@ export const RISK_LEVEL_SCORE: Record<RiskLevel, number> = {
   VERY_HIGH: 4,
 };
 
-const LEVEL_ORDER: RiskLevel[] = ["VERY_LOW", "LOW", "MODERATE", "HIGH", "VERY_HIGH"];
+const LEVEL_ORDER: RiskLevel[] = [
+  "VERY_LOW",
+  "LOW",
+  "MODERATE",
+  "HIGH",
+  "VERY_HIGH",
+];
 
 export interface RuleActivation {
   outputLevel: RiskLevel;
