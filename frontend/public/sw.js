@@ -66,6 +66,7 @@ self.addEventListener("fetch", (event) => {
   // geocoding, Next RSC navigation payloads or development hot updates.
   if (url.origin !== self.location.origin) return;
   const navigation = event.request.mode === "navigate" && url.pathname === "/";
+  const appManifest = url.pathname === "/manifest.json";
   const asset = url.pathname.startsWith("/_next/static/") || APP_SHELL.slice(1).includes(url.pathname);
   if (!navigation && !asset) return;
 
@@ -75,9 +76,14 @@ self.addEventListener("fetch", (event) => {
     const cached = await cache.match(key);
     // Use fresh HTML online to match the current build. Only versioned assets
     // are cache-first. HTML must never be a fallback for JavaScript or images.
-    if (asset && cached) return cached;
+    if (asset && !appManifest && cached) return cached;
     try {
-      const response = await fetch(event.request);
+      // Installed-app settings (including orientation) must not remain pinned
+      // to the manifest saved at first installation.
+      const response = appManifest
+        ? await fetch(event.request, { cache: "no-cache" })
+        : await fetch(event.request);
+      if (appManifest && !response.ok && cached) return cached;
       if (response.ok) await cache.put(key, response.clone()).catch(() => {});
       return response;
     } catch (error) {
