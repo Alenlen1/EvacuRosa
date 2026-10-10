@@ -2290,16 +2290,10 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .arrival-details summary { min-height: 44px; padding: 10px 0; cursor: pointer; }
 .arrival-actions { display: flex; gap: 8px; margin-top: 10px; }
 .arrival-actions button { flex: 1; min-height: 44px; padding: 8px; border: 1px solid #c4a51c; border-radius: 10px; background: #f4d84b; font-size: 12px; }
-/* The native dialog uses the top layer, outside the clipped map canvas. */
 .map-legend-trigger { display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 10px; cursor: pointer; }
-.map-legend-dialog { position: fixed; inset: 0; margin: auto; width: min(340px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); padding: 0; border: 1px solid #dce1e6; border-radius: 16px; background: white; color: #243345; box-shadow: 0 12px 40px #17232f30; overflow-y: auto; }
-.map-legend-dialog::backdrop { background: rgb(20 30 40 / 30%); }
 .map-legend-content { padding: 16px; }
 .map-legend-content header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .map-legend-content header button { display: grid; place-items: center; min-width: 44px; min-height: 44px; border-radius: 10px; background: #f4f6f8; }
-.public-app .map-legend-dialog ul { position: static; width: auto; max-width: none; max-height: none; margin: 8px 0 0; padding: 0; overflow: visible; font-size: 13px; }
-.map-legend-dialog li { display: flex; align-items: center; gap: 10px; min-height: 34px; }
-.map-legend-dialog li > span { flex-shrink: 0; }
 @media ((max-width: 800px) or ((max-width: 1100px) and (max-height: 500px))) {
   .public-app .map-legend-trigger { justify-content: center; width: 44px; height: 44px; padding: 0; }
   .public-app .map-legend-trigger > span { display: none; }
@@ -2349,3 +2343,9 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .place-search { top: 6px; left: 6px; right: 6px; }
   .public-app .map-canvas { min-height: 0; }
 }
+/* Anchored, non-modal legend: opens toward the available map space. */
+.map-legend-popover { position: fixed; z-index: 5000; overflow-y: auto; overscroll-behavior: contain; border: 1px solid #dce1e6; border-radius: 12px; background: white; color: #243345; box-shadow: 0 4px 18px #17232f26; font-size: 12px; }
+.map-legend-popover .map-legend-content { padding: 10px 12px; }
+.map-legend-popover ul { display: grid; gap: 8px; padding: 0; margin: 8px 0 2px; list-style: none; }
+.map-legend-popover li { display: flex; align-items: center; gap: 8px; line-height: 1.4; }
+.map-legend-popover li > span { flex-shrink: 0; }
