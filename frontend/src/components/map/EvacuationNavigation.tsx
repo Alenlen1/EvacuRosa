@@ -13,9 +13,10 @@ import { NavigationLocation } from "./NavigationLocation";
 import { RoutePolyline } from "./RoutePolyline";
 import { UserLocationMarker } from "./UserLocationMarker";
 
-export function EvacuationNavigation({ route, center, mode, geolocation, onRoute, onActiveChange, onStart }: {
+export function EvacuationNavigation({ route, center, mode, geolocation, onRoute, onActiveChange, onStart, onDetails }: {
   route: LatLng[] | null; center?: NavigationDestination; mode: TravelMode; geolocation: GeolocationState;
   onRoute: (data: RouteResponse) => void; onActiveChange: (active: boolean) => void; onStart: () => void;
+  onDetails?: () => void;
 }) {
   const { t } = useLanguage();
   const map = useMap();
@@ -61,8 +62,14 @@ export function EvacuationNavigation({ route, center, mode, geolocation, onRoute
       fresh={nav.fresh} near={nav.near && !nav.offRoute} lookAhead={nav.offRoute ? null : nav.lookAhead} recenter={recenter} onFollowing={setFollowing} />
     {(validRoute || nav.arrived) && <div className="leaflet-bottom leaflet-left navigation-controls" ref={element => { if (element) { DomEvent.disableClickPropagation(element); DomEvent.disableScrollPropagation(element); } }}>
       <section className={`leaflet-control navigation-card${nav.active ? " is-active" : ""}${collapsed ? " is-collapsed" : ""}`} aria-label={t("Evacuation navigation")}>
-        {nav.arrived ? <><p role="status"><CheckCircle size={18} />{t(center?.id ? "You have arrived at the evacuation center." : "You have arrived at your destination.")}</p><button type="button" onClick={nav.dismissArrival}>{t("Dismiss")}</button></>
-          : !nav.active ? <><button type="button" className="primary-button" disabled={!nav.canStart} onClick={() => { setCollapsed(window.matchMedia("(max-width: 800px)").matches); nav.start(); onStart(); }}><Navigation size={18} />{t("Start Navigation")}</button>
+        {nav.arrived ? <div className="arrival-details"><p role="status"><CheckCircle size={20} aria-hidden="true" />{t(center?.id ? "You have arrived at the evacuation center." : "You have arrived at your destination.")}</p>
+          <strong>{center?.name}</strong>
+          {center?.address && <p>{center.address}</p>}
+          {center?.entranceInformation?.trim() && <p><b>{t("Entrance information")}: </b>{center.entranceInformation}</p>}
+          {center?.notes?.trim() && <details><summary>{t("Shelter notes")}</summary><p>{center.notes}</p></details>}
+          <div className="arrival-actions">{onDetails && <button type="button" onClick={() => { nav.dismissArrival(); onDetails(); }}>{t("Shelter details")}</button>}<button type="button" onClick={nav.dismissArrival}>{t("End Navigation")}</button></div>
+        </div>
+          : !nav.active ? <><button type="button" className="primary-button" disabled={!nav.canStart} onClick={() => { setCollapsed(window.matchMedia("(max-width: 800px), (max-width: 1100px) and (max-height: 500px)").matches); nav.start(); onStart(); }}><Navigation size={18} />{t("Start Navigation")}</button>
             {!nav.canStart && <small>{t(center?.id ? "A fresh, accurate location and an available center are needed to start." : "A fresh, accurate location is needed to start.")}</small>}</>
           : <>
             <div className="navigation-quick-actions">
