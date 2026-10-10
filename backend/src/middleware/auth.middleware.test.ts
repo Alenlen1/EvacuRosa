@@ -43,7 +43,9 @@ describe("requireAuth", () => {
     const previousAnonKey = env.supabaseAnonKey;
     env.supabaseUrl = "";
     env.supabaseAnonKey = "";
-    const req = { headers: { authorization: "Bearer sometoken" } } as AuthedRequest;
+    const req = {
+      headers: { authorization: "Bearer sometoken" },
+    } as AuthedRequest;
     const res = makeRes();
     const next = vi.fn();
 

@@ -15,7 +15,11 @@ export interface RoleAwareRequest extends AuthedRequest {
 /** Loads the caller's admin profile. This is a convenience check for nicer
  * error messages — the actual authorization boundary is the RLS policy on
  * evacuation_centers, which is enforced regardless of what happens here. */
-export async function attachProfile(req: RoleAwareRequest, res: Response, next: NextFunction) {
+export async function attachProfile(
+  req: RoleAwareRequest,
+  res: Response,
+  next: NextFunction,
+) {
   if (!req.userSupabase || !req.supabaseUser) {
     res.status(401).json({ error: "Not authenticated." });
     return;

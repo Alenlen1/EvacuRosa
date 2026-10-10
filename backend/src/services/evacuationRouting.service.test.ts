@@ -31,16 +31,35 @@ const center = {
 describe("computeEvacuationRoute", () => {
   it("only identifies hazard failure when no available center is reachable", async () => {
     mocks.getAvailableCenters.mockResolvedValue([center]);
-    mocks.computeRoute.mockResolvedValue({ found: false, failureReason: "HAZARD_BLOCKED" });
-    expect((await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 })).failureReason).toBe("HAZARD_BLOCKED");
+    mocks.computeRoute.mockResolvedValue({
+      found: false,
+      failureReason: "HAZARD_BLOCKED",
+    });
+    expect(
+      (await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 }))
+        .failureReason,
+    ).toBe("HAZARD_BLOCKED");
     mocks.getAvailableCenters.mockResolvedValue([]);
-    expect((await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 })).failureReason).toBeUndefined();
+    expect(
+      (await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 }))
+        .failureReason,
+    ).toBeUndefined();
   });
   it("does not offer assistance when another center can be reached", async () => {
-    mocks.getAvailableCenters.mockResolvedValue([center, { ...center, id: "second" }]);
-    mocks.computeRoute.mockResolvedValueOnce({ found: false, failureReason: "HAZARD_BLOCKED" });
-    const result = await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 });
-    expect(result.found).toBe(true); expect(result.failureReason).toBeUndefined();
+    mocks.getAvailableCenters.mockResolvedValue([
+      center,
+      { ...center, id: "second" },
+    ]);
+    mocks.computeRoute.mockResolvedValueOnce({
+      found: false,
+      failureReason: "HAZARD_BLOCKED",
+    });
+    const result = await computeEvacuationRoute({
+      latitude: 14.3,
+      longitude: 121.1,
+    });
+    expect(result.found).toBe(true);
+    expect(result.failureReason).toBeUndefined();
   });
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,7 +78,10 @@ describe("computeEvacuationRoute", () => {
   });
 
   it("returns an available center and its route", async () => {
-    const result = await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 });
+    const result = await computeEvacuationRoute({
+      latitude: 14.3,
+      longitude: 121.1,
+    });
     expect(result.found).toBe(true);
     expect(result.recommendedCenter).toEqual(center);
     expect(result.distanceMeters).toBe(1200);
@@ -68,15 +90,23 @@ describe("computeEvacuationRoute", () => {
 
   it("returns a clear failure when no verified centers are available", async () => {
     mocks.getAvailableCenters.mockResolvedValue([]);
-    const result = await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 });
+    const result = await computeEvacuationRoute({
+      latitude: 14.3,
+      longitude: 121.1,
+    });
     expect(result.found).toBe(false);
     expect(result.recommendedCenter).toBeNull();
   });
   it("uses the selected travel mode for candidate routes", async () => {
     const start = { latitude: 14.3, longitude: 121.1 };
     await computeEvacuationRoute(start, "car");
-    expect(mocks.computeRoute).toHaveBeenCalledWith(start, {
-      latitude: center.latitude, longitude: center.longitude,
-    }, "car");
+    expect(mocks.computeRoute).toHaveBeenCalledWith(
+      start,
+      {
+        latitude: center.latitude,
+        longitude: center.longitude,
+      },
+      "car",
+    );
   });
 });

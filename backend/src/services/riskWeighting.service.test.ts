@@ -89,14 +89,23 @@ describe("edgeRisk", () => {
   it("raises risk for a road whose midpoint sits inside an active fire's radius", () => {
     const edge = makeEdge(); // midpoint is essentially at the node coordinates, ~0m from (14.3, 121.1)
     const fireIncidents = [makeFireIncident()]; // centered right on this edge
-    const { cost, risk } = edgeRisk(edge, makeGraph(edge), new Map(), fireIncidents);
+    const { cost, risk } = edgeRisk(
+      edge,
+      makeGraph(edge),
+      new Map(),
+      fireIncidents,
+    );
     expect(risk.riskLevel).not.toBe("VERY_LOW");
     expect(cost).toBeGreaterThan(1000);
   });
 
   it("does not raise risk for a road far outside any fire's influence radius", () => {
     const edge = makeEdge();
-    const farFire = makeFireIncident({ latitude: 15.0, longitude: 122.0, radiusMeters: 200 });
+    const farFire = makeFireIncident({
+      latitude: 15.0,
+      longitude: 122.0,
+      radiusMeters: 200,
+    });
     const { risk } = edgeRisk(edge, makeGraph(edge), new Map(), [farFire]);
     expect(risk.riskLevel).toBe("VERY_LOW");
   });

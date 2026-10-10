@@ -1,5 +1,8 @@
 import { getSupabase } from "../database/supabase";
-import type { EarthquakeEvent, EarthquakeRoadImpact } from "../types/earthquake";
+import type {
+  EarthquakeEvent,
+  EarthquakeRoadImpact,
+} from "../types/earthquake";
 import type { RoadStatus } from "../algorithms/astar/edge";
 
 export async function getRecentEarthquakes(): Promise<EarthquakeEvent[]> {
@@ -11,7 +14,7 @@ export async function getRecentEarthquakes(): Promise<EarthquakeEvent[]> {
   const { data, error } = await supabase
     .from("earthquake_events")
     .select(
-      "id, external_event_id, latitude, longitude, magnitude, depth_km, occurred_at, source, status, notes, created_at, updated_at"
+      "id, external_event_id, latitude, longitude, magnitude, depth_km, occurred_at, source, status, notes, created_at, updated_at",
     )
     .order("occurred_at", { ascending: false })
     .limit(50);
@@ -36,7 +39,9 @@ export async function getRecentEarthquakes(): Promise<EarthquakeEvent[]> {
   }));
 }
 
-export async function getVerifiedRoadImpacts(): Promise<EarthquakeRoadImpact[]> {
+export async function getVerifiedRoadImpacts(): Promise<
+  EarthquakeRoadImpact[]
+> {
   const supabase = getSupabase();
   if (!supabase) {
     return [];
@@ -44,7 +49,9 @@ export async function getVerifiedRoadImpacts(): Promise<EarthquakeRoadImpact[]> 
 
   const { data, error } = await supabase
     .from("earthquake_road_impacts")
-    .select("id, earthquake_event_id, road_id, impact_level, confirmed_blocked, notes, verified_at");
+    .select(
+      "id, earthquake_event_id, road_id, impact_level, confirmed_blocked, notes, verified_at",
+    );
 
   if (error) {
     throw new Error(`Could not load earthquake road impacts: ${error.message}`);
@@ -65,13 +72,15 @@ export async function getVerifiedRoadImpacts(): Promise<EarthquakeRoadImpact[]> 
  * magnitude, depth, proximity — NEVER touches routing. Only an explicit,
  * human-verified road impact does. There is deliberately no geometric
  * proximity calculation here at all, unlike fire's radius-based falloff. */
-export async function buildEarthquakeStatusOverrides(): Promise<Map<string, RoadStatus>> {
+export async function buildEarthquakeStatusOverrides(): Promise<
+  Map<string, RoadStatus>
+> {
   const impacts = await getVerifiedRoadImpacts();
   return earthquakeStatusOverridesForImpacts(impacts);
 }
 
 export function earthquakeStatusOverridesForImpacts(
-  impacts: EarthquakeRoadImpact[]
+  impacts: EarthquakeRoadImpact[],
 ): Map<string, RoadStatus> {
   const overrides = new Map<string, RoadStatus>();
   for (const impact of impacts) {
@@ -90,13 +99,15 @@ const IMPACT_LEVEL_TO_NUMERIC: Record<string, number> = {
 
 /** Verified impact level per road, for the fuzzy engine's earthquake
  * input — 0 for any road with no verified impact record, by design. */
-export async function buildEarthquakeImpactByRoadId(): Promise<Map<string, number>> {
+export async function buildEarthquakeImpactByRoadId(): Promise<
+  Map<string, number>
+> {
   const impacts = await getVerifiedRoadImpacts();
   return earthquakeImpactByRoadId(impacts);
 }
 
 export function earthquakeImpactByRoadId(
-  impacts: EarthquakeRoadImpact[]
+  impacts: EarthquakeRoadImpact[],
 ): Map<string, number> {
   const byRoad = new Map<string, number>();
   for (const impact of impacts) {
@@ -111,12 +122,20 @@ export function earthquakeImpactByRoadId(
  * duplicate row (section 45's explicit requirement). Only meaningful once
  * Supabase is configured; this is what scripts/fetch-earthquakes.ts calls. */
 export async function upsertEarthquakeEvents(
-  events: { externalEventId: string; latitude: number; longitude: number; magnitude: number; depthKm: number | null; occurredAt: string; source: string }[]
+  events: {
+    externalEventId: string;
+    latitude: number;
+    longitude: number;
+    magnitude: number;
+    depthKm: number | null;
+    occurredAt: string;
+    source: string;
+  }[],
 ): Promise<{ inserted: number; updated: number }> {
   const supabase = getSupabase();
   if (!supabase) {
     throw new Error(
-      "Supabase isn't configured — set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before syncing real earthquake data."
+      "Supabase isn't configured — set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before syncing real earthquake data.",
     );
   }
 

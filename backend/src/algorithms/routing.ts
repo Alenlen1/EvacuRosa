@@ -29,10 +29,23 @@ export interface RoutingSnapshot {
   earthquakeImpacts: [string, number][];
 }
 
-export function calculateRoute(graph: RoadGraph, start: LatLng, destination: LatLng,
-  travelMode: TravelMode, snapshot: RoutingSnapshot): RouteResult {
-  const startNode = graph.nearestAccessibleNode(start.latitude, start.longitude, travelMode);
-  const goalNode = graph.nearestAccessibleNode(destination.latitude, destination.longitude, travelMode);
+export function calculateRoute(
+  graph: RoadGraph,
+  start: LatLng,
+  destination: LatLng,
+  travelMode: TravelMode,
+  snapshot: RoutingSnapshot,
+): RouteResult {
+  const startNode = graph.nearestAccessibleNode(
+    start.latitude,
+    start.longitude,
+    travelMode,
+  );
+  const goalNode = graph.nearestAccessibleNode(
+    destination.latitude,
+    destination.longitude,
+    travelMode,
+  );
 
   if (!startNode || !goalNode) {
     return {
@@ -41,7 +54,9 @@ export function calculateRoute(graph: RoadGraph, start: LatLng, destination: Lat
       distanceMeters: 0,
       affectedRoads: 0,
       riskLevel: null,
-      warnings: ["No accessible road within 250 m of the start or destination for this travel mode."],
+      warnings: [
+        "No accessible road within 250 m of the start or destination for this travel mode.",
+      ],
     };
   }
 
@@ -61,7 +76,13 @@ export function calculateRoute(graph: RoadGraph, start: LatLng, destination: Lat
     const key = edge.id.endsWith("-r") ? edge.id.slice(0, -2) : edge.id;
     let cached = riskCache.get(key);
     if (!cached) {
-      cached = edgeRisk(edge, graph, floodByRoadId, fireIncidents, earthquakeImpactByRoadId);
+      cached = edgeRisk(
+        edge,
+        graph,
+        floodByRoadId,
+        fireIncidents,
+        earthquakeImpactByRoadId,
+      );
       riskCache.set(key, cached);
     }
     return cached;
@@ -79,7 +100,8 @@ export function calculateRoute(graph: RoadGraph, start: LatLng, destination: Lat
   if (!result.found) {
     // Diagnostic only: keep access/one-way rules, remove hazard overrides.
     // Never return this potentially unsafe path to the caller.
-    const hazardBlocked = [...overrides.values()].includes("BLOCKED") &&
+    const hazardBlocked =
+      [...overrides.values()].includes("BLOCKED") &&
       findPath(graph, startNode.id, goalNode.id, { travelMode }).found;
     return {
       failureReason: hazardBlocked ? "HAZARD_BLOCKED" : undefined,
@@ -100,7 +122,7 @@ export function calculateRoute(graph: RoadGraph, start: LatLng, destination: Lat
     .map((n) => ({ latitude: n.latitude, longitude: n.longitude }));
 
   const affectedRoads = result.edges.filter(
-    (e) => (overrides.get(e.roadId) ?? e.status) !== "OPEN"
+    (e) => (overrides.get(e.roadId) ?? e.status) !== "OPEN",
   ).length;
 
   // Overall route risk is the worst segment along it, not an average.

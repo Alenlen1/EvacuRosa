@@ -2,7 +2,10 @@ import type { TravelMode } from "@/lib/travelTime";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export class RoutingError extends Error {
-  constructor(message: string, public readonly failureReason?: string) {
+  constructor(
+    message: string,
+    public readonly failureReason?: string,
+  ) {
     super(message);
     this.name = "RoutingError";
   }
@@ -14,60 +17,117 @@ export interface AssistanceContext {
   destination?: LatLng;
 }
 
-export async function shareAssistanceLocation(data: AssistanceContext & {
-  id: string; consent: true; start: LatLng; accuracy: number;
-  recordedAt: string; name?: string; contact?: string;
-}): Promise<{ id: string }> {
+export async function shareAssistanceLocation(
+  data: AssistanceContext & {
+    id: string;
+    consent: true;
+    start: LatLng;
+    accuracy: number;
+    recordedAt: string;
+    name?: string;
+    contact?: string;
+  },
+): Promise<{ id: string }> {
   const response = await fetch(`${API_URL}/api/assistance-requests`, {
-    method: "POST", cache: "no-store", signal: AbortSignal.timeout(30000),
-    headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
+    method: "POST",
+    cache: "no-store",
+    signal: AbortSignal.timeout(30000),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   });
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error ?? "Could not confirm submission. Please retry.");
+  if (!response.ok)
+    throw new Error(
+      body.error ?? "Could not confirm submission. Please retry.",
+    );
   return body;
 }
 
 export type AssistanceStatus = "NEW" | "ACKNOWLEDGED" | "RESOLVED";
 
-export async function updateAssistanceStatus(token: string, id: string, status: AssistanceStatus) {
-  const response = await fetch(API_URL + "/api/admin/assistance-requests/" + encodeURIComponent(id), {
-    method: "PATCH", cache: "no-store", signal: AbortSignal.timeout(30000),
-    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-    body: JSON.stringify({ status }),
-  });
+export async function updateAssistanceStatus(
+  token: string,
+  id: string,
+  status: AssistanceStatus,
+) {
+  const response = await fetch(
+    API_URL + "/api/admin/assistance-requests/" + encodeURIComponent(id),
+    {
+      method: "PATCH",
+      cache: "no-store",
+      signal: AbortSignal.timeout(30000),
+      headers: {
+        Authorization: "Bearer " + token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    },
+  );
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error ?? "Could not update request status. Refresh and try again.");
-  return body.request as Pick<AssistanceRequest, "id" | "status" | "status_updated_at">;
+  if (!response.ok)
+    throw new Error(
+      body.error ?? "Could not update request status. Refresh and try again.",
+    );
+  return body.request as Pick<
+    AssistanceRequest,
+    "id" | "status" | "status_updated_at"
+  >;
 }
 
 export interface AssistanceRequest {
   status: AssistanceStatus;
   status_updated_at: string | null;
-  id: string; latitude: number; longitude: number; accuracy_meters: number;
-  location_recorded_at: string; created_at: string;
-  display_name: string | null; contact_number: string | null;
-  travel_mode: TravelMode; route_kind: "route" | "evacuation";
-  destination_latitude: number | null; destination_longitude: number | null;
+  id: string;
+  latitude: number;
+  longitude: number;
+  accuracy_meters: number;
+  location_recorded_at: string;
+  created_at: string;
+  display_name: string | null;
+  contact_number: string | null;
+  travel_mode: TravelMode;
+  route_kind: "route" | "evacuation";
+  destination_latitude: number | null;
+  destination_longitude: number | null;
   location_name?: { roadName: string; distanceMeters: number } | null;
   destination_name?: { roadName: string; distanceMeters: number } | null;
 }
 
-export async function deleteAssistanceRequest(token: string, id: string): Promise<void> {
-  const response = await fetch(`${API_URL}/api/admin/assistance-requests/${encodeURIComponent(id)}`, {
-    method: "DELETE", cache: "no-store", signal: AbortSignal.timeout(30000),
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function deleteAssistanceRequest(
+  token: string,
+  id: string,
+): Promise<void> {
+  const response = await fetch(
+    `${API_URL}/api/admin/assistance-requests/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+      cache: "no-store",
+      signal: AbortSignal.timeout(30000),
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.error ?? "Could not confirm deletion. Refresh the list before trying again.");
+    throw new Error(
+      body.error ??
+        "Could not confirm deletion. Refresh the list before trying again.",
+    );
   }
 }
 
-export async function fetchAssistanceRequests(token: string, signal?: AbortSignal): Promise<AssistanceRequest[]> {
+export async function fetchAssistanceRequests(
+  token: string,
+  signal?: AbortSignal,
+): Promise<AssistanceRequest[]> {
   const response = await fetch(`${API_URL}/api/admin/assistance-requests`, {
-    cache: "no-store", signal, headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+    signal,
+    headers: { Authorization: `Bearer ${token}` },
   });
-  if (!response.ok) throw new Error("Unable to load shared locations. Check your connection and CDRRMO access.");
+  if (!response.ok)
+    throw new Error(
+      "Unable to load shared locations. Check your connection and CDRRMO access.",
+    );
   return (await response.json()).requests;
 }
 
@@ -89,7 +149,7 @@ export interface RouteResponse {
 export async function fetchRoute(
   start: LatLng,
   destination: LatLng,
-  travelMode: TravelMode = "walking"
+  travelMode: TravelMode = "walking",
 ): Promise<RouteResponse> {
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     const offline = await import("../lib/offline/routing");
@@ -103,7 +163,8 @@ export async function fetchRoute(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ start, destination, travelMode }),
     });
-    if (res.status >= 500) throw new RoutingError("Routing server unavailable.");
+    if (res.status >= 500)
+      throw new RoutingError("Routing server unavailable.");
   } catch (error) {
     const offline = await import("../lib/offline/routing");
     const saved = await offline.getOfflinePackage().catch(() => null);
@@ -115,14 +176,15 @@ export async function fetchRoute(
     const body = await res.json().catch(() => ({}));
     throw new RoutingError(
       body.warnings?.[0] ?? body.error ?? "Could not calculate a route.",
-      res.status === 422 ? body.failureReason : undefined
+      res.status === 422 ? body.failureReason : undefined,
     );
   }
 
   return res.json();
 }
 
-export type EvacuationCenterStatus = "AVAILABLE" | "NEARLY_FULL" | "FULL" | "CLOSED";
+export type EvacuationCenterStatus =
+  "AVAILABLE" | "NEARLY_FULL" | "FULL" | "CLOSED";
 
 export interface EvacuationCenter {
   id: string;
@@ -164,7 +226,7 @@ export interface EvacuationRouteResponse {
 
 export async function fetchEvacuationRoute(
   start: LatLng,
-  travelMode: TravelMode = "walking"
+  travelMode: TravelMode = "walking",
 ): Promise<EvacuationRouteResponse> {
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     const offline = await import("../lib/offline/routing");
@@ -178,7 +240,8 @@ export async function fetchEvacuationRoute(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ start, travelMode }),
     });
-    if (res.status >= 500) throw new RoutingError("Routing server unavailable.");
+    if (res.status >= 500)
+      throw new RoutingError("Routing server unavailable.");
   } catch (error) {
     const offline = await import("../lib/offline/routing");
     const saved = await offline.getOfflinePackage().catch(() => null);
@@ -189,8 +252,10 @@ export async function fetchEvacuationRoute(
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new RoutingError(
-      body.warnings?.[0] ?? body.error ?? "Could not find an evacuation center.",
-      res.status === 422 ? body.failureReason : undefined
+      body.warnings?.[0] ??
+        body.error ??
+        "Could not find an evacuation center.",
+      res.status === 422 ? body.failureReason : undefined,
     );
   }
 
@@ -284,10 +349,10 @@ export interface NearestRoad {
 export async function fetchNearestRoads(
   latitude: number,
   longitude: number,
-  limit = 3
+  limit = 3,
 ): Promise<NearestRoad[]> {
   const res = await fetch(
-    `${API_URL}/api/roads/nearest?lat=${latitude}&lng=${longitude}&limit=${limit}`
+    `${API_URL}/api/roads/nearest?lat=${latitude}&lng=${longitude}&limit=${limit}`,
   );
   if (!res.ok) throw new Error("Could not look up nearby roads.");
   const body = await res.json();
@@ -318,7 +383,7 @@ export function createFloodReport(
     waterLevelMeters?: number;
     roadImpassable: boolean;
     notes?: string;
-  }
+  },
 ) {
   return adminPost("/api/admin/floods", token, data);
 }
@@ -331,7 +396,7 @@ export function createFireIncident(
     severity: FireSeverity;
     radiusMeters: number;
     notes?: string;
-  }
+  },
 ) {
   return adminPost("/api/admin/fires", token, data);
 }
@@ -344,7 +409,7 @@ export function createEarthquakeRoadImpact(
     impactLevel: "LOW" | "MODERATE" | "HIGH";
     confirmedBlocked: boolean;
     notes?: string;
-  }
+  },
 ) {
   return adminPost("/api/admin/earthquake-road-impacts", token, data);
 }
@@ -367,7 +432,10 @@ export const deleteFireIncident = (token: string, id: string) =>
   adminDelete(`/api/admin/fires/${encodeURIComponent(id)}`, token);
 
 export const deleteEarthquakeRoadImpact = (token: string, id: string) =>
-  adminDelete(`/api/admin/earthquake-road-impacts/${encodeURIComponent(id)}`, token);
+  adminDelete(
+    `/api/admin/earthquake-road-impacts/${encodeURIComponent(id)}`,
+    token,
+  );
 
 export const deleteEarthquakeEvent = (token: string, id: string) =>
   adminDelete(`/api/admin/earthquakes/${encodeURIComponent(id)}`, token);

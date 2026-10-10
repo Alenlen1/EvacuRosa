@@ -1,12 +1,15 @@
 import { getSupabase } from "../database/supabase";
-import type { EvacuationCenter, EvacuationCenterStatus } from "../types/evacuation";
+import type {
+  EvacuationCenter,
+  EvacuationCenterStatus,
+} from "../types/evacuation";
 
 /** Occupancy-driven status, per the project spec's thresholds — a manual
  * CLOSED always wins regardless of occupancy. */
 export function deriveStatus(
   currentOccupancy: number,
   capacity: number,
-  manualStatus?: string
+  manualStatus?: string,
 ): EvacuationCenterStatus {
   if (manualStatus === "CLOSED") return "CLOSED";
   if (capacity <= 0) return "CLOSED";
@@ -25,7 +28,7 @@ export async function getAllCenters(): Promise<EvacuationCenter[]> {
   const { data, error } = await supabase
     .from("evacuation_centers")
     .select(
-      "id, barangay_id, name, address, latitude, longitude, capacity, current_occupancy, status, contact_information, notes, updated_at, water_status, food_status, medical_status, supplies_updated_at, barangays(name)"
+      "id, barangay_id, name, address, latitude, longitude, capacity, current_occupancy, status, contact_information, notes, updated_at, water_status, food_status, medical_status, supplies_updated_at, barangays(name)",
     );
 
   if (error) {

@@ -5,7 +5,7 @@ import { createDivIcon } from "./icons";
 
 const userIcon = createDivIcon(
   `<div style="width:16px;height:16px;border-radius:9999px;background:#2563eb;border:2px solid white;box-shadow:0 0 0 2px rgba(37,99,235,0.4);"></div>`,
-  16
+  16,
 );
 
 interface UserLocationMarkerProps {

@@ -10,19 +10,28 @@ interface RoutePolylineProps {
   navigating?: boolean;
 }
 
-export function RoutePolyline({ points, navigating = false }: RoutePolylineProps) {
+export function RoutePolyline({
+  points,
+  navigating = false,
+}: RoutePolylineProps) {
   const map = useMap();
   const outline = useRef<LeafletPolyline>(null);
   const line = useRef<LeafletPolyline>(null);
-  const positions = useMemo(() => points.map((p): [number, number] => [p.latitude, p.longitude]), [points]);
+  const positions = useMemo(
+    () => points.map((p): [number, number] => [p.latitude, p.longitude]),
+    [points],
+  );
 
   useEffect(() => {
     if (points.length < 2 || navigating) return;
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const stopTrace = traceRoutePaths([
-      outline.current?.getElement() as SVGPathElement | undefined,
-      line.current?.getElement() as SVGPathElement | undefined,
-    ], preference.matches);
+    const stopTrace = traceRoutePaths(
+      [
+        outline.current?.getElement() as SVGPathElement | undefined,
+        line.current?.getElement() as SVGPathElement | undefined,
+      ],
+      preference.matches,
+    );
     // Leaflet reprojects/clips paths during interaction: reveal the full line
     // immediately rather than animate stale screen-space lengths.
     map.on("zoomstart movestart", stopTrace);
@@ -45,14 +54,24 @@ export function RoutePolyline({ points, navigating = false }: RoutePolylineProps
         noClip
         smoothFactor={0}
         positions={positions}
-        pathOptions={{ color: navigating ? "white" : "#252b31", weight: 9, opacity: 1, interactive: false }}
+        pathOptions={{
+          color: navigating ? "white" : "#252b31",
+          weight: 9,
+          opacity: 1,
+          interactive: false,
+        }}
       />
       <Polyline
         ref={line}
         noClip
         smoothFactor={0}
         positions={positions}
-        pathOptions={{ color: "#f4d84b", weight: 5, opacity: 1, interactive: false }}
+        pathOptions={{
+          color: "#f4d84b",
+          weight: 5,
+          opacity: 1,
+          interactive: false,
+        }}
       />
     </>
   );

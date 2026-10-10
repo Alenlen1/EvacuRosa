@@ -23,7 +23,10 @@ export interface EvacuationRouteResult {
  * losing out to "Center B: 2.2km, LOW RISK" only happens once distance
  * alone stops being the sole criterion, which it now isn't.
  */
-export async function computeEvacuationRoute(start: LatLng, travelMode: TravelMode = "walking"): Promise<EvacuationRouteResult> {
+export async function computeEvacuationRoute(
+  start: LatLng,
+  travelMode: TravelMode = "walking",
+): Promise<EvacuationRouteResult> {
   const candidates = await getAvailableCenters();
 
   if (candidates.length === 0) {
@@ -33,7 +36,9 @@ export async function computeEvacuationRoute(start: LatLng, travelMode: TravelMo
       route: [],
       distanceMeters: 0,
       riskLevel: null,
-      warnings: ["No evacuation centers are currently available (all full or closed)."],
+      warnings: [
+        "No evacuation centers are currently available (all full or closed).",
+      ],
     };
   }
 
@@ -47,10 +52,14 @@ export async function computeEvacuationRoute(start: LatLng, travelMode: TravelMo
 
   let hazardBlocked = false;
   for (const center of candidates) {
-    const result = await computeRoute(start, {
-      latitude: center.latitude,
-      longitude: center.longitude,
-    }, travelMode);
+    const result = await computeRoute(
+      start,
+      {
+        latitude: center.latitude,
+        longitude: center.longitude,
+      },
+      travelMode,
+    );
     if (result.failureReason === "HAZARD_BLOCKED") hazardBlocked = true;
     if (!result.found || !result.riskLevel) continue;
 
@@ -76,7 +85,9 @@ export async function computeEvacuationRoute(start: LatLng, travelMode: TravelMo
       route: [],
       distanceMeters: 0,
       riskLevel: null,
-      warnings: ["No reachable evacuation center was found using the available road network."],
+      warnings: [
+        "No reachable evacuation center was found using the available road network.",
+      ],
     };
   }
 

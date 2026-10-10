@@ -9,7 +9,13 @@ export function triangular(x: number, a: number, b: number, c: number): number {
 }
 
 /** Trapezoidal shape: 0 below a and above d, plateau of 1 between b and c. */
-export function trapezoidal(x: number, a: number, b: number, c: number, d: number): number {
+export function trapezoidal(
+  x: number,
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+): number {
   if (x <= a || x >= d) return 0;
   if (x >= b && x <= c) return 1;
   if (x < b) return (x - a) / (b - a);
@@ -50,7 +56,9 @@ function fuzzifyFire(severityLevel: number): FuzzyMemberships["fire"] {
   };
 }
 
-function fuzzifyRoadCondition(conditionLevel: number): FuzzyMemberships["roadCondition"] {
+function fuzzifyRoadCondition(
+  conditionLevel: number,
+): FuzzyMemberships["roadCondition"] {
   return {
     GOOD: triangular(conditionLevel, -0.5, 0, 1),
     FAIR: triangular(conditionLevel, 0, 1, 2),
@@ -69,7 +77,9 @@ function fuzzifyDistance(distanceMeters: number): FuzzyMemberships["distance"] {
 // Composite exposure (0-2) derived from the worse of flood/fire severity —
 // not an independently reported field. See fuzzyEngine.ts for how it's
 // computed; documented there since that's a modeling choice, not a shape.
-function fuzzifyHazardExposure(exposureLevel: number): FuzzyMemberships["hazardExposure"] {
+function fuzzifyHazardExposure(
+  exposureLevel: number,
+): FuzzyMemberships["hazardExposure"] {
   return {
     LOW: triangular(exposureLevel, -0.5, 0, 1),
     MEDIUM: triangular(exposureLevel, 0, 1, 2),
@@ -77,7 +87,9 @@ function fuzzifyHazardExposure(exposureLevel: number): FuzzyMemberships["hazardE
   };
 }
 
-function fuzzifyEarthquake(impactLevel: number): FuzzyMemberships["earthquake"] {
+function fuzzifyEarthquake(
+  impactLevel: number,
+): FuzzyMemberships["earthquake"] {
   return {
     NONE: trapezoidal(impactLevel, -0.5, 0, 0, 0.5),
     LOW: triangular(impactLevel, 0, 1, 2),

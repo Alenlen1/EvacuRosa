@@ -37,13 +37,22 @@ export class RoadGraph {
       else this.grid.set(key, [node]);
     }
     for (const edge of data.edges) {
-      this.addDirectedEdge({ ...edge, allowedModes: edge.osmTags ? permittedModes(edge.osmTags, false) : edge.allowedModes });
+      this.addDirectedEdge({
+        ...edge,
+        allowedModes: edge.osmTags
+          ? permittedModes(edge.osmTags, false)
+          : edge.allowedModes,
+      });
       this.addDirectedEdge({
         ...edge,
         id: `${edge.id}-r`,
         fromNodeId: edge.toNodeId,
         toNodeId: edge.fromNodeId,
-        allowedModes: edge.osmTags ? permittedModes(edge.osmTags, true) : edge.oneway ? ["walking"] : edge.allowedModes,
+        allowedModes: edge.osmTags
+          ? permittedModes(edge.osmTags, true)
+          : edge.oneway
+            ? ["walking"]
+            : edge.allowedModes,
       });
       const existing = this.edgesByRoad.get(edge.roadId);
       if (existing) existing.push(edge);
@@ -61,7 +70,7 @@ export class RoadGraph {
     const list = this.adjacency.get(edge.fromNodeId);
     if (!list) {
       throw new Error(
-        `Edge ${edge.id} references unknown node ${edge.fromNodeId}`
+        `Edge ${edge.id} references unknown node ${edge.fromNodeId}`,
       );
     }
     list.push(edge);
@@ -81,11 +90,19 @@ export class RoadGraph {
 
   /** Snap to the nearest endpoint on an accessible segment, including sinks.
    * Skipping a one-way sink would move the start upstream and bypass the rule. */
-  nearestAccessibleNode(latitude: number, longitude: number, mode: TravelMode): GraphNode | null {
+  nearestAccessibleNode(
+    latitude: number,
+    longitude: number,
+    mode: TravelMode,
+  ): GraphNode | null {
     const eligible = new Set<string>();
     for (const edges of this.adjacency.values()) {
       for (const edge of edges) {
-        if (edge.status === "BLOCKED" || (edge.allowedModes && !edge.allowedModes.includes(mode))) continue;
+        if (
+          edge.status === "BLOCKED" ||
+          (edge.allowedModes && !edge.allowedModes.includes(mode))
+        )
+          continue;
         eligible.add(edge.fromNodeId);
         eligible.add(edge.toNodeId);
       }
@@ -94,8 +111,16 @@ export class RoadGraph {
     let bestDistance = 250; // Never silently snap across town to bypass access rules.
     for (const id of eligible) {
       const node = this.nodes.get(id)!;
-      const distance = haversineMeters(latitude, longitude, node.latitude, node.longitude);
-      if (distance < bestDistance) { best = node; bestDistance = distance; }
+      const distance = haversineMeters(
+        latitude,
+        longitude,
+        node.latitude,
+        node.longitude,
+      );
+      if (distance < bestDistance) {
+        best = node;
+        bestDistance = distance;
+      }
     }
     return best;
   }
@@ -147,7 +172,12 @@ export class RoadGraph {
           if (!cell) continue;
           ringHadCells = true;
           for (const node of cell) {
-            const d = haversineMeters(latitude, longitude, node.latitude, node.longitude);
+            const d = haversineMeters(
+              latitude,
+              longitude,
+              node.latitude,
+              node.longitude,
+            );
             if (d < bestDist) {
               bestDist = d;
               best = node;
@@ -167,11 +197,19 @@ export class RoadGraph {
     return best ?? this.nearestNodeLinear(latitude, longitude);
   }
 
-  private nearestNodeLinear(latitude: number, longitude: number): GraphNode | null {
+  private nearestNodeLinear(
+    latitude: number,
+    longitude: number,
+  ): GraphNode | null {
     let best: GraphNode | null = null;
     let bestDist = Infinity;
     for (const node of this.nodes.values()) {
-      const d = haversineMeters(latitude, longitude, node.latitude, node.longitude);
+      const d = haversineMeters(
+        latitude,
+        longitude,
+        node.latitude,
+        node.longitude,
+      );
       if (d < bestDist) {
         bestDist = d;
         best = node;
@@ -191,9 +229,13 @@ export class RoadGraph {
   nearestRoads(
     latitude: number,
     longitude: number,
-    limit = 5
+    limit = 5,
   ): { roadId: string; roadName?: string; distanceMeters: number }[] {
-    const results: { roadId: string; roadName?: string; distanceMeters: number }[] = [];
+    const results: {
+      roadId: string;
+      roadName?: string;
+      distanceMeters: number;
+    }[] = [];
 
     for (const [roadId, edges] of this.edgesByRoad) {
       let minDist = Infinity;

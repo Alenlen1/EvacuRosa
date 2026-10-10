@@ -22,28 +22,52 @@ interface Submission {
 function point(value: unknown): value is LatLng {
   if (!value || typeof value !== "object") return false;
   const p = value as LatLng;
-  return Number.isFinite(p.latitude) && Number.isFinite(p.longitude) &&
-    Math.abs(p.latitude) <= 90 && Math.abs(p.longitude) <= 180;
+  return (
+    Number.isFinite(p.latitude) &&
+    Number.isFinite(p.longitude) &&
+    Math.abs(p.latitude) <= 90 &&
+    Math.abs(p.longitude) <= 180
+  );
 }
 
-export function validSubmission(value: unknown, now = Date.now()): value is Submission {
+export function validSubmission(
+  value: unknown,
+  now = Date.now(),
+): value is Submission {
   if (!value || typeof value !== "object") return false;
   const v = value as Submission;
-  const age = typeof v.recordedAt === "string" ? now - Date.parse(v.recordedAt) : NaN;
-  return typeof v.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v.id) &&
-    v.consent === true && point(v.start) && isTravelMode(v.travelMode) &&
-    Number.isFinite(v.accuracy) && v.accuracy >= 0 && v.accuracy <= 100000 &&
-    Number.isFinite(age) && age >= -30000 && age <= 120000 &&
-    (v.name === undefined || (typeof v.name === "string" && v.name.length <= 100)) &&
-    (v.contact === undefined || (typeof v.contact === "string" && /^[0-9+() .-]{0,40}$/.test(v.contact))) &&
-    ((v.kind === "route" && point(v.destination)) || (v.kind === "evacuation" && v.destination === undefined));
+  const age =
+    typeof v.recordedAt === "string" ? now - Date.parse(v.recordedAt) : NaN;
+  return (
+    typeof v.id === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      v.id,
+    ) &&
+    v.consent === true &&
+    point(v.start) &&
+    isTravelMode(v.travelMode) &&
+    Number.isFinite(v.accuracy) &&
+    v.accuracy >= 0 &&
+    v.accuracy <= 100000 &&
+    Number.isFinite(age) &&
+    age >= -30000 &&
+    age <= 120000 &&
+    (v.name === undefined ||
+      (typeof v.name === "string" && v.name.length <= 100)) &&
+    (v.contact === undefined ||
+      (typeof v.contact === "string" &&
+        /^[0-9+() .-]{0,40}$/.test(v.contact))) &&
+    ((v.kind === "route" && point(v.destination)) ||
+      (v.kind === "evacuation" && v.destination === undefined))
+  );
 }
 
 // Bounded, per-process abuse protection. Do not trust client X-Forwarded-For.
 // Production multi-instance deployments need a shared gateway rate limit.
 const attempts = new Map<string, { count: number; expires: number }>();
 export function allowSubmission(ip: string, now = Date.now()): boolean {
-  for (const [key, entry] of attempts) if (entry.expires <= now) attempts.delete(key);
+  for (const [key, entry] of attempts)
+    if (entry.expires <= now) attempts.delete(key);
   const previous = attempts.get(ip);
   if (previous) return ++previous.count <= 5;
   if (attempts.size >= 10000) return false;
@@ -54,107 +78,198 @@ export function allowSubmission(ip: string, now = Date.now()): boolean {
 export async function postAssistance(req: Request, res: Response) {
   res.setHeader("Cache-Control", "no-store");
   if (!allowSubmission(req.ip ?? "unknown")) {
-    res.status(429).json({ error: "Too many sharing attempts. Please wait before trying again. This is not an emergency dispatch service." });
+    res
+      .status(429)
+      .json({
+        error:
+          "Too many sharing attempts. Please wait before trying again. This is not an emergency dispatch service.",
+      });
     return;
   }
   if (!validSubmission(req.body)) {
-    res.status(400).json({ error: "Explicit consent, a fresh location and valid contact details are required." });
+    res
+      .status(400)
+      .json({
+        error:
+          "Explicit consent, a fresh location and valid contact details are required.",
+      });
     return;
   }
   const db = getSupabase();
-  if (!db) { res.status(503).json({ error: "Location sharing is currently unavailable. Nothing was submitted." }); return; }
+  if (!db) {
+    res
+      .status(503)
+      .json({
+        error:
+          "Location sharing is currently unavailable. Nothing was submitted.",
+      });
+    return;
+  }
   const v = req.body;
   try {
     // Client flags are not proof. Recheck the selected mode and current hazards.
-    const route = v.kind === "route"
-      ? await computeRoute(v.start, v.destination!, v.travelMode)
-      : await computeEvacuationRoute(v.start, v.travelMode);
+    const route =
+      v.kind === "route"
+        ? await computeRoute(v.start, v.destination!, v.travelMode)
+        : await computeEvacuationRoute(v.start, v.travelMode);
     if (route.found || route.failureReason !== "HAZARD_BLOCKED") {
-      res.status(409).json({ error: "A hazard-blocked route could not be confirmed at your current location. Please calculate your route again." });
+      res
+        .status(409)
+        .json({
+          error:
+            "A hazard-blocked route could not be confirmed at your current location. Please calculate your route again.",
+        });
       return;
     }
     const { error } = await db.from("assistance_requests").insert({
-      id: v.id, latitude: v.start.latitude, longitude: v.start.longitude,
-      accuracy_meters: v.accuracy, location_recorded_at: v.recordedAt,
-      display_name: v.name?.trim() || null, contact_number: v.contact?.trim() || null,
-      travel_mode: v.travelMode, route_kind: v.kind,
+      id: v.id,
+      latitude: v.start.latitude,
+      longitude: v.start.longitude,
+      accuracy_meters: v.accuracy,
+      location_recorded_at: v.recordedAt,
+      display_name: v.name?.trim() || null,
+      contact_number: v.contact?.trim() || null,
+      travel_mode: v.travelMode,
+      route_kind: v.kind,
       destination_latitude: v.destination?.latitude ?? null,
       destination_longitude: v.destination?.longitude ?? null,
-      reason: "HAZARD_BLOCKED", consent_version: "location-sharing-v1",
+      reason: "HAZARD_BLOCKED",
+      consent_version: "location-sharing-v1",
     });
     // The UUID is generated by the client once; retries never insert twice.
     if (error && error.code !== "23505") throw error;
     res.status(201).json({ id: v.id });
   } catch {
     // Never expose database errors or personal details in public responses/logs.
-    res.status(503).json({ error: "Could not confirm submission. Retry with this form; it will not create a duplicate." });
+    res
+      .status(503)
+      .json({
+        error:
+          "Could not confirm submission. Retry with this form; it will not create a duplicate.",
+      });
   }
 }
 
 export async function listAssistance(req: RoleAwareRequest, res: Response) {
   res.setHeader("Cache-Control", "no-store");
   if (!req.userSupabase || req.profile?.role !== "SUPER_ADMIN") {
-    res.status(403).json({ error: "CDRRMO access required." }); return;
+    res.status(403).json({ error: "CDRRMO access required." });
+    return;
   }
   // The caller's JWT enforces RLS, not the service-role client.
-  const { data, error } = await req.userSupabase.from("assistance_requests")
-    .select("id,latitude,longitude,accuracy_meters,location_recorded_at,display_name,contact_number,travel_mode,route_kind,destination_latitude,destination_longitude,created_at,status,status_updated_at,status_updated_by")
-    .order("created_at", { ascending: false }).limit(100);
-  if (error) { res.status(503).json({ error: "Could not load shared locations." }); return; }
+  const { data, error } = await req.userSupabase
+    .from("assistance_requests")
+    .select(
+      "id,latitude,longitude,accuracy_meters,location_recorded_at,display_name,contact_number,travel_mode,route_kind,destination_latitude,destination_longitude,created_at,status,status_updated_at,status_updated_by",
+    )
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) {
+    res.status(503).json({ error: "Could not load shared locations." });
+    return;
+  }
   const locationName = createAssistanceLocationLookup();
-  res.json({ requests: (data ?? []).map(row => ({
-    ...row,
-    location_name: locationName(row.latitude, row.longitude),
-    destination_name: locationName(row.destination_latitude, row.destination_longitude),
-  })) });
+  res.json({
+    requests: (data ?? []).map((row) => ({
+      ...row,
+      location_name: locationName(row.latitude, row.longitude),
+      destination_name: locationName(
+        row.destination_latitude,
+        row.destination_longitude,
+      ),
+    })),
+  });
 }
 
-export async function updateAssistanceStatus(req: RoleAwareRequest, res: Response) {
+export async function updateAssistanceStatus(
+  req: RoleAwareRequest,
+  res: Response,
+) {
   res.setHeader("Cache-Control", "no-store");
   if (!req.userSupabase || req.profile?.role !== "SUPER_ADMIN") {
-    res.status(403).json({ error: "CDRRMO access required." }); return;
+    res.status(403).json({ error: "CDRRMO access required." });
+    return;
   }
   const id = req.params.id;
   const status = req.body?.status;
-  if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id) ||
-      !["ACKNOWLEDGED", "RESOLVED"].includes(status)) {
-    res.status(400).json({ error: "A valid request ID and status are required." }); return;
+  if (
+    typeof id !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      id,
+    ) ||
+    !["ACKNOWLEDGED", "RESOLVED"].includes(status)
+  ) {
+    res
+      .status(400)
+      .json({ error: "A valid request ID and status are required." });
+    return;
   }
   try {
     // Conditional update prevents stale clients from reversing newer work.
-    const { data, error } = await req.userSupabase.from("assistance_requests")
-      .update({ status }).eq("id", id)
+    const { data, error } = await req.userSupabase
+      .from("assistance_requests")
+      .update({ status })
+      .eq("id", id)
       .eq("status", status === "ACKNOWLEDGED" ? "NEW" : "ACKNOWLEDGED")
-      .select("id,status,status_updated_at").maybeSingle();
+      .select("id,status,status_updated_at")
+      .maybeSingle();
     if (error) throw error;
     if (!data) {
-      res.status(409).json({ error: "This request changed or no longer exists. Refresh before updating it." }); return;
+      res
+        .status(409)
+        .json({
+          error:
+            "This request changed or no longer exists. Refresh before updating it.",
+        });
+      return;
     }
     res.json({ request: data });
   } catch {
-    res.status(503).json({ error: "Could not confirm status update. Refresh before trying again." });
+    res
+      .status(503)
+      .json({
+        error: "Could not confirm status update. Refresh before trying again.",
+      });
   }
 }
 
 export async function deleteAssistance(req: RoleAwareRequest, res: Response) {
   res.setHeader("Cache-Control", "no-store");
   if (!req.userSupabase || req.profile?.role !== "SUPER_ADMIN") {
-    res.status(403).json({ error: "CDRRMO access required." }); return;
+    res.status(403).json({ error: "CDRRMO access required." });
+    return;
   }
   const id = req.params.id;
-  if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
-    res.status(400).json({ error: "Invalid assistance request ID." }); return;
+  if (
+    typeof id !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      id,
+    )
+  ) {
+    res.status(400).json({ error: "Invalid assistance request ID." });
+    return;
   }
   try {
     // Delete only the selected record, using the caller's JWT and RLS.
-    const { data, error } = await req.userSupabase.from("assistance_requests")
-      .delete().eq("id", id).select("id");
+    const { data, error } = await req.userSupabase
+      .from("assistance_requests")
+      .delete()
+      .eq("id", id)
+      .select("id");
     if (error) throw error;
     if (!data?.length) {
-      res.status(404).json({ error: "This request no longer exists. Refresh the list." }); return;
+      res
+        .status(404)
+        .json({ error: "This request no longer exists. Refresh the list." });
+      return;
     }
     res.status(204).end();
   } catch {
-    res.status(503).json({ error: "Could not confirm deletion. Refresh the list before trying again." });
+    res
+      .status(503)
+      .json({
+        error:
+          "Could not confirm deletion. Refresh the list before trying again.",
+      });
   }
 }

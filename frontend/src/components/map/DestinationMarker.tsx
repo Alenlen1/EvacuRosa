@@ -8,7 +8,7 @@ const destinationIcon = createDivIcon(
     <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 7 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8Z" fill="#252b31" stroke="white" stroke-width="1.5"/>
     <circle cx="12" cy="10" r="2.5" fill="white"/>
   </svg>`,
-  28
+  28,
 );
 
 interface DestinationMarkerProps {
@@ -26,9 +26,21 @@ export function DestinationMarker({
 }: DestinationMarkerProps) {
   const title = `Destination: ${label ?? `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`}`;
   return (
-    <Marker position={[latitude, longitude]} icon={destinationIcon} title={title} alt={title}>
+    <Marker
+      position={[latitude, longitude]}
+      icon={destinationIcon}
+      title={title}
+      alt={title}
+    >
       <Tooltip className="hazard-tooltip">{title}</Tooltip>
-      <Popup><div className="center-popup"><strong>{title}</strong><button type="button" className="secondary-button" onClick={onRemove}>Remove destination</button></div></Popup>
+      <Popup>
+        <div className="center-popup">
+          <strong>{title}</strong>
+          <button type="button" className="secondary-button" onClick={onRemove}>
+            Remove destination
+          </button>
+        </div>
+      </Popup>
     </Marker>
   );
 }

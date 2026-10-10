@@ -44,7 +44,11 @@ export async function idbSet(key: string, data: unknown): Promise<void> {
   const db = await openDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, "readwrite");
-    const record: CacheRecord = { id: key, data, cachedAt: new Date().toISOString() };
+    const record: CacheRecord = {
+      id: key,
+      data,
+      cachedAt: new Date().toISOString(),
+    };
     tx.objectStore(STORE).put(record);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
@@ -52,7 +56,7 @@ export async function idbSet(key: string, data: unknown): Promise<void> {
 }
 
 export async function idbGet<T>(
-  key: string
+  key: string,
 ): Promise<{ data: T; cachedAt: string } | null> {
   if (!isIndexedDbAvailable()) return null;
   const db = await openDb();
@@ -61,7 +65,9 @@ export async function idbGet<T>(
     const request = tx.objectStore(STORE).get(key);
     request.onsuccess = () => {
       const record = request.result as CacheRecord | undefined;
-      resolve(record ? { data: record.data as T, cachedAt: record.cachedAt } : null);
+      resolve(
+        record ? { data: record.data as T, cachedAt: record.cachedAt } : null,
+      );
     };
     request.onerror = () => reject(request.error);
   });

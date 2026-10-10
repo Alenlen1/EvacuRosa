@@ -16,16 +16,35 @@ function report(overrides: Partial<FloodReport>): FloodReport {
 }
 
 describe("roadStatusOverridesForReports", () => {
-  it.each(["LOW", "MODERATE"] as const)("keeps %s routable even with an outdated impassable flag", severity => {
-    expect(roadStatusOverridesForReports([report({ severity, roadImpassable: true })]).get("R1")).toBe("FLOODED");
-  });
+  it.each(["LOW", "MODERATE"] as const)(
+    "keeps %s routable even with an outdated impassable flag",
+    (severity) => {
+      expect(
+        roadStatusOverridesForReports([
+          report({ severity, roadImpassable: true }),
+        ]).get("R1"),
+      ).toBe("FLOODED");
+    },
+  );
 
-  it.each(["HIGH", "SEVERE"] as const)("blocks %s even without the old checkbox", severity => {
-    expect(roadStatusOverridesForReports([report({ severity, roadImpassable: false })]).get("R1")).toBe("BLOCKED");
-  });
+  it.each(["HIGH", "SEVERE"] as const)(
+    "blocks %s even without the old checkbox",
+    (severity) => {
+      expect(
+        roadStatusOverridesForReports([
+          report({ severity, roadImpassable: false }),
+        ]).get("R1"),
+      ).toBe("BLOCKED");
+    },
+  );
 
   it("does not restrict NONE or reports without a road", () => {
-    expect(roadStatusOverridesForReports([report({ severity: "NONE", roadImpassable: true }), report({ roadId: "", severity: "SEVERE" })]).size).toBe(0);
+    expect(
+      roadStatusOverridesForReports([
+        report({ severity: "NONE", roadImpassable: true }),
+        report({ roadId: "", severity: "SEVERE" }),
+      ]).size,
+    ).toBe(0);
   });
   it("marks a confirmed-impassable road as BLOCKED", () => {
     const overrides = roadStatusOverridesForReports([
@@ -49,6 +68,11 @@ describe("roadStatusOverridesForReports", () => {
     expect(overrides.get("R1")).toBe("BLOCKED");
   });
   it("blocks a road regardless of report order", () => {
-    expect(roadStatusOverridesForReports([report({ severity: "LOW" }), report({ severity: "SEVERE" })]).get("R1")).toBe("BLOCKED");
+    expect(
+      roadStatusOverridesForReports([
+        report({ severity: "LOW" }),
+        report({ severity: "SEVERE" }),
+      ]).get("R1"),
+    ).toBe("BLOCKED");
   });
 });

@@ -55,7 +55,10 @@ class MinHeap<T> {
     while (index > 0) {
       const parent = (index - 1) >> 1;
       if (this.heap[parent].key <= this.heap[index].key) break;
-      [this.heap[parent], this.heap[index]] = [this.heap[index], this.heap[parent]];
+      [this.heap[parent], this.heap[index]] = [
+        this.heap[index],
+        this.heap[parent],
+      ];
       index = parent;
     }
   }
@@ -66,10 +69,15 @@ class MinHeap<T> {
       const left = index * 2 + 1;
       const right = index * 2 + 2;
       let smallest = index;
-      if (left < n && this.heap[left].key < this.heap[smallest].key) smallest = left;
-      if (right < n && this.heap[right].key < this.heap[smallest].key) smallest = right;
+      if (left < n && this.heap[left].key < this.heap[smallest].key)
+        smallest = left;
+      if (right < n && this.heap[right].key < this.heap[smallest].key)
+        smallest = right;
       if (smallest === index) break;
-      [this.heap[smallest], this.heap[index]] = [this.heap[index], this.heap[smallest]];
+      [this.heap[smallest], this.heap[index]] = [
+        this.heap[index],
+        this.heap[smallest],
+      ];
       index = smallest;
     }
   }
@@ -91,13 +99,19 @@ export function findPath(
   graph: RoadGraph,
   startNodeId: string,
   goalNodeId: string,
-  options?: FindPathOptions
+  options?: FindPathOptions,
 ): AstarResult {
   const statusOverrides = options?.statusOverrides;
-  const edgeCost = options?.edgeCost ?? ((edge: GraphEdge) => edge.distanceMeters);
+  const edgeCost =
+    options?.edgeCost ?? ((edge: GraphEdge) => edge.distanceMeters);
 
   if (startNodeId === goalNodeId) {
-    return { found: true, nodeIds: [startNodeId], edges: [], distanceMeters: 0 };
+    return {
+      found: true,
+      nodeIds: [startNodeId],
+      edges: [],
+      distanceMeters: 0,
+    };
   }
 
   const start = graph.getNode(startNodeId);
@@ -127,7 +141,11 @@ export function findPath(
     }
 
     for (const edge of graph.neighbors(currentId)) {
-      if (edge.allowedModes && !edge.allowedModes.includes(options?.travelMode ?? "walking")) continue;
+      if (
+        edge.allowedModes &&
+        !edge.allowedModes.includes(options?.travelMode ?? "walking")
+      )
+        continue;
       if (effectiveStatus(edge) === "BLOCKED") continue;
       if (visited.has(edge.toNodeId)) continue;
 
@@ -147,7 +165,7 @@ export function findPath(
 
 function buildResult(
   cameFrom: Map<string, { nodeId: string; edge: GraphEdge }>,
-  goalNodeId: string
+  goalNodeId: string,
 ): AstarResult {
   const nodeIds: string[] = [goalNodeId];
   const edges: GraphEdge[] = [];

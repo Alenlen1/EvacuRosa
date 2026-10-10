@@ -9,8 +9,17 @@ export interface AssistanceLocationName {
  * Names are nearby-road references, not verified addresses or route access. */
 export function createAssistanceLocationLookup() {
   const cache = new Map<string, AssistanceLocationName | null>();
-  return (latitude: number | null, longitude: number | null): AssistanceLocationName | null => {
-    if (latitude === null || longitude === null || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  return (
+    latitude: number | null,
+    longitude: number | null,
+  ): AssistanceLocationName | null => {
+    if (
+      latitude === null ||
+      longitude === null ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
+    )
+      return null;
     const key = `${latitude},${longitude}`;
     if (cache.has(key)) return cache.get(key)!;
     let label: AssistanceLocationName | null = null;

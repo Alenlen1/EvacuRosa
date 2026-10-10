@@ -9,7 +9,11 @@ export interface AuthedRequest extends Request {
   userSupabase?: SupabaseClient;
 }
 
-export async function requireAuth(req: AuthedRequest, res: Response, next: NextFunction) {
+export async function requireAuth(
+  req: AuthedRequest,
+  res: Response,
+  next: NextFunction,
+) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
     res.status(401).json({ error: "Missing bearer token." });

@@ -1,4 +1,5 @@
-export type EvacuationCenterStatus = "AVAILABLE" | "NEARLY_FULL" | "FULL" | "CLOSED";
+export type EvacuationCenterStatus =
+  "AVAILABLE" | "NEARLY_FULL" | "FULL" | "CLOSED";
 
 export interface EvacuationCenter {
   id: string;

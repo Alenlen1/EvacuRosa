@@ -8,7 +8,8 @@ import { useEffect } from "react";
  * never break the app itself. */
 export function ServiceWorkerRegistration() {
   useEffect(() => {
-    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+    if (typeof window === "undefined" || !("serviceWorker" in navigator))
+      return;
     // Development cleanup runs in layout's head, before React hydration.
     if (process.env.NODE_ENV !== "production") {
       return;

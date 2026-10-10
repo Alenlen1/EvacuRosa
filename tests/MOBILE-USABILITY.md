@@ -3,15 +3,15 @@
 Browser checks used Edge/Chromium with touch emulation and simulated GPS/API
 responses. These results are not physical Android or iPhone certification.
 
-| Scenario | Result |
-| --- | --- |
-| Filipino navigation at 320×740 and 390×844 | Passed: four transport choices visible; controls above the details panel |
-| Filipino landscape at 740×390 | Passed: map, transport choices and navigation controls accessible |
-| 200% text at 320×740 | Found overlapping transport labels and crowded header; fixed text wrapping and header sizing; repeat check found no transport-label overflow |
-| GPS accuracy degrades to 120 m | Warning shown; inaccurate fix does not trigger arrival |
-| GPS recovers to 5 m | Warning clears after a fresh accepted update |
-| Connection lost during an existing route | Navigation remains active and accepts subsequent GPS updates |
-| Prepared app reopened offline | Service-worker-cached app shell loads; missing offline routing data is disclosed |
+| Scenario                                   | Result                                                                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Filipino navigation at 320×740 and 390×844 | Passed: four transport choices visible; controls above the details panel                                                                     |
+| Filipino landscape at 740×390              | Passed: map, transport choices and navigation controls accessible                                                                            |
+| 200% text at 320×740                       | Found overlapping transport labels and crowded header; fixed text wrapping and header sizing; repeat check found no transport-label overflow |
+| GPS accuracy degrades to 120 m             | Warning shown; inaccurate fix does not trigger arrival                                                                                       |
+| GPS recovers to 5 m                        | Warning clears after a fresh accepted update                                                                                                 |
+| Connection lost during an existing route   | Navigation remains active and accepts subsequent GPS updates                                                                                 |
+| Prepared app reopened offline              | Service-worker-cached app shell loads; missing offline routing data is disclosed                                                             |
 
 Frontend suite: 104 tests passed, including offline engine/cache tests.
 Production build passed. Browser checks reported no page errors.

@@ -19,5 +19,7 @@ export function getSupabase(): SupabaseClient | null {
 }
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(env.supabaseUrl && env.supabaseAnonKey && env.supabaseServiceRoleKey);
+  return Boolean(
+    env.supabaseUrl && env.supabaseAnonKey && env.supabaseServiceRoleKey,
+  );
 }

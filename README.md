@@ -702,8 +702,8 @@ Request:
     "longitude": 121.1115
   },
   "destination": {
-    "latitude": 14.2840,
-    "longitude": 121.1090
+    "latitude": 14.284,
+    "longitude": 121.109
   }
 }
 ```

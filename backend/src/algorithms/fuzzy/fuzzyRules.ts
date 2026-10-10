@@ -23,25 +23,29 @@ export interface FuzzyRule {
 export const fuzzyRules: FuzzyRule[] = [
   {
     id: "R1",
-    description: "IF flood is HIGH AND road condition is POOR THEN risk is VERY_HIGH",
+    description:
+      "IF flood is HIGH AND road condition is POOR THEN risk is VERY_HIGH",
     strength: (m) => Math.min(m.flood.HIGH, m.roadCondition.POOR),
     outputLevel: "VERY_HIGH",
   },
   {
     id: "R2",
-    description: "IF flood is LOW AND fire is NONE AND road condition is GOOD THEN risk is LOW",
+    description:
+      "IF flood is LOW AND fire is NONE AND road condition is GOOD THEN risk is LOW",
     strength: (m) => Math.min(m.flood.LOW, m.fire.NONE, m.roadCondition.GOOD),
     outputLevel: "LOW",
   },
   {
     id: "R3",
-    description: "IF fire is HIGH AND hazard exposure is HIGH THEN risk is VERY_HIGH",
+    description:
+      "IF fire is HIGH AND hazard exposure is HIGH THEN risk is VERY_HIGH",
     strength: (m) => Math.min(m.fire.HIGH, m.hazardExposure.HIGH),
     outputLevel: "VERY_HIGH",
   },
   {
     id: "R4",
-    description: "IF flood is NONE AND fire is NONE AND road condition is GOOD THEN risk is VERY_LOW",
+    description:
+      "IF flood is NONE AND fire is NONE AND road condition is GOOD THEN risk is VERY_LOW",
     strength: (m) => Math.min(m.flood.NONE, m.fire.NONE, m.roadCondition.GOOD),
     outputLevel: "VERY_LOW",
   },
@@ -53,7 +57,8 @@ export const fuzzyRules: FuzzyRule[] = [
   },
   {
     id: "R6",
-    description: "IF flood is MODERATE AND road condition is FAIR THEN risk is MODERATE",
+    description:
+      "IF flood is MODERATE AND road condition is FAIR THEN risk is MODERATE",
     strength: (m) => Math.min(m.flood.MODERATE, m.roadCondition.FAIR),
     outputLevel: "MODERATE",
   },
@@ -65,7 +70,8 @@ export const fuzzyRules: FuzzyRule[] = [
   },
   {
     id: "R8",
-    description: "IF earthquake impact is HIGH AND road condition is POOR THEN risk is VERY_HIGH",
+    description:
+      "IF earthquake impact is HIGH AND road condition is POOR THEN risk is VERY_HIGH",
     strength: (m) => Math.min(m.earthquake.HIGH, m.roadCondition.POOR),
     outputLevel: "VERY_HIGH",
   },
@@ -73,12 +79,19 @@ export const fuzzyRules: FuzzyRule[] = [
     id: "R9",
     description:
       "IF flood is NONE AND fire is NONE AND earthquake is NONE AND road condition is FAIR THEN risk is LOW",
-    strength: (m) => Math.min(m.flood.NONE, m.fire.NONE, m.earthquake.NONE, m.roadCondition.FAIR),
+    strength: (m) =>
+      Math.min(
+        m.flood.NONE,
+        m.fire.NONE,
+        m.earthquake.NONE,
+        m.roadCondition.FAIR,
+      ),
     outputLevel: "LOW",
   },
   {
     id: "R10",
-    description: "IF road condition is POOR AND distance is NEAR THEN risk is MODERATE",
+    description:
+      "IF road condition is POOR AND distance is NEAR THEN risk is MODERATE",
     strength: (m) => Math.min(m.roadCondition.POOR, m.distance.NEAR),
     outputLevel: "MODERATE",
   },
@@ -120,7 +133,8 @@ export const fuzzyRules: FuzzyRule[] = [
   },
   {
     id: "R17",
-    description: "IF earthquake impact is MODERATE THEN risk is at least MODERATE",
+    description:
+      "IF earthquake impact is MODERATE THEN risk is at least MODERATE",
     strength: (m) => m.earthquake.MODERATE,
     outputLevel: "MODERATE",
   },

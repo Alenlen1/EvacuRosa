@@ -1,7 +1,10 @@
 "use client";
 import { AssistanceRequests } from "@/components/admin/AssistanceRequests";
 
-import { ShelterSuppliesForm, type ShelterSupplyRecord } from "@/components/admin/ShelterSuppliesForm";
+import {
+  ShelterSuppliesForm,
+  type ShelterSupplyRecord,
+} from "@/components/admin/ShelterSuppliesForm";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Brand } from "@/components/ui/Brand";
@@ -19,23 +22,29 @@ import {
   type EarthquakeRoadImpact,
 } from "@/services/api";
 
-const AdminEvacuationMap = dynamic(() => import("@/components/admin/AdminEvacuationMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-64 w-full items-center justify-center bg-slate-100 text-xs text-slate-500">
-      Loading map…
-    </div>
-  ),
-});
+const AdminEvacuationMap = dynamic(
+  () => import("@/components/admin/AdminEvacuationMap"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-64 w-full items-center justify-center bg-slate-100 text-xs text-slate-500">
+        Loading map…
+      </div>
+    ),
+  },
+);
 
-const HazardPlacementMap = dynamic(() => import("@/components/admin/HazardPlacementMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-64 w-full items-center justify-center bg-slate-100 text-xs text-slate-500">
-      Loading map…
-    </div>
-  ),
-});
+const HazardPlacementMap = dynamic(
+  () => import("@/components/admin/HazardPlacementMap"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-64 w-full items-center justify-center bg-slate-100 text-xs text-slate-500">
+        Loading map…
+      </div>
+    ),
+  },
+);
 
 interface AdminCenter extends ShelterSupplyRecord {
   id: string;
@@ -58,7 +67,9 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [centers, setCenters] = useState<AdminCenter[]>([]);
-  const [occupancyDrafts, setOccupancyDrafts] = useState<Record<string, string>>({});
+  const [occupancyDrafts, setOccupancyDrafts] = useState<
+    Record<string, string>
+  >({});
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
@@ -66,8 +77,12 @@ export default function AdminDashboardPage() {
 
   const [floodReports, setFloodReports] = useState<FloodReport[]>([]);
   const [fireIncidents, setFireIncidents] = useState<FireIncident[]>([]);
-  const [earthquakeEvents, setEarthquakeEvents] = useState<EarthquakeEvent[]>([]);
-  const [earthquakeRoadImpacts, setEarthquakeRoadImpacts] = useState<EarthquakeRoadImpact[]>([]);
+  const [earthquakeEvents, setEarthquakeEvents] = useState<EarthquakeEvent[]>(
+    [],
+  );
+  const [earthquakeRoadImpacts, setEarthquakeRoadImpacts] = useState<
+    EarthquakeRoadImpact[]
+  >([]);
 
   useEffect(() => {
     if (!supabase) {
@@ -87,8 +102,12 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (profile?.role !== "SUPER_ADMIN") return;
-    fetchFloodReports().then(setFloodReports).catch(() => setFloodReports([]));
-    fetchFireIncidents().then(setFireIncidents).catch(() => setFireIncidents([]));
+    fetchFloodReports()
+      .then(setFloodReports)
+      .catch(() => setFloodReports([]));
+    fetchFireIncidents()
+      .then(setFireIncidents)
+      .catch(() => setFireIncidents([]));
     fetchEarthquakes()
       .then(({ events, roadImpacts }) => {
         setEarthquakeEvents(events);
@@ -121,7 +140,9 @@ export default function AdminDashboardPage() {
 
     let query = supabase
       .from("evacuation_centers")
-      .select("id, name, capacity, current_occupancy, status, latitude, longitude, water_status, food_status, medical_status, supplies_updated_at");
+      .select(
+        "id, name, capacity, current_occupancy, status, latitude, longitude, water_status, food_status, medical_status, supplies_updated_at",
+      );
     if (profileRow?.role === "BARANGAY_ADMIN" && profileRow.barangay_id) {
       query = query.eq("barangay_id", profileRow.barangay_id);
     }
@@ -133,7 +154,11 @@ export default function AdminDashboardPage() {
     }
     const rows = data ?? [];
     setCenters(rows);
-    setOccupancyDrafts(Object.fromEntries(rows.map((center) => [center.id, String(center.current_occupancy)])));
+    setOccupancyDrafts(
+      Object.fromEntries(
+        rows.map((center) => [center.id, String(center.current_occupancy)]),
+      ),
+    );
   }
 
   async function updateOccupancy(id: string) {
@@ -141,8 +166,16 @@ export default function AdminDashboardPage() {
     const center = centers.find((item) => item.id === id);
     const draft = occupancyDrafts[id] ?? "";
     const currentOccupancy = Number(draft);
-    if (!center || draft.trim() === "" || !Number.isInteger(currentOccupancy) || currentOccupancy < 0 || currentOccupancy > center.capacity) {
-      setError(`Enter a whole number from 0 to ${center?.capacity ?? "the center's capacity"}.`);
+    if (
+      !center ||
+      draft.trim() === "" ||
+      !Number.isInteger(currentOccupancy) ||
+      currentOccupancy < 0 ||
+      currentOccupancy > center.capacity
+    ) {
+      setError(
+        `Enter a whole number from 0 to ${center?.capacity ?? "the center's capacity"}.`,
+      );
       return;
     }
     setSavingId(id);
@@ -150,10 +183,14 @@ export default function AdminDashboardPage() {
     try {
       const { data: session } = await supabase.auth.getSession();
       const token = session.session?.access_token;
-      if (!token) throw new Error("Your session has expired. Please sign in again.");
+      if (!token)
+        throw new Error("Your session has expired. Please sign in again.");
       const res = await fetch(`${API_URL}/api/admin/evacuation-centers/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ currentOccupancy }),
       });
       if (!res.ok) {
@@ -181,7 +218,10 @@ export default function AdminDashboardPage() {
       behavior: "smooth",
       block: "center",
     });
-    setTimeout(() => setHighlightedId((current) => (current === id ? null : current)), 2000);
+    setTimeout(
+      () => setHighlightedId((current) => (current === id ? null : current)),
+      2000,
+    );
   }
 
   async function getAuthToken(): Promise<string | undefined> {
@@ -199,147 +239,272 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <main className={`admin-app${profile?.role === "SUPER_ADMIN" ? " cdrrmo-workspace" : ""}`}>
-      <header className="app-header"><Link href="/" aria-label="EvacuRosa public map"><Brand /></Link><span className="city-label">Santa Rosa, Laguna</span><Link href="/" className="admin-link">Back to public map →</Link></header>
-      <div className={profile?.role === "SUPER_ADMIN" ? "cdrrmo-content" : undefined}>
-      <div className="admin-heading">
-        <div><span className="eyebrow">{profile?.role === "SUPER_ADMIN" ? "CDRRMO WORKSPACE" : "BARANGAY WORKSPACE"}</span>
-        <h1>
-          {profile?.role === "SUPER_ADMIN"
-            ? "City response workspace"
-            : "Assigned evacuation centers"}
-        </h1>
-        <p>{profile?.role === "SUPER_ADMIN" ? "Review shared locations and manage reported hazards across Santa Rosa." : "View assigned shelters and keep occupancy information up to date."}</p>
-        {error && <p className="error-message" role="alert">{error}</p>}</div>
-        {profile?.role === "SUPER_ADMIN" && <span className="cdrrmo-access"><ShieldCheck size={17} aria-hidden="true" />CDRRMO staff access</span>}
-      </div>
-
-      <div className={profile?.role !== "SUPER_ADMIN" ? "admin-center-layout" : undefined}>
-      {profile?.role !== "SUPER_ADMIN" && (
-        <div className="admin-center-map">
-          <AdminEvacuationMap centers={centers} onSelectCenter={handleSelectCenterOnMap} />
+    <main
+      className={`admin-app${profile?.role === "SUPER_ADMIN" ? " cdrrmo-workspace" : ""}`}
+    >
+      <header className="app-header">
+        <Link href="/" aria-label="EvacuRosa public map">
+          <Brand />
+        </Link>
+        <span className="city-label">Santa Rosa, Laguna</span>
+        <Link href="/" className="admin-link">
+          Back to public map →
+        </Link>
+      </header>
+      <div
+        className={
+          profile?.role === "SUPER_ADMIN" ? "cdrrmo-content" : undefined
+        }
+      >
+        <div className="admin-heading">
+          <div>
+            <span className="eyebrow">
+              {profile?.role === "SUPER_ADMIN"
+                ? "CDRRMO WORKSPACE"
+                : "BARANGAY WORKSPACE"}
+            </span>
+            <h1>
+              {profile?.role === "SUPER_ADMIN"
+                ? "City response workspace"
+                : "Assigned evacuation centers"}
+            </h1>
+            <p>
+              {profile?.role === "SUPER_ADMIN"
+                ? "Review shared locations and manage reported hazards across Santa Rosa."
+                : "View assigned shelters and keep occupancy information up to date."}
+            </p>
+            {error && (
+              <p className="error-message" role="alert">
+                {error}
+              </p>
+            )}
+          </div>
+          {profile?.role === "SUPER_ADMIN" && (
+            <span className="cdrrmo-access">
+              <ShieldCheck size={17} aria-hidden="true" />
+              CDRRMO staff access
+            </span>
+          )}
         </div>
-      )}
 
-      {profile?.role !== "SUPER_ADMIN" && (
-        <div className="admin-center-cards">
-          {centers.map((center) => (
-            <div
-              key={center.id}
-              id={`center-${center.id}`}
-              className={`rounded-xl border bg-white p-4 shadow-sm transition-colors ${
-                highlightedId === center.id
-                  ? "border-blue-500 ring-2 ring-blue-200"
-                  : "border-slate-200"
-              }`}
-            >
-              {(() => {
-                const draft = occupancyDrafts[center.id] ?? String(center.current_occupancy);
-                const occupancy = Number(draft);
-                const valid = draft.trim() !== "" && Number.isInteger(occupancy) && occupancy >= 0 && occupancy <= center.capacity;
-                const status = getOccupancyStatus(center, Number.isFinite(occupancy) ? occupancy : 0);
-                const statusClass = status === "AVAILABLE"
-                  ? "bg-emerald-50 text-emerald-700"
-                  : status === "NEARLY FULL"
-                    ? "bg-amber-50 text-amber-700"
-                    : status === "FULL"
-                      ? "bg-red-50 text-red-700"
-                      : "bg-slate-100 text-slate-600";
-                const percent = center.capacity > 0 && Number.isFinite(occupancy)
-                  ? Math.max(0, Math.min(100, (occupancy / center.capacity) * 100))
-                  : 0;
-                return (
-                  <>
-                    <div className="mb-4 flex items-start justify-between gap-3">
-                      <div>
-                        <h2 className="font-semibold text-slate-900">{center.name}</h2>
-                        <p className="mt-1 text-xs text-slate-500">Evacuation center</p>
-                      </div>
-                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusClass}`}>{status}</span>
-                    </div>
-                    <div className="mb-2 flex items-baseline justify-between">
-                      <span className="text-sm text-slate-600">Current occupancy</span>
-                      <span className="text-sm font-semibold tabular-nums text-slate-900">
-                        {draft} <span className="font-normal text-slate-500">/ {center.capacity}</span>
-                      </span>
-                    </div>
-                    <div
-                      role="progressbar"
-                      aria-label={`${center.name} occupancy`}
-                      aria-valuemin={0}
-                      aria-valuemax={center.capacity}
-                      aria-valuenow={Math.max(0, Math.min(center.capacity, Number.isFinite(occupancy) ? occupancy : 0))}
-                      className="mb-4 h-2 overflow-hidden rounded-full bg-slate-100"
-                    >
-                      <div className="h-full rounded-full bg-blue-600 transition-[width]" style={{ width: `${percent}%` }} />
-                    </div>
-                    <div className="flex flex-wrap items-end gap-2">
-                      <label className="flex-1 text-xs font-medium text-slate-600">
-                        Update occupancy
-                        <input
-                          type="number"
-                          min={0}
-                          max={center.capacity}
-                          step={1}
-                          value={draft}
-                          onChange={(event) => setOccupancyDrafts((drafts) => ({ ...drafts, [center.id]: event.target.value }))}
-                          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => updateOccupancy(center.id)}
-                        disabled={!valid || savingId !== null || String(center.current_occupancy) === draft}
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                      >
-                        {savingId === center.id ? "Saving…" : "Save"}
-                      </button>
-                    </div>
-                  </>
-                );
-              })()}
-              <ShelterSuppliesForm key={center.id} center={center} />
+        <div
+          className={
+            profile?.role !== "SUPER_ADMIN" ? "admin-center-layout" : undefined
+          }
+        >
+          {profile?.role !== "SUPER_ADMIN" && (
+            <div className="admin-center-map">
+              <AdminEvacuationMap
+                centers={centers}
+                onSelectCenter={handleSelectCenterOnMap}
+              />
             </div>
-          ))}
-          {centers.length === 0 && !error && (
-            <div className="col-span-full rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
-              <p className="font-medium text-slate-700">No evacuation centers are assigned to your account.</p>
-              <p className="mt-1 text-sm text-slate-500">Ask your CDRRMO administrator to verify your barangay assignment and register its evacuation centers.</p>
+          )}
+
+          {profile?.role !== "SUPER_ADMIN" && (
+            <div className="admin-center-cards">
+              {centers.map((center) => (
+                <div
+                  key={center.id}
+                  id={`center-${center.id}`}
+                  className={`rounded-xl border bg-white p-4 shadow-sm transition-colors ${
+                    highlightedId === center.id
+                      ? "border-blue-500 ring-2 ring-blue-200"
+                      : "border-slate-200"
+                  }`}
+                >
+                  {(() => {
+                    const draft =
+                      occupancyDrafts[center.id] ??
+                      String(center.current_occupancy);
+                    const occupancy = Number(draft);
+                    const valid =
+                      draft.trim() !== "" &&
+                      Number.isInteger(occupancy) &&
+                      occupancy >= 0 &&
+                      occupancy <= center.capacity;
+                    const status = getOccupancyStatus(
+                      center,
+                      Number.isFinite(occupancy) ? occupancy : 0,
+                    );
+                    const statusClass =
+                      status === "AVAILABLE"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : status === "NEARLY FULL"
+                          ? "bg-amber-50 text-amber-700"
+                          : status === "FULL"
+                            ? "bg-red-50 text-red-700"
+                            : "bg-slate-100 text-slate-600";
+                    const percent =
+                      center.capacity > 0 && Number.isFinite(occupancy)
+                        ? Math.max(
+                            0,
+                            Math.min(100, (occupancy / center.capacity) * 100),
+                          )
+                        : 0;
+                    return (
+                      <>
+                        <div className="mb-4 flex items-start justify-between gap-3">
+                          <div>
+                            <h2 className="font-semibold text-slate-900">
+                              {center.name}
+                            </h2>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Evacuation center
+                            </p>
+                          </div>
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusClass}`}
+                          >
+                            {status}
+                          </span>
+                        </div>
+                        <div className="mb-2 flex items-baseline justify-between">
+                          <span className="text-sm text-slate-600">
+                            Current occupancy
+                          </span>
+                          <span className="text-sm font-semibold tabular-nums text-slate-900">
+                            {draft}{" "}
+                            <span className="font-normal text-slate-500">
+                              / {center.capacity}
+                            </span>
+                          </span>
+                        </div>
+                        <div
+                          role="progressbar"
+                          aria-label={`${center.name} occupancy`}
+                          aria-valuemin={0}
+                          aria-valuemax={center.capacity}
+                          aria-valuenow={Math.max(
+                            0,
+                            Math.min(
+                              center.capacity,
+                              Number.isFinite(occupancy) ? occupancy : 0,
+                            ),
+                          )}
+                          className="mb-4 h-2 overflow-hidden rounded-full bg-slate-100"
+                        >
+                          <div
+                            className="h-full rounded-full bg-blue-600 transition-[width]"
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                        <div className="flex flex-wrap items-end gap-2">
+                          <label className="flex-1 text-xs font-medium text-slate-600">
+                            Update occupancy
+                            <input
+                              type="number"
+                              min={0}
+                              max={center.capacity}
+                              step={1}
+                              value={draft}
+                              onChange={(event) =>
+                                setOccupancyDrafts((drafts) => ({
+                                  ...drafts,
+                                  [center.id]: event.target.value,
+                                }))
+                              }
+                              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => updateOccupancy(center.id)}
+                            disabled={
+                              !valid ||
+                              savingId !== null ||
+                              String(center.current_occupancy) === draft
+                            }
+                            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                          >
+                            {savingId === center.id ? "Saving…" : "Save"}
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
+                  <ShelterSuppliesForm key={center.id} center={center} />
+                </div>
+              ))}
+              {centers.length === 0 && !error && (
+                <div className="col-span-full rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
+                  <p className="font-medium text-slate-700">
+                    No evacuation centers are assigned to your account.
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Ask your CDRRMO administrator to verify your barangay
+                    assignment and register its evacuation centers.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
-      </div>
 
-      {profile?.role === "SUPER_ADMIN" && <div id="shared-locations" className="cdrrmo-section-anchor" tabIndex={-1}><AssistanceRequests /></div>}
-      {profile?.role === "SUPER_ADMIN" && (
-        <section id="hazard-management" className="admin-hazard-section cdrrmo-section-anchor" tabIndex={-1} aria-labelledby="hazard-management-title">
-          <div className="cdrrmo-section-heading"><div><span className="eyebrow">CITYWIDE REPORTING</span>
-            <h2 id="hazard-management-title">Hazard management</h2>
-            <p>Flood, fire and verified earthquake road impacts.</p>
-          </div><span className="cdrrmo-map-label"><MapPin size={15} aria-hidden="true" />Santa Rosa, Laguna</span></div>
-          <ol className="cdrrmo-report-steps" aria-label="How to report a hazard">
-            <li><span>1</span>Choose a hazard type</li><li><span>2</span>Select a point on the map</li><li><span>3</span>Review details and save</li>
-          </ol>
-          <HazardPlacementMapWrapper
-            floodReports={floodReports}
-            fireIncidents={fireIncidents}
-            earthquakeEvents={earthquakeEvents}
-            earthquakeRoadImpacts={earthquakeRoadImpacts}
-            getAuthToken={getAuthToken}
-            onCreated={() => {
-              fetchFloodReports().then(setFloodReports).catch(() => {});
-              fetchFireIncidents().then(setFireIncidents).catch(() => {});
-              fetchEarthquakes()
-                .then(({ events, roadImpacts }) => {
-                  setEarthquakeEvents(events);
-                  setEarthquakeRoadImpacts(roadImpacts);
-                })
-                .catch(() => {});
-            }}
-          />
-        </section>
-      )}
+        {profile?.role === "SUPER_ADMIN" && (
+          <div
+            id="shared-locations"
+            className="cdrrmo-section-anchor"
+            tabIndex={-1}
+          >
+            <AssistanceRequests />
+          </div>
+        )}
+        {profile?.role === "SUPER_ADMIN" && (
+          <section
+            id="hazard-management"
+            className="admin-hazard-section cdrrmo-section-anchor"
+            tabIndex={-1}
+            aria-labelledby="hazard-management-title"
+          >
+            <div className="cdrrmo-section-heading">
+              <div>
+                <span className="eyebrow">CITYWIDE REPORTING</span>
+                <h2 id="hazard-management-title">Hazard management</h2>
+                <p>Flood, fire and verified earthquake road impacts.</p>
+              </div>
+              <span className="cdrrmo-map-label">
+                <MapPin size={15} aria-hidden="true" />
+                Santa Rosa, Laguna
+              </span>
+            </div>
+            <ol
+              className="cdrrmo-report-steps"
+              aria-label="How to report a hazard"
+            >
+              <li>
+                <span>1</span>Choose a hazard type
+              </li>
+              <li>
+                <span>2</span>Select a point on the map
+              </li>
+              <li>
+                <span>3</span>Review details and save
+              </li>
+            </ol>
+            <HazardPlacementMapWrapper
+              floodReports={floodReports}
+              fireIncidents={fireIncidents}
+              earthquakeEvents={earthquakeEvents}
+              earthquakeRoadImpacts={earthquakeRoadImpacts}
+              getAuthToken={getAuthToken}
+              onCreated={() => {
+                fetchFloodReports()
+                  .then(setFloodReports)
+                  .catch(() => {});
+                fetchFireIncidents()
+                  .then(setFireIncidents)
+                  .catch(() => {});
+                fetchEarthquakes()
+                  .then(({ events, roadImpacts }) => {
+                    setEarthquakeEvents(events);
+                    setEarthquakeRoadImpacts(roadImpacts);
+                  })
+                  .catch(() => {});
+              }}
+            />
+          </section>
+        )}
       </div>
     </main>
   );

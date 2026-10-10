@@ -23,7 +23,9 @@ export function FloodLayer({ reports }: FloodLayerProps) {
             key={`${report.id}-${i}`}
             positions={segment.map((p) => [p.latitude, p.longitude])}
             pathOptions={{
-              color: report.roadImpassable ? "#b3261e" : severityColor[report.severity] ?? "#2563eb",
+              color: report.roadImpassable
+                ? "#b3261e"
+                : (severityColor[report.severity] ?? "#2563eb"),
               weight: report.roadImpassable ? 8 : 5,
               opacity: 0.75,
               dashArray: report.roadImpassable ? undefined : "6 6",
@@ -34,7 +36,7 @@ export function FloodLayer({ reports }: FloodLayerProps) {
               {report.roadImpassable ? " — road blocked" : " — road passable"}
             </Tooltip>
           </Polyline>
-        ))
+        )),
       )}
     </>
   );

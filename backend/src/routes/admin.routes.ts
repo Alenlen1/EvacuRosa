@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { deleteAssistance, listAssistance, updateAssistanceStatus } from "../controllers/assistance.controller";
+import {
+  deleteAssistance,
+  listAssistance,
+  updateAssistanceStatus,
+} from "../controllers/assistance.controller";
 import { requireAuth } from "../middleware/auth.middleware";
 import { attachProfile, requireRole } from "../middleware/role.middleware";
 import {
@@ -17,16 +21,34 @@ import {
 } from "../controllers/admin.controller";
 
 export const adminRouter = Router();
-adminRouter.patch("/assistance-requests/:id", requireAuth, attachProfile, requireRole("SUPER_ADMIN"), updateAssistanceStatus);
-adminRouter.get("/assistance-requests", requireAuth, attachProfile, requireRole("SUPER_ADMIN"), listAssistance);
-adminRouter.delete("/assistance-requests/:id", requireAuth, attachProfile, requireRole("SUPER_ADMIN"), deleteAssistance);
+adminRouter.patch(
+  "/assistance-requests/:id",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  updateAssistanceStatus,
+);
+adminRouter.get(
+  "/assistance-requests",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  listAssistance,
+);
+adminRouter.delete(
+  "/assistance-requests/:id",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  deleteAssistance,
+);
 
 adminRouter.put(
   "/evacuation-centers/:id",
   requireAuth,
   attachProfile,
   requireRole("BARANGAY_ADMIN"),
-  updateEvacuationCenter
+  updateEvacuationCenter,
 );
 
 // Flood, fire, and earthquake data are all citywide/CDRRMO-managed —
@@ -37,21 +59,21 @@ adminRouter.post(
   requireAuth,
   attachProfile,
   requireRole("SUPER_ADMIN"),
-  createFloodReport
+  createFloodReport,
 );
 adminRouter.put(
   "/floods/:id",
   requireAuth,
   attachProfile,
   requireRole("SUPER_ADMIN"),
-  updateFloodReport
+  updateFloodReport,
 );
 adminRouter.delete(
   "/floods/:id",
   requireAuth,
   attachProfile,
   requireRole("SUPER_ADMIN"),
-  deleteFloodReport
+  deleteFloodReport,
 );
 
 adminRouter.post(
@@ -59,21 +81,21 @@ adminRouter.post(
   requireAuth,
   attachProfile,
   requireRole("SUPER_ADMIN"),
-  createFireIncident
+  createFireIncident,
 );
 adminRouter.put(
   "/fires/:id",
   requireAuth,
   attachProfile,
   requireRole("SUPER_ADMIN"),
-  updateFireIncident
+  updateFireIncident,
 );
 adminRouter.delete(
   "/fires/:id",
   requireAuth,
   attachProfile,
   requireRole("SUPER_ADMIN"),
-  deleteFireIncident
+  deleteFireIncident,
 );
 
 adminRouter.put(
@@ -81,26 +103,26 @@ adminRouter.put(
   requireAuth,
   attachProfile,
   requireRole("SUPER_ADMIN"),
-  updateEarthquakeEvent
+  updateEarthquakeEvent,
 );
 adminRouter.delete(
   "/earthquakes/:id",
   requireAuth,
   attachProfile,
   requireRole("SUPER_ADMIN"),
-  deleteEarthquakeEvent
+  deleteEarthquakeEvent,
 );
 adminRouter.post(
   "/earthquake-road-impacts",
   requireAuth,
   attachProfile,
   requireRole("SUPER_ADMIN"),
-  createEarthquakeRoadImpact
+  createEarthquakeRoadImpact,
 );
 adminRouter.delete(
   "/earthquake-road-impacts/:id",
   requireAuth,
   attachProfile,
   requireRole("SUPER_ADMIN"),
-  deleteEarthquakeRoadImpact
+  deleteEarthquakeRoadImpact,
 );

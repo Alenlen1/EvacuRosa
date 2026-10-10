@@ -11,10 +11,38 @@ function makeGraph() {
       { id: "D", latitude: 14.3, longitude: 121.11 },
     ],
     edges: [
-      { id: "AB", fromNodeId: "A", toNodeId: "B", roadId: "R1", distanceMeters: 1000, status: "OPEN" },
-      { id: "BC", fromNodeId: "B", toNodeId: "C", roadId: "R2", distanceMeters: 1000, status: "OPEN" },
-      { id: "AD", fromNodeId: "A", toNodeId: "D", roadId: "R3", distanceMeters: 1000, status: "OPEN" },
-      { id: "DC", fromNodeId: "D", toNodeId: "C", roadId: "R4", distanceMeters: 3000, status: "OPEN" },
+      {
+        id: "AB",
+        fromNodeId: "A",
+        toNodeId: "B",
+        roadId: "R1",
+        distanceMeters: 1000,
+        status: "OPEN",
+      },
+      {
+        id: "BC",
+        fromNodeId: "B",
+        toNodeId: "C",
+        roadId: "R2",
+        distanceMeters: 1000,
+        status: "OPEN",
+      },
+      {
+        id: "AD",
+        fromNodeId: "A",
+        toNodeId: "D",
+        roadId: "R3",
+        distanceMeters: 1000,
+        status: "OPEN",
+      },
+      {
+        id: "DC",
+        fromNodeId: "D",
+        toNodeId: "C",
+        roadId: "R4",
+        distanceMeters: 3000,
+        status: "OPEN",
+      },
     ],
   });
 }
@@ -41,9 +69,30 @@ describe("A* pathfinding", () => {
         { id: "C", latitude: 14.31, longitude: 121.11 },
       ],
       edges: [
-        { id: "AC", fromNodeId: "A", toNodeId: "C", roadId: "R1", distanceMeters: 500, status: "BLOCKED" },
-        { id: "AB", fromNodeId: "A", toNodeId: "B", roadId: "R2", distanceMeters: 1000, status: "OPEN" },
-        { id: "BC", fromNodeId: "B", toNodeId: "C", roadId: "R3", distanceMeters: 1000, status: "OPEN" },
+        {
+          id: "AC",
+          fromNodeId: "A",
+          toNodeId: "C",
+          roadId: "R1",
+          distanceMeters: 500,
+          status: "BLOCKED",
+        },
+        {
+          id: "AB",
+          fromNodeId: "A",
+          toNodeId: "B",
+          roadId: "R2",
+          distanceMeters: 1000,
+          status: "OPEN",
+        },
+        {
+          id: "BC",
+          fromNodeId: "B",
+          toNodeId: "C",
+          roadId: "R3",
+          distanceMeters: 1000,
+          status: "OPEN",
+        },
       ],
     });
     const result = findPath(graph, "A", "C");
@@ -79,9 +128,30 @@ describe("A* with status overrides (flood-report-driven)", () => {
         { id: "C", latitude: 14.31, longitude: 121.11 },
       ],
       edges: [
-        { id: "AC", fromNodeId: "A", toNodeId: "C", roadId: "R1", distanceMeters: 500, status: "OPEN" },
-        { id: "AB", fromNodeId: "A", toNodeId: "B", roadId: "R2", distanceMeters: 1000, status: "OPEN" },
-        { id: "BC", fromNodeId: "B", toNodeId: "C", roadId: "R3", distanceMeters: 1000, status: "OPEN" },
+        {
+          id: "AC",
+          fromNodeId: "A",
+          toNodeId: "C",
+          roadId: "R1",
+          distanceMeters: 500,
+          status: "OPEN",
+        },
+        {
+          id: "AB",
+          fromNodeId: "A",
+          toNodeId: "B",
+          roadId: "R2",
+          distanceMeters: 1000,
+          status: "OPEN",
+        },
+        {
+          id: "BC",
+          fromNodeId: "B",
+          toNodeId: "C",
+          roadId: "R3",
+          distanceMeters: 1000,
+          status: "OPEN",
+        },
       ],
     });
     const overrides = new Map([["R1", "BLOCKED" as const]]);
@@ -97,7 +167,14 @@ describe("A* with status overrides (flood-report-driven)", () => {
         { id: "C", latitude: 14.31, longitude: 121.11 },
       ],
       edges: [
-        { id: "AC", fromNodeId: "A", toNodeId: "C", roadId: "R1", distanceMeters: 500, status: "OPEN" },
+        {
+          id: "AC",
+          fromNodeId: "A",
+          toNodeId: "C",
+          roadId: "R1",
+          distanceMeters: 500,
+          status: "OPEN",
+        },
       ],
     });
     const overrides = new Map([["R1", "FLOODED" as const]]);
@@ -123,12 +200,47 @@ describe("A* with a custom risk-weighted edge cost", () => {
       ],
       edges: [
         // Short "risky" direct path: A -> B -> C, 1000m total.
-        { id: "AB", fromNodeId: "A", toNodeId: "B", roadId: "RISKY", distanceMeters: 500, status: "OPEN" },
-        { id: "BC", fromNodeId: "B", toNodeId: "C", roadId: "RISKY", distanceMeters: 500, status: "OPEN" },
+        {
+          id: "AB",
+          fromNodeId: "A",
+          toNodeId: "B",
+          roadId: "RISKY",
+          distanceMeters: 500,
+          status: "OPEN",
+        },
+        {
+          id: "BC",
+          fromNodeId: "B",
+          toNodeId: "C",
+          roadId: "RISKY",
+          distanceMeters: 500,
+          status: "OPEN",
+        },
         // Longer "safe" detour: A -> D -> E -> C, 1800m total.
-        { id: "AD", fromNodeId: "A", toNodeId: "D", roadId: "SAFE", distanceMeters: 600, status: "OPEN" },
-        { id: "DE", fromNodeId: "D", toNodeId: "E", roadId: "SAFE", distanceMeters: 600, status: "OPEN" },
-        { id: "EC", fromNodeId: "E", toNodeId: "C", roadId: "SAFE", distanceMeters: 600, status: "OPEN" },
+        {
+          id: "AD",
+          fromNodeId: "A",
+          toNodeId: "D",
+          roadId: "SAFE",
+          distanceMeters: 600,
+          status: "OPEN",
+        },
+        {
+          id: "DE",
+          fromNodeId: "D",
+          toNodeId: "E",
+          roadId: "SAFE",
+          distanceMeters: 600,
+          status: "OPEN",
+        },
+        {
+          id: "EC",
+          fromNodeId: "E",
+          toNodeId: "C",
+          roadId: "SAFE",
+          distanceMeters: 600,
+          status: "OPEN",
+        },
       ],
     });
   }

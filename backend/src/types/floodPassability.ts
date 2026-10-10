@@ -5,5 +5,8 @@ export function isFloodImpassable(severity: FloodSeverity): boolean {
 }
 
 export function isFloodSeverity(value: unknown): value is FloodSeverity {
-  return typeof value === "string" && ["NONE", "LOW", "MODERATE", "HIGH", "SEVERE"].includes(value);
+  return (
+    typeof value === "string" &&
+    ["NONE", "LOW", "MODERATE", "HIGH", "SEVERE"].includes(value)
+  );
 }
