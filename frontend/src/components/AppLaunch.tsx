@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+// Reset on a new document/app launch, but retain completion across remounts.
+let launchCompleted = false;
+
 /** A brief installed-app introduction; never waits for GPS or network requests. */
 export function AppLaunch() {
   const [visible, setVisible] = useState(true);
@@ -10,10 +13,10 @@ export function AppLaunch() {
   useEffect(() => {
     const standalone = window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
-    if (!standalone) { setVisible(false); return; }
+    if (!standalone || launchCompleted) { setVisible(false); return; }
     setInstalled(true);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timer = window.setTimeout(() => setVisible(false), reducedMotion ? 150 : 2000);
+    const timer = window.setTimeout(() => { launchCompleted = true; setVisible(false); }, reducedMotion ? 150 : 2000);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -31,7 +34,7 @@ export function AppLaunch() {
         </g>
         <path d="M55 135h55V90h60V45h55" stroke="#f4e9b0" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
         <path className="app-launch-route" d="M55 135h55V90h60V45h55" pathLength="1" stroke="#b99521" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="55" cy="135" r="11" fill="#2563eb" fillOpacity=".2" />
+        <circle className="app-launch-location-pulse" cx="55" cy="135" r="11" fill="#2563eb" fillOpacity=".2" />
         <circle cx="55" cy="135" r="7" fill="#2563eb" stroke="white" strokeWidth="2" />
         <g className="app-launch-shelter">
           <g transform="translate(199.8 19.8) scale(1.2)">
@@ -42,8 +45,10 @@ export function AppLaunch() {
               <path d="m10 19 11-9 11 9M13 18v13h16V18" fill="white" />
               <path d="M18 31v-8h6v8M16 20h1m8 0h1" />
             </g>
-            <circle cx="34" cy="33" r="9" fill="#3B6D11" stroke="white" strokeWidth="2" />
-            <path transform="translate(27 26) scale(.58)" d="m7 12 3 3 7-7" stroke="white" strokeWidth="2.7" strokeLinecap="round" strokeLinejoin="round" />
+            <g className="app-launch-check">
+              <circle cx="34" cy="33" r="9" fill="#3B6D11" stroke="white" strokeWidth="2" />
+              <path transform="translate(27 26) scale(.58)" d="m7 12 3 3 7-7" stroke="white" strokeWidth="2.7" strokeLinecap="round" strokeLinejoin="round" />
+            </g>
           </g>
         </g>
       </svg>
