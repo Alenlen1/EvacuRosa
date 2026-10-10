@@ -1,4 +1,8 @@
 export const filipino: Record<string, string> = {
+  "Entrance information": "Impormasyon sa pasukan",
+  "Shelter notes": "Mga tala tungkol sa evacuation center",
+  "Shelter details": "Detalye ng evacuation center",
+  "End Navigation": "Tapusin ang pag-navigate",
   "Retry": "Ulitin",
   "Hazard layers": "Mga layer ng panganib",
   "View full details": "Tingnan ang buong detalye",

@@ -2280,3 +2280,13 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .sheet-mobile-actions > button { border-radius: 10px; }
   .public-app .navigation-compact-warning { max-width: none; }
 }
+.status-badge { display: inline-flex; align-items: center; gap: 5px; }
+.status-badge > svg { flex-shrink: 0; }
+.arrival-details { max-height: 32dvh; overflow-y: auto; }
+.arrival-details > p { margin: 6px 0; font-size: 12px; }
+.arrival-details > p[role="status"] { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.arrival-details > p > svg { flex-shrink: 0; color: #3b6d11; }
+.arrival-details > strong { display: block; font-size: 16px; margin-top: 8px; }
+.arrival-details summary { min-height: 44px; padding: 10px 0; cursor: pointer; }
+.arrival-actions { display: flex; gap: 8px; margin-top: 10px; }
+.arrival-actions button { flex: 1; min-height: 44px; padding: 8px; border: 1px solid #c4a51c; border-radius: 10px; background: #f4d84b; font-size: 12px; }
