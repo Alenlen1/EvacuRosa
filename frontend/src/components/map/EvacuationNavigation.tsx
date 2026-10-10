@@ -69,7 +69,7 @@ export function EvacuationNavigation({ route, center, mode, geolocation, onRoute
           {center?.notes?.trim() && <details><summary>{t("Shelter notes")}</summary><p>{center.notes}</p></details>}
           <div className="arrival-actions">{onDetails && <button type="button" onClick={() => { nav.dismissArrival(); onDetails(); }}>{t("Shelter details")}</button>}<button type="button" onClick={nav.dismissArrival}>{t("End Navigation")}</button></div>
         </div>
-          : !nav.active ? <><button type="button" className="primary-button" disabled={!nav.canStart} onClick={() => { setCollapsed(window.matchMedia("(max-width: 800px)").matches); nav.start(); onStart(); }}><Navigation size={18} />{t("Start Navigation")}</button>
+          : !nav.active ? <><button type="button" className="primary-button" disabled={!nav.canStart} onClick={() => { setCollapsed(window.matchMedia("(max-width: 800px), (max-width: 1100px) and (max-height: 500px)").matches); nav.start(); onStart(); }}><Navigation size={18} />{t("Start Navigation")}</button>
             {!nav.canStart && <small>{t(center?.id ? "A fresh, accurate location and an available center are needed to start." : "A fresh, accurate location is needed to start.")}</small>}</>
           : <>
             <div className="navigation-quick-actions">
