@@ -2608,6 +2608,23 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   background: #edf7f0;
   color: #27623d;
 }
+.assistance-map-section {
+  margin-top: 16px;
+}
+.assistance-location-map {
+  height: clamp(300px, 45vh, 480px);
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #d8dee7;
+  border-radius: 12px;
+  isolation: isolate;
+}
+.assistance-map-popup {
+  display: grid;
+  gap: 5px;
+  min-width: 190px;
+  overflow-wrap: anywhere;
+}
 .assistance-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 370px), 1fr));
