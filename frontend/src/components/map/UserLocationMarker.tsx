@@ -1,6 +1,7 @@
 "use client";
 
-import { Circle, Marker } from "react-leaflet";
+import { CircleMarker, Marker, Popup } from "react-leaflet";
+import { useLanguage } from "@/components/LanguageProvider";
 import { createDivIcon } from "./icons";
 
 const userIcon = createDivIcon(
@@ -19,19 +20,25 @@ export function UserLocationMarker({
   longitude,
   accuracy,
 }: UserLocationMarkerProps) {
+  const { t } = useLanguage();
   return (
     <>
-      <Circle
+      {/* A fixed-size location halo, not a geographic accuracy boundary. */}
+      <CircleMarker
         center={[latitude, longitude]}
-        radius={accuracy}
+        radius={18}
         pathOptions={{
           color: "#2563eb",
           fillColor: "#2563eb",
-          fillOpacity: 0.1,
+          fillOpacity: 0.08,
+          opacity: 0.3,
           weight: 1,
+          interactive: false,
         }}
       />
-      <Marker position={[latitude, longitude]} icon={userIcon} />
+      <Marker position={[latitude, longitude]} icon={userIcon} title={t("Your location")}>
+        <Popup>{t("GPS accuracy: approximately {meters} m", { meters: Math.round(accuracy) })}</Popup>
+      </Marker>
     </>
   );
 }

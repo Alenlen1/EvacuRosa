@@ -4472,3 +4472,4 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .map-legend-popover li > span {
   flex-shrink: 0;
 }
+.public-map-scope-notice { position: absolute; z-index: 1600; top: 50%; left: 50%; transform: translate(-50%, -50%); width: max-content; max-width: calc(100% - 32px); padding: 10px 14px; border: 1px solid #d6bd40; border-radius: 12px; background: #fff8dcf5; color: #3b3422; box-shadow: 0 3px 12px #17232f20; font-size: 13px; line-height: 1.4; pointer-events: none; }

@@ -37,6 +37,8 @@ import { EvacuationCenterLayer } from "./EvacuationCenterLayer";
 import { FloodLayer } from "./FloodLayer";
 import { FireLayer } from "./FireLayer";
 import { EarthquakeLayer } from "./EarthquakeLayer";
+import { PublicMapScope } from "./PublicMapScope";
+import { isInsideSantaRosa, PUBLIC_MAP_MIN_ZOOM } from "@/lib/mapBounds";
 import { Basemap } from "./Basemap";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
@@ -102,7 +104,7 @@ function ClickToSetDestination({
 }) {
   useMapEvents({
     click(e) {
-      onMapClick(e.latlng.lat, e.latlng.lng);
+      if (isInsideSantaRosa(e.latlng.lat, e.latlng.lng)) onMapClick(e.latlng.lat, e.latlng.lng);
     },
   });
   return null;
@@ -244,11 +246,11 @@ export default function Map({
   return (
     <MapContainer
       center={SANTA_ROSA_CITY_CENTER}
-      zoom={SANTA_ROSA_CITY_DEFAULT_ZOOM}
+      zoom={Math.max(PUBLIC_MAP_MIN_ZOOM, SANTA_ROSA_CITY_DEFAULT_ZOOM)}
       maxBounds={SANTA_ROSA_CITY_BOUNDS}
-      maxBoundsViscosity={0.8}
-      minZoom={12}
-      maxZoom={19}
+      maxBoundsViscosity={1}
+      minZoom={PUBLIC_MAP_MIN_ZOOM}
+      maxZoom={17}
       rotate
       rotateControl={false}
       // leaflet-rotate can drift vector overlays during CSS zoom transitions.
@@ -299,6 +301,7 @@ export default function Map({
         />
       )}
       {!navigating && <ClickToSetDestination onMapClick={onMapClick} />}
+      <PublicMapScope />
       <ResizeMap />
       <FollowUser
         position={geolocation.position}
