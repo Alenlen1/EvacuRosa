@@ -3,6 +3,29 @@ import type { Response } from "express";
 import type { RoleAwareRequest } from "../middleware/role.middleware";
 import { createFloodReport, updateFloodReport } from "./admin.controller";
 
+vi.mock("../services/road.service", async () => {
+  const { RoadGraph } = await import("../algorithms/astar/graph.js");
+  return {
+    loadRoadGraph: () =>
+      new RoadGraph({
+        nodes: [
+          { id: "A", latitude: 14.3, longitude: 121.1 },
+          { id: "B", latitude: 14.301, longitude: 121.1 },
+        ],
+        edges: [
+          {
+            id: "AB",
+            roadId: "road",
+            fromNodeId: "A",
+            toNodeId: "B",
+            distanceMeters: 111,
+            status: "OPEN",
+          },
+        ],
+      }),
+  };
+});
+
 async function call(body: unknown, create: boolean) {
   const query = {
     eq: vi.fn(),

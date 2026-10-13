@@ -1,8 +1,15 @@
 import { writeFileSync } from "node:fs";
 import path from "node:path";
+import { santaRosaBounds } from "../src/geography/santaRosa";
 
-// Must match frontend/src/lib/mapBounds.ts — update both if the boundary changes.
-const BOUNDS = { south: 14.27, west: 121.05, north: 14.36, east: 121.15 };
+// Fetch the entire city plus a small margin for roads connecting at the border.
+// This rectangle is data coverage only; admin placement uses the city polygon.
+const BOUNDS = {
+  south: santaRosaBounds[0][0] - 0.005,
+  west: santaRosaBounds[0][1] - 0.005,
+  north: santaRosaBounds[1][0] + 0.005,
+  east: santaRosaBounds[1][1] + 0.005,
+};
 
 const HIGHWAY_TYPES = [
   "motorway",

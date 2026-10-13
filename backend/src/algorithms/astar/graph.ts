@@ -230,6 +230,7 @@ export class RoadGraph {
     latitude: number,
     longitude: number,
     limit = 5,
+    includeRoad?: (roadId: string) => boolean,
   ): { roadId: string; roadName?: string; distanceMeters: number }[] {
     const results: {
       roadId: string;
@@ -238,6 +239,7 @@ export class RoadGraph {
     }[] = [];
 
     for (const [roadId, edges] of this.edgesByRoad) {
+      if (includeRoad && !includeRoad(roadId)) continue;
       let minDist = Infinity;
       let roadName: string | undefined;
       for (const edge of edges) {

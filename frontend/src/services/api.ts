@@ -350,9 +350,10 @@ export async function fetchNearestRoads(
   latitude: number,
   longitude: number,
   limit = 3,
+  santaRosaOnly = false,
 ): Promise<NearestRoad[]> {
   const res = await fetch(
-    `${API_URL}/api/roads/nearest?lat=${latitude}&lng=${longitude}&limit=${limit}`,
+    `${API_URL}/api/roads/nearest?lat=${latitude}&lng=${longitude}&limit=${limit}${santaRosaOnly ? "&scope=santa-rosa" : ""}`,
   );
   if (!res.ok) throw new Error("Could not look up nearby roads.");
   const body = await res.json();

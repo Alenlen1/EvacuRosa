@@ -1,0 +1,162 @@
+import { describe, expect, it, vi } from "vitest";
+import type { Response } from "express";
+import type { RoleAwareRequest } from "../middleware/role.middleware";
+import {
+  createFloodReport,
+  createFireIncident,
+  createEarthquakeRoadImpact,
+  updateFireIncident,
+} from "./admin.controller";
+import { getNearestRoads } from "./road.controller";
+
+vi.mock("../services/road.service", async () => {
+  const { RoadGraph } = await import("../algorithms/astar/graph.js");
+  const graph = new RoadGraph({
+    nodes: [
+      { id: "A", latitude: 14.3, longitude: 121.1 },
+      { id: "B", latitude: 14.301, longitude: 121.1 },
+      { id: "C", latitude: 14.338, longitude: 121.085 },
+      { id: "D", latitude: 14.3381, longitude: 121.085 },
+    ],
+    edges: [
+      {
+        id: "AB",
+        roadId: "inside",
+        fromNodeId: "A",
+        toNodeId: "B",
+        distanceMeters: 111,
+        status: "OPEN",
+      },
+      {
+        id: "CD",
+        roadId: "outside",
+        fromNodeId: "C",
+        toNodeId: "D",
+        distanceMeters: 11,
+        status: "OPEN",
+      },
+      {
+        id: "BC",
+        roadId: "crossing",
+        fromNodeId: "B",
+        toNodeId: "C",
+        distanceMeters: 4000,
+        status: "OPEN",
+      },
+    ],
+  });
+  return { loadRoadGraph: () => graph };
+});
+
+async function call(
+  handler: (req: RoleAwareRequest, res: Response) => unknown,
+  body: unknown,
+  query = {},
+) {
+  const db = {
+    insert: vi.fn(),
+    update: vi.fn(),
+    eq: vi.fn(),
+    select: vi.fn(),
+    single: vi.fn().mockResolvedValue({ data: { id: "new" }, error: null }),
+  };
+  for (const fn of [db.insert, db.update, db.eq, db.select])
+    fn.mockReturnValue(db);
+  const from = vi.fn(() => db);
+  const res = { status: vi.fn(), json: vi.fn() };
+  res.status.mockReturnValue(res);
+  await handler(
+    {
+      body,
+      query,
+      params: { id: "fire" },
+      userSupabase: { from },
+    } as unknown as RoleAwareRequest,
+    res as unknown as Response,
+  );
+  return { db, from, res };
+}
+
+describe("CDRRMO hazard city enforcement", () => {
+  for (const [name, handler, fields] of [
+    ["flood", createFloodReport, { severity: "MODERATE" }],
+    [
+      "earthquake impact",
+      createEarthquakeRoadImpact,
+      { earthquakeEventId: "external-event", impactLevel: "LOW" },
+    ],
+  ] as const) {
+    it.each(["outside", "crossing", "missing"])(
+      `rejects ${name} on %s roads before writing`,
+      async (roadId) => {
+        const { from, res } = await call(handler, { ...fields, roadId });
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(from).not.toHaveBeenCalled();
+      },
+    );
+    it(`accepts ${name} on a city road`, async () => {
+      const { db, res } = await call(handler, { ...fields, roadId: "inside" });
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(db.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ road_id: "inside" }),
+      );
+    });
+  }
+  it.each([
+    [14.338, 121.085],
+    [14.275, 121.125],
+    [NaN, 121.1],
+    [14.3, Infinity],
+  ])("rejects outside/invalid fires (%s, %s)", async (latitude, longitude) => {
+    const { from, res } = await call(createFireIncident, {
+      latitude,
+      longitude,
+      severity: "MODERATE",
+      radiusMeters: 200,
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(from).not.toHaveBeenCalled();
+  });
+  it("accepts a fire located inside Santa Rosa", async () => {
+    const { res } = await call(createFireIncident, {
+      latitude: 14.3,
+      longitude: 121.1,
+      severity: "MODERATE",
+      radiusMeters: 200,
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+  it("rejects fire road-block overrides outside Santa Rosa", async () => {
+    const { from, res } = await call(updateFireIncident, {
+      confirmedBlockedRoadIds: ["outside"],
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(from).not.toHaveBeenCalled();
+  });
+  it("limits hazard road suggestions while preserving normal road lookup", async () => {
+    const scoped = await call(
+      getNearestRoads,
+      {},
+      { lat: "14.3", lng: "121.1", scope: "santa-rosa" },
+    );
+    expect(scoped.res.json).toHaveBeenCalledWith({
+      roads: [expect.objectContaining({ roadId: "inside" })],
+    });
+    const rejected = await call(
+      getNearestRoads,
+      {},
+      { lat: "14.338", lng: "121.085", scope: "santa-rosa" },
+    );
+    expect(rejected.res.status).toHaveBeenCalledWith(400);
+    const normal = await call(
+      getNearestRoads,
+      {},
+      { lat: "14.338", lng: "121.085" },
+    );
+    expect(normal.res.json).toHaveBeenCalledWith({
+      roads: expect.arrayContaining([
+        expect.objectContaining({ roadId: "outside" }),
+      ]),
+    });
+  });
+});
