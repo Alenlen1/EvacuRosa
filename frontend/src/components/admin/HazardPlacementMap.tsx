@@ -1,20 +1,35 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { useRef, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Polygon,
+  useMapEvents,
+} from "react-leaflet";
 import { Trash2 } from "lucide-react";
 import {
   FloodIcon,
   FireIcon,
   EarthquakeIcon,
 } from "@/components/ui/HazardIcons";
-import {
-  SANTA_ROSA_CITY_BOUNDS,
-  SANTA_ROSA_CITY_CENTER,
-  SANTA_ROSA_CITY_DEFAULT_ZOOM,
-} from "@/lib/mapBounds";
 import { createDivIcon } from "@/components/map/icons";
+import {
+  isInsideSantaRosa,
+  santaRosaBounds,
+  santaRosaBoundary,
+  HAZARD_CITY_ERROR,
+} from "../../../../backend/src/geography/santaRosa";
+
+const cityOutline = santaRosaBoundary.geometry.coordinates.map((polygon) =>
+  polygon.map((ring) =>
+    ring.map(
+      ([longitude, latitude]) => [latitude, longitude] as [number, number],
+    ),
+  ),
+);
 import { FloodLayer } from "@/components/map/FloodLayer";
 import { FireLayer } from "@/components/map/FireLayer";
 import { EarthquakeLayer } from "@/components/map/EarthquakeLayer";
@@ -97,27 +112,39 @@ export default function HazardPlacementMap({
   const [error, setError] = useState<string | null>(null);
   const [lookingUpRoads, setLookingUpRoads] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const roadLookupVersion = useRef(0);
 
   async function handleMapClick(lat: number, lng: number) {
+    if (!isInsideSantaRosa(lat, lng)) {
+      resetForm();
+      setError(HAZARD_CITY_ERROR);
+      return;
+    }
+    const version = ++roadLookupVersion.current;
     setError(null);
     setPendingPoint({ lat, lng });
     setSelectedRoadId("");
+    setNearestRoads([]);
 
     if (mode === "fire") return; // point-based, no road lookup needed
 
     setLookingUpRoads(true);
     try {
-      const roads = await fetchNearestRoads(lat, lng, 3);
+      const roads = await fetchNearestRoads(lat, lng, 3, true);
+      if (version !== roadLookupVersion.current) return;
       setNearestRoads(roads);
       if (roads.length > 0) setSelectedRoadId(roads[0].roadId);
     } catch {
-      setError("Could not look up nearby roads.");
+      if (version === roadLookupVersion.current)
+        setError("Could not look up nearby Santa Rosa roads.");
     } finally {
-      setLookingUpRoads(false);
+      if (version === roadLookupVersion.current) setLookingUpRoads(false);
     }
   }
 
   function resetForm() {
+    roadLookupVersion.current++;
+    setLookingUpRoads(false);
     setPendingPoint(null);
     setNearestRoads([]);
     setSelectedRoadId("");
@@ -128,6 +155,10 @@ export default function HazardPlacementMap({
 
   async function handleSubmit() {
     if (!pendingPoint) return;
+    if (!isInsideSantaRosa(pendingPoint.lat, pendingPoint.lng)) {
+      setError(HAZARD_CITY_ERROR);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -263,16 +294,26 @@ export default function HazardPlacementMap({
 
       <div className="hazard-editor-map">
         <MapContainer
-          center={SANTA_ROSA_CITY_CENTER}
-          zoom={SANTA_ROSA_CITY_DEFAULT_ZOOM}
-          maxBounds={SANTA_ROSA_CITY_BOUNDS}
+          bounds={santaRosaBounds}
+          boundsOptions={{ padding: [16, 16] }}
+          maxBounds={santaRosaBounds}
           maxBoundsViscosity={0.8}
-          minZoom={12}
+          minZoom={10}
           className="h-full w-full"
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <Polygon
+            positions={cityOutline}
+            attribution='Boundary: PSA/NAMRIA via <a href="https://github.com/faeldon/philippines-json-maps">Philippines JSON Maps</a>'
+            pathOptions={{
+              color: "#800000",
+              weight: 2,
+              fillOpacity: 0.04,
+              interactive: false,
+            }}
           />
           <FloodLayer reports={floodReports} />
           <FireLayer incidents={fireIncidents} />
@@ -291,6 +332,10 @@ export default function HazardPlacementMap({
       </div>
 
       <div className="hazard-form">
+        <p className="mb-2 text-xs text-slate-600">
+          Santa Rosa City only. Select a location inside the outlined city
+          boundary.
+        </p>
         <h3 className="mb-3 text-sm font-semibold">
           Report{" "}
           {mode === "earthquake" ? "a verified road impact" : `a ${mode}`}
@@ -491,7 +536,11 @@ export default function HazardPlacementMap({
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={loading}
+                disabled={
+                  loading ||
+                  lookingUpRoads ||
+                  (mode !== "fire" && !selectedRoadId)
+                }
                 className="flex-1 rounded bg-blue-600 py-1.5 text-xs font-medium text-white disabled:bg-slate-300"
               >
                 {loading ? "Saving…" : "Save report"}
