@@ -49,7 +49,7 @@ export function NavigationCamera({
   useEffect(() => {
     if (!active) return;
     oldView.current = { center: map.getCenter(), zoom: map.getZoom() };
-    const bounds = map.options.maxBounds;
+
     let zooming = false;
     const zoomStart = () => {
       zooming = true;
@@ -59,9 +59,7 @@ export function NavigationCamera({
     };
     map.on("zoomstart", zoomStart);
     map.on("zoomend", zoomEnd);
-    // City bounds restrict planning, but must not pin a walking camera against
-    // their edge. Restore them when returning to planning.
-    map.setMaxBounds([]);
+    // Public city restrictions remain active during navigation.
     following.current = true;
     manualZoom.current = false;
     nearApplied.current = target.current.near;
@@ -180,7 +178,7 @@ export function NavigationCamera({
       container.removeEventListener("keydown", gesture);
       map.off("dragstart", pause);
       map.stop();
-      if (bounds) map.setMaxBounds(bounds);
+
     };
   }, [active, map, onFollowing]);
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { SANTA_ROSA_CITY_BOUNDS, SANTA_ROSA_CITY_CENTER } from "./mapBounds";
+import { isInsideSantaRosa, SANTA_ROSA_CITY_BOUNDS, SANTA_ROSA_CITY_CENTER } from "./mapBounds";
 import { formatPhotonLabel, type DestinationLabel } from "./reverseGeocoding";
 
 export interface PlaceResult {
@@ -9,15 +9,7 @@ export interface PlaceResult {
 }
 
 export function withinSearchBounds(latitude: number, longitude: number) {
-  const [southwest, northeast] = SANTA_ROSA_CITY_BOUNDS;
-  return (
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude) &&
-    latitude >= southwest[0] &&
-    latitude <= northeast[0] &&
-    longitude >= southwest[1] &&
-    longitude <= northeast[1]
-  );
+  return isInsideSantaRosa(latitude, longitude);
 }
 
 export function parsePlaceResults(data: unknown): PlaceResult[] {
