@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabaseClient";
 import {
   deleteAssistanceRequest,
@@ -12,8 +13,18 @@ import {
 import { TRAVEL_MODES } from "@/lib/travelTime";
 import { MapPin, Phone, RefreshCw, ShieldAlert, Trash2 } from "lucide-react";
 
+const AssistanceLocationMap = dynamic(() => import("./AssistanceLocationMap"), {
+  ssr: false,
+  loading: () => <p role="status">Loading shared-location map…</p>,
+});
+
 export function AssistanceRequests() {
   const [requests, setRequests] = useState<AssistanceRequest[]>([]);
+  const [mapSelection, setMapSelection] = useState<{
+    id: string;
+    version: number;
+  } | null>(null);
+  const mapSection = useRef<HTMLDivElement>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const mutationVersion = useRef(0);
   const mutationPending = useRef(false);
@@ -244,6 +255,16 @@ export function AssistanceRequests() {
           <span>New submissions will appear here automatically.</span>
         </div>
       )}
+      {!error && requests.length > 0 && (
+        <div ref={mapSection} className="assistance-map-section">
+          <h3>Shared-location map</h3>
+          <p className="assistance-caption">
+            Blue: new · Amber: acknowledged · Gray: resolved. Select a marker to
+            see the person’s details and reported accuracy area.
+          </p>
+          <AssistanceLocationMap requests={requests} selection={mapSelection} />
+        </div>
+      )}
       <div className="assistance-list">
         {requests.map((item) => (
           <article className="assistance-record" key={item.id}>
@@ -346,6 +367,22 @@ export function AssistanceRequests() {
               </dl>
             </details>
             <div className="assistance-record-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  setMapSelection((previous) => ({
+                    id: item.id,
+                    version: (previous?.version ?? 0) + 1,
+                  }));
+                  mapSection.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                  });
+                }}
+              >
+                <MapPin size={15} aria-hidden="true" /> View on map
+              </button>
               {item.status !== "RESOLVED" && (
                 <button
                   type="button"
