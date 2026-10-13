@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { Marker, Circle, useMap } from "react-leaflet";
+import { Marker, CircleMarker, Tooltip, useMap } from "react-leaflet";
+import { useLanguage } from "@/components/LanguageProvider";
 import type { Marker as LeafletMarker } from "leaflet";
 import { createDivIcon } from "./icons";
 import {
@@ -21,6 +22,7 @@ export function NavigationLocation({
   position: NavigationFix;
   heading: number | null;
 }) {
+  const { t } = useLanguage();
   const marker = useRef<LeafletMarker>(null);
   const map = useMap();
   const angle = useRef(0);
@@ -79,13 +81,14 @@ export function NavigationLocation({
   ]);
   return (
     <>
-      <Circle
+      <CircleMarker
         center={[position.latitude, position.longitude]}
-        radius={position.accuracy}
+        radius={18}
         pathOptions={{
           color: "#2563eb",
           weight: 1,
           fillOpacity: 0.08,
+          opacity: 0.3,
           interactive: false,
         }}
       />
@@ -93,9 +96,9 @@ export function NavigationLocation({
         ref={marker}
         position={initial.current}
         icon={icon}
-        interactive={false}
+        title={t("GPS accuracy: approximately {meters} m", { meters: Math.round(position.accuracy) })}
         zIndexOffset={1000}
-      />
+      ><Tooltip>{t("GPS accuracy: approximately {meters} m", { meters: Math.round(position.accuracy) })}</Tooltip></Marker>
     </>
   );
 }

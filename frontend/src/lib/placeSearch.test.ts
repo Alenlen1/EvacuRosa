@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parsePlaceResults, searchPlaces } from "./placeSearch";
+import { SANTA_ROSA_CITY_BOUNDS } from "./mapBounds";
 
 const feature = (name: string, longitude = 121.11, latitude = 14.31) => ({
   geometry: { type: "Point", coordinates: [longitude, latitude] },
@@ -8,6 +9,13 @@ const feature = (name: string, longitude = 121.11, latitude = 14.31) => ({
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Santa Rosa place search", () => {
+  it("rejects neighboring-city points inside the bounding rectangle and includes southern barangays", () => {
+    const results = parsePlaceResults({ features: [
+      feature("Outside city polygon", 121.094647, 14.3245),
+      feature("Southern Santa Rosa", 121.065, 14.24),
+    ] });
+    expect(results.map(result => result.label.title)).toEqual(["Southern Santa Rosa"]);
+  });
   it("uses GeoJSON longitude/latitude order and a readable label", () => {
     const [result] = parsePlaceResults({ features: [feature("Market Area")] });
     expect(result.latitude).toBe(14.31);
@@ -42,7 +50,8 @@ describe("Santa Rosa place search", () => {
     await searchPlaces("test place", signal);
     expect(request).toHaveBeenCalledTimes(1);
     const url = new URL(request.mock.calls[0][0]);
-    expect(url.searchParams.get("bbox")).toBe("121.05,14.27,121.15,14.36");
+    const [sw, ne] = SANTA_ROSA_CITY_BOUNDS;
+    expect(url.searchParams.get("bbox")).toBe([sw[1], sw[0], ne[1], ne[0]].join(","));
     expect(url.searchParams.get("q")).toBe("Test place");
   });
   it("does not start cancelled searches", async () => {
