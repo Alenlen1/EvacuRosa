@@ -1,6 +1,13 @@
 import type { Response } from "express";
 import type { RoleAwareRequest } from "../middleware/role.middleware";
 import { isFloodImpassable, isFloodSeverity } from "../types/floodPassability";
+import {
+  isInsideSantaRosa,
+  HAZARD_CITY_ERROR,
+  HAZARD_ROAD_ERROR,
+} from "../geography/santaRosa";
+import { loadRoadGraph } from "../services/road.service";
+import { isSantaRosaRoad } from "../services/hazardScope.service";
 
 export async function updateEvacuationCenter(
   req: RoleAwareRequest,
@@ -77,6 +84,11 @@ export async function createFloodReport(req: RoleAwareRequest, res: Response) {
     res
       .status(400)
       .json({ error: "roadId and a valid flood severity are required." });
+    return;
+  }
+
+  if (!isSantaRosaRoad(loadRoadGraph(), roadId)) {
+    res.status(400).json({ error: HAZARD_ROAD_ERROR });
     return;
   }
 
@@ -192,6 +204,11 @@ export async function createFireIncident(req: RoleAwareRequest, res: Response) {
     return;
   }
 
+  if (!isInsideSantaRosa(latitude, longitude)) {
+    res.status(400).json({ error: HAZARD_CITY_ERROR });
+    return;
+  }
+
   const { data, error } = await req.userSupabase
     .from("fire_incidents")
     .insert({
@@ -233,6 +250,14 @@ export async function updateFireIncident(req: RoleAwareRequest, res: Response) {
   if (typeof radiusMeters === "number") updates.radius_meters = radiusMeters;
   if (typeof status === "string") updates.status = status;
   if (Array.isArray(confirmedBlockedRoadIds)) {
+    if (
+      confirmedBlockedRoadIds.some(
+        (id) => typeof id !== "string" || !isSantaRosaRoad(loadRoadGraph(), id),
+      )
+    ) {
+      res.status(400).json({ error: HAZARD_ROAD_ERROR });
+      return;
+    }
     updates.confirmed_blocked_road_ids = confirmedBlockedRoadIds;
   }
   if (typeof notes === "string") updates.notes = notes;
@@ -357,6 +382,11 @@ export async function createEarthquakeRoadImpact(
     res.status(400).json({
       error: "earthquakeEventId, roadId, and impactLevel are required.",
     });
+    return;
+  }
+
+  if (!isSantaRosaRoad(loadRoadGraph(), roadId)) {
+    res.status(400).json({ error: HAZARD_ROAD_ERROR });
     return;
   }
 
