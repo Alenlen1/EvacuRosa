@@ -52,7 +52,7 @@ export function Basemap({
           url: openBasemap(data),
           ...offlineBasemapStyle(renderer),
           maxDataZoom: 15,
-          maxZoom: 20,
+          maxZoom: 25,
           noWrap: true,
           bounds: SANTA_ROSA_CITY_BOUNDS,
           attribution:
@@ -75,7 +75,7 @@ export function Basemap({
       {!online && !detailed && <OfflineRoadLayer ready={routingReady} />}
       {online && (
         <TileLayer
-          maxZoom={20}
+          maxZoom={25}
           maxNativeZoom={19}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
