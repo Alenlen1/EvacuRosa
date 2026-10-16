@@ -2,6 +2,7 @@ import type { RoadGraph } from "./graph";
 import type { GraphEdge, RoadStatus } from "./edge";
 import { heuristic } from "./heuristic";
 import type { TravelMode } from "./access";
+import { effectiveEdgeStatus } from "../../types/floodScope";
 
 export interface AstarResult {
   found: boolean;
@@ -121,7 +122,7 @@ export function findPath(
   }
 
   const effectiveStatus = (edge: GraphEdge): RoadStatus =>
-    statusOverrides?.get(edge.roadId) ?? edge.status;
+    effectiveEdgeStatus(edge, statusOverrides);
 
   const gScore = new Map<string, number>([[startNodeId, 0]]);
   const cameFrom = new Map<string, { nodeId: string; edge: GraphEdge }>();

@@ -8,6 +8,22 @@ import {
 } from "../geography/santaRosa";
 import { loadRoadGraph } from "../services/road.service";
 import { isSantaRosaRoad } from "../services/hazardScope.service";
+import type { FloodEdgeRange } from "../types/flood";
+import {
+  selectFloodSection,
+  type SectionPoint,
+} from "../algorithms/floodSections";
+
+function validSectionPoint(value: unknown): value is SectionPoint {
+  const point = value as SectionPoint | null;
+  return (
+    !!point &&
+    typeof point === "object" &&
+    Number.isFinite(point.latitude) &&
+    Number.isFinite(point.longitude) &&
+    isInsideSantaRosa(point.latitude, point.longitude)
+  );
+}
 
 export async function updateEvacuationCenter(
   req: RoleAwareRequest,
@@ -73,8 +89,16 @@ export async function updateEvacuationCenter(
 }
 
 export async function createFloodReport(req: RoleAwareRequest, res: Response) {
-  const { roadId, barangayId, severity, waterLevelMeters, notes } =
-    req.body ?? {};
+  const {
+    roadId,
+    barangayId,
+    severity,
+    waterLevelMeters,
+    notes,
+    sectionStart,
+    sectionEnd,
+    coverage,
+  } = req.body ?? {};
 
   if (!req.userSupabase) {
     res.status(401).json({ error: "Not authenticated." });
@@ -92,12 +116,58 @@ export async function createFloodReport(req: RoleAwareRequest, res: Response) {
     return;
   }
 
+  let affectedEdgeIds: string[] | null = null;
+  let edgeRanges: FloodEdgeRange[] | null = null;
+  if (
+    coverage !== undefined &&
+    coverage !== "section" &&
+    coverage !== "entire-road"
+  ) {
+    res.status(400).json({ error: "Invalid flood coverage." });
+    return;
+  }
+  if (
+    coverage === "section" ||
+    sectionStart !== undefined ||
+    sectionEnd !== undefined
+  ) {
+    if (
+      coverage === "entire-road" ||
+      !validSectionPoint(sectionStart) ||
+      !validSectionPoint(sectionEnd)
+    ) {
+      res.status(400).json({
+        error:
+          "Select a valid start and end inside Santa Rosa for the flooded road section.",
+      });
+      return;
+    }
+    try {
+      const selection = selectFloodSection(
+        loadRoadGraph(),
+        roadId,
+        sectionStart,
+        sectionEnd,
+        (candidate) => isSantaRosaRoad(loadRoadGraph(), candidate),
+      );
+      affectedEdgeIds = selection.edgeIds;
+      edgeRanges = selection.edgeRanges;
+    } catch (error) {
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Invalid road section.",
+      });
+      return;
+    }
+  }
+
   // Runs AS the calling user's JWT — the SUPER_ADMIN-only RLS policy on
   // flood_reports decides whether this insert actually succeeds.
   const { data, error } = await req.userSupabase
     .from("flood_reports")
     .insert({
       road_id: roadId,
+      affected_edge_ids: affectedEdgeIds,
+      edge_ranges: edgeRanges,
       barangay_id: barangayId ?? null,
       severity,
       water_level_meters:
@@ -111,6 +181,16 @@ export async function createFloodReport(req: RoleAwareRequest, res: Response) {
     .single();
 
   if (error) {
+    if (
+      (error.code === "42703" || error.code === "PGRST204") &&
+      /affected_edge_ids|edge_ranges/.test(error.message)
+    ) {
+      res.status(503).json({
+        error:
+          "Flood section database setup is incomplete. Run migrations 0015 and 0016 in the Supabase project used by this backend, then retry.",
+      });
+      return;
+    }
     res
       .status(403)
       .json({ error: "Could not create flood report — check permissions." });

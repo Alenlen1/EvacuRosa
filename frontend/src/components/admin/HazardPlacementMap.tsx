@@ -1,12 +1,15 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
   TileLayer,
   Marker,
   Polygon,
+  Polyline,
+  CircleMarker,
+  Tooltip,
   useMapEvents,
 } from "react-leaflet";
 import { Trash2 } from "lucide-react";
@@ -40,6 +43,8 @@ import { FireLayer } from "@/components/map/FireLayer";
 import { EarthquakeLayer } from "@/components/map/EarthquakeLayer";
 import {
   fetchNearestRoads,
+  fetchFloodSection,
+  type FloodSectionPreview,
   createFloodReport,
   createFireIncident,
   createEarthquakeRoadImpact,
@@ -100,6 +105,16 @@ export default function HazardPlacementMap({
   onCreated,
 }: HazardPlacementMapProps) {
   const [mode, setMode] = useState<Mode>("flood");
+  const [floodCoverage, setFloodCoverage] = useState<"section" | "entire-road">(
+    "section",
+  );
+  const [sectionEnd, setSectionEnd] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [sectionPreview, setSectionPreview] =
+    useState<FloodSectionPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [pendingPoint, setPendingPoint] = useState<{
     lat: number;
     lng: number;
@@ -121,10 +136,84 @@ export default function HazardPlacementMap({
   const removalPending = useRef(false);
   const roadLookupVersion = useRef(0);
 
+  useEffect(() => {
+    if (
+      mode !== "flood" ||
+      floodCoverage !== "section" ||
+      !pendingPoint ||
+      !sectionEnd ||
+      !selectedRoadId
+    ) {
+      setPreviewLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const controller = new AbortController();
+    setPreviewLoading(true);
+    setSectionPreview(null);
+    void fetchFloodSection(
+      selectedRoadId,
+      { latitude: pendingPoint.lat, longitude: pendingPoint.lng },
+      sectionEnd,
+      controller.signal,
+    )
+      .then((preview) => {
+        if (!cancelled) {
+          setSectionPreview(preview);
+          setError(null);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled)
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Could not preview this road section.",
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [mode, floodCoverage, pendingPoint, sectionEnd, selectedRoadId]);
+
+  const previewSegments =
+    mode === "flood"
+      ? ((floodCoverage === "section"
+          ? sectionPreview?.affectedSegments
+          : nearestRoads.find((road) => road.roadId === selectedRoadId)
+              ?.affectedSegments) ?? [])
+      : [];
+
+  const snappedPreview =
+    mode === "flood" && floodCoverage === "section" ? sectionPreview : null;
+  const displayedStart =
+    snappedPreview?.snappedStart ??
+    (pendingPoint
+      ? { latitude: pendingPoint.lat, longitude: pendingPoint.lng }
+      : null);
+  const displayedEnd = snappedPreview?.snappedEnd ?? sectionEnd;
+
   async function handleMapClick(lat: number, lng: number) {
+    if (loading || removalPending.current) return;
     if (!isInsideSantaRosa(lat, lng)) {
       resetForm();
       setError(HAZARD_CITY_ERROR);
+      return;
+    }
+    if (
+      mode === "flood" &&
+      floodCoverage === "section" &&
+      pendingPoint &&
+      selectedRoadId &&
+      !lookingUpRoads
+    ) {
+      setError(null);
+      setSectionPreview(null);
+      setSectionEnd({ latitude: lat, longitude: lng });
       return;
     }
     const version = ++roadLookupVersion.current;
@@ -153,6 +242,9 @@ export default function HazardPlacementMap({
     roadLookupVersion.current++;
     setLookingUpRoads(false);
     setPendingPoint(null);
+    setSectionEnd(null);
+    setSectionPreview(null);
+    setPreviewLoading(false);
     setNearestRoads([]);
     setSelectedRoadId("");
     setWaterLevelMeters("");
@@ -171,8 +263,25 @@ export default function HazardPlacementMap({
     try {
       if (mode === "flood") {
         if (!selectedRoadId) throw new Error("Select a road first.");
+        if (
+          floodCoverage === "section" &&
+          (!sectionPreview || !sectionEnd || previewLoading)
+        )
+          throw new Error(
+            "Select an end point and review the flooded road section before saving.",
+          );
         await createFloodReport(authToken, {
           roadId: selectedRoadId,
+          coverage: floodCoverage,
+          ...(floodCoverage === "section" && sectionEnd
+            ? {
+                sectionStart: {
+                  latitude: pendingPoint.lat,
+                  longitude: pendingPoint.lng,
+                },
+                sectionEnd,
+              }
+            : {}),
           severity: severity as FloodReport["severity"],
           waterLevelMeters: waterLevelMeters
             ? Number(waterLevelMeters)
@@ -333,6 +442,35 @@ export default function HazardPlacementMap({
         ))}
       </div>
 
+      {mode === "flood" && (
+        <div className="hazard-event-selector">
+          <label htmlFor="flood-coverage" className="mb-1 block text-xs">
+            Flood coverage
+          </label>
+          <select
+            id="flood-coverage"
+            value={floodCoverage}
+            disabled={loading || removingId !== null}
+            onChange={(event) => {
+              setFloodCoverage(event.target.value as "section" | "entire-road");
+              resetForm();
+              setError(null);
+            }}
+            className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+          >
+            <option value="section">
+              Affected road section (start and end)
+            </option>
+            <option value="entire-road">Entire mapped road</option>
+          </select>
+          <p className="mt-1 text-xs">
+            {floodCoverage === "section"
+              ? "Select the start, review the street, then select the end on the same connected street. The preview follows the street between those points."
+              : "Select a point near the road. Every mapped segment of that road will be affected."}
+          </p>
+        </div>
+      )}
+
       {mode === "earthquake" && (
         <div className="hazard-event-selector">
           <label
@@ -387,11 +525,51 @@ export default function HazardPlacementMap({
             events={earthquakeEvents}
             roadImpacts={earthquakeRoadImpacts}
           />
-          {pendingPoint && (
+          {previewSegments.map((segment, index) => (
+            <Polyline
+              key={`preview-${index}`}
+              positions={segment.map((point) => [
+                point.latitude,
+                point.longitude,
+              ])}
+              pathOptions={{ color: "#7c3aed", weight: 9, opacity: 0.85 }}
+              interactive={false}
+            />
+          ))}
+          {mode === "flood" && floodCoverage === "section" && displayedEnd && (
+            <CircleMarker
+              center={[displayedEnd.latitude, displayedEnd.longitude]}
+              radius={8}
+              pathOptions={{ color: "#7c3aed", fillOpacity: 1 }}
+              interactive={false}
+            >
+              <Tooltip permanent>End</Tooltip>
+            </CircleMarker>
+          )}
+          {snappedPreview && (
+            <CircleMarker
+              center={[
+                snappedPreview.snappedStart.latitude,
+                snappedPreview.snappedStart.longitude,
+              ]}
+              radius={8}
+              pathOptions={{ color: "#185FA5", fillOpacity: 1 }}
+              interactive={false}
+            >
+              <Tooltip permanent>Start</Tooltip>
+            </CircleMarker>
+          )}
+          {pendingPoint && !snappedPreview && (
             <Marker
               position={[pendingPoint.lat, pendingPoint.lng]}
               icon={pendingIcon}
-            />
+            >
+              <Tooltip>
+                {mode === "flood" && floodCoverage === "section"
+                  ? "Start"
+                  : "Selected location"}
+              </Tooltip>
+            </Marker>
           )}
           <ClickCapture onClick={handleMapClick} />
         </MapContainer>
@@ -409,8 +587,45 @@ export default function HazardPlacementMap({
         <p className="mb-2 text-xs text-slate-500">
           {mode === "fire"
             ? "Tap the map where the fire is."
-            : "Tap the map near the affected road."}
+            : mode === "flood" && floodCoverage === "section"
+              ? pendingPoint
+                ? "Select the end of the affected section on the same connected street. Use Start over to change the start."
+                : "Tap the start of the affected road section."
+              : "Tap the map near the affected road."}
         </p>
+        {mode === "flood" && pendingPoint && (
+          <div className="mb-3 text-xs">
+            <p>
+              {hazardCoordinates(displayedStart ?? undefined)}
+              {floodCoverage === "section" ? " (start)" : ""}
+            </p>
+            {displayedEnd && <p>{hazardCoordinates(displayedEnd)} (end)</p>}
+            {previewLoading && (
+              <p role="status">Previewing affected road section…</p>
+            )}
+            {sectionPreview && floodCoverage === "section" && (
+              <p role="status">
+                Preview: {sectionPreview.distanceMeters} m across{" "}
+                {sectionPreview.edgeIds.length} mapped segment(s). Only the
+                purple section receives this flood report. Start and End snap to
+                the road near your clicks, keeping the selected length.
+              </p>
+            )}
+            {floodCoverage === "entire-road" && previewSegments.length > 0 && (
+              <p role="status">
+                The purple preview covers the entire mapped road.
+              </p>
+            )}
+            <button
+              type="button"
+              className="mt-2 underline"
+              disabled={loading || removingId !== null}
+              onClick={resetForm}
+            >
+              Start over
+            </button>
+          </div>
+        )}
 
         {error && (
           <p className="mb-2 text-xs text-red-600" role="alert">
@@ -455,12 +670,18 @@ export default function HazardPlacementMap({
                   <select
                     id="hazard-road"
                     value={selectedRoadId}
-                    onChange={(e) => setSelectedRoadId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedRoadId(e.target.value);
+                      setSectionEnd(null);
+                      setSectionPreview(null);
+                      setError(null);
+                    }}
                     className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
                   >
                     {nearestRoads.map((r) => (
                       <option key={r.roadId} value={r.roadId}>
-                        {r.roadName ?? r.roadId} ({r.distanceMeters}m away)
+                        {r.roadName ?? "Unnamed mapped road"} (
+                        {r.distanceMeters}m away)
                       </option>
                     ))}
                   </select>
@@ -606,6 +827,10 @@ export default function HazardPlacementMap({
                   loading ||
                   removingId !== null ||
                   lookingUpRoads ||
+                  previewLoading ||
+                  (mode === "flood" &&
+                    floodCoverage === "section" &&
+                    !sectionPreview) ||
                   (mode !== "fire" && !selectedRoadId)
                 }
                 className="flex-1 rounded bg-blue-600 py-1.5 text-xs font-medium text-white disabled:bg-slate-300"
@@ -666,8 +891,11 @@ export default function HazardPlacementMap({
                 className="flex items-center justify-between gap-3 rounded border border-slate-200 px-2 py-1.5 text-xs"
               >
                 <span>
-                  {report.severity} · Road location:{" "}
-                  {roadCoordinates(report.affectedSegments)}
+                  {report.severity} ·{" "}
+                  {report.affectedEdgeIds == null
+                    ? "Entire mapped road"
+                    : "Selected section"}{" "}
+                  · Road location: {roadCoordinates(report.affectedSegments)}
                   {report.roadImpassable ? " · blocked" : ""}
                 </span>
                 <button

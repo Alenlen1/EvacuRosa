@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { getNearestRoads } from "../controllers/road.controller";
+import {
+  getNearestRoads,
+  getRoadSection,
+} from "../controllers/road.controller";
 
 export const roadRouter = Router();
 
@@ -7,3 +10,4 @@ export const roadRouter = Router();
 // lets the admin hazard-placement map turn "clicked here" into "nearest
 // road is X" without anyone needing to know or type a raw roadId.
 roadRouter.get("/nearest", getNearestRoads);
+roadRouter.get("/section", getRoadSection);
