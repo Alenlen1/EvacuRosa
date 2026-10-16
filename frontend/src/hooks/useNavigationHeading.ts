@@ -16,12 +16,16 @@ export function useNavigationHeading(active: boolean) {
   } | null>(null);
   const filter = useRef<{ heading: number; at: number } | null>(null);
   // Called directly from a user gesture, including on iOS.
-  const request = useCallback(async () => {
+  const request = useCallback(async (allowPrompt = true) => {
     const sensor =
       window.DeviceOrientationEvent as typeof DeviceOrientationEvent & {
         requestPermission?: (absolute?: boolean) => Promise<string>;
       };
     if (!window.isSecureContext || !sensor) {
+      setPermission("unavailable");
+      return;
+    }
+    if (sensor.requestPermission && !allowPrompt) {
       setPermission("unavailable");
       return;
     }

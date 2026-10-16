@@ -5,6 +5,8 @@ export interface RouteSelection {
   destination: { latitude: number; longitude: number } | null;
   travelMode: TravelMode;
   intent: "route" | "evacuation" | null;
+  navigationActive?: boolean;
+  navigationCenterId?: string;
 }
 type SessionStore = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -34,6 +36,16 @@ export function parseRouteSelection(raw: string | null): RouteSelection | null {
       destination: d ? { latitude: d.latitude, longitude: d.longitude } : null,
       travelMode: v.travelMode,
       intent: v.intent,
+      ...(v.navigationActive === true && v.intent && d
+        ? {
+            navigationActive: true,
+            ...(typeof v.navigationCenterId === "string" &&
+            v.navigationCenterId.length > 0 &&
+            v.navigationCenterId.length <= 128
+              ? { navigationCenterId: v.navigationCenterId }
+              : {}),
+          }
+        : {}),
     };
   } catch {
     return null;
@@ -52,7 +64,7 @@ export function readRouteSelection(
   }
 }
 
-/** Only destination/mode/intent; never store GPS origin, route geometry,
+/** Only destination/mode/intent and navigation intent; never store GPS origin, route geometry,
  * hazard assessments, emergency contact details or consent. */
 export function saveRouteSelection(
   selection: RouteSelection,
@@ -69,11 +81,38 @@ export function saveRouteSelection(
           : null,
         travelMode: selection.travelMode,
         intent: selection.intent,
+        ...(selection.navigationActive === true && selection.intent && d
+          ? {
+              navigationActive: true,
+              ...(typeof selection.navigationCenterId === "string" &&
+              selection.navigationCenterId.length > 0 &&
+              selection.navigationCenterId.length <= 128
+                ? { navigationCenterId: selection.navigationCenterId }
+                : {}),
+            }
+          : {}),
       }),
     );
   } catch {
     /* Restricted storage must not prevent routing. */
   }
+}
+
+export function setRouteNavigation(
+  active: boolean,
+  centerId?: string,
+  store?: SessionStore,
+): void {
+  const selection = readRouteSelection(store);
+  if (selection)
+    saveRouteSelection(
+      {
+        ...selection,
+        navigationActive: active,
+        navigationCenterId: active ? centerId : undefined,
+      },
+      store,
+    );
 }
 
 export function clearRouteSelection(store?: SessionStore): void {
