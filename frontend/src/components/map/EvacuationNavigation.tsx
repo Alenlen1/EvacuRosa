@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DomEvent } from "leaflet";
 import { useMap } from "react-leaflet";
 import {
@@ -33,6 +33,9 @@ export function EvacuationNavigation({
   onActiveChange,
   onStart,
   onDetails,
+  resumeNavigation = false,
+  onResumeHandled,
+  onEnd,
 }: {
   route: LatLng[] | null;
   center?: NavigationDestination;
@@ -42,6 +45,9 @@ export function EvacuationNavigation({
   onActiveChange: (active: boolean) => void;
   onStart: () => void;
   onDetails?: () => void;
+  resumeNavigation?: boolean;
+  onResumeHandled?: () => void;
+  onEnd?: () => void;
 }) {
   const { t } = useLanguage();
   const map = useMap();
@@ -56,9 +62,34 @@ export function EvacuationNavigation({
   const [following, setFollowing] = useState(true);
   const [recenter, setRecenter] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
+  const wasActive = useRef(false);
+  const resumeConsumed = useRef(false);
   useEffect(() => {
     onActiveChange(nav.active);
-  }, [nav.active, onActiveChange]);
+    if (wasActive.current && !nav.active) onEnd?.();
+    wasActive.current = nav.active;
+  }, [nav.active, onActiveChange, onEnd]);
+
+  function startNavigation(allowPermissionPrompt = true) {
+    if (!nav.start(allowPermissionPrompt)) return false;
+    setCollapsed(
+      window.matchMedia(
+        "(max-width: 800px), (max-width: 1100px) and (max-height: 500px)",
+      ).matches,
+    );
+    onStart();
+    return true;
+  }
+
+  useEffect(() => {
+    if (!resumeNavigation) {
+      resumeConsumed.current = false;
+      return;
+    }
+    if (resumeConsumed.current || !nav.canStart || nav.active) return;
+    resumeConsumed.current = true;
+    if (startNavigation(false)) onResumeHandled?.();
+  });
   useEffect(() => {
     if (!nav.active) return;
     const container = map.getContainer();
@@ -177,13 +208,7 @@ export function EvacuationNavigation({
                   className="primary-button"
                   disabled={!nav.canStart}
                   onClick={() => {
-                    setCollapsed(
-                      window.matchMedia(
-                        "(max-width: 800px), (max-width: 1100px) and (max-height: 500px)",
-                      ).matches,
-                    );
-                    nav.start();
-                    onStart();
+                    startNavigation();
                   }}
                 >
                   <Navigation size={18} />

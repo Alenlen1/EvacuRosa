@@ -1,6 +1,12 @@
 export const filipino: Record<string, string> = {
-  "GPS accuracy: approximately {meters} m": "Katumpakan ng GPS: humigit-kumulang {meters} m",
-  "This map is limited to Santa Rosa City. Select a location inside the city.": "Para lamang sa Santa Rosa City ang mapa. Pumili ng lokasyon sa loob ng lungsod.",
+  "Resuming navigation. Waiting for a fresh, accurate location.":
+    "Ipinagpapatuloy ang nabigasyon. Hinihintay ang bago at tumpak na lokasyon.",
+  "The previous evacuation center is unavailable. Choose another center before starting navigation.":
+    "Hindi magagamit ang dating evacuation center. Pumili ng ibang center bago simulan ang nabigasyon.",
+  "GPS accuracy: approximately {meters} m":
+    "Katumpakan ng GPS: humigit-kumulang {meters} m",
+  "This map is limited to Santa Rosa City. Select a location inside the city.":
+    "Para lamang sa Santa Rosa City ang mapa. Pumili ng lokasyon sa loob ng lungsod.",
   "Entrance information": "Impormasyon sa pasukan",
   "Shelter notes": "Mga tala tungkol sa evacuation center",
   "Shelter details": "Detalye ng evacuation center",
