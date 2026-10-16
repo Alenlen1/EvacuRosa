@@ -14,6 +14,36 @@ export interface RoadGraphData {
  * mostly-empty overhead. */
 const GRID_CELL_DEGREES = 0.005;
 
+const genericRoadNames = new Set([
+  "residential",
+  "service",
+  "unclassified",
+  "tertiary",
+  "secondary",
+  "primary",
+  "trunk",
+  "motorway",
+  "living street",
+  "footway",
+  "path",
+  "track",
+  "pedestrian",
+  "cycleway",
+  "steps",
+  "road",
+  "unknown",
+  "unnamed",
+]);
+function streetName(edge: GraphEdge): string | null {
+  if (!edge.osmTags?.name && edge.roadName === edge.osmTags?.highway)
+    return null;
+  const name = (edge.osmTags?.name ?? edge.roadName ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, " ");
+  return name && !genericRoadNames.has(name) ? name : null;
+}
+
 /** Both geometrical directions are retained, with separate mode permissions. */
 export class RoadGraph {
   private nodes = new Map<string, GraphNode>();
@@ -26,6 +56,28 @@ export class RoadGraph {
   /** roadId -> its forward-direction edges, so looking up a road's geometry
    * (for a flood/fire report) doesn't scan the whole adjacency structure. */
   private edgesByRoad = new Map<string, GraphEdge[]>();
+  private forwardEdges = new Map<string, GraphEdge>();
+  private edgesByStreetName = new Map<string, GraphEdge[]>();
+
+  getForwardEdge(id: string): GraphEdge | undefined {
+    return this.forwardEdges.get(id);
+  }
+
+  /** A named street can span several OSM way IDs. Connectivity is checked
+   * by the section path search, so identical names never bridge gaps. */
+  edgesForStreet(roadId: string): GraphEdge[] {
+    const original = this.edgesByRoadId(roadId);
+    const name = original.length ? streetName(original[0]) : null;
+    return name ? (this.edgesByStreetName.get(name) ?? original) : original;
+  }
+
+  /** Forward-edge snapshot for immutable request-specific graph partitioning. */
+  getData(): RoadGraphData {
+    return {
+      nodes: [...this.nodes.values()],
+      edges: [...this.edgesByRoad.values()].flat(),
+    };
+  }
 
   constructor(data: RoadGraphData) {
     for (const node of data.nodes) {
@@ -57,6 +109,13 @@ export class RoadGraph {
       const existing = this.edgesByRoad.get(edge.roadId);
       if (existing) existing.push(edge);
       else this.edgesByRoad.set(edge.roadId, [edge]);
+      this.forwardEdges.set(edge.id, edge);
+      const name = streetName(edge);
+      if (name) {
+        const streetEdges = this.edgesByStreetName.get(name) ?? [];
+        streetEdges.push(edge);
+        this.edgesByStreetName.set(name, streetEdges);
+      }
     }
   }
 
