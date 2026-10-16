@@ -329,6 +329,7 @@ export interface EarthquakeRoadImpact {
   roadId: string;
   impactLevel: string;
   confirmedBlocked: boolean;
+  affectedSegments?: LatLng[][];
 }
 
 export async function fetchEarthquakes(): Promise<{
