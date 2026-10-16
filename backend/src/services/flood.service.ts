@@ -2,6 +2,7 @@ import { getSupabase } from "../database/supabase";
 import type { FloodReport } from "../types/flood";
 import type { RoadStatus } from "../algorithms/astar/edge";
 import { isFloodImpassable } from "../types/floodPassability";
+import { floodStatusOverrides } from "../types/floodScope";
 
 export async function getActiveFloodReports(): Promise<FloodReport[]> {
   const supabase = getSupabase();
@@ -12,7 +13,7 @@ export async function getActiveFloodReports(): Promise<FloodReport[]> {
   const { data, error } = await supabase
     .from("flood_reports")
     .select(
-      "id, road_id, barangay_id, severity, water_level_meters, road_impassable, status, notes, reported_at, updated_at, barangays(name)",
+      "id, road_id, affected_edge_ids, edge_ranges, barangay_id, severity, water_level_meters, road_impassable, status, notes, reported_at, updated_at, barangays(name)",
     )
     .eq("status", "ACTIVE");
 
@@ -23,6 +24,8 @@ export async function getActiveFloodReports(): Promise<FloodReport[]> {
   return (data ?? []).map((row: any) => ({
     id: row.id,
     roadId: row.road_id,
+    affectedEdgeIds: row.affected_edge_ids,
+    edgeRanges: row.edge_ranges,
     barangayId: row.barangay_id,
     barangayName: row.barangays?.name,
     severity: row.severity,
@@ -50,19 +53,5 @@ export async function buildRoadStatusOverrides(): Promise<
 export function roadStatusOverridesForReports(
   reports: FloodReport[],
 ): Map<string, RoadStatus> {
-  const overrides = new Map<string, RoadStatus>();
-
-  for (const report of reports) {
-    if (!report.roadId) continue;
-    if (isFloodImpassable(report.severity)) {
-      overrides.set(report.roadId, "BLOCKED");
-    } else if (
-      report.severity !== "NONE" &&
-      overrides.get(report.roadId) !== "BLOCKED"
-    ) {
-      overrides.set(report.roadId, "FLOODED");
-    }
-  }
-
-  return overrides;
+  return floodStatusOverrides(reports);
 }

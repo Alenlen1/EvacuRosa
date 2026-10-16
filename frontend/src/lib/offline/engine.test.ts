@@ -29,7 +29,7 @@ function data(): OfflinePackage {
       },
     },
     snapshot: {
-      formatVersion: 1,
+      formatVersion: 3,
       graphVersion: "test",
       updatedAt: "2026-10-08T00:00:00Z",
       hazardsAvailable: true,
@@ -54,6 +54,75 @@ function data(): OfflinePackage {
   };
 }
 describe("offline routing", () => {
+  it("keeps dry portions of a partly flooded edge usable offline", () => {
+    const saved = data();
+    const fraction = (t: number) => ({
+      latitude: start.latitude + (destination.latitude - start.latitude) * t,
+      longitude: 121.1,
+    });
+    saved.snapshot.floodReports = [
+      {
+        id: "precise",
+        roadId: "road",
+        affectedEdgeIds: ["AB"],
+        edgeRanges: [{ edgeId: "AB", startFraction: 0.4, endFraction: 0.6 }],
+        severity: "HIGH",
+        roadImpassable: true,
+        status: "ACTIVE",
+        reportedAt: "2026-10-16T00:00:00Z",
+        updatedAt: "2026-10-16T00:00:00Z",
+      },
+    ];
+    const engine = new OfflineRoutingEngine(saved);
+    expect(
+      engine.calculate(start, fraction(0.4), "walking").result,
+    ).toBeTruthy();
+    expect(
+      engine.calculate(fraction(0.6), destination, "walking").result,
+    ).toBeTruthy();
+    expect(engine.calculate(start, destination, "walking").failureReason).toBe(
+      "HAZARD_BLOCKED",
+    );
+    expect(engine.calculate(destination, start, "walking").failureReason).toBe(
+      "HAZARD_BLOCKED",
+    );
+  });
+  it("respects section blocks without blocking other segments of the same road", () => {
+    const saved = data();
+    const end = { id: "C", latitude: 14.302, longitude: 121.1 };
+    saved.graph.data.nodes.push(end);
+    saved.graph.data.edges.push({
+      id: "BC",
+      fromNodeId: "B",
+      toNodeId: "C",
+      roadId: "road",
+      distanceMeters: 111,
+      status: "OPEN",
+    });
+    saved.snapshot.statusOverrides = [["edge:BC", "BLOCKED"]];
+    saved.snapshot.floodReports = [
+      {
+        id: "section",
+        roadId: "road",
+        affectedEdgeIds: ["BC"],
+        severity: "HIGH",
+        roadImpassable: true,
+        status: "ACTIVE",
+        reportedAt: "2026-10-16T00:00:00Z",
+        updatedAt: "2026-10-16T00:00:00Z",
+      },
+    ];
+    const offline = new OfflineRoutingEngine(saved);
+    expect(
+      offline.calculate(start, destination, "walking").result,
+    ).toBeTruthy();
+    expect(offline.calculate(destination, end, "walking").failureReason).toBe(
+      "HAZARD_BLOCKED",
+    );
+    expect(offline.calculate(end, destination, "walking").failureReason).toBe(
+      "HAZARD_BLOCKED",
+    );
+  });
   it("uses the same path, distance and risk as the backend engine", () => {
     const saved = data();
     const online = calculateRoute(

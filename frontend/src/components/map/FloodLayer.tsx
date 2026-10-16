@@ -33,6 +33,9 @@ export function FloodLayer({ reports }: FloodLayerProps) {
           >
             <Tooltip sticky className="hazard-tooltip">
               {report.severity} flood
+              {report.affectedEdgeIds == null
+                ? " · entire mapped road"
+                : " · selected section"}
               {report.roadImpassable ? " — road blocked" : " — road passable"}
             </Tooltip>
           </Polyline>

@@ -267,6 +267,9 @@ export type FloodSeverity = "NONE" | "LOW" | "MODERATE" | "HIGH" | "SEVERE";
 export interface FloodReport {
   id: string;
   roadId: string;
+  affectedEdgeIds?: string[] | null;
+  edgeRanges?:
+    { edgeId: string; startFraction: number; endFraction: number }[] | null;
   barangayId?: string | null;
   barangayName?: string;
   severity: FloodSeverity;
@@ -345,6 +348,7 @@ export interface NearestRoad {
   roadId: string;
   roadName?: string;
   distanceMeters: number;
+  affectedSegments?: LatLng[][];
 }
 
 export async function fetchNearestRoads(
@@ -381,6 +385,9 @@ export function createFloodReport(
   token: string,
   data: {
     roadId: string;
+    coverage?: "section" | "entire-road";
+    sectionStart?: LatLng;
+    sectionEnd?: LatLng;
     severity: FloodSeverity;
     waterLevelMeters?: number;
     roadImpassable: boolean;
@@ -388,6 +395,38 @@ export function createFloodReport(
   },
 ) {
   return adminPost("/api/admin/floods", token, data);
+}
+
+export interface FloodSectionPreview {
+  edgeRanges: { edgeId: string; startFraction: number; endFraction: number }[];
+  snappedStart: LatLng;
+  snappedEnd: LatLng;
+  edgeIds: string[];
+  affectedSegments: LatLng[][];
+  distanceMeters: number;
+}
+
+export async function fetchFloodSection(
+  roadId: string,
+  start: LatLng,
+  end: LatLng,
+  signal?: AbortSignal,
+): Promise<FloodSectionPreview> {
+  const query = new URLSearchParams({
+    roadId,
+    startLat: String(start.latitude),
+    startLng: String(start.longitude),
+    endLat: String(end.latitude),
+    endLng: String(end.longitude),
+  });
+  const response = await fetch(`${API_URL}/api/roads/section?${query}`, {
+    signal,
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error ?? "Could not preview the flooded section.");
+  }
+  return response.json();
 }
 
 export function createFireIncident(

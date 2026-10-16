@@ -9,6 +9,7 @@ import type { RoadGraph } from "../algorithms/astar/graph";
 import { distanceMetersToSegment } from "../algorithms/astar/heuristic";
 import type { FloodReport } from "../types/flood";
 import type { FireIncident } from "../types/fire";
+import { floodForEdge } from "../types/floodScope";
 /**
  * How much a maximally-risky (VERY_HIGH, normalizedRisk=1) road inflates
  * its own cost in the A* search, relative to its physical distance. At
@@ -84,7 +85,7 @@ export function edgeRisk(
   fireIncidents: FireIncident[],
   earthquakeImpactByRoadId: Map<string, number> = new Map(),
 ): EdgeRisk {
-  const floodReport = floodReportsByRoadId.get(edge.roadId);
+  const floodReport = floodForEdge(edge, floodReportsByRoadId);
   const floodLevel = floodReport ? severityToNumeric(floodReport.severity) : 0;
   const floodWaterLevelMeters =
     floodReport?.waterLevelMeters ??

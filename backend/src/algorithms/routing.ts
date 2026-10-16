@@ -6,6 +6,8 @@ import type { RiskLevel } from "./fuzzy/types";
 import { edgeRisk, riskLevelRank } from "../services/riskWeighting.service";
 import type { FloodReport } from "../types/flood";
 import type { FireIncident } from "../types/fire";
+import { effectiveEdgeStatus, indexFloodReports } from "../types/floodScope";
+import { prepareFloodRouting } from "./floodGraph";
 
 export interface LatLng {
   latitude: number;
@@ -36,6 +38,12 @@ export function calculateRoute(
   travelMode: TravelMode,
   snapshot: RoutingSnapshot,
 ): RouteResult {
+  const prepared = prepareFloodRouting(
+    graph,
+    snapshot.floodReports,
+    snapshot.statusOverrides,
+  );
+  graph = prepared.graph;
   const startNode = graph.nearestAccessibleNode(
     start.latitude,
     start.longitude,
@@ -60,11 +68,11 @@ export function calculateRoute(
     };
   }
 
-  const overrides = new Map(snapshot.statusOverrides);
-  const floodReports = snapshot.floodReports;
+  const overrides = prepared.overrides;
+  const floodReports = prepared.reports;
   const fireIncidents = snapshot.fireIncidents;
   const earthquakeImpactByRoadId = new Map(snapshot.earthquakeImpacts);
-  const floodByRoadId = new Map(floodReports.map((r) => [r.roadId, r]));
+  const floodByRoadId = indexFloodReports(floodReports);
 
   // A* evaluates edgeCost on every edge expansion, and each call runs the
   // full fuzzy rule set — on a real OSM graph that's tens of thousands of
@@ -122,7 +130,7 @@ export function calculateRoute(
     .map((n) => ({ latitude: n.latitude, longitude: n.longitude }));
 
   const affectedRoads = result.edges.filter(
-    (e) => (overrides.get(e.roadId) ?? e.status) !== "OPEN",
+    (e) => effectiveEdgeStatus(e, overrides) !== "OPEN",
   ).length;
 
   // Overall route risk is the worst segment along it, not an average.

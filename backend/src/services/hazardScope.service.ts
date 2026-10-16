@@ -3,7 +3,7 @@ import { isSantaRosaSegment } from "../geography/santaRosa";
 
 const scopeCache = new WeakMap<RoadGraph, Map<string, boolean>>();
 
-/** Reports affect a whole roadId, so a road crossing the border is excluded. */
+/** Each mapped way used by a hazard report must stay inside the city. */
 export function isSantaRosaRoad(graph: RoadGraph, roadId: string): boolean {
   let cache = scopeCache.get(graph);
   if (!cache) {
