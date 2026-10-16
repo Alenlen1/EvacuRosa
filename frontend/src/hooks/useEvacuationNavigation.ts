@@ -104,9 +104,9 @@ export function useEvacuationNavigation({
     fresh &&
     center.status !== "CLOSED" &&
     center.status !== "FULL";
-  function start() {
-    if (!canStart || !fix) return;
-    void compass.request();
+  function start(allowPermissionPrompt = true) {
+    if (!canStart || !fix) return false;
+    void compass.request(allowPermissionPrompt);
     generation.current++;
     acceptedRoute.current = route;
     sessionIdentity.current = identity;
@@ -127,6 +127,7 @@ export function useEvacuationNavigation({
     setArrived(false);
     setNow(Date.now());
     setActive(true);
+    return true;
   }
   useEffect(() => {
     if (

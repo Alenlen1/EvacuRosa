@@ -46,6 +46,9 @@ interface MapProps {
   travelMode: TravelMode;
   onNavigationRoute: (data: RouteResponse) => void;
   onNavigationStart: () => void;
+  resumeNavigation?: boolean;
+  onNavigationResumeHandled?: () => void;
+  onNavigationEnd?: () => void;
   offlineReady?: boolean;
   geolocation: GeolocationState;
   onRetryLocation?: () => void;
@@ -103,7 +106,8 @@ function ClickToSetDestination({
 }) {
   useMapEvents({
     click(e) {
-      if (isInsideSantaRosa(e.latlng.lat, e.latlng.lng)) onMapClick(e.latlng.lat, e.latlng.lng);
+      if (isInsideSantaRosa(e.latlng.lat, e.latlng.lng))
+        onMapClick(e.latlng.lat, e.latlng.lng);
     },
   });
   return null;
@@ -213,6 +217,9 @@ export default function Map({
   travelMode,
   onNavigationRoute,
   onNavigationStart,
+  resumeNavigation = false,
+  onNavigationResumeHandled,
+  onNavigationEnd,
   offlineReady = false,
   geolocation,
   onRetryLocation,
@@ -284,6 +291,9 @@ export default function Map({
         geolocation={geolocation}
         onRoute={onNavigationRoute}
         onStart={onNavigationStart}
+        resumeNavigation={resumeNavigation}
+        onResumeHandled={onNavigationResumeHandled}
+        onEnd={onNavigationEnd}
         onActiveChange={setNavigating}
         onDetails={
           navigationCenter && onSelectCenter

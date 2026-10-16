@@ -5,6 +5,7 @@ import {
   readRouteSelection,
   ROUTE_SESSION_KEY,
   saveRouteSelection,
+  setRouteNavigation,
   type RouteSelection,
 } from "./routeSession";
 
@@ -26,6 +27,42 @@ function storage() {
   };
 }
 describe("route session selections", () => {
+  it("persists active navigation intent without persisting a route or GPS fix", () => {
+    const store = storage();
+    saveRouteSelection(selection, store);
+    setRouteNavigation(true, "center-1", store);
+    expect(readRouteSelection(store)).toEqual({
+      ...selection,
+      navigationActive: true,
+      navigationCenterId: "center-1",
+    });
+    setRouteNavigation(false, undefined, store);
+    expect(readRouteSelection(store)).toEqual(selection);
+  });
+  it("does not create a navigation session after its destination was cleared", () => {
+    const store = storage();
+    saveRouteSelection(selection, store);
+    clearRouteSelection(store);
+    setRouteNavigation(true, undefined, store);
+    expect(readRouteSelection(store)).toBeNull();
+  });
+  it("does not auto-resume a pin or accept a truthy string as navigation intent", () => {
+    expect(
+      parseRouteSelection(
+        JSON.stringify({ version: 1, ...selection, navigationActive: "true" }),
+      )?.navigationActive,
+    ).toBeUndefined();
+    expect(
+      parseRouteSelection(
+        JSON.stringify({
+          version: 1,
+          ...selection,
+          intent: null,
+          navigationActive: true,
+        }),
+      )?.navigationActive,
+    ).toBeUndefined();
+  });
   it("restores a destination and mode after recreating page state", () => {
     const store = storage();
     saveRouteSelection(selection, store);

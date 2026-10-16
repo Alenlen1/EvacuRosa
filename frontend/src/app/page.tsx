@@ -49,7 +49,9 @@ import {
   readRouteSelection,
   saveRouteSelection,
   clearRouteSelection,
+  setRouteNavigation,
 } from "@/lib/routeSession";
+import { usableFix } from "@/lib/navigation";
 import {
   prepareOfflineRouting,
   getOfflinePackage,
@@ -188,6 +190,9 @@ function PublicHome() {
   const restoredOnce = useRef(false);
   const pendingRestore = useRef<"route" | "evacuation" | null>(null);
   const [restoring, setRestoring] = useState(false);
+  const pendingNavigationResume = useRef(false);
+  const resumeCenterId = useRef<string | undefined>(undefined);
+  const [resumeNavigation, setResumeNavigation] = useState(false);
   useEffect(
     () => () => {
       routeVersion.current += 1;
@@ -197,6 +202,9 @@ function PublicHome() {
 
   function cancelRestore() {
     pendingRestore.current = null;
+    pendingNavigationResume.current = false;
+    resumeCenterId.current = undefined;
+    setResumeNavigation(false);
     setRestoring(false);
   }
 
@@ -210,6 +218,8 @@ function PublicHome() {
     setTravelMode(saved.travelMode);
     routeIntent.current = saved.intent;
     pendingRestore.current = saved.intent;
+    pendingNavigationResume.current = saved.navigationActive === true;
+    resumeCenterId.current = saved.navigationCenterId;
     setRestoring(saved.intent !== null);
     if (saved.destination || saved.intent) setSheetState("partial");
   }, []);
@@ -336,16 +346,53 @@ function PublicHome() {
   async function handleFindRoute(
     mode: TravelMode = travelMode,
     keepPrevious = false,
+    resume = false,
   ) {
     if (!geolocation.position || !destination) return;
+    const centerId = resume ? resumeCenterId.current : undefined;
+    const intent =
+      resume && routeIntent.current === "evacuation" ? "evacuation" : "route";
     cancelRestore();
-    saveRouteSelection({ destination, travelMode: mode, intent: "route" });
-    routeIntent.current = "route";
+    saveRouteSelection({
+      destination,
+      travelMode: mode,
+      intent,
+      ...(resume
+        ? { navigationActive: true, navigationCenterId: centerId }
+        : {}),
+    });
+    routeIntent.current = intent;
     const version = ++routeVersion.current;
     setLoading("route");
     setError(null);
     if (!keepPrevious) setResult(null);
     try {
+      if (resume && (centerId || intent === "evacuation")) {
+        // Resume to the selected shelter, not a newly chosen nearest shelter.
+        const currentCenters = isOnline
+          ? await fetchEvacuationCenters()
+          : (await getOfflinePackage())?.snapshot.centers;
+        if (version !== routeVersion.current) return;
+        const center = currentCenters?.find((item) =>
+          centerId
+            ? item.id === centerId
+            : item.latitude === destination.latitude &&
+              item.longitude === destination.longitude,
+        );
+        if (
+          !center ||
+          center.status === "FULL" ||
+          center.status === "CLOSED" ||
+          center.latitude !== destination.latitude ||
+          center.longitude !== destination.longitude
+        )
+          throw new Error(
+            t(
+              "The previous evacuation center is unavailable. Choose another center before starting navigation.",
+            ),
+          );
+        setCenters(currentCenters!);
+      }
       const data = await fetchRoute(
         {
           latitude: geolocation.position.latitude,
@@ -357,9 +404,11 @@ function PublicHome() {
       if (version === routeVersion.current) {
         setResult({ kind: "route", data });
         setResultMode(mode);
+        setResumeNavigation(resume);
       }
     } catch (err) {
       if (version === routeVersion.current) {
+        if (resume) setRouteNavigation(false);
         setSheetState("partial");
         setResult(null);
         setError(
@@ -449,8 +498,11 @@ function PublicHome() {
     )
       return;
     if (intent === "route" && !destination) return;
+    const resume = pendingNavigationResume.current;
+    if (resume && !usableFix(geolocation.position, Date.now())) return;
     pendingRestore.current = null;
-    if (intent === "evacuation") void handleFindEvacuationCenter();
+    if (resume && destination) void handleFindRoute(travelMode, false, true);
+    else if (intent === "evacuation") void handleFindEvacuationCenter();
     else void handleFindRoute();
   });
 
@@ -606,6 +658,8 @@ function PublicHome() {
       value={travelMode}
       onChange={(mode) => {
         if (mode === travelMode) return;
+        pendingNavigationResume.current = false;
+        setResumeNavigation(false);
         const resumeWhenReady = pendingRestore.current;
         saveRouteSelection({
           destination,
@@ -788,8 +842,15 @@ function PublicHome() {
                 setResultMode(travelMode);
               }}
               onNavigationStart={() => {
+                setRouteNavigation(true, routeCenter?.id);
                 setPanel("map");
                 setSheetState("collapsed");
+              }}
+              resumeNavigation={resumeNavigation}
+              onNavigationResumeHandled={() => setResumeNavigation(false)}
+              onNavigationEnd={() => {
+                setResumeNavigation(false);
+                setRouteNavigation(false);
               }}
               offlineReady={offlineStatus.state === "ready"}
               geolocation={geolocation}
@@ -878,9 +939,13 @@ function PublicHome() {
                       ? t(
                           "Saved selection restored. Connect to the internet to recalculate.",
                         )
-                      : t(
-                          "Saved selection restored. Waiting for location access to recalculate.",
-                        )}
+                      : pendingNavigationResume.current
+                        ? t(
+                            "Resuming navigation. Waiting for a fresh, accurate location.",
+                          )
+                        : t(
+                            "Saved selection restored. Waiting for location access to recalculate.",
+                          )}
                   </p>
                 )}
                 {error && (
