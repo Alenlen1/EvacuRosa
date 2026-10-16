@@ -18,7 +18,6 @@ import {
 import {
   SANTA_ROSA_CITY_BOUNDS,
   SANTA_ROSA_CITY_CENTER,
-  SANTA_ROSA_CITY_DEFAULT_ZOOM,
 } from "@/lib/mapBounds";
 import type { GeolocationState } from "@/hooks/useGeolocation";
 import type {
@@ -246,11 +245,11 @@ export default function Map({
   return (
     <MapContainer
       center={SANTA_ROSA_CITY_CENTER}
-      zoom={Math.max(PUBLIC_MAP_MIN_ZOOM, SANTA_ROSA_CITY_DEFAULT_ZOOM)}
+      zoom={18}
       maxBounds={SANTA_ROSA_CITY_BOUNDS}
       maxBoundsViscosity={1}
       minZoom={PUBLIC_MAP_MIN_ZOOM}
-      maxZoom={17}
+      maxZoom={25}
       rotate
       rotateControl={false}
       // leaflet-rotate can drift vector overlays during CSS zoom transitions.
