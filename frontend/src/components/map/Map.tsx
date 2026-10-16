@@ -250,7 +250,7 @@ export default function Map({
       maxBounds={SANTA_ROSA_CITY_BOUNDS}
       maxBoundsViscosity={1}
       minZoom={PUBLIC_MAP_MIN_ZOOM}
-      maxZoom={17}
+      maxZoom={20}
       rotate
       rotateControl={false}
       // leaflet-rotate can drift vector overlays during CSS zoom transitions.
