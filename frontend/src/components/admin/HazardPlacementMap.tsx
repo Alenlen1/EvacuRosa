@@ -11,6 +11,11 @@ import {
 } from "react-leaflet";
 import { Trash2 } from "lucide-react";
 import {
+  hazardCoordinates,
+  roadCoordinates,
+  removeHazardBatch,
+} from "@/lib/adminHazards";
+import {
   FloodIcon,
   FireIcon,
   EarthquakeIcon,
@@ -112,6 +117,8 @@ export default function HazardPlacementMap({
   const [error, setError] = useState<string | null>(null);
   const [lookingUpRoads, setLookingUpRoads] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removalNotice, setRemovalNotice] = useState<string | null>(null);
+  const removalPending = useRef(false);
   const roadLookupVersion = useRef(0);
 
   async function handleMapClick(lat: number, lng: number) {
@@ -154,7 +161,7 @@ export default function HazardPlacementMap({
   }
 
   async function handleSubmit() {
-    if (!pendingPoint) return;
+    if (!pendingPoint || removalPending.current) return;
     if (!isInsideSantaRosa(pendingPoint.lat, pendingPoint.lng)) {
       setError(HAZARD_CITY_ERROR);
       return;
@@ -208,11 +215,14 @@ export default function HazardPlacementMap({
     kind: "flood" | "fire" | "earthquake" | "impact",
     id: string,
   ) {
+    if (removalPending.current || loading) return;
     const label =
       kind === "impact" ? "earthquake road impact" : `${kind} record`;
     if (!window.confirm(`Remove this ${label}?`)) return;
+    removalPending.current = true;
     setRemovingId(id);
     setError(null);
+    setRemovalNotice(null);
     try {
       if (kind === "flood") await deleteFloodReport(authToken, id);
       else if (kind === "fire") await deleteFireIncident(authToken, id);
@@ -225,6 +235,62 @@ export default function HazardPlacementMap({
         err instanceof Error ? err.message : "Could not remove this record.",
       );
     } finally {
+      removalPending.current = false;
+      setRemovingId(null);
+    }
+  }
+
+  async function removeAllHazards() {
+    if (removalPending.current || loading) return;
+    const count =
+      floodReports.length +
+      fireIncidents.length +
+      earthquakeEvents.length +
+      earthquakeRoadImpacts.length;
+    if (
+      !count ||
+      !window.confirm(
+        `Remove all ${count} loaded hazard records? This includes floods, fires, earthquake events and verified road impacts. Removing them changes routing immediately and cannot be undone.`,
+      )
+    )
+      return;
+    removalPending.current = true;
+    setRemovingId("all");
+    setError(null);
+    setRemovalNotice(null);
+    try {
+      // Remove impacts first, then their events. Never remove an event if any
+      // impact deletion failed, so a failed impact remains available to retry.
+      const first = await removeHazardBatch([
+        ...floodReports.map(
+          (item) => () => deleteFloodReport(authToken, item.id),
+        ),
+        ...fireIncidents.map(
+          (item) => () => deleteFireIncident(authToken, item.id),
+        ),
+        ...earthquakeRoadImpacts.map(
+          (item) => () => deleteEarthquakeRoadImpact(authToken, item.id),
+        ),
+      ]);
+      const events =
+        first.failed === 0
+          ? await removeHazardBatch(
+              earthquakeEvents.map(
+                (item) => () => deleteEarthquakeEvent(authToken, item.id),
+              ),
+            )
+          : { removed: 0, failed: earthquakeEvents.length };
+      const failed = first.failed + events.failed;
+      const removed = first.removed + events.removed;
+      setRemovalNotice(`Removed ${removed} hazard record(s).`);
+      if (failed)
+        setError(
+          `${failed} record(s) could not be removed or were skipped. Refresh and retry the remaining records.`,
+        );
+      resetForm();
+      onCreated();
+    } finally {
+      removalPending.current = false;
       setRemovingId(null);
     }
   }
@@ -538,6 +604,7 @@ export default function HazardPlacementMap({
                 onClick={handleSubmit}
                 disabled={
                   loading ||
+                  removingId !== null ||
                   lookingUpRoads ||
                   (mode !== "fire" && !selectedRoadId)
                 }
@@ -561,9 +628,33 @@ export default function HazardPlacementMap({
         <h3 className="text-sm font-semibold text-slate-700">
           Active hazard records
         </h3>
+        <button
+          type="button"
+          onClick={() => void removeAllHazards()}
+          disabled={
+            loading ||
+            removingId !== null ||
+            !(
+              floodReports.length +
+              fireIncidents.length +
+              earthquakeEvents.length +
+              earthquakeRoadImpacts.length
+            )
+          }
+          className="inline-flex items-center gap-1 rounded border border-red-300 px-3 py-2 text-xs text-red-700 disabled:opacity-50"
+        >
+          <Trash2 size={14} aria-hidden="true" />
+          {removingId === "all" ? "Removing all…" : "Remove all hazards"}
+        </button>
+        {removalNotice && (
+          <p role="status" className="text-xs">
+            {removalNotice}
+          </p>
+        )}
         {floodReports.length === 0 &&
           fireIncidents.length === 0 &&
-          earthquakeEvents.length === 0 && (
+          earthquakeEvents.length === 0 &&
+          earthquakeRoadImpacts.length === 0 && (
             <p className="text-xs text-slate-500">No active hazard records.</p>
           )}
         {floodReports.length > 0 && (
@@ -575,13 +666,14 @@ export default function HazardPlacementMap({
                 className="flex items-center justify-between gap-3 rounded border border-slate-200 px-2 py-1.5 text-xs"
               >
                 <span>
-                  {report.severity} · {report.roadId}
+                  {report.severity} · Road location:{" "}
+                  {roadCoordinates(report.affectedSegments)}
                   {report.roadImpassable ? " · blocked" : ""}
                 </span>
                 <button
                   type="button"
                   onClick={() => removeHazard("flood", report.id)}
-                  disabled={removingId === report.id}
+                  disabled={removingId !== null || loading}
                   className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
                 >
                   <Trash2 size={13} />{" "}
@@ -601,11 +693,13 @@ export default function HazardPlacementMap({
               >
                 <span>
                   {incident.severity} fire · {incident.radiusMeters}m radius
+                  {" · "}
+                  {hazardCoordinates(incident)}
                 </span>
                 <button
                   type="button"
                   onClick={() => removeHazard("fire", incident.id)}
-                  disabled={removingId === incident.id}
+                  disabled={removingId !== null || loading}
                   className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
                 >
                   <Trash2 size={13} />{" "}
@@ -634,11 +728,13 @@ export default function HazardPlacementMap({
                       M{event.magnitude.toFixed(1)} ·{" "}
                       {new Date(event.occurredAt).toLocaleDateString()} ·{" "}
                       {event.status}
+                      {" · "}
+                      {hazardCoordinates(event)}
                     </span>
                     <button
                       type="button"
                       onClick={() => removeHazard("earthquake", event.id)}
-                      disabled={removingId === event.id}
+                      disabled={removingId !== null || loading}
                       className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
                     >
                       <Trash2 size={13} />{" "}
@@ -651,13 +747,14 @@ export default function HazardPlacementMap({
                       className="mt-1 flex items-center justify-between gap-3 border-t border-slate-100 pt-1"
                     >
                       <span>
-                        {impact.impactLevel} impact · {impact.roadId}
+                        {impact.impactLevel} impact · Road location:{" "}
+                        {roadCoordinates(impact.affectedSegments)}
                         {impact.confirmedBlocked ? " · blocked" : ""}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeHazard("impact", impact.id)}
-                        disabled={removingId === impact.id}
+                        disabled={removingId !== null || loading}
                         className="text-red-700 disabled:opacity-50"
                       >
                         {removingId === impact.id
