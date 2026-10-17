@@ -12,7 +12,7 @@ import {
   Tooltip,
   useMapEvents,
 } from "react-leaflet";
-import { Trash2 } from "lucide-react";
+import { Trash2, PersonStanding, ExternalLink, X } from "lucide-react";
 import {
   hazardCoordinates,
   roadCoordinates,
@@ -105,6 +105,12 @@ export default function HazardPlacementMap({
   onCreated,
 }: HazardPlacementMapProps) {
   const [mode, setMode] = useState<Mode>("flood");
+  const [inspectStreet, setInspectStreet] = useState(false);
+  const [streetViewPoint, setStreetViewPoint] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [streetViewError, setStreetViewError] = useState<string | null>(null);
   const [floodCoverage, setFloodCoverage] = useState<"section" | "entire-road">(
     "section",
   );
@@ -197,8 +203,19 @@ export default function HazardPlacementMap({
       : null);
   const displayedEnd = snappedPreview?.snappedEnd ?? sectionEnd;
 
-  async function handleMapClick(lat: number, lng: number) {
+  async function handleMapClick(lat: number, lng: number, reportStart = false) {
     if (loading || removalPending.current) return;
+    if (inspectStreet && !reportStart) {
+      if (!isInsideSantaRosa(lat, lng)) {
+        setStreetViewError(
+          "Select a street photo location inside Santa Rosa City.",
+        );
+        return;
+      }
+      setStreetViewPoint({ latitude: lat, longitude: lng });
+      setStreetViewError(null);
+      return;
+    }
     if (!isInsideSantaRosa(lat, lng)) {
       resetForm();
       setError(HAZARD_CITY_ERROR);
@@ -206,6 +223,7 @@ export default function HazardPlacementMap({
     }
     if (
       mode === "flood" &&
+      !reportStart &&
       floodCoverage === "section" &&
       pendingPoint &&
       selectedRoadId &&
@@ -217,6 +235,10 @@ export default function HazardPlacementMap({
       return;
     }
     const version = ++roadLookupVersion.current;
+    if (reportStart) {
+      setSectionEnd(null);
+      setSectionPreview(null);
+    }
     setError(null);
     setPendingPoint({ lat, lng });
     setSelectedRoadId("");
@@ -422,6 +444,9 @@ export default function HazardPlacementMap({
             aria-pressed={mode === key}
             onClick={() => {
               setMode(key);
+              setInspectStreet(false);
+              setStreetViewPoint(null);
+              setStreetViewError(null);
               resetForm();
               // severity is shared state across all three modes, but
               // earthquake's valid values (LOW/MODERATE/HIGH) don't
@@ -496,7 +521,9 @@ export default function HazardPlacementMap({
         </div>
       )}
 
-      <div className="hazard-editor-map">
+      <div
+        className={`hazard-editor-map${inspectStreet ? " is-inspecting-street" : ""}`}
+      >
         <MapContainer
           bounds={santaRosaBounds}
           boundsOptions={{ padding: [16, 16] }}
@@ -525,6 +552,21 @@ export default function HazardPlacementMap({
             events={earthquakeEvents}
             roadImpacts={earthquakeRoadImpacts}
           />
+          {mode === "flood" && inspectStreet && streetViewPoint && (
+            <CircleMarker
+              center={[streetViewPoint.latitude, streetViewPoint.longitude]}
+              radius={9}
+              pathOptions={{
+                color: "#946b00",
+                fillColor: "#f4d84b",
+                fillOpacity: 1,
+                weight: 3,
+              }}
+              interactive={false}
+            >
+              <Tooltip permanent>Street photo location</Tooltip>
+            </CircleMarker>
+          )}
           {previewSegments.map((segment, index) => (
             <Polyline
               key={`preview-${index}`}
@@ -573,6 +615,84 @@ export default function HazardPlacementMap({
           )}
           <ClickCapture onClick={handleMapClick} />
         </MapContainer>
+        {mode === "flood" && (
+          <>
+            <button
+              type="button"
+              className="hazard-street-view-toggle"
+              aria-label="Inspect street photos"
+              title="Select a point to view Google Street View"
+              aria-pressed={inspectStreet}
+              disabled={loading || removingId !== null}
+              onClick={() => {
+                setInspectStreet((value) => !value);
+                setStreetViewError(null);
+                if (!inspectStreet && !streetViewPoint && displayedStart)
+                  setStreetViewPoint(displayedStart);
+              }}
+            >
+              <PersonStanding size={22} aria-hidden="true" />
+              <span>Street View</span>
+            </button>
+            {inspectStreet && (
+              <section
+                className="hazard-street-view-panel"
+                aria-label="Street photo inspection"
+              >
+                <div className="hazard-street-view-heading">
+                  <strong>Find the road with street photos</strong>
+                  <button
+                    type="button"
+                    aria-label="Close street photo inspection"
+                    onClick={() => setInspectStreet(false)}
+                  >
+                    <X size={18} aria-hidden="true" />
+                  </button>
+                </div>
+                <p>
+                  Select a point on the map to check nearby landmarks. Your
+                  flood selection stays in place.
+                </p>
+                {streetViewError && <p role="alert">{streetViewError}</p>}
+                {streetViewPoint && (
+                  <>
+                    <p className="hazard-street-view-coordinates">
+                      {hazardCoordinates(streetViewPoint)}
+                    </p>
+                    <a
+                      href={`https://www.google.com/maps/@?${new URLSearchParams({ api: "1", map_action: "pano", viewpoint: `${streetViewPoint.latitude},${streetViewPoint.longitude}` })}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink size={15} aria-hidden="true" /> Open Google
+                      Street View
+                    </a>
+                    <small>
+                      Opens Google Maps in a new tab or app. Photos depend on
+                      coverage and may be old; verify current flooding
+                      separately.
+                    </small>
+                    <button
+                      type="button"
+                      className="hazard-street-view-use"
+                      disabled={loading || removingId !== null}
+                      onClick={() => {
+                        setInspectStreet(false);
+                        void handleMapClick(
+                          streetViewPoint.latitude,
+                          streetViewPoint.longitude,
+                          true,
+                        );
+                      }}
+                    >
+                      Use as new flood start
+                    </button>
+                  </>
+                )}
+              </section>
+            )}
+          </>
+        )}
       </div>
 
       <div className="hazard-form">
