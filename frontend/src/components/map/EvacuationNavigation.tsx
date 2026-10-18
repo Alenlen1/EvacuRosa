@@ -34,6 +34,7 @@ export function EvacuationNavigation({
   onStart,
   onDetails,
   resumeNavigation = false,
+  routeUpdating = false,
   onResumeHandled,
   onEnd,
 }: {
@@ -46,6 +47,7 @@ export function EvacuationNavigation({
   onStart: () => void;
   onDetails?: () => void;
   resumeNavigation?: boolean;
+  routeUpdating?: boolean;
   onResumeHandled?: () => void;
   onEnd?: () => void;
 }) {
@@ -57,6 +59,7 @@ export function EvacuationNavigation({
     mode,
     geolocation,
     onRoute,
+    routeUpdating,
   });
   const [headingUp, setHeadingUp] = useState(true);
   const [following, setFollowing] = useState(true);

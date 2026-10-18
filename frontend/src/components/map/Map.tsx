@@ -47,6 +47,7 @@ interface MapProps {
   onNavigationRoute: (data: RouteResponse) => void;
   onNavigationStart: () => void;
   resumeNavigation?: boolean;
+  navigationRouteUpdating?: boolean;
   onNavigationResumeHandled?: () => void;
   onNavigationEnd?: () => void;
   offlineReady?: boolean;
@@ -218,6 +219,7 @@ export default function Map({
   onNavigationRoute,
   onNavigationStart,
   resumeNavigation = false,
+  navigationRouteUpdating = false,
   onNavigationResumeHandled,
   onNavigationEnd,
   offlineReady = false,
@@ -292,6 +294,7 @@ export default function Map({
         onRoute={onNavigationRoute}
         onStart={onNavigationStart}
         resumeNavigation={resumeNavigation}
+        routeUpdating={navigationRouteUpdating}
         onResumeHandled={onNavigationResumeHandled}
         onEnd={onNavigationEnd}
         onActiveChange={setNavigating}
