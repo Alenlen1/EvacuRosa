@@ -204,7 +204,7 @@ export const filipino: Record<string, string> = {
   "Calculating your route…": "Kinakalkula ang iyong ruta…",
   "Travel mode": "Paraan ng paglalakbay",
   Walking: "Paglalakad",
-  Biking: "Bisikleta",
+  Cycling: "Bisikleta",
   Motorcycle: "Motorsiklo",
   Car: "Kotse",
   "Routing information": "Impormasyon sa ruta",

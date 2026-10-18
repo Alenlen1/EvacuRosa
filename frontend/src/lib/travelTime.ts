@@ -1,7 +1,7 @@
 // An explicit planning assumption, not a live or hazard-adjusted ETA.
 export const TRAVEL_MODES = {
   walking: { label: "Walking", speedKmh: 4 },
-  biking: { label: "Biking", speedKmh: 12 },
+  biking: { label: "Cycling", speedKmh: 12 },
   motorcycle: { label: "Motorcycle", speedKmh: 25 },
   car: { label: "Car", speedKmh: 20 },
 } as const;
