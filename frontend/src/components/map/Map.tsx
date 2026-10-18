@@ -70,16 +70,51 @@ interface MapProps {
 function FollowUser({
   position,
   following,
+  onPause,
 }: {
   position: { latitude: number; longitude: number } | null;
   following: boolean;
+  onPause: () => void;
 }) {
   const map = useMap();
 
   useEffect(() => {
-    if (following && position) {
-      map.flyTo([position.latitude, position.longitude], map.getZoom(), {
-        duration: 0.5,
+    if (!following) return;
+    const container = map.getContainer();
+    const pause = () => {
+      map.stop();
+      onPause();
+    };
+    const gesture = (event: Event) => {
+      const element = event.target as HTMLElement;
+      if (
+        !element.closest(".leaflet-control") ||
+        element.closest(".leaflet-control-zoom")
+      )
+        pause();
+    };
+    map.on("dragstart", pause);
+    container.addEventListener("pointerdown", gesture);
+    container.addEventListener("wheel", gesture, { passive: true });
+    container.addEventListener("keydown", gesture);
+    return () => {
+      map.off("dragstart", pause);
+      container.removeEventListener("pointerdown", gesture);
+      container.removeEventListener("wheel", gesture);
+      container.removeEventListener("keydown", gesture);
+    };
+  }, [following, map, onPause]);
+
+  useEffect(() => {
+    if (
+      following &&
+      position &&
+      isInsideSantaRosa(position.latitude, position.longitude)
+    ) {
+      // Center immediately, including the first GPS fix. An animated flight
+      // can cross the city boundary and be interrupted by PublicMapScope.
+      map.setView([position.latitude, position.longitude], map.getZoom(), {
+        animate: false,
       });
     }
   }, [following, position, map]);
@@ -239,7 +274,7 @@ export default function Map({
   onSelectCenter,
 }: MapProps) {
   const isOnline = useOnlineStatus();
-  const [following, setFollowing] = useState(false);
+  const [following, setFollowing] = useState(true);
   const [navigating, setNavigating] = useState(false);
   useEffect(() => {
     if (navigating) setFollowing(false);
@@ -316,8 +351,9 @@ export default function Map({
       <PublicMapScope />
       <ResizeMap />
       <FollowUser
-        position={geolocation.position}
+        position={geolocation.status === "active" ? geolocation.position : null}
         following={following && !navigating}
+        onPause={() => setFollowing(false)}
       />
       {!navigating && <FocusSearchResult target={searchFocus} />}
       {!navigating && (
@@ -332,7 +368,7 @@ export default function Map({
       )}
       {!navigating && (
         <MapControls
-          isFollowing={following}
+          isFollowing={following && geolocation.status === "active"}
           onFollowMe={() => {
             if (geolocation.status !== "active") {
               onRetryLocation?.();
