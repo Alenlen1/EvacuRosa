@@ -36,12 +36,14 @@ export function useEvacuationNavigation({
   mode,
   geolocation,
   onRoute,
+  routeUpdating = false,
 }: {
   route: LatLng[] | null;
   center?: NavigationDestination;
   mode: TravelMode;
   geolocation: GeolocationState;
   onRoute: (route: RouteResponse) => void;
+  routeUpdating?: boolean;
 }) {
   const [active, setActive] = useState(false);
   const [arrived, setArrived] = useState(false);
@@ -84,7 +86,37 @@ export function useEvacuationNavigation({
   }, [active]);
   const identity = `${center?.id}:${center?.latitude}:${center?.longitude}:${mode}`;
   const sessionIdentity = useRef("");
+  const updatingIdentity = useRef<string | null>(null);
   useEffect(() => {
+    if (active && routeUpdating) {
+      // Cancel any old-mode wrong-turn request while the page calculates the
+      // newly selected mode. Keep the navigation controls and camera active.
+      generation.current++;
+      pending.current = false;
+      updatingIdentity.current = identity;
+      setRerouting(false);
+      return;
+    }
+    if (
+      active &&
+      updatingIdentity.current === identity &&
+      route &&
+      route.length >= 2
+    ) {
+      acceptedRoute.current = route;
+      sessionIdentity.current = identity;
+      progress.current = 0;
+      lastFix.current = null;
+      seen.current = 0;
+      away.current = 0;
+      arrivalSince.current = null;
+      retryAfter.current = 0;
+      setAlong(0);
+      setOffRoute(false);
+      setRouteError(false);
+      setRejected(false);
+    }
+    updatingIdentity.current = null;
     if (
       (active || arrived) &&
       (identity !== sessionIdentity.current || route !== acceptedRoute.current)
@@ -92,7 +124,7 @@ export function useEvacuationNavigation({
       stop();
       setArrived(false);
     }
-  }, [active, arrived, identity, route, stop]);
+  }, [active, arrived, identity, route, routeUpdating, stop]);
   const fix = geolocation.position;
   const fresh =
     geolocation.status === "active" &&
@@ -132,6 +164,7 @@ export function useEvacuationNavigation({
   useEffect(() => {
     if (
       !active ||
+      routeUpdating ||
       !route ||
       !center ||
       !fix ||
@@ -225,7 +258,19 @@ export function useEvacuationNavigation({
           setRerouting(false);
         }
       });
-  }, [active, route, center, mode, fix, fresh, lengths, total, onRoute, stop]);
+  }, [
+    active,
+    route,
+    center,
+    mode,
+    fix,
+    fresh,
+    lengths,
+    total,
+    onRoute,
+    stop,
+    routeUpdating,
+  ]);
   const remaining = Math.max(0, total - along);
   const remainingPoints = useMemo(
     () => (route && active ? remainingRoute(route, lengths, along) : route),
@@ -259,15 +304,15 @@ export function useEvacuationNavigation({
     position,
     fresh: fresh && !rejected,
     remaining,
-    remainingPoints,
+    remainingPoints: routeUpdating ? null : remainingPoints,
     heading,
     headingSource,
-    lookAhead,
+    lookAhead: routeUpdating ? null : lookAhead,
     bend,
     near:
       remaining < 70 && !!position && !!center && meters(position, center) < 85,
     offRoute,
-    rerouting,
+    rerouting: rerouting || routeUpdating,
     routeError,
     compass,
     dismissArrival: () => setArrived(false),

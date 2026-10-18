@@ -193,6 +193,7 @@ function PublicHome() {
   const pendingNavigationResume = useRef(false);
   const resumeCenterId = useRef<string | undefined>(undefined);
   const [resumeNavigation, setResumeNavigation] = useState(false);
+  const [navigationActive, setNavigationActive] = useState(false);
   useEffect(
     () => () => {
       routeVersion.current += 1;
@@ -404,7 +405,7 @@ function PublicHome() {
       if (version === routeVersion.current) {
         setResult({ kind: "route", data });
         setResultMode(mode);
-        setResumeNavigation(resume);
+        setResumeNavigation(resume && !navigationActive);
       }
     } catch (err) {
       if (version === routeVersion.current) {
@@ -507,7 +508,9 @@ function PublicHome() {
   });
 
   const activeRoutePoints =
-    result && resultMode === travelMode ? result.data.route : null;
+    result && (resultMode === travelMode || navigationActive)
+      ? result.data.route
+      : null;
 
   const routingDisabledReason = !canRoute
     ? t("Connect once to download offline routing data.")
@@ -658,13 +661,18 @@ function PublicHome() {
       value={travelMode}
       onChange={(mode) => {
         if (mode === travelMode) return;
-        pendingNavigationResume.current = false;
         setResumeNavigation(false);
         const resumeWhenReady = pendingRestore.current;
         saveRouteSelection({
           destination,
           travelMode: mode,
           intent: routeIntent.current,
+          ...(navigationActive || pendingNavigationResume.current
+            ? {
+                navigationActive: true,
+                navigationCenterId: routeCenter?.id ?? resumeCenterId.current,
+              }
+            : {}),
         });
         routeVersion.current += 1;
         setTravelMode(mode);
@@ -684,6 +692,9 @@ function PublicHome() {
                   "Enable location access to recalculate for this travel mode.",
                 ),
           );
+        } else if (navigationActive && destination) {
+          resumeCenterId.current = routeCenter?.id;
+          void handleFindRoute(mode, true, true);
         } else if (routeIntent.current === "evacuation") {
           void handleFindEvacuationCenter(mode, true);
         } else if (routeIntent.current === "route") {
@@ -842,13 +853,21 @@ function PublicHome() {
                 setResultMode(travelMode);
               }}
               onNavigationStart={() => {
+                setNavigationActive(true);
                 setRouteNavigation(true, routeCenter?.id);
                 setPanel("map");
                 setSheetState("collapsed");
               }}
               resumeNavigation={resumeNavigation}
+              navigationRouteUpdating={navigationActive && loading !== null}
               onNavigationResumeHandled={() => setResumeNavigation(false)}
               onNavigationEnd={() => {
+                setNavigationActive(false);
+                if (loading !== null) {
+                  routeVersion.current += 1;
+                  setLoading(null);
+                  setResult(null);
+                }
                 setResumeNavigation(false);
                 setRouteNavigation(false);
               }}
