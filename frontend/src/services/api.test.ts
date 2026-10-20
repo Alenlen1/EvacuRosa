@@ -43,7 +43,7 @@ describe("location-sharing API", () => {
     );
   });
   it.each(["network", "server"])(
-    "uses saved routing after a %s failure",
+    "does not silently use stale hazards after an online %s failure",
     async (failure) => {
       vi.stubGlobal("navigator", { onLine: true });
       offline.getOfflinePackage.mockResolvedValue({});
@@ -54,9 +54,37 @@ describe("location-sharing API", () => {
           ? vi.fn().mockRejectedValue(new TypeError("Disconnected"))
           : vi.fn().mockResolvedValue(new Response(null, { status: 503 })),
       );
-      await expect(fetchRoute(start, destination)).resolves.toMatchObject({
+      await expect(fetchRoute(start, destination)).rejects.toThrow(
+        "Current road closures could not be verified",
+      );
+      await expect(fetchEvacuationRoute(start)).rejects.toThrow(
+        "Current road closures could not be verified",
+      );
+      expect(offline.calculateOfflineRoute).not.toHaveBeenCalled();
+      expect(offline.calculateOfflineEvacuationRoute).not.toHaveBeenCalled();
+    },
+  );
+  it.each(["route", "evacuation"])(
+    "uses offline routing if connectivity is lost during a %s request",
+    async (kind) => {
+      const connection = { onLine: true };
+      vi.stubGlobal("navigator", connection);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockImplementation(async () => {
+          connection.onLine = false;
+          throw new TypeError("Disconnected");
+        }),
+      );
+      offline.calculateOfflineRoute.mockResolvedValue({ source: "offline" });
+      offline.calculateOfflineEvacuationRoute.mockResolvedValue({
         source: "offline",
       });
+      await expect(
+        kind === "route"
+          ? fetchRoute(start, destination)
+          : fetchEvacuationRoute(start),
+      ).resolves.toMatchObject({ source: "offline" });
     },
   );
   it("deletes only the selected request with authorization and no caching", async () => {
@@ -81,13 +109,11 @@ describe("location-sharing API", () => {
     async (status) => {
       vi.stubGlobal(
         "fetch",
-        vi
-          .fn()
-          .mockResolvedValue(
-            new Response(JSON.stringify({ error: "Delete failed" }), {
-              status,
-            }),
-          ),
+        vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({ error: "Delete failed" }), {
+            status,
+          }),
+        ),
       );
       await expect(deleteAssistanceRequest("token", "id")).rejects.toThrow(
         "Delete failed",
@@ -99,17 +125,15 @@ describe("location-sharing API", () => {
     async (kind) => {
       vi.stubGlobal(
         "fetch",
-        vi
-          .fn()
-          .mockResolvedValue(
-            new Response(
-              JSON.stringify({
-                warnings: ["No route"],
-                failureReason: "HAZARD_BLOCKED",
-              }),
-              { status: 422 },
-            ),
+        vi.fn().mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              warnings: ["No route"],
+              failureReason: "HAZARD_BLOCKED",
+            }),
+            { status: 422 },
           ),
+        ),
       );
       const call =
         kind === "route"
@@ -126,17 +150,15 @@ describe("location-sharing API", () => {
   it("does not offer hazard assistance for server/network failures", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(
-            JSON.stringify({
-              error: "Unavailable",
-              failureReason: "HAZARD_BLOCKED",
-            }),
-            { status: 503 },
-          ),
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: "Unavailable",
+            failureReason: "HAZARD_BLOCKED",
+          }),
+          { status: 503 },
         ),
+      ),
     );
     await expect(fetchRoute(start, destination)).rejects.toMatchObject({
       failureReason: undefined,
@@ -145,7 +167,7 @@ describe("location-sharing API", () => {
       "fetch",
       vi.fn().mockRejectedValue(new TypeError("Network error")),
     );
-    await expect(fetchRoute(start, destination)).rejects.not.toBeInstanceOf(
+    await expect(fetchRoute(start, destination)).rejects.toBeInstanceOf(
       RoutingError,
     );
   });

@@ -22,11 +22,17 @@ export function prepareFloodRouting(
   sourceOverrides: [string, RoadStatus][],
 ) {
   const ranges = reports.flatMap((report) => report.edgeRanges ?? []);
-  if (!ranges.length)
+  if (!ranges.length) {
+    cached.delete(base);
     return { graph: base, reports, overrides: new Map(sourceOverrides) };
+  }
   const key = JSON.stringify(ranges);
   let partition = cached.get(base);
   if (!partition || partition.key !== key) {
+    // Release the previous full partition before constructing its replacement.
+    // Otherwise a flood edit temporarily retains three indexed road graphs.
+    cached.delete(base);
+    partition = undefined;
     const cuts = new Map<string, Set<number>>();
     for (const range of ranges) {
       if (
