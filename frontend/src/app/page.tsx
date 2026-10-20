@@ -7,7 +7,6 @@ import {
 import { LocationRecovery } from "@/components/LocationRecovery";
 import { ShelterSupplies } from "@/components/map/ShelterSupplies";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   MapPin,
@@ -718,10 +717,6 @@ function PublicHome() {
         <span className="city-label">
           <MapPin size={16} /> Santa Rosa, Laguna
         </span>
-        <Link href="/admin/login" className="admin-link">
-          {t("Admin sign in")}
-          <ArrowRight size={15} />
-        </Link>
         <LanguageToggle />
         <MobileNavigation activeSection={panel} onSelect={choosePanel} />
         <EmergencyContact {...emergencyContactProps} />
@@ -1021,11 +1016,6 @@ function PublicHome() {
                   </p>
                 )}
               </div>
-              {panel === "hazards" && (
-                <Link href="/admin/login" className="mobile-staff-access">
-                  {t("Staff access · Admin sign in")}
-                </Link>
-              )}
             </>
           }
         >

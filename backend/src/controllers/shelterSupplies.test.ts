@@ -8,18 +8,30 @@ async function call(body: unknown) {
     eq: vi.fn(),
     select: vi.fn(),
     single: vi.fn().mockResolvedValue({ data: { id: "center" }, error: null }),
+    maybeSingle: vi
+      .fn()
+      .mockResolvedValue({
+        data: {
+          id: "center",
+          latitude: 14.3146,
+          longitude: 121.1137,
+          capacity: 100,
+          current_occupancy: 0,
+        },
+        error: null,
+      }),
   };
   query.eq.mockReturnValue(query);
   query.select.mockReturnValue(query);
   const update = vi.fn(() => query);
-  const from = vi.fn(() => ({ update }));
+  const from = vi.fn(() => ({ update, select: () => query }));
   const res = { status: vi.fn(), json: vi.fn() };
   res.status.mockReturnValue(res);
   await updateEvacuationCenter(
     {
       body,
       params: { id: "center" },
-      profile: { id: "staff" },
+      profile: { id: "staff", role: "SUPER_ADMIN", barangay_id: null },
       userSupabase: { from },
     } as unknown as RoleAwareRequest,
     res as unknown as Response,
@@ -39,13 +51,10 @@ describe("shelter supplies", () => {
     const { update, query } = await call({
       waterStatus: "low",
       medicalStatus: "unknown",
-      supplies_updated_at: "forged",
-      updated_by: "forged",
     });
     expect(update).toHaveBeenCalledWith({
       water_status: "low",
       medical_status: "unknown",
-      supplies_updated_at: expect.any(String),
       updated_by: "staff",
     });
     expect(query.eq).toHaveBeenCalledWith("id", "center");

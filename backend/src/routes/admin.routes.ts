@@ -7,7 +7,6 @@ import {
 import { requireAuth } from "../middleware/auth.middleware";
 import { attachProfile, requireRole } from "../middleware/role.middleware";
 import {
-  updateEvacuationCenter,
   createFloodReport,
   updateFloodReport,
   deleteFloodReport,
@@ -20,7 +19,41 @@ import {
   deleteEarthquakeRoadImpact,
 } from "../controllers/admin.controller";
 
+import {
+  listBarangays,
+  signInBarangay,
+} from "../controllers/barangayAccess.controller";
+import {
+  listAdminCenters,
+  createCenter,
+  updateCenter,
+  deleteCenter,
+} from "../controllers/centerManagement.controller";
+
 export const adminRouter = Router();
+adminRouter.get("/barangays", listBarangays);
+adminRouter.post("/barangay-login", signInBarangay);
+adminRouter.get(
+  "/evacuation-centers",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN", "BARANGAY_ADMIN"),
+  listAdminCenters,
+);
+adminRouter.post(
+  "/evacuation-centers",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  createCenter,
+);
+adminRouter.delete(
+  "/evacuation-centers/:id",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  deleteCenter,
+);
 adminRouter.patch(
   "/assistance-requests/:id",
   requireAuth,
@@ -47,8 +80,8 @@ adminRouter.put(
   "/evacuation-centers/:id",
   requireAuth,
   attachProfile,
-  requireRole("BARANGAY_ADMIN"),
-  updateEvacuationCenter,
+  requireRole("BARANGAY_ADMIN", "SUPER_ADMIN"),
+  updateCenter,
 );
 
 // Flood, fire, and earthquake data are all citywide/CDRRMO-managed —
