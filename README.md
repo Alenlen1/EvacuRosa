@@ -68,7 +68,7 @@ The system supports two administrative roles:
 
 #### BARANGAY_ADMIN
 
-Barangay administrators select their barangay on the separate admin website and authenticate with its private access code. They can update only occupancy and availability for their assigned centers. Null barangay assignments do not grant citywide access.
+CDRRMO and barangay staff sign in on the separate admin website with their Supabase Auth email and password. CDRRMO opens the city dashboard. The shared barangay login opens a list of the 18 barangays; each barangay requires its own private code. Successful code verification creates a session restricted to that barangay's occupancy and availability updates. The shared account itself cannot access center operations, and null assignments do not grant citywide access.
 
 #### SUPER_ADMIN
 

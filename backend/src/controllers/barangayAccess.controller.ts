@@ -53,8 +53,7 @@ export async function signInBarangay(req: Request, res: Response) {
     typeof barangayId !== "string" ||
     !/^[0-9a-f-]{36}$/i.test(barangayId) ||
     typeof code !== "string" ||
-    code.length < 12 ||
-    code.length > 128
+    !/^[A-Za-z0-9]{6}$/.test(code)
   ) {
     res
       .status(401)

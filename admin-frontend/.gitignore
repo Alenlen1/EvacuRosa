@@ -1,1 +1,10 @@
+# Private local environment files (keep the example template trackable)
+.env*
+!.env.example
+
+# Generated Next.js and deployment files
+.next/
+out/
+.vercel/
+next-env.d.ts
 *.tsbuildinfo

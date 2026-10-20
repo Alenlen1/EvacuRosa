@@ -4,7 +4,7 @@
  */
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
-import { randomBytes } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { SANTA_ROSA_BARANGAYS } from "../src/geography/barangays";
@@ -35,10 +35,15 @@ async function main() {
   mkdirSync(directory, { recursive: true });
   const output = resolve(directory, `barangay-access-${Date.now()}.json`);
   const results: { barangay: string; code: string; userId: string }[] = [];
+  const usedCodes = new Set<string>();
   writeFileSync(output, "[]\n", { flag: "wx", mode: 0o600 });
   for (const barangay of barangays) {
     if (done.has(barangay.id)) continue;
-    const code = `Brgy1!${randomBytes(18).toString("base64url")}`;
+    let code: string;
+    do {
+      code = randomInt(0, 1_000_000).toString().padStart(6, "0");
+    } while (usedCodes.has(code));
+    usedCodes.add(code);
     const { data: created, error: authError } =
       await client.auth.admin.createUser({
         email: `barangay-${barangay.id}@access.evacurosa.invalid`,
@@ -51,14 +56,12 @@ async function main() {
       );
     const id = created.user.id;
     try {
-      const { error: profileError } = await client
-        .from("profiles")
-        .insert({
-          id,
-          role: "BARANGAY_ADMIN",
-          barangay_id: barangay.id,
-          full_name: `${barangay.name} authorized staff`,
-        });
+      const { error: profileError } = await client.from("profiles").insert({
+        id,
+        role: "BARANGAY_ADMIN",
+        barangay_id: barangay.id,
+        full_name: `${barangay.name} authorized staff`,
+      });
       if (profileError) throw profileError;
       const { error: accessError } = await client
         .from("barangay_access_accounts")

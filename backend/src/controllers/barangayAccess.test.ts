@@ -66,7 +66,7 @@ describe("barangay access-code authentication", () => {
       const r = res();
       await signInBarangay(
         {
-          body: { barangayId: id, code: "private-code-123" },
+          body: { barangayId: id, code: "123456" },
           ip: mismatch,
         } as Request,
         r as unknown as Response,
@@ -75,31 +75,61 @@ describe("barangay access-code authentication", () => {
       expect(mocks.signIn).not.toHaveBeenCalled();
     },
   );
-  it("issues only session tokens after Supabase verifies the code", async () => {
-    mocks.signIn.mockResolvedValue({
-      data: {
-        user: { id: "user" },
-        session: { access_token: "access", refresh_token: "refresh" },
-      },
-      error: null,
-    });
-    const r = res();
-    await signInBarangay(
-      {
-        body: { barangayId: id, code: "private-code-123" },
-        ip: "success",
-      } as Request,
-      r as unknown as Response,
-    );
-    expect(mocks.signIn).toHaveBeenCalledWith({
-      email: "private@test.invalid",
-      password: "private-code-123",
-    });
-    expect(r.json).toHaveBeenCalledWith({
-      access_token: "access",
-      refresh_token: "refresh",
-    });
-  });
+  it.each(["000123", "654321", "abcdef", "ABCDEF", "Ab12Cd"])(
+    "issues only session tokens after Supabase verifies code %s",
+    async (code) => {
+      mocks.signIn.mockResolvedValue({
+        data: {
+          user: { id: "user" },
+          session: { access_token: "access", refresh_token: "refresh" },
+        },
+        error: null,
+      });
+      const r = res();
+      await signInBarangay(
+        {
+          body: { barangayId: id, code },
+          ip: "success",
+        } as Request,
+        r as unknown as Response,
+      );
+      expect(mocks.signIn).toHaveBeenCalledWith({
+        email: "private@test.invalid",
+        password: code,
+      });
+      expect(r.json).toHaveBeenCalledWith({
+        access_token: "access",
+        refresh_token: "refresh",
+      });
+    },
+  );
+  it.each([
+    "",
+    "12345",
+    "1234567",
+    "Ab12C!",
+    "Ab 123",
+    " Ab123",
+    "private-code-123",
+    "x".repeat(129),
+    123456,
+    null,
+  ])(
+    "rejects invalid code input before checking credentials (%s)",
+    async (code) => {
+      const r = res();
+      await signInBarangay(
+        {
+          body: { barangayId: id, code },
+          ip: `invalid-${String(code)}`,
+        } as Request,
+        r as unknown as Response,
+      );
+      expect(r.status).toHaveBeenCalledWith(401);
+      expect(mocks.service).not.toHaveBeenCalled();
+      expect(mocks.signIn).not.toHaveBeenCalled();
+    },
+  );
   it("rejects incorrect codes without issuing a session", async () => {
     mocks.signIn.mockResolvedValue({
       data: { session: null },
@@ -108,11 +138,12 @@ describe("barangay access-code authentication", () => {
     const r = res();
     await signInBarangay(
       {
-        body: { barangayId: id, code: "incorrect-code" },
+        body: { barangayId: id, code: "999999" },
         ip: "failure",
       } as Request,
       r as unknown as Response,
     );
     expect(r.status).toHaveBeenCalledWith(401);
+    expect(mocks.signIn).toHaveBeenCalled();
   });
 });

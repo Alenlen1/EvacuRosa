@@ -6,7 +6,9 @@ export const env = {
   // Comma-separated list; defaults to local dev only. Set to the real
   // Vercel URL(s) in production — see DEPLOYMENT.md. Section 68's "no
   // hardcoded production URLs" rule applies here as much as anywhere else.
-  allowedOrigins: (process.env.ALLOWED_ORIGINS ?? "http://localhost:3000")
+  allowedOrigins: (
+    process.env.ALLOWED_ORIGINS ?? "http://localhost:3000,http://localhost:3001"
+  )
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean),

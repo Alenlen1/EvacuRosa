@@ -17,6 +17,24 @@
   color: #596677;
   max-width: 700px;
 }
+.staff-credentials-login {
+  max-width: 560px;
+  padding-top: clamp(24px, 6vh, 64px);
+}
+.staff-credentials-login .barangay-access-form {
+  margin: 0;
+  box-shadow: 0 8px 32px #17232f08;
+}
+.staff-credentials-login .eyebrow {
+  display: block;
+  margin-top: 16px;
+}
+.staff-credentials-login .primary-button {
+  width: 100%;
+}
+.staff-credentials-login .error-message {
+  margin-top: 16px;
+}
 .staff-login-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -117,6 +135,32 @@
 }
 .barangay-access-form button {
   margin-top: 16px;
+}
+.admin-secret-field {
+  position: relative;
+}
+.admin-secret-field input {
+  padding-right: 56px;
+}
+.barangay-access-form .secret-visibility-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  min-height: 40px;
+  min-width: 44px;
+  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 5px;
+  color: #596677;
+  background: transparent;
+}
+.secret-visibility-toggle:focus-visible {
+  outline: 2px solid #bba42b;
+  outline-offset: -2px;
 }
 .center-management {
   background: #f6f7f9;

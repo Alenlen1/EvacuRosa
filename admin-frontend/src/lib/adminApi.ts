@@ -14,7 +14,16 @@ export async function adminApi(path: string, method = "GET", body?: unknown) {
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     },
-  );
+  ).catch((error: unknown) => {
+    if (error instanceof Error && error.name === "TimeoutError") {
+      throw new Error(
+        "The backend took too long to respond. Please try again.",
+      );
+    }
+    throw new Error(
+      "Cannot reach the backend. Check that it is running and ALLOWED_ORIGINS includes this admin website, then try again.",
+    );
+  });
   if (response.status === 204) return null;
   const result = await response.json();
   if (!response.ok)

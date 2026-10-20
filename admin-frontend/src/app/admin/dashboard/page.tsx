@@ -70,6 +70,7 @@ export default function AdminDashboardPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [retrying, setRetrying] = useState(false);
 
   const [floodReports, setFloodReports] = useState<FloodReport[]>([]);
   const [fireIncidents, setFireIncidents] = useState<FireIncident[]>([]);
@@ -118,6 +119,7 @@ export default function AdminDashboardPage() {
   }, [profile?.role]);
 
   async function loadCenters() {
+    setError(null);
     try {
       const body = await adminApi("/evacuation-centers");
       setProfile(body.profile);
@@ -237,6 +239,22 @@ export default function AdminDashboardPage() {
         <p role="alert">
           {error || "An authorized admin profile is required."}
         </p>
+        <button
+          className="primary-button"
+          disabled={retrying}
+          onClick={async () => {
+            setRetrying(true);
+            try {
+              await loadCenters();
+            } catch {
+              // loadCenters displays the error; keep the retry action available.
+            } finally {
+              setRetrying(false);
+            }
+          }}
+        >
+          {retrying ? "Retrying..." : "Retry"}
+        </button>
         <button onClick={() => router.replace("/admin/login")}>
           Return to sign in
         </button>
@@ -251,6 +269,11 @@ export default function AdminDashboardPage() {
           <Brand />
         </Link>
         <span className="city-label">Santa Rosa, Laguna</span>
+        {profile.role === "BARANGAY_ADMIN" && (
+          <Link className="secondary-button" href="/admin/barangays">
+            Change barangay
+          </Link>
+        )}
         {process.env.NEXT_PUBLIC_PUBLIC_APP_URL && (
           <a
             href={process.env.NEXT_PUBLIC_PUBLIC_APP_URL}
