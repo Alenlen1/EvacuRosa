@@ -25,6 +25,20 @@ function makeSupabaseReturning(result: { data: unknown; error: unknown }) {
 }
 
 describe("attachProfile", () => {
+  it("denies a legacy barangay administrator without an assigned barangay", async () => {
+    const req = {
+      supabaseUser: { id: "legacy" },
+      userSupabase: makeSupabaseReturning({
+        data: { id: "legacy", role: "BARANGAY_ADMIN", barangay_id: null },
+        error: null,
+      }),
+    } as unknown as RoleAwareRequest;
+    const res = makeRes(),
+      next = vi.fn();
+    await attachProfile(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
   it("rejects when there's no authenticated user on the request at all", async () => {
     const req = {} as RoleAwareRequest;
     const res = makeRes();

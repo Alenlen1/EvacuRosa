@@ -4,13 +4,16 @@
   "version": "0.1.0",
   "workspaces": [
     "frontend",
-    "backend"
+    "backend",
+    "admin-frontend"
   ],
   "scripts": {
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:backend": "npm run dev --workspace=backend",
     "build:frontend": "npm run build --workspace=frontend",
-    "build:backend": "npm run build --workspace=backend"
+    "build:backend": "npm run build --workspace=backend",
+    "dev:admin": "npm run dev --workspace=admin-frontend",
+    "build:admin": "npm run build --workspace=admin-frontend"
   },
   "engines": {
     "node": ">=24.0.0"

@@ -3,6 +3,10 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.env.*
+!.env.example
+.temp/
+.vercel/
 dist/
 .next/
 build/

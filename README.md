@@ -68,7 +68,7 @@ The system supports two administrative roles:
 
 #### BARANGAY_ADMIN
 
-Barangay administrators can manage evacuation-center occupancy for their assigned barangay.
+CDRRMO and barangay staff sign in on the separate admin website with their Supabase Auth email and password. CDRRMO opens the city dashboard. The shared barangay login opens a list of the 18 barangays; each barangay requires its own private code. Successful code verification creates a session restricted to that barangay's occupancy and availability updates. The shared account itself cannot access center operations, and null assignments do not grant citywide access.
 
 #### SUPER_ADMIN
 
@@ -79,7 +79,7 @@ The super administrator represents citywide/CDRRMO-level management and can mana
 - Earthquake road impacts
 - Citywide evacuation-center management
 
-The admin dashboard includes map-based evacuation-center management and a hazard-placement map.
+The admin dashboard includes map-based evacuation-center management and a hazard-placement map. CDRRMO does not manage barangay administrator accounts. Public pages are in `frontend/`, administration is in `admin-frontend/`, and both share `backend/` and Supabase. See [admin setup and deployment](admin-frontend/README.md).
 
 ### Offline Support
 

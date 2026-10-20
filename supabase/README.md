@@ -27,13 +27,14 @@
    - `frontend/.env.local` — `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `backend/.env` — `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
      (never expose the service role key to the frontend)
-4. Create a barangay admin login: in Supabase Auth, add a user (email +
-   password), then insert a matching row into `profiles` with that user's
-   `id`, `role = 'BARANGAY_ADMIN'`, and the `barangay_id` they manage.
-   **To make them a citywide evacuation-center admin instead** (manages
-   every barangay's centers, but still can't touch flood/fire/earthquake
-   — that stays `SUPER_ADMIN`-only), leave `barangay_id` as `null`.
-5. Sign in at `/admin/login` in the frontend with that account.
+4. Apply migrations `0015_flood_road_sections.sql`,
+   `0016_precise_flood_sections.sql`, and
+   `0017_admin_roles_and_barangay_access.sql` after the preceding migrations.
+5. Configure the separate admin website in `admin-frontend/`. Follow
+   [admin-frontend/README.md](../admin-frontend/README.md) for account provisioning
+   and deployment. CDRRMO uses `SUPER_ADMIN`; every barangay account must have
+   its own assigned `barangay_id`. Null assignments no longer grant citywide access.
+   No admin pages are deployed in the public `frontend/` website.
 
 ## Without a Supabase project
 

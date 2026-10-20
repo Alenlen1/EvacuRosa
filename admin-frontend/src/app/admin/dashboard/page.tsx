@@ -2,9 +2,10 @@
 import { AssistanceRequests } from "@/components/admin/AssistanceRequests";
 
 import {
-  ShelterSuppliesForm,
-  type ShelterSupplyRecord,
-} from "@/components/admin/ShelterSuppliesForm";
+  CenterManager,
+  type ManagedCenter,
+} from "@/components/admin/CenterManager";
+import { adminApi } from "@/lib/adminApi";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Brand } from "@/components/ui/Brand";
@@ -46,15 +47,7 @@ const HazardPlacementMap = dynamic(
   },
 );
 
-interface AdminCenter extends ShelterSupplyRecord {
-  id: string;
-  name: string;
-  capacity: number;
-  current_occupancy: number;
-  status: string;
-  latitude: number | null;
-  longitude: number | null;
-}
+type AdminCenter = ManagedCenter;
 
 interface Profile {
   role: "BARANGAY_ADMIN" | "SUPER_ADMIN";
@@ -67,6 +60,9 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [centers, setCenters] = useState<AdminCenter[]>([]);
+  const [availabilityDrafts, setAvailabilityDrafts] = useState<
+    Record<string, string>
+  >({});
   const [occupancyDrafts, setOccupancyDrafts] = useState<
     Record<string, string>
   >({});
@@ -74,6 +70,7 @@ export default function AdminDashboardPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [retrying, setRetrying] = useState(false);
 
   const [floodReports, setFloodReports] = useState<FloodReport[]>([]);
   const [fireIncidents, setFireIncidents] = useState<FireIncident[]>([]);
@@ -95,7 +92,9 @@ export default function AdminDashboardPage() {
         router.push("/admin/login");
         return;
       }
-      loadCenters().finally(() => setReady(true));
+      loadCenters()
+        .catch(() => {})
+        .finally(() => setReady(true));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -117,48 +116,36 @@ export default function AdminDashboardPage() {
         setEarthquakeEvents([]);
         setEarthquakeRoadImpacts([]);
       });
-  }, [profile]);
+  }, [profile?.role]);
 
   async function loadCenters() {
-    if (!supabase) return;
-    const { data: session } = await supabase.auth.getSession();
-    const userId = session.session?.user.id;
-    if (!userId) return;
-
-    const { data: profileRow } = await supabase
-      .from("profiles")
-      .select("barangay_id, role")
-      .eq("id", userId)
-      .single();
-    if (profileRow) setProfile(profileRow as Profile);
-
-    if (profileRow?.role === "SUPER_ADMIN") {
-      setCenters([]);
-      setOccupancyDrafts({});
-      return;
-    }
-
-    let query = supabase
-      .from("evacuation_centers")
-      .select(
-        "id, name, capacity, current_occupancy, status, latitude, longitude, water_status, food_status, medical_status, supplies_updated_at",
+    setError(null);
+    try {
+      const body = await adminApi("/evacuation-centers");
+      setProfile(body.profile);
+      const rows: AdminCenter[] = body.centers;
+      setCenters(rows);
+      setAvailabilityDrafts(
+        Object.fromEntries(
+          rows.map((center) => [
+            center.id,
+            center.status === "CLOSED" ? "CLOSED" : "AVAILABLE",
+          ]),
+        ),
       );
-    if (profileRow?.role === "BARANGAY_ADMIN" && profileRow.barangay_id) {
-      query = query.eq("barangay_id", profileRow.barangay_id);
+      setOccupancyDrafts(
+        Object.fromEntries(
+          rows.map((center) => [center.id, String(center.current_occupancy)]),
+        ),
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Could not load assigned centers.",
+      );
+      throw error;
     }
-
-    const { data, error: fetchError } = await query;
-    if (fetchError) {
-      setError(fetchError.message);
-      return;
-    }
-    const rows = data ?? [];
-    setCenters(rows);
-    setOccupancyDrafts(
-      Object.fromEntries(
-        rows.map((center) => [center.id, String(center.current_occupancy)]),
-      ),
-    );
   }
 
   async function updateOccupancy(id: string) {
@@ -191,7 +178,12 @@ export default function AdminDashboardPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ currentOccupancy }),
+        body: JSON.stringify({
+          currentOccupancy,
+          status:
+            availabilityDrafts[id] ??
+            (center.status === "CLOSED" ? "CLOSED" : "AVAILABLE"),
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -206,9 +198,11 @@ export default function AdminDashboardPage() {
   }
 
   function getOccupancyStatus(center: AdminCenter, occupancy: number) {
-    if (center.status === "CLOSED") return "CLOSED";
-    if (center.capacity <= 0 || occupancy >= center.capacity) return "FULL";
-    if (occupancy / center.capacity >= 0.8) return "NEARLY FULL";
+    if ((availabilityDrafts[center.id] ?? center.status) === "CLOSED")
+      return "CLOSED";
+    if (center.capacity <= 0 || occupancy / center.capacity >= 0.9)
+      return "FULL";
+    if (occupancy / center.capacity >= 0.7) return "NEARLY FULL";
     return "AVAILABLE";
   }
 
@@ -238,18 +232,65 @@ export default function AdminDashboardPage() {
     );
   }
 
+  if (!profile)
+    return (
+      <main className="staff-login-content">
+        <h1>Workspace unavailable</h1>
+        <p role="alert">
+          {error || "An authorized admin profile is required."}
+        </p>
+        <button
+          className="primary-button"
+          disabled={retrying}
+          onClick={async () => {
+            setRetrying(true);
+            try {
+              await loadCenters();
+            } catch {
+              // loadCenters displays the error; keep the retry action available.
+            } finally {
+              setRetrying(false);
+            }
+          }}
+        >
+          {retrying ? "Retrying..." : "Retry"}
+        </button>
+        <button onClick={() => router.replace("/admin/login")}>
+          Return to sign in
+        </button>
+      </main>
+    );
   return (
     <main
       className={`admin-app${profile?.role === "SUPER_ADMIN" ? " cdrrmo-workspace" : ""}`}
     >
       <header className="app-header">
-        <Link href="/" aria-label="EvacuRosa public map">
+        <Link href="/admin/dashboard" aria-label="EvacuRosa administration">
           <Brand />
         </Link>
         <span className="city-label">Santa Rosa, Laguna</span>
-        <Link href="/" className="admin-link">
-          Back to public map →
-        </Link>
+        {profile.role === "BARANGAY_ADMIN" && (
+          <Link className="secondary-button" href="/admin/barangays">
+            Change barangay
+          </Link>
+        )}
+        {process.env.NEXT_PUBLIC_PUBLIC_APP_URL && (
+          <a
+            href={process.env.NEXT_PUBLIC_PUBLIC_APP_URL}
+            className="admin-link"
+          >
+            Public map
+          </a>
+        )}
+        <button
+          className="secondary-button"
+          onClick={async () => {
+            await supabase?.auth.signOut();
+            router.replace("/admin/login");
+          }}
+        >
+          Sign out
+        </button>
       </header>
       <div
         className={
@@ -270,8 +311,8 @@ export default function AdminDashboardPage() {
             </h1>
             <p>
               {profile?.role === "SUPER_ADMIN"
-                ? "Review shared locations and manage reported hazards across Santa Rosa."
-                : "View assigned shelters and keep occupancy information up to date."}
+                ? "Register evacuation centers, review shared locations and manage hazards across Santa Rosa."
+                : "Update occupancy and availability for your assigned barangay. Fullness is calculated consistently from occupancy."}
             </p>
             {error && (
               <p className="error-message" role="alert">
@@ -287,6 +328,16 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
+        {profile?.role === "SUPER_ADMIN" && (
+          <>
+            <nav className="staff-section-nav">
+              <a href="#evacuation-centers">Evacuation centers</a>
+              <a href="#shared-locations">Shared locations</a>
+              <a href="#hazard-management">Hazard management</a>
+            </nav>
+            <CenterManager centers={centers} onSaved={loadCenters} />
+          </>
+        )}
         <div
           className={
             profile?.role !== "SUPER_ADMIN" ? "admin-center-layout" : undefined
@@ -389,6 +440,23 @@ export default function AdminDashboardPage() {
                             style={{ width: `${percent}%` }}
                           />
                         </div>
+                        <label className="availability-field">
+                          Availability
+                          <select
+                            value={availabilityDrafts[center.id] ?? "AVAILABLE"}
+                            onChange={(event) =>
+                              setAvailabilityDrafts((values) => ({
+                                ...values,
+                                [center.id]: event.target.value,
+                              }))
+                            }
+                          >
+                            <option value="AVAILABLE">
+                              Accepting evacuees
+                            </option>
+                            <option value="CLOSED">Closed / unavailable</option>
+                          </select>
+                        </label>
                         <div className="flex flex-wrap items-end gap-2">
                           <label className="flex-1 text-xs font-medium text-slate-600">
                             Update occupancy
@@ -413,7 +481,12 @@ export default function AdminDashboardPage() {
                             disabled={
                               !valid ||
                               savingId !== null ||
-                              String(center.current_occupancy) === draft
+                              (String(center.current_occupancy) === draft &&
+                                (availabilityDrafts[center.id] ??
+                                  "AVAILABLE") ===
+                                  (center.status === "CLOSED"
+                                    ? "CLOSED"
+                                    : "AVAILABLE"))
                             }
                             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                           >
@@ -423,7 +496,6 @@ export default function AdminDashboardPage() {
                       </>
                     );
                   })()}
-                  <ShelterSuppliesForm key={center.id} center={center} />
                 </div>
               ))}
               {centers.length === 0 && !error && (
@@ -432,8 +504,8 @@ export default function AdminDashboardPage() {
                     No evacuation centers are assigned to your account.
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
-                    Ask your CDRRMO administrator to verify your barangay
-                    assignment and register its evacuation centers.
+                    Contact your designated system operator about access. CDRRMO
+                    registers and assigns evacuation centers.
                   </p>
                 </div>
               )}

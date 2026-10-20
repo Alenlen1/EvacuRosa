@@ -1,0 +1,312 @@
+@import "../../../frontend/src/app/globals.css";
+@source "../";
+.staff-login {
+  min-height: 100dvh;
+  background: #f5f6f8;
+}
+.staff-login-content {
+  max-width: 1200px;
+  margin: auto;
+  padding: 32px 24px;
+}
+.staff-login-title h1 {
+  font-size: clamp(25px, 4vw, 38px);
+  margin: 8px 0;
+}
+.staff-login-title p {
+  color: #596677;
+  max-width: 700px;
+}
+.staff-credentials-login {
+  max-width: 560px;
+  padding-top: clamp(24px, 6vh, 64px);
+}
+.staff-credentials-login .barangay-access-form {
+  margin: 0;
+  box-shadow: 0 8px 32px #17232f08;
+}
+.staff-credentials-login .eyebrow {
+  display: block;
+  margin-top: 16px;
+}
+.staff-credentials-login .primary-button {
+  width: 100%;
+}
+.staff-credentials-login .error-message {
+  margin-top: 16px;
+}
+.staff-login-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+}
+.staff-login-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border: 1px solid #d8dde5;
+  border-radius: 10px;
+  background: white;
+}
+.staff-login-tabs button[aria-pressed="true"] {
+  border-color: #d0b934;
+  background: #fff8d8;
+}
+.barangay-access-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+.barangay-access-grid button {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-align: left;
+  background: white;
+  padding: 20px;
+  border: 1px solid #e1e5eb;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px #17232f09;
+  min-width: 0;
+}
+.barangay-access-grid button[aria-pressed="true"] {
+  border: 2px solid #bba42b;
+  background: #fffbed;
+}
+.barangay-access-grid small {
+  display: block;
+  color: #657181;
+  margin-top: 5px;
+}
+.barangay-card-icon {
+  display: grid;
+  place-items: center;
+  min-width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  background: #edf4fc;
+  color: #3d68a0;
+}
+.tone-1 {
+  background: #edf4e9;
+  color: #3b6d11;
+}
+.tone-2 {
+  background: #fff0ea;
+  color: #aa583a;
+}
+.tone-3 {
+  background: #f4edf7;
+  color: #885f9c;
+}
+.barangay-access-form {
+  max-width: 560px;
+  padding: 24px;
+  background: white;
+  border: 1px solid #e1e5eb;
+  border-radius: 12px;
+  margin: 24px 0;
+}
+.barangay-access-form label {
+  display: block;
+  margin-top: 18px;
+  margin-bottom: 7px;
+}
+.barangay-access-form input,
+.center-registration input,
+.center-registration select,
+.center-registration textarea,
+.availability-field select {
+  width: 100%;
+  padding: 11px;
+  min-height: 44px;
+  border: 1px solid #bcc6d2;
+  border-radius: 7px;
+  background: white;
+  color: #17232f;
+}
+.barangay-access-form p {
+  font-size: 13px;
+  color: #596677;
+  margin: 12px 0;
+}
+.barangay-access-form button {
+  margin-top: 16px;
+}
+.admin-secret-field {
+  position: relative;
+}
+.admin-secret-field input {
+  padding-right: 56px;
+}
+.barangay-access-form .secret-visibility-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  min-height: 40px;
+  min-width: 44px;
+  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 5px;
+  color: #596677;
+  background: transparent;
+}
+.secret-visibility-toggle:focus-visible {
+  outline: 2px solid #bba42b;
+  outline-offset: -2px;
+}
+.center-management {
+  background: #f6f7f9;
+  border: 1px solid #dfe4eb;
+  border-radius: 14px;
+  padding: 24px;
+  margin: 24px 0;
+}
+.center-management h2 {
+  font-size: 25px;
+  margin: 8px 0;
+}
+.center-management h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+.staff-section-nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.staff-section-nav a {
+  padding: 10px 14px;
+  border: 1px solid #dfe4eb;
+  border-radius: 8px;
+  background: white;
+}
+.staff-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 22px 0;
+}
+.staff-stat-grid > div {
+  background: white;
+  border: 1px solid #e1e5eb;
+  border-radius: 9px;
+  padding: 16px;
+}
+.staff-stat-grid strong {
+  display: block;
+  color: #3b6d11;
+  font-size: 28px;
+}
+.staff-stat-grid span {
+  font-size: 12px;
+  color: #596677;
+}
+.center-registration {
+  padding: 20px;
+  background: white;
+  border: 1px solid #dfe4eb;
+  border-radius: 10px;
+  scroll-margin-top: 20px;
+}
+.center-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0;
+}
+.center-field-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.center-location-picker {
+  height: 360px;
+  margin: 16px 0;
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+}
+.center-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+.danger-button {
+  padding: 10px 14px;
+  min-height: 44px;
+  border: 1px solid #e4b9b5;
+  border-radius: 8px;
+  color: #a42e23;
+  background: #fff6f4;
+}
+.managed-center-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+.managed-center-grid article {
+  border: 1px solid #dfe4eb;
+  border-radius: 10px;
+  padding: 18px;
+  background: white;
+  overflow-wrap: anywhere;
+}
+.managed-center-grid p {
+  margin: 7px 0;
+  color: #596677;
+  font-size: 13px;
+}
+.availability-field {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  font-size: 13px;
+}
+@media (max-width: 800px) {
+  .barangay-access-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .staff-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .center-management {
+    padding: 14px;
+  }
+  .center-field-grid,
+  .managed-center-grid {
+    grid-template-columns: 1fr;
+  }
+  .staff-login-content {
+    padding: 22px 14px;
+  }
+  .staff-login .app-header {
+    height: auto;
+    padding: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .center-location-picker {
+    height: 300px;
+  }
+}
+@media (max-width: 440px) {
+  .barangay-access-grid {
+    grid-template-columns: 1fr;
+  }
+  .barangay-access-grid button {
+    padding: 15px;
+  }
+  .barangay-access-form {
+    padding: 18px;
+  }
+}

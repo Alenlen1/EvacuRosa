@@ -25,68 +25,7 @@ function validSectionPoint(value: unknown): value is SectionPoint {
   );
 }
 
-export async function updateEvacuationCenter(
-  req: RoleAwareRequest,
-  res: Response,
-) {
-  const { id } = req.params;
-  const { currentOccupancy, capacity, status, notes } = req.body ?? {};
-
-  if (!req.userSupabase) {
-    res.status(401).json({ error: "Not authenticated." });
-    return;
-  }
-
-  const updates: Record<string, unknown> = {};
-  for (const [field, column] of [
-    ["waterStatus", "water_status"],
-    ["foodStatus", "food_status"],
-    ["medicalStatus", "medical_status"],
-  ]) {
-    const value = req.body?.[field];
-    if (value !== undefined) {
-      if (
-        typeof value !== "string" ||
-        !["unknown", "adequate", "low", "unavailable"].includes(value)
-      ) {
-        res.status(400).json({ error: "Invalid supply status." });
-        return;
-      }
-      updates[column] = value;
-      updates.supplies_updated_at = new Date().toISOString();
-    }
-  }
-  if (typeof currentOccupancy === "number")
-    updates.current_occupancy = currentOccupancy;
-  if (typeof capacity === "number") updates.capacity = capacity;
-  if (typeof status === "string") updates.status = status;
-  if (typeof notes === "string") updates.notes = notes;
-  if (req.profile) updates.updated_by = req.profile.id;
-
-  if (Object.keys(updates).length === 0) {
-    res.status(400).json({ error: "No recognized fields to update." });
-    return;
-  }
-
-  // Runs AS the calling user's JWT — RLS decides whether this row is
-  // actually writable for them, regardless of what this code intends.
-  const { data, error } = await req.userSupabase
-    .from("evacuation_centers")
-    .update(updates)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    res.status(403).json({
-      error:
-        "Update rejected — check that this center belongs to your barangay.",
-    });
-    return;
-  }
-
-  res.json({ center: data });
-}
+export { updateCenter as updateEvacuationCenter } from "./centerManagement.controller";
 
 export async function createFloodReport(req: RoleAwareRequest, res: Response) {
   const {

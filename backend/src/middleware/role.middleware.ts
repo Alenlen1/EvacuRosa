@@ -31,7 +31,7 @@ export async function attachProfile(
     .eq("id", req.supabaseUser.id)
     .single();
 
-  if (error || !data) {
+  if (error || !data || (data.role === "BARANGAY_ADMIN" && !data.barangay_id)) {
     res.status(403).json({ error: "No admin profile found for this account." });
     return;
   }
