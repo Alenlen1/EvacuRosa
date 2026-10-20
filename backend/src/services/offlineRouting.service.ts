@@ -19,8 +19,7 @@ import { getSupabase } from "../database/supabase";
 import { OFFLINE_FORMAT, type OfflineSnapshot } from "../algorithms/offline";
 import type { RoadStatus } from "../algorithms/astar/edge";
 
-let graphResponse: { version: string; json: string; gzip: Buffer } | null =
-  null;
+let graphResponse: { version: string; gzip: Buffer } | null = null;
 export function getOfflineGraphResponse() {
   if (!graphResponse) {
     const data = loadRoadGraphData();
@@ -28,7 +27,9 @@ export function getOfflineGraphResponse() {
       .update(JSON.stringify(data))
       .digest("hex");
     const json = JSON.stringify({ version, data });
-    graphResponse = { version, json, gzip: gzipSync(json) };
+    // Keep only compressed bytes, outside the JS heap. Retaining the full
+    // serialized graph alongside two indexed graphs wastes tens of MB.
+    graphResponse = { version, gzip: gzipSync(json) };
   }
   return graphResponse;
 }

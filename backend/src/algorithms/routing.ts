@@ -79,18 +79,20 @@ export function calculateRoute(
   // evaluations per route. Memoize per request. Forward and reverse edges
   // of the same segment ("E12" / "E12-r") are geometrically identical, so
   // they share a cache entry.
-  const riskCache = new Map<string, ReturnType<typeof edgeRisk>>();
+  const riskCache = new Map<string, { cost: number; riskLevel: RiskLevel }>();
   const cachedEdgeRisk = (edge: GraphEdge) => {
     const key = edge.id.endsWith("-r") ? edge.id.slice(0, -2) : edge.id;
     let cached = riskCache.get(key);
     if (!cached) {
-      cached = edgeRisk(
+      const evaluated = edgeRisk(
         edge,
         graph,
         floodByRoadId,
         fireIncidents,
         earthquakeImpactByRoadId,
       );
+      // Routing needs the score, not thousands of retained rule explanations.
+      cached = { cost: evaluated.cost, riskLevel: evaluated.risk.riskLevel };
       riskCache.set(key, cached);
     }
     return cached;
@@ -138,7 +140,7 @@ export function calculateRoute(
     result.edges.length === 0
       ? "VERY_LOW"
       : result.edges.reduce<RiskLevel>((worst, e) => {
-          const level = cachedEdgeRisk(e).risk.riskLevel;
+          const level = cachedEdgeRisk(e).riskLevel;
           return riskLevelRank(level) > riskLevelRank(worst) ? level : worst;
         }, "VERY_LOW");
 
