@@ -879,7 +879,7 @@ The interface displays an offline indicator and the age of cached information.
 
 The application does not pretend that cached information is current.
 
-Online route requests use the backend. Without a connection, or after a network/server failure, the frontend uses its saved routing package in a Web Worker. An authoritative backend rejection (including a hazard-blocked 422 response) is preserved and never bypassed using stale offline data. The service worker saves all versioned build assets, including lazy map and worker code, before reporting offline readiness.
+Online route requests use the backend. When the browser reports disconnection, the frontend uses its saved routing package in a Web Worker. If the browser remains online but the server fails or times out, routing shows an error rather than silently using potentially outdated hazard data. An authoritative backend rejection (including a hazard-blocked 422 response) is preserved and never bypassed using stale offline data. The service worker saves all versioned build assets, including lazy map and worker code, before reporting offline readiness.
 
 ---
 

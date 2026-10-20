@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { gunzipSync } from "node:zlib";
 import {
   getOfflineGraphResponse,
   getOfflineSnapshot,
@@ -22,5 +23,5 @@ offlineRouter.get("/graph", (req, res) => {
   if (req.acceptsEncodings("gzip")) {
     res.setHeader("Content-Encoding", "gzip");
     res.send(graph.gzip);
-  } else res.send(graph.json);
+  } else res.send(gunzipSync(graph.gzip));
 });

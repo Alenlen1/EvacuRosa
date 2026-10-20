@@ -165,11 +165,16 @@ export async function fetchRoute(
     });
     if (res.status >= 500)
       throw new RoutingError("Routing server unavailable.");
-  } catch (error) {
-    const offline = await import("../lib/offline/routing");
-    const saved = await offline.getOfflinePackage().catch(() => null);
-    if (!saved) throw error;
-    return offline.calculateOfflineRoute(start, destination, travelMode);
+  } catch {
+    // A backend failure does not prove that saved hazards are current. Only
+    // use the offline path when the browser actually reports disconnection.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      const offline = await import("../lib/offline/routing");
+      return offline.calculateOfflineRoute(start, destination, travelMode);
+    }
+    throw new RoutingError(
+      "The routing server is unavailable. Current road closures could not be verified. Please retry shortly.",
+    );
   }
 
   if (!res.ok) {
@@ -242,11 +247,14 @@ export async function fetchEvacuationRoute(
     });
     if (res.status >= 500)
       throw new RoutingError("Routing server unavailable.");
-  } catch (error) {
-    const offline = await import("../lib/offline/routing");
-    const saved = await offline.getOfflinePackage().catch(() => null);
-    if (!saved) throw error;
-    return offline.calculateOfflineEvacuationRoute(start, travelMode);
+  } catch {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      const offline = await import("../lib/offline/routing");
+      return offline.calculateOfflineEvacuationRoute(start, travelMode);
+    }
+    throw new RoutingError(
+      "The routing server is unavailable. Current road closures could not be verified. Please retry shortly.",
+    );
   }
 
   if (!res.ok) {
