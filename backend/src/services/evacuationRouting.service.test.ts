@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getAvailableCenters: vi.fn(),
   computeRoute: vi.fn(),
+  createRoutePlanner: vi.fn(),
 }));
 
 vi.mock("./evacuation.service", () => ({
@@ -10,7 +11,7 @@ vi.mock("./evacuation.service", () => ({
 }));
 
 vi.mock("./routing.service", () => ({
-  computeRoute: mocks.computeRoute,
+  createRoutePlanner: mocks.createRoutePlanner,
 }));
 
 import { computeEvacuationRoute } from "./evacuationRouting.service";
@@ -31,7 +32,7 @@ const center = {
 describe("computeEvacuationRoute", () => {
   it("only identifies hazard failure when no available center is reachable", async () => {
     mocks.getAvailableCenters.mockResolvedValue([center]);
-    mocks.computeRoute.mockResolvedValue({
+    mocks.computeRoute.mockReturnValue({
       found: false,
       failureReason: "HAZARD_BLOCKED",
     });
@@ -50,7 +51,7 @@ describe("computeEvacuationRoute", () => {
       center,
       { ...center, id: "second" },
     ]);
-    mocks.computeRoute.mockResolvedValueOnce({
+    mocks.computeRoute.mockReturnValueOnce({
       found: false,
       failureReason: "HAZARD_BLOCKED",
     });
@@ -63,8 +64,9 @@ describe("computeEvacuationRoute", () => {
   });
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.createRoutePlanner.mockResolvedValue(mocks.computeRoute);
     mocks.getAvailableCenters.mockResolvedValue([center]);
-    mocks.computeRoute.mockResolvedValue({
+    mocks.computeRoute.mockReturnValue({
       found: true,
       path: [
         { latitude: 14.3, longitude: 121.1 },
@@ -96,6 +98,31 @@ describe("computeEvacuationRoute", () => {
     });
     expect(result.found).toBe(false);
     expect(result.recommendedCenter).toBeNull();
+    expect(mocks.createRoutePlanner).not.toHaveBeenCalled();
+  });
+  it("shares one planner and preserves risk-aware ranking across candidates", async () => {
+    const safer = { ...center, id: "safer-center" };
+    mocks.getAvailableCenters.mockResolvedValue([center, safer]);
+    mocks.computeRoute
+      .mockReturnValueOnce({
+        found: true,
+        path: [],
+        distanceMeters: 1000,
+        riskLevel: "HIGH",
+      })
+      .mockReturnValueOnce({
+        found: true,
+        path: [],
+        distanceMeters: 1500,
+        riskLevel: "LOW",
+      });
+    const result = await computeEvacuationRoute({
+      latitude: 14.3,
+      longitude: 121.1,
+    });
+    expect(result.recommendedCenter?.id).toBe("safer-center");
+    expect(mocks.createRoutePlanner).toHaveBeenCalledTimes(1);
+    expect(mocks.computeRoute).toHaveBeenCalledTimes(2);
   });
   it("uses the selected travel mode for candidate routes", async () => {
     const start = { latitude: 14.3, longitude: 121.1 };

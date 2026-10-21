@@ -8,6 +8,7 @@
     "postbuild": "node scripts/copy-road-data.mjs",
     "start": "node dist/server.js",
     "test": "vitest run",
+    "benchmark:routing": "npm run build && node --expose-gc scripts/benchmark-routing.cjs",
     "fetch:roads": "tsx scripts/fetch-santa-rosa-roads.ts",
     "fetch:earthquakes": "tsx scripts/fetch-earthquakes.ts"
   },
