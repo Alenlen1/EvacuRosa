@@ -1,5 +1,7 @@
 "use client";
 import { useLanguage } from "@/components/LanguageProvider";
+import type { TravelMode } from "@/lib/travelTime";
+import { useAssistance } from "@/components/assistance/AssistanceProvider";
 
 import { useId, useRef, useState } from "react";
 import { Phone, X, Landmark, MapPin, Share2, ChevronRight } from "lucide-react";
@@ -9,13 +11,16 @@ export function EmergencyContact({
   position,
   onFindCenter,
   routingUnavailable,
+  travelMode = "walking",
 }: {
   placement?: "header" | "floating";
   position: { latitude: number; longitude: number } | null;
   onFindCenter: () => void;
   routingUnavailable: string | null;
+  travelMode?: TravelMode;
 }) {
   const { t } = useLanguage();
+  const { openRequest, hasRequest } = useAssistance();
   const id = useId();
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -108,6 +113,31 @@ export function EmergencyContact({
           )}
         </p>
         <div className="emergency-action-list">
+          <button
+            type="button"
+            className="emergency-action emergency-action-agency"
+            onClick={() => {
+              dialog.current?.close();
+              openRequest({ kind: "emergency", travelMode });
+            }}
+          >
+            <span className="emergency-action-icon">
+              <Phone size={22} aria-hidden="true" />
+            </span>
+            <span>
+              <strong>
+                {hasRequest
+                  ? t("View My Assistance Request")
+                  : t("Request Assistance")}
+              </strong>
+              <small>
+                {t(
+                  "Share a one-time GPS location with CDRRMO and track your request",
+                )}
+              </small>
+            </span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </button>
           <button
             className="emergency-action emergency-action-call"
             type="button"

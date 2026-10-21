@@ -3,6 +3,8 @@ import {
   deleteAssistance,
   listAssistance,
   updateAssistanceStatus,
+  adminAssistanceEvents,
+  getAdminAssistance,
 } from "../controllers/assistance.controller";
 import { requireAuth } from "../middleware/auth.middleware";
 import { attachProfile, requireRole } from "../middleware/role.middleware";
@@ -53,6 +55,20 @@ adminRouter.delete(
   attachProfile,
   requireRole("SUPER_ADMIN"),
   deleteCenter,
+);
+adminRouter.get(
+  "/assistance-requests/events",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  adminAssistanceEvents,
+);
+adminRouter.get(
+  "/assistance-requests/:id",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  getAdminAssistance,
 );
 adminRouter.patch(
   "/assistance-requests/:id",

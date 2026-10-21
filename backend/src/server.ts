@@ -11,7 +11,7 @@ import { earthquakeRouter } from "./routes/earthquake.routes";
 import { roadRouter } from "./routes/road.routes";
 import { adminRouter } from "./routes/admin.routes";
 import { errorHandler } from "./middleware/error.middleware";
-import { postAssistance } from "./controllers/assistance.controller";
+import { assistanceRouter } from "./routes/assistance.routes";
 import { offlineRouter } from "./routes/offline.routes";
 
 const app = express();
@@ -33,7 +33,7 @@ app.use("/api/fires", fireRouter);
 app.use("/api/earthquakes", earthquakeRouter);
 app.use("/api/roads", roadRouter);
 app.use("/api/admin", adminRouter);
-app.post("/api/assistance-requests", postAssistance);
+app.use("/api/assistance-requests", assistanceRouter);
 
 app.use(errorHandler);
 

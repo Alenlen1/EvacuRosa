@@ -1,4 +1,5 @@
 "use client";
+import { AssistanceProvider } from "@/components/assistance/AssistanceProvider";
 import {
   useLanguage,
   LanguageProvider,
@@ -120,7 +121,9 @@ type ActiveResult =
 export default function Home() {
   return (
     <LanguageProvider>
-      <PublicHome />
+      <AssistanceProvider>
+        <PublicHome />
+      </AssistanceProvider>
     </LanguageProvider>
   );
 }
@@ -565,6 +568,7 @@ function PublicHome() {
     selectedCenter ??
     (result?.kind === "evacuation" ? result.data.recommendedCenter : null);
   const emergencyContactProps = {
+    travelMode,
     position: geolocation.position,
     routingUnavailable: !geolocation.position
       ? t("Enable location access to find a route")

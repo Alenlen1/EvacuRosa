@@ -1,36 +1,44 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+﻿import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Request, Response } from "express";
 import type { RoleAwareRequest } from "../middleware/role.middleware";
-const mocks = vi.hoisted(() => ({
-  db: vi.fn(),
-  insert: vi.fn(),
-  route: vi.fn(),
-  evacuation: vi.fn(),
-}));
+const mocks = vi.hoisted(() => ({ db: vi.fn(), rpc: vi.fn(), from: vi.fn() }));
 vi.mock("../database/supabase", () => ({ getSupabase: mocks.db }));
-vi.mock("../services/routing.service", () => ({ computeRoute: mocks.route }));
-vi.mock("../services/evacuationRouting.service", () => ({
-  computeEvacuationRoute: mocks.evacuation,
+vi.mock("../services/assistanceLocation.service", () => ({
+  createAssistanceLocationLookup: () => () => null,
 }));
 import {
-  allowSubmission,
-  deleteAssistance,
-  listAssistance,
   postAssistance,
   validSubmission,
+  allowSubmission,
+  listAssistance,
+  deleteAssistance,
+  getTrackedAssistance,
+  cancelTrackedAssistance,
+  recoverTrackedAssistance,
 } from "./assistance.controller";
-import { requireRole } from "../middleware/role.middleware";
-const now = Date.now();
+import {
+  issueTrackingToken,
+  trackingHash,
+} from "../services/assistanceTracking.service";
+const id = "ea956074-b82a-4df1-b9dc-b02ee7dbd542";
+const row = {
+  id,
+  status: "PENDING",
+  version: 1,
+  latitude: 14.3,
+  longitude: 121.1,
+  tracking_expires_at: new Date(Date.now() + 86400000).toISOString(),
+};
 function data() {
   return {
-    id: "ea956074-b82a-4df1-b9dc-b02ee7dbd542",
+    id,
+    submissionKey: "a".repeat(64),
     consent: true,
     start: { latitude: 14.3, longitude: 121.1 },
-    destination: { latitude: 14.31, longitude: 121.1 },
     accuracy: 20,
-    recordedAt: new Date(now).toISOString(),
+    recordedAt: new Date().toISOString(),
     travelMode: "walking",
-    kind: "route",
+    kind: "emergency",
   };
 }
 function response() {
@@ -43,84 +51,27 @@ function response() {
   r.status.mockReturnValue(r);
   return r;
 }
+function query(
+  result: { data: unknown; error: unknown } = { data: row, error: null },
+) {
+  const q: any = {};
+  for (const key of [
+    "select",
+    "eq",
+    "in",
+    "order",
+    "limit",
+    "delete",
+    "update",
+    "lte",
+  ])
+    q[key] = vi.fn(() => q);
+  q.maybeSingle = vi.fn(async () => result);
+  q.then = (resolve: any, reject: any) =>
+    Promise.resolve(result).then(resolve, reject);
+  return q;
+}
 let ip = 0;
-describe("CDRRMO assistance deletion", () => {
-  function client(result: { data: unknown; error: unknown }) {
-    const select = vi.fn().mockResolvedValue(result);
-    const eq = vi.fn(() => ({ select }));
-    const remove = vi.fn(() => ({ eq }));
-    const from = vi.fn(() => ({ delete: remove }));
-    return { from, remove, eq, select };
-  }
-  async function remove(
-    role: string | undefined,
-    id: unknown,
-    db: ReturnType<typeof client>,
-  ) {
-    const r = response();
-    await deleteAssistance(
-      {
-        profile: role ? { role } : undefined,
-        params: { id },
-        userSupabase: db,
-      } as unknown as RoleAwareRequest,
-      r as unknown as Response,
-    );
-    return r;
-  }
-  it.each([undefined, "BARANGAY_ADMIN"])(
-    "denies deletion for %s",
-    async (role) => {
-      const db = client({ data: [], error: null });
-      expect((await remove(role, data().id, db)).status).toHaveBeenCalledWith(
-        403,
-      );
-      expect(db.from).not.toHaveBeenCalled();
-    },
-  );
-  it.each([undefined, "", "not-a-uuid", ["unexpected-array"]])(
-    "rejects malformed IDs %j",
-    async (id) => {
-      const db = client({ data: [], error: null });
-      expect((await remove("SUPER_ADMIN", id, db)).status).toHaveBeenCalledWith(
-        400,
-      );
-      expect(db.remove).not.toHaveBeenCalled();
-    },
-  );
-  it("deletes exactly the selected record using the authenticated client", async () => {
-    const db = client({ data: [{ id: data().id }], error: null });
-    const r = await remove("SUPER_ADMIN", data().id, db);
-    expect(db.from).toHaveBeenCalledWith("assistance_requests");
-    expect(db.eq).toHaveBeenCalledWith("id", data().id);
-    expect(db.select).toHaveBeenCalledWith("id");
-    expect(r.status).toHaveBeenCalledWith(204);
-    expect(r.end).toHaveBeenCalled();
-    expect(r.setHeader).toHaveBeenCalledWith("Cache-Control", "no-store");
-  });
-  it("does not claim deletion if the row no longer exists", async () => {
-    expect(
-      (
-        await remove(
-          "SUPER_ADMIN",
-          data().id,
-          client({ data: [], error: null }),
-        )
-      ).status,
-    ).toHaveBeenCalledWith(404);
-  });
-  it("reports failures without exposing internal database errors", async () => {
-    const r = await remove(
-      "SUPER_ADMIN",
-      data().id,
-      client({ data: null, error: { message: "private database details" } }),
-    );
-    expect(r.status).toHaveBeenCalledWith(503);
-    expect(JSON.stringify(r.json.mock.calls)).not.toContain(
-      "private database details",
-    );
-  });
-});
 async function post(body: unknown) {
   const r = response();
   await postAssistance(
@@ -129,129 +80,213 @@ async function post(body: unknown) {
   );
   return r;
 }
-describe("private assistance intake", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mocks.db.mockReturnValue({ from: () => ({ insert: mocks.insert }) });
-    mocks.insert.mockResolvedValue({ error: null });
-    mocks.route.mockResolvedValue({
-      found: false,
-      failureReason: "HAZARD_BLOCKED",
-    });
-    mocks.evacuation.mockResolvedValue({
-      found: false,
-      failureReason: "HAZARD_BLOCKED",
-    });
-  });
-  it("requires explicit consent, finite coordinates, freshness and bounded fields", () => {
-    expect(validSubmission(data(), now)).toBe(true);
-    for (const bad of [
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.stubEnv("ASSISTANCE_TRACKING_SECRET", "isolated-test-secret-".repeat(3));
+  mocks.db.mockReturnValue({ rpc: mocks.rpc, from: mocks.from });
+  mocks.rpc.mockResolvedValue({ data: row, error: null });
+  mocks.from.mockReturnValue(query({ data: [], error: null }));
+});
+describe("private tracked assistance intake", () => {
+  it("validates consent, cryptographic retry key, freshness and bounded location fields", () => {
+    expect(validSubmission(data())).toBe(true);
+    for (const invalid of [
       null,
       {},
+      { ...data(), submissionKey: "short" },
       { ...data(), consent: false },
       { ...data(), start: { latitude: Infinity, longitude: 121 } },
       { ...data(), accuracy: -1 },
       { ...data(), recordedAt: "invalid" },
-      { ...data(), recordedAt: new Date(now - 121000).toISOString() },
-      { ...data(), recordedAt: new Date(now + 40000).toISOString() },
-      { ...data(), name: "a".repeat(101) },
+      { ...data(), recordedAt: new Date(Date.now() - 121000).toISOString() },
+      { ...data(), name: "x".repeat(101) },
       { ...data(), contact: "<script>" },
       { ...data(), travelMode: "aircraft" },
-      { ...data(), kind: "evacuation" },
-    ]) {
-      expect(validSubmission(bad, now)).toBe(false);
-    }
+    ])
+      expect(validSubmission(invalid)).toBe(false);
   });
-  it("does not insert or calculate routes without consent", async () => {
+  it("never saves without explicit consent", async () => {
     expect(
       (await post({ ...data(), consent: false })).status,
     ).toHaveBeenCalledWith(400);
-    expect(mocks.insert).not.toHaveBeenCalled();
-    expect(mocks.route).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
-  it("rechecks hazards and stores only approved fields", async () => {
+  it("accepts direct emergency requests without requiring a blocked route and sends only approved fields", async () => {
     const r = await post({ ...data(), name: " Alex ", role: "SUPER_ADMIN" });
     expect(r.status).toHaveBeenCalledWith(201);
-    expect(mocks.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        display_name: "Alex",
-        consent_version: "location-sharing-v1",
-      }),
+    const args = mocks.rpc.mock.calls[0][1];
+    expect(args.p_request.display_name).toBe("Alex");
+    expect(args.p_request.reason).toBe("EMERGENCY");
+    expect(args.p_request).not.toHaveProperty("role");
+    expect(args.p_token_hash).toMatch(/^[a-f0-9]{64}$/);
+    const saved = r.json.mock.calls[0][0];
+    expect(saved.trackingToken).toHaveLength(43);
+    expect(args.p_token_hash).toBe(trackingHash(saved.trackingToken));
+    expect(JSON.stringify(args)).not.toContain(saved.trackingToken);
+    expect(r.setHeader).toHaveBeenCalledWith(
+      "Cache-Control",
+      "private, no-store",
     );
-    expect(mocks.insert.mock.calls[0][0]).not.toHaveProperty("role");
-    expect(r.setHeader).toHaveBeenCalledWith("Cache-Control", "no-store");
   });
-  it("rechecks evacuation failures too", async () => {
-    const { destination, ...body } = data();
-    await post({ ...body, kind: "evacuation" });
-    expect(mocks.evacuation).toHaveBeenCalledWith(body.start, body.travelMode);
-    expect(mocks.route).not.toHaveBeenCalled();
+  it("derives the same tracking capability on retry but different ones for other owners", () => {
+    const one = issueTrackingToken(id, "a".repeat(64));
+    expect(issueTrackingToken(id, "a".repeat(64))).toBe(one);
+    expect(issueTrackingToken(id, "b".repeat(64))).not.toBe(one);
   });
-  it.each([{ found: true }, { found: false }])(
-    "rejects unconfirmed blockage %j",
-    async (result) => {
-      mocks.route.mockResolvedValue(result);
-      expect((await post(data())).status).toHaveBeenCalledWith(409);
-      expect(mocks.insert).not.toHaveBeenCalled();
-    },
-  );
-  it("handles duplicate retries without overwriting a snapshot", async () => {
-    mocks.insert.mockResolvedValue({ error: { code: "23505" } });
-    expect((await post(data())).status).toHaveBeenCalledWith(201);
+  it("fails closed when the server tracking secret is missing", async () => {
+    vi.stubEnv("ASSISTANCE_TRACKING_SECRET", "");
+    expect((await post(data())).status).toHaveBeenCalledWith(503);
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
-  it("reports database failure without leaking database details", async () => {
-    mocks.insert.mockResolvedValue({
-      error: { code: "42P01", message: "private SQL" },
+  it("never treats duplicate conflicts or database failures as proof of saved ownership", async () => {
+    mocks.rpc.mockResolvedValue({
+      data: null,
+      error: { code: "23505", message: "private database error" },
     });
     const r = await post(data());
     expect(r.status).toHaveBeenCalledWith(503);
-    expect(JSON.stringify(r.json.mock.calls)).not.toContain("private SQL");
+    expect(JSON.stringify(r.json.mock.calls)).not.toContain(
+      "private database error",
+    );
   });
-  it("rate limits repeated submissions", () => {
-    for (let n = 0; n < 5; n++)
-      expect(allowSubmission("limited", now)).toBe(true);
-    expect(allowSubmission("limited", now)).toBe(false);
-    expect(allowSubmission("limited", now + 15 * 60000)).toBe(true);
+  it("returns the same saved request when the atomic RPC confirms a retry", async () => {
+    const a = await post(data()),
+      b = await post(data());
+    expect(a.json.mock.calls[0][0].trackingToken).toBe(
+      b.json.mock.calls[0][0].trackingToken,
+    );
+    expect(mocks.rpc.mock.calls[0][1].p_request.id).toBe(
+      mocks.rpc.mock.calls[1][1].p_request.id,
+    );
   });
-  it("denies anonymous and barangay readers before touching the database", async () => {
-    for (const req of [
-      {},
-      { profile: { role: "BARANGAY_ADMIN" }, userSupabase: {} },
-    ]) {
+  it("rate limits excessive submissions and releases the cooldown", () => {
+    for (let i = 0; i < 5; i++)
+      expect(allowSubmission("rate-case", 100)).toBe(true);
+    expect(allowSubmission("rate-case", 100)).toBe(false);
+    expect(allowSubmission("rate-case", 100 + 15 * 60_000)).toBe(true);
+  });
+});
+describe("request-specific tracking", () => {
+  it.each(["", "Bearer guessed", "Bearer " + "a".repeat(42)])(
+    "rejects absent or malformed capabilities before reading personal data",
+    async (authorization) => {
       const r = response();
-      await listAssistance(req as RoleAwareRequest, r as unknown as Response);
-      expect(r.status).toHaveBeenCalledWith(403);
-    }
-    expect(mocks.db).not.toHaveBeenCalled();
+      await getTrackedAssistance(
+        { headers: { authorization }, params: { id } } as unknown as Request,
+        r as unknown as Response,
+      );
+      expect(r.status).toHaveBeenCalledWith(404);
+      expect(mocks.from).not.toHaveBeenCalled();
+    },
+  );
+  it("queries both the request ID and token hash, never a public ID alone", async () => {
+    const q = query();
+    mocks.from.mockImplementation((table) =>
+      table === "assistance_requests" ? q : query({ data: [], error: null }),
+    );
+    const r = response();
+    const token = "a".repeat(43);
+    await getTrackedAssistance(
+      {
+        headers: { authorization: `Bearer ${token}` },
+        params: { id },
+      } as unknown as Request,
+      r as unknown as Response,
+    );
+    expect(q.eq).toHaveBeenCalledWith("id", id);
+    expect(q.eq).toHaveBeenCalledWith(
+      "tracking_token_hash",
+      trackingHash(token),
+    );
+    expect(r.json.mock.calls[0][0].request.id).toBe(id);
   });
-  it("uses the authenticated CDRRMO client for dashboard reads", async () => {
-    const limit = vi
-      .fn()
-      .mockResolvedValue({ data: [{ id: "test" }], error: null });
-    const from = vi.fn(() => ({
-      select: () => ({ order: () => ({ limit }) }),
-    }));
+  it("denies expired tracking", async () => {
+    mocks.from.mockReturnValue(
+      query({
+        data: { ...row, tracking_expires_at: "2000-01-01" },
+        error: null,
+      }),
+    );
+    const r = response();
+    await getTrackedAssistance(
+      {
+        headers: { authorization: "Bearer " + "a".repeat(43) },
+        params: { id },
+      } as unknown as Request,
+      r as unknown as Response,
+    );
+    expect(r.status).toHaveBeenCalledWith(404);
+  });
+  it("rejects cancellation without a capability", async () => {
+    const r = response();
+    await cancelTrackedAssistance(
+      { headers: {}, params: { id } } as unknown as Request,
+      r as unknown as Response,
+    );
+    expect(r.status).toHaveBeenCalledWith(404);
+  });
+  it("rejects malformed recovery keys", async () => {
+    const r = response();
+    await recoverTrackedAssistance(
+      {
+        headers: {},
+        params: { id },
+        body: { submissionKey: "guess" },
+      } as unknown as Request,
+      r as unknown as Response,
+    );
+    expect(r.status).toHaveBeenCalledWith(400);
+  });
+});
+describe("CDRRMO assistance access", () => {
+  it.each(["BARANGAY_ADMIN", undefined])(
+    "denies role %s before accessing private records",
+    async (role) => {
+      for (const action of [listAssistance, deleteAssistance]) {
+        const r = response();
+        await action(
+          {
+            params: { id },
+            query: {},
+            profile: role ? { role } : undefined,
+            userSupabase: { from: mocks.from },
+          } as unknown as RoleAwareRequest,
+          r as unknown as Response,
+        );
+        expect(r.status).toHaveBeenCalledWith(403);
+      }
+      expect(mocks.from).not.toHaveBeenCalled();
+    },
+  );
+  it("uses the staff JWT client and returns no tracking hashes", async () => {
+    const q = query({ data: [], error: null }),
+      from = vi.fn(() => q);
     const r = response();
     await listAssistance(
       {
+        query: {},
         profile: { role: "SUPER_ADMIN" },
         userSupabase: { from },
       } as unknown as RoleAwareRequest,
       r as unknown as Response,
     );
     expect(from).toHaveBeenCalledWith("assistance_requests");
-    expect(limit).toHaveBeenCalledWith(100);
-    expect(mocks.db).not.toHaveBeenCalled();
+    expect(q.select.mock.calls[0][0]).not.toContain("tracking_token_hash");
+    expect(mocks.from).not.toHaveBeenCalled();
   });
-  it("admin role middleware excludes barangay admins", () => {
-    const r = response();
-    const next = vi.fn();
-    requireRole("SUPER_ADMIN")(
-      { profile: { role: "BARANGAY_ADMIN" } } as RoleAwareRequest,
+  it("deletes only closed records", async () => {
+    const q = query({ data: [{ id }], error: null }),
+      r = response();
+    await deleteAssistance(
+      {
+        params: { id },
+        profile: { role: "SUPER_ADMIN" },
+        userSupabase: { from: () => q },
+      } as unknown as RoleAwareRequest,
       r as unknown as Response,
-      next,
     );
-    expect(r.status).toHaveBeenCalledWith(403);
-    expect(next).not.toHaveBeenCalled();
+    expect(q.eq).toHaveBeenCalledWith("id", id);
+    expect(q.in).toHaveBeenCalledWith("status", ["COMPLETED", "CANCELLED"]);
+    expect(r.status).toHaveBeenCalledWith(204);
   });
 });

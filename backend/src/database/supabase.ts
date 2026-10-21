@@ -4,7 +4,8 @@ import { env } from "../config/environment";
 let serviceClient: SupabaseClient | null = null;
 
 /** Service-role client — bypasses RLS entirely. Public-data reads and the
- * validated anonymous assistance intake only. Role-gated reads/writes must
+ * validated anonymous assistance intake and capability-checked tracking only.
+ * Role-gated reads/writes must
  * use the caller's userSupabase client instead. */
 export function getSupabase(): SupabaseClient | null {
   if (!env.supabaseUrl || !env.supabaseServiceRoleKey) {

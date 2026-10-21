@@ -6,6 +6,8 @@ import { AppLaunch } from "@/components/AppLaunch";
 import { DEVELOPMENT_WORKER_RESET } from "@/lib/developmentWorkerReset";
 
 export const metadata: Metadata = {
+  // OSM tiles require a Referer; cross-origin requests expose only our origin.
+  referrer: "strict-origin-when-cross-origin",
   title: "EvacuRosa",
   description:
     "Multi-hazard safe route recommendation system for Santa Rosa City, Laguna.",

@@ -180,6 +180,7 @@ describe("location-sharing API", () => {
     vi.stubGlobal("fetch", fetch);
     const body = {
       id: "request-id",
+      submissionKey: "a".repeat(64),
       consent: true as const,
       start,
       destination,
@@ -213,6 +214,7 @@ describe("location-sharing API", () => {
     await expect(
       shareAssistanceLocation({
         id: "test",
+        submissionKey: "a".repeat(64),
         consent: true,
         start,
         accuracy: 20,
