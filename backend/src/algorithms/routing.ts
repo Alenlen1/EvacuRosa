@@ -38,36 +38,21 @@ export function calculateRoute(
   travelMode: TravelMode,
   snapshot: RoutingSnapshot,
 ): RouteResult {
+  return createRouteCalculator(graph, snapshot)(start, destination, travelMode);
+}
+
+/** Reuse graph preparation and fuzzy edge scores only within one request.
+ * A new request always builds a calculator from freshly loaded hazards. */
+export function createRouteCalculator(
+  graph: RoadGraph,
+  snapshot: RoutingSnapshot,
+) {
   const prepared = prepareFloodRouting(
     graph,
     snapshot.floodReports,
     snapshot.statusOverrides,
   );
   graph = prepared.graph;
-  const startNode = graph.nearestAccessibleNode(
-    start.latitude,
-    start.longitude,
-    travelMode,
-  );
-  const goalNode = graph.nearestAccessibleNode(
-    destination.latitude,
-    destination.longitude,
-    travelMode,
-  );
-
-  if (!startNode || !goalNode) {
-    return {
-      found: false,
-      path: [],
-      distanceMeters: 0,
-      affectedRoads: 0,
-      riskLevel: null,
-      warnings: [
-        "No accessible road within 250 m of the start or destination for this travel mode.",
-      ],
-    };
-  }
-
   const overrides = prepared.overrides;
   const floodReports = prepared.reports;
   const fireIncidents = snapshot.fireIncidents;
@@ -98,58 +83,88 @@ export function calculateRoute(
     return cached;
   };
 
-  // The hybrid step: A* selects a path by risk-weighted cost (flood, fire
-  // proximity, verified earthquake impact, road condition), not raw
-  // distance. BLOCKED status is still a hard exclusion regardless of cost.
-  const result = findPath(graph, startNode.id, goalNode.id, {
-    travelMode,
-    statusOverrides: overrides,
-    edgeCost: (edge) => cachedEdgeRisk(edge).cost,
-  });
+  return (
+    start: LatLng,
+    destination: LatLng,
+    travelMode: TravelMode,
+  ): RouteResult => {
+    const startNode = graph.nearestAccessibleNode(
+      start.latitude,
+      start.longitude,
+      travelMode,
+    );
+    const goalNode = graph.nearestAccessibleNode(
+      destination.latitude,
+      destination.longitude,
+      travelMode,
+    );
 
-  if (!result.found) {
-    // Diagnostic only: keep access/one-way rules, remove hazard overrides.
-    // Never return this potentially unsafe path to the caller.
-    const hazardBlocked =
-      [...overrides.values()].includes("BLOCKED") &&
-      findPath(graph, startNode.id, goalNode.id, { travelMode }).found;
+    if (!startNode || !goalNode) {
+      return {
+        found: false,
+        path: [],
+        distanceMeters: 0,
+        affectedRoads: 0,
+        riskLevel: null,
+        warnings: [
+          "No accessible road within 250 m of the start or destination for this travel mode.",
+        ],
+      };
+    }
+
+    // The hybrid step: A* selects a path by risk-weighted cost (flood, fire
+    // proximity, verified earthquake impact, road condition), not raw
+    // distance. BLOCKED status is still a hard exclusion regardless of cost.
+    const result = findPath(graph, startNode.id, goalNode.id, {
+      travelMode,
+      statusOverrides: overrides,
+      edgeCost: (edge) => cachedEdgeRisk(edge).cost,
+    });
+
+    if (!result.found) {
+      // Diagnostic only: keep access/one-way rules, remove hazard overrides.
+      // Never return this potentially unsafe path to the caller.
+      const hazardBlocked =
+        [...overrides.values()].includes("BLOCKED") &&
+        findPath(graph, startNode.id, goalNode.id, { travelMode }).found;
+      return {
+        failureReason: hazardBlocked ? "HAZARD_BLOCKED" : undefined,
+        found: false,
+        path: [],
+        distanceMeters: 0,
+        affectedRoads: 0,
+        riskLevel: null,
+        warnings: [
+          "No route could be found using the available road network and current restrictions.",
+        ],
+      };
+    }
+
+    const path = result.nodeIds
+      .map((id) => graph.getNode(id))
+      .filter((n): n is NonNullable<typeof n> => !!n)
+      .map((n) => ({ latitude: n.latitude, longitude: n.longitude }));
+
+    const affectedRoads = result.edges.filter(
+      (e) => effectiveEdgeStatus(e, overrides) !== "OPEN",
+    ).length;
+
+    // Overall route risk is the worst segment along it, not an average.
+    const riskLevel: RiskLevel =
+      result.edges.length === 0
+        ? "VERY_LOW"
+        : result.edges.reduce<RiskLevel>((worst, e) => {
+            const level = cachedEdgeRisk(e).riskLevel;
+            return riskLevelRank(level) > riskLevelRank(worst) ? level : worst;
+          }, "VERY_LOW");
+
     return {
-      failureReason: hazardBlocked ? "HAZARD_BLOCKED" : undefined,
-      found: false,
-      path: [],
-      distanceMeters: 0,
-      affectedRoads: 0,
-      riskLevel: null,
-      warnings: [
-        "No route could be found using the available road network and current restrictions.",
-      ],
+      found: true,
+      path,
+      distanceMeters: Math.round(result.distanceMeters),
+      affectedRoads,
+      riskLevel,
+      warnings: [],
     };
-  }
-
-  const path = result.nodeIds
-    .map((id) => graph.getNode(id))
-    .filter((n): n is NonNullable<typeof n> => !!n)
-    .map((n) => ({ latitude: n.latitude, longitude: n.longitude }));
-
-  const affectedRoads = result.edges.filter(
-    (e) => effectiveEdgeStatus(e, overrides) !== "OPEN",
-  ).length;
-
-  // Overall route risk is the worst segment along it, not an average.
-  const riskLevel: RiskLevel =
-    result.edges.length === 0
-      ? "VERY_LOW"
-      : result.edges.reduce<RiskLevel>((worst, e) => {
-          const level = cachedEdgeRisk(e).riskLevel;
-          return riskLevelRank(level) > riskLevelRank(worst) ? level : worst;
-        }, "VERY_LOW");
-
-  return {
-    found: true,
-    path,
-    distanceMeters: Math.round(result.distanceMeters),
-    affectedRoads,
-    riskLevel,
-    warnings: [],
   };
 }

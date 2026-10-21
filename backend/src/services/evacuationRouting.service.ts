@@ -1,5 +1,5 @@
 import { getAvailableCenters } from "./evacuation.service";
-import { computeRoute, type LatLng } from "./routing.service";
+import { createRoutePlanner, type LatLng } from "./routing.service";
 import { RISK_WEIGHT, riskLevelRank } from "./riskWeighting.service";
 import type { RiskLevel } from "../algorithms/fuzzy/types";
 import type { EvacuationCenter } from "../types/evacuation";
@@ -51,8 +51,9 @@ export async function computeEvacuationRoute(
   } | null = null;
 
   let hazardBlocked = false;
+  const calculate = await createRoutePlanner();
   for (const center of candidates) {
-    const result = await computeRoute(
+    const result = calculate(
       start,
       {
         latitude: center.latitude,

@@ -1,6 +1,6 @@
 import type { GraphNode } from "./node";
 import type { GraphEdge } from "./edge";
-import { permittedModes, type TravelMode } from "./access";
+import { permittedModes, TRAVEL_MODES, type TravelMode } from "./access";
 import { haversineMeters, distanceMetersToSegment } from "./heuristic";
 
 export interface RoadGraphData {
@@ -13,6 +13,7 @@ export interface RoadGraphData {
  * manageable handful of nodes, large enough that the index doesn't become
  * mostly-empty overhead. */
 const GRID_CELL_DEGREES = 0.005;
+const modeBit = (mode: TravelMode) => 1 << TRAVEL_MODES.indexOf(mode);
 
 const genericRoadNames = new Set([
   "residential",
@@ -58,6 +59,19 @@ export class RoadGraph {
   private edgesByRoad = new Map<string, GraphEdge[]>();
   private forwardEdges = new Map<string, GraphEdge>();
   private edgesByStreetName = new Map<string, GraphEdge[]>();
+  private nodeAccess = new Map<string, number>();
+  // Access arrays are immutable within the graph. Thousands of segments share
+  // the same few combinations, so retain one array per combination.
+  private modeCombinations = new Map<number, TravelMode[]>();
+
+  private shareModes(modes: TravelMode[] | undefined) {
+    if (!modes) return undefined;
+    const mask = modes.reduce((bits, mode) => bits | modeBit(mode), 0);
+    const shared = this.modeCombinations.get(mask);
+    if (shared) return shared;
+    this.modeCombinations.set(mask, modes);
+    return modes;
+  }
 
   getForwardEdge(id: string): GraphEdge | undefined {
     return this.forwardEdges.get(id);
@@ -91,20 +105,24 @@ export class RoadGraph {
     for (const edge of data.edges) {
       this.addDirectedEdge({
         ...edge,
-        allowedModes: edge.osmTags
-          ? permittedModes(edge.osmTags, false)
-          : edge.allowedModes,
+        allowedModes: this.shareModes(
+          edge.osmTags
+            ? permittedModes(edge.osmTags, false)
+            : edge.allowedModes,
+        ),
       });
       this.addDirectedEdge({
         ...edge,
         id: `${edge.id}-r`,
         fromNodeId: edge.toNodeId,
         toNodeId: edge.fromNodeId,
-        allowedModes: edge.osmTags
-          ? permittedModes(edge.osmTags, true)
-          : edge.oneway
-            ? ["walking"]
-            : edge.allowedModes,
+        allowedModes: this.shareModes(
+          edge.osmTags
+            ? permittedModes(edge.osmTags, true)
+            : edge.oneway
+              ? ["walking"]
+              : edge.allowedModes,
+        ),
       });
       const existing = this.edgesByRoad.get(edge.roadId);
       if (existing) existing.push(edge);
@@ -133,6 +151,13 @@ export class RoadGraph {
       );
     }
     list.push(edge);
+    if (edge.status !== "BLOCKED") {
+      let mask = 0;
+      for (const mode of edge.allowedModes ?? TRAVEL_MODES)
+        mask |= modeBit(mode);
+      for (const id of [edge.fromNodeId, edge.toNodeId])
+        this.nodeAccess.set(id, (this.nodeAccess.get(id) ?? 0) | mask);
+    }
   }
 
   getNode(id: string): GraphNode | undefined {
@@ -154,22 +179,29 @@ export class RoadGraph {
     longitude: number,
     mode: TravelMode,
   ): GraphNode | null {
-    const eligible = new Set<string>();
-    for (const edges of this.adjacency.values()) {
-      for (const edge of edges) {
-        if (
-          edge.status === "BLOCKED" ||
-          (edge.allowedModes && !edge.allowedModes.includes(mode))
-        )
-          continue;
-        eligible.add(edge.fromNodeId);
-        eligible.add(edge.toNodeId);
-      }
-    }
     let best: GraphNode | null = null;
     let bestDistance = 250; // Never silently snap across town to bypass access rules.
-    for (const id of eligible) {
-      const node = this.nodes.get(id)!;
+    // Conservative bounds around the 250 m search circle. Include incoming
+    // endpoints via nodeAccess so one-way sinks remain valid destinations.
+    const latDelta = 250 / 110_000;
+    const cosLat = Math.cos(
+      (Math.min(90, Math.abs(latitude) + latDelta) * Math.PI) / 180,
+    );
+    const lonDelta = latDelta / Math.max(cosLat, 0.000001);
+    const mask = modeBit(mode);
+    const candidates =
+      lonDelta > 0.05 ||
+      longitude - lonDelta < -180 ||
+      longitude + lonDelta > 180
+        ? this.nodes.values()
+        : this.nodesInBounds(
+            latitude - latDelta,
+            latitude + latDelta,
+            longitude - lonDelta,
+            longitude + lonDelta,
+          );
+    for (const node of candidates) {
+      if (!((this.nodeAccess.get(node.id) ?? 0) & mask)) continue;
       const distance = haversineMeters(
         latitude,
         longitude,
@@ -182,6 +214,25 @@ export class RoadGraph {
       }
     }
     return best;
+  }
+
+  private *nodesInBounds(
+    minLat: number,
+    maxLat: number,
+    minLon: number,
+    maxLon: number,
+  ) {
+    for (
+      let row = Math.floor(minLat / GRID_CELL_DEGREES);
+      row <= Math.floor(maxLat / GRID_CELL_DEGREES);
+      row++
+    )
+      for (
+        let col = Math.floor(minLon / GRID_CELL_DEGREES);
+        col <= Math.floor(maxLon / GRID_CELL_DEGREES);
+        col++
+      )
+        yield* this.grid.get(`${row}:${col}`) ?? [];
   }
 
   /** All (forward-direction) edges sharing a roadId — used to look up the

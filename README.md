@@ -4,6 +4,8 @@ EvacuRosa is a multi-hazard evacuation decision-support web application for Sant
 
 The system is designed as a responsive web application with support for desktop and mobile browsers. It also calculates routes offline using a downloaded Santa Rosa road network, saved hazard and evacuation-center data, and a browser Web Worker.
 
+For backend deployment on Railway and Hobby budget controls, see [the Railway guide](backend/RAILWAY.md).
+
 EvacuRosa is a decision-support system. It does not guarantee that a route is completely safe and should not replace official emergency instructions from the City Disaster Risk Reduction and Management Office (CDRRMO), barangay officials, or other authorized emergency agencies.
 
 ---

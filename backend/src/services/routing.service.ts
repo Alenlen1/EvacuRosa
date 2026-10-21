@@ -1,20 +1,21 @@
 import { loadRoadGraph } from "./road.service";
 import {
-  buildRoadStatusOverrides,
+  roadStatusOverridesForReports,
   getActiveFloodReports,
 } from "./flood.service";
 import {
-  buildFireStatusOverrides,
+  fireStatusOverridesForIncidents,
   getActiveFireIncidents,
 } from "./fire.service";
 import {
-  buildEarthquakeStatusOverrides,
-  buildEarthquakeImpactByRoadId,
+  getVerifiedRoadImpacts,
+  earthquakeStatusOverridesForImpacts,
+  earthquakeImpactByRoadId,
 } from "./earthquake.service";
 import type { RoadStatus } from "../algorithms/astar/edge";
 import type { TravelMode } from "../algorithms/astar/access";
 import {
-  calculateRoute,
+  createRouteCalculator,
   type LatLng,
   type RouteResult,
 } from "../algorithms/routing";
@@ -41,28 +42,28 @@ export async function computeRoute(
   destination: LatLng,
   travelMode: TravelMode = "walking",
 ): Promise<RouteResult> {
+  const calculate = await createRoutePlanner();
+  return calculate(start, destination, travelMode);
+}
+
+/** One fresh hazard read per source per request, shared by all candidate centers. */
+export async function createRoutePlanner() {
   const graph = loadRoadGraph();
-  const [
-    floodOverrides,
-    fireOverrides,
-    earthquakeOverrides,
-    floodReports,
-    fireIncidents,
-    earthquakeImpactByRoadId,
-  ] = await Promise.all([
-    buildRoadStatusOverrides(),
-    buildFireStatusOverrides(),
-    buildEarthquakeStatusOverrides(),
+  const [floodReports, fireIncidents, impacts] = await Promise.all([
     getActiveFloodReports(),
     getActiveFireIncidents(),
-    buildEarthquakeImpactByRoadId(),
+    getVerifiedRoadImpacts(),
   ]);
-  return calculateRoute(graph, start, destination, travelMode, {
+  return createRouteCalculator(graph, {
     statusOverrides: [
-      ...mergeOverrides(floodOverrides, fireOverrides, earthquakeOverrides),
+      ...mergeOverrides(
+        roadStatusOverridesForReports(floodReports),
+        fireStatusOverridesForIncidents(fireIncidents),
+        earthquakeStatusOverridesForImpacts(impacts),
+      ),
     ],
     floodReports,
     fireIncidents,
-    earthquakeImpacts: [...earthquakeImpactByRoadId],
+    earthquakeImpacts: [...earthquakeImpactByRoadId(impacts)],
   });
 }
