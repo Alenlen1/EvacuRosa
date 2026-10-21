@@ -83,6 +83,14 @@ The super administrator represents citywide/CDRRMO-level management and can mana
 
 The admin dashboard includes map-based evacuation-center management and a hazard-placement map. CDRRMO does not manage barangay administrator accounts. Public pages are in `frontend/`, administration is in `admin-frontend/`, and both share `backend/` and Supabase. See [admin setup and deployment](admin-frontend/README.md).
 
+### Emergency assistance
+
+Public users can request assistance through **Emergency**, share a one-time GPS
+snapshot and privately track acknowledgment, confirmed dispatch, completion or
+cancellation without logging in. Requests recover after reopening on the same
+device. Only CDRRMO can manage them; barangay administrators have no access.
+See [assistance setup, migration and limitations](backend/ASSISTANCE.md) before deployment.
+
 ### Offline Support
 
 The frontend caches the following data in IndexedDB:

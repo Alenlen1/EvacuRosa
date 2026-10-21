@@ -53,6 +53,9 @@ are imported from `frontend/src` through the TypeScript alias fallback.
 
 ## Permissions and behavior
 
+Emergency request status tracking also requires migration 0018 and the backend's
+ASSISTANCE_TRACKING_SECRET. See [the assistance guide](../backend/ASSISTANCE.md).
+
 - CDRRMO registers centers, edits record details/capacity/assignment, deletes
   centers, and retains the hazard and shared-location tools. Existing supply
   controls are available during CDRRMO center editing.

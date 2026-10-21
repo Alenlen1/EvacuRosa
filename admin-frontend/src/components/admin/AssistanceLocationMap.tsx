@@ -14,7 +14,13 @@ import {
 import type { AssistanceRequest } from "@/services/api";
 import { SANTA_ROSA_CITY_CENTER } from "@/lib/mapBounds";
 
-const colors = { NEW: "#2563eb", ACKNOWLEDGED: "#b7791f", RESOLVED: "#6b7280" };
+const colors = {
+  PENDING: "#2563eb",
+  ACKNOWLEDGED: "#b7791f",
+  DISPATCHED: "#b03a2e",
+  COMPLETED: "#28764b",
+  CANCELLED: "#6b7280",
+};
 type Selection = { id: string; version: number } | null;
 
 function Locations({
@@ -89,6 +95,7 @@ function Locations({
           <Popup>
             <div className="assistance-map-popup">
               <strong>{item.display_name || "Name not provided"}</strong>
+              <span className="assistance-reference">Request ID: {item.id}</span>
               <span>{item.status.replaceAll("_", " ")}</span>
               <span>
                 {item.contact_number

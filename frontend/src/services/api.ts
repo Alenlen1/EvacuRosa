@@ -1,3 +1,5 @@
+import type { AssistanceStatus, TrackedAssistance } from "@/lib/assistance";
+export type { AssistanceStatus } from "@/lib/assistance";
 import type { TravelMode } from "@/lib/travelTime";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -12,7 +14,7 @@ export class RoutingError extends Error {
 }
 
 export interface AssistanceContext {
-  kind: "route" | "evacuation";
+  kind: "route" | "evacuation" | "emergency";
   travelMode: TravelMode;
   destination?: LatLng;
 }
@@ -20,6 +22,7 @@ export interface AssistanceContext {
 export async function shareAssistanceLocation(
   data: AssistanceContext & {
     id: string;
+    submissionKey: string;
     consent: true;
     start: LatLng;
     accuracy: number;
@@ -27,13 +30,17 @@ export async function shareAssistanceLocation(
     name?: string;
     contact?: string;
   },
-): Promise<{ id: string }> {
+): Promise<TrackedAssistance & { id: string; trackingToken: string }> {
   const response = await fetch(`${API_URL}/api/assistance-requests`, {
     method: "POST",
     cache: "no-store",
     signal: AbortSignal.timeout(30000),
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
+  }).catch(() => {
+    throw Error(
+      "Submission could not be confirmed. Retry this request; it will not be duplicated. Use official emergency communication channels if urgent.",
+    );
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok)
@@ -43,12 +50,12 @@ export async function shareAssistanceLocation(
   return body;
 }
 
-export type AssistanceStatus = "NEW" | "ACKNOWLEDGED" | "RESOLVED";
-
 export async function updateAssistanceStatus(
   token: string,
   id: string,
   status: AssistanceStatus,
+  version: number,
+  confirmed = false,
 ) {
   const response = await fetch(
     API_URL + "/api/admin/assistance-requests/" + encodeURIComponent(id),
@@ -60,9 +67,13 @@ export async function updateAssistanceStatus(
         Authorization: "Bearer " + token,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, version, confirmed }),
     },
-  );
+  ).catch(() => {
+    throw Error(
+      "Could not confirm the status update. Refresh before trying again.",
+    );
+  });
   const body = await response.json().catch(() => ({}));
   if (!response.ok)
     throw new Error(
@@ -70,11 +81,12 @@ export async function updateAssistanceStatus(
     );
   return body.request as Pick<
     AssistanceRequest,
-    "id" | "status" | "status_updated_at"
+    "id" | "status" | "status_updated_at" | "version"
   >;
 }
 
 export interface AssistanceRequest {
+  version: number;
   status: AssistanceStatus;
   status_updated_at: string | null;
   id: string;
@@ -86,7 +98,7 @@ export interface AssistanceRequest {
   display_name: string | null;
   contact_number: string | null;
   travel_mode: TravelMode;
-  route_kind: "route" | "evacuation";
+  route_kind: "route" | "evacuation" | "emergency";
   destination_latitude: number | null;
   destination_longitude: number | null;
   location_name?: { roadName: string; distanceMeters: number } | null;
@@ -118,17 +130,124 @@ export async function deleteAssistanceRequest(
 export async function fetchAssistanceRequests(
   token: string,
   signal?: AbortSignal,
+  status?: AssistanceStatus,
 ): Promise<AssistanceRequest[]> {
-  const response = await fetch(`${API_URL}/api/admin/assistance-requests`, {
-    cache: "no-store",
-    signal,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await fetch(
+    `${API_URL}/api/admin/assistance-requests${status ? `?status=${status}` : ""}`,
+    {
+      cache: "no-store",
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(15000)])
+        : AbortSignal.timeout(15000),
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
   if (!response.ok)
     throw new Error(
       "Unable to load shared locations. Check your connection and CDRRMO access.",
     );
   return (await response.json()).requests;
+}
+
+export const assistanceEventsUrl = (id?: string) =>
+  id
+    ? `${API_URL}/api/assistance-requests/${encodeURIComponent(id)}/events`
+    : `${API_URL}/api/admin/assistance-requests/events`;
+export async function recoverAssistance(
+  id: string,
+  submissionKey: string,
+  signal?: AbortSignal,
+): Promise<(TrackedAssistance & { trackingToken: string }) | null> {
+  const response = await fetch(
+    `${API_URL}/api/assistance-requests/${encodeURIComponent(id)}/recover`,
+    {
+      method: "POST",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ submissionKey }),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(15000)])
+        : AbortSignal.timeout(15000),
+    },
+  );
+  if (response.status === 404) return null;
+  if (!response.ok) throw Error("Could not recover the previous submission.");
+  return response.json();
+}
+export class AssistanceTrackingError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "AssistanceTrackingError";
+  }
+}
+export async function fetchTrackedAssistance(
+  id: string,
+  token: string,
+  signal?: AbortSignal,
+): Promise<TrackedAssistance> {
+  const response = await fetch(
+    `${API_URL}/api/assistance-requests/${encodeURIComponent(id)}`,
+    {
+      cache: "no-store",
+      headers: { Authorization: `Bearer ${token}` },
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(15000)])
+        : AbortSignal.timeout(15000),
+    },
+  ).catch(() => {
+    throw new AssistanceTrackingError(
+      "Status could not be refreshed. The previous status may be outdated.",
+      0,
+    );
+  });
+  if (!response.ok)
+    throw new AssistanceTrackingError(
+      response.status === 404
+        ? "Tracking is unavailable or expired. Use the official emergency contact."
+        : "Status could not be refreshed. The previous status may be outdated.",
+      response.status,
+    );
+  return response.json();
+}
+export async function cancelMyAssistance(
+  id: string,
+  token: string,
+): Promise<TrackedAssistance> {
+  const response = await fetch(
+    `${API_URL}/api/assistance-requests/${encodeURIComponent(id)}/cancel`,
+    {
+      method: "POST",
+      cache: "no-store",
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(20000),
+    },
+  ).catch(() => {
+    throw Error(
+      "Cancellation could not be confirmed. Check the latest status before retrying.",
+    );
+  });
+  const body = await response.json();
+  if (!response.ok)
+    throw Error(body.error ?? "Cancellation could not be confirmed.");
+  return body;
+}
+export async function fetchAssistanceDetails(
+  token: string,
+  id: string,
+): Promise<TrackedAssistance> {
+  const response = await fetch(
+    `${API_URL}/api/admin/assistance-requests/${encodeURIComponent(id)}`,
+    {
+      cache: "no-store",
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(15000),
+    },
+  );
+  if (!response.ok) throw Error("Could not load request history.");
+  return response.json();
 }
 
 export interface LatLng {

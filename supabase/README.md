@@ -1,5 +1,10 @@
 # Supabase
 
+For the current emergency assistance lifecycle, private tracking and migration
+0018, follow [the assistance deployment guide](../backend/ASSISTANCE.md).
+The location-sharing sections below describe the earlier 0011-0013 implementation;
+0018 replaces its NEW/RESOLVED statuses and adds private recovery and dispatch.
+
 ## Setup
 
 1. Create a project at https://supabase.com.
@@ -35,6 +40,9 @@
    and deployment. CDRRMO uses `SUPER_ADMIN`; every barangay account must have
    its own assigned `barangay_id`. Null assignments no longer grant citywide access.
    No admin pages are deployed in the public `frontend/` website.
+6. For emergency request tracking, apply `0018_emergency_assistance_tracking.sql`
+   and configure the backend-only `ASSISTANCE_TRACKING_SECRET` as described in
+   [the assistance guide](../backend/ASSISTANCE.md).
 
 ## Without a Supabase project
 
