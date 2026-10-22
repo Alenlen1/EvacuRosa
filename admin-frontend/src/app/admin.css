@@ -1356,3 +1356,200 @@
     padding: 18px;
   }
 }
+
+/* Barangay workspaces carry the sign-in page's type, paper and maroon palette. */
+:is(.barangay-access-page, .barangay-workspace) {
+  --ink: #302825;
+  --muted: #746862;
+  --border: #e5ddd5;
+  --surface: #f7f3ee;
+  --accent: #800000;
+  background: var(--surface);
+  color: var(--ink);
+}
+:is(.barangay-access-page, .barangay-workspace) .app-header {
+  background: #fffdf9;
+  border-color: var(--border);
+}
+:is(.barangay-access-page, .barangay-workspace) .brand-name {
+  color: var(--ink);
+}
+:is(.barangay-access-page, .barangay-workspace) .brand-name > span {
+  color: #800000;
+}
+:is(.barangay-access-page, .barangay-workspace) .app-header > span:not(.brand) {
+  color: var(--muted);
+  font-size: 12px;
+}
+.barangay-access-page .app-header > span:not(.brand) {
+  margin-right: auto;
+}
+:is(.barangay-access-page, .barangay-workspace) .eyebrow {
+  color: #8c5148;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 1.6px;
+}
+.barangay-workspace .admin-heading {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 36px 28px 28px;
+}
+.barangay-workspace .admin-heading > div {
+  min-width: 0;
+}
+.barangay-workspace .admin-heading h1,
+.barangay-access-page .staff-login-title h1 {
+  margin-top: 8px;
+  color: var(--ink);
+  font-size: clamp(26px, 3.5vw, 36px);
+  font-weight: 650;
+  letter-spacing: -1.1px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.barangay-workspace .admin-heading .barangay-workspace-subtitle {
+  margin-top: 9px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.barangay-access-page
+  :is(.staff-login-title, .barangay-overview, .barangay-access-form)
+  p:not(.error-message) {
+  color: var(--muted);
+  line-height: 1.65;
+}
+.barangay-access-page
+  :is(.barangay-overview, .barangay-access-form, .barangay-access-grid button),
+.barangay-workspace .barangay-center-card,
+.barangay-workspace .admin-center-cards > div {
+  background: #fffdf9;
+  border-color: var(--border);
+  box-shadow: none;
+}
+.barangay-workspace .barangay-center-card {
+  padding: 24px;
+}
+.barangay-workspace .barangay-center-card h2 {
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.4;
+  letter-spacing: -0.25px;
+}
+.barangay-workspace
+  .barangay-center-card
+  :is(.text-slate-500, .text-slate-600) {
+  color: var(--muted);
+}
+.barangay-workspace .barangay-center-card .text-slate-900 {
+  color: var(--ink);
+}
+.barangay-workspace .admin-heading .error-message {
+  color: #a52e25;
+}
+:is(.barangay-access-page, .barangay-workspace) :is(input, select) {
+  background: #fffcf8;
+  color: var(--ink);
+  border-color: #ded7cf;
+}
+.barangay-workspace .availability-field {
+  color: var(--muted);
+}
+:is(.barangay-access-page, .barangay-workspace) .secondary-button {
+  background: #fffdf9;
+  border-color: #ded7cf;
+  color: #583c35;
+}
+:is(.barangay-access-page, .barangay-workspace)
+  .secondary-button:hover:not(:disabled) {
+  background: #f6eee7;
+}
+.barangay-access-page .primary-button,
+.barangay-workspace .admin-center-cards .barangay-save-button {
+  background: #800000;
+  border: 1px solid #800000;
+  color: #fffaf6;
+}
+.barangay-access-page .primary-button:hover:not(:disabled),
+.barangay-workspace
+  .admin-center-cards
+  .barangay-save-button:hover:not(:disabled) {
+  background: #600000;
+  border-color: #600000;
+}
+.barangay-access-page .primary-button:disabled,
+.barangay-workspace .admin-center-cards .barangay-save-button:disabled {
+  background: #eee7df;
+  border-color: #eee7df;
+  color: #8a7c73;
+}
+.barangay-access-page .barangay-access-grid button {
+  transition:
+    background 150ms,
+    border-color 150ms;
+}
+.barangay-access-page
+  .barangay-access-grid
+  button:hover:not(:disabled):not([aria-pressed="true"]) {
+  background: #fcf5ef;
+  border-color: #c49c91;
+}
+.barangay-access-page .barangay-access-grid button[aria-pressed="true"] {
+  border-color: #800000;
+  background: #faefeb;
+}
+.barangay-access-page .barangay-card-icon {
+  background: #f6e9e3;
+  color: #800000;
+}
+.barangay-access-page .barangay-access-grid small {
+  color: var(--muted);
+}
+:is(.barangay-access-page, .barangay-workspace)
+  :is(a, button, input, select):focus-visible {
+  outline: 2px solid #94524f;
+  outline-offset: 3px;
+}
+.barangay-workspace [role="progressbar"] {
+  background: #eee7df;
+}
+.barangay-workspace .barangay-center-status[data-status="AVAILABLE"] {
+  background: #edf5ee;
+  color: #326641;
+}
+.barangay-workspace [role="progressbar"][data-status="AVAILABLE"] > div {
+  background: #428557;
+}
+.barangay-workspace .barangay-center-status[data-status="NEARLY FULL"] {
+  background: #fbf1d9;
+  color: #855c15;
+}
+.barangay-workspace [role="progressbar"][data-status="NEARLY FULL"] > div {
+  background: #b78623;
+}
+.barangay-workspace .barangay-center-status[data-status="FULL"] {
+  background: #fbe9e6;
+  color: #a52e25;
+}
+.barangay-workspace [role="progressbar"][data-status="FULL"] > div {
+  background: #b5362c;
+}
+.barangay-workspace .barangay-center-status[data-status="CLOSED"] {
+  background: #efebe6;
+  color: #746862;
+}
+.barangay-workspace [role="progressbar"][data-status="CLOSED"] > div {
+  background: #978a80;
+}
+@media (max-width: 800px) {
+  .barangay-workspace .admin-heading {
+    padding: 28px 16px 22px;
+  }
+  .barangay-workspace .barangay-center-card {
+    padding: 20px;
+  }
+  :is(.barangay-access-page, .barangay-workspace) :is(input, select) {
+    font-size: 16px;
+  }
+}

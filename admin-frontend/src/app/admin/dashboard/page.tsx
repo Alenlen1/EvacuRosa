@@ -13,6 +13,7 @@ import { MapPin, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { publicSans } from "@/app/fonts/publicSans";
 import {
   fetchFloodReports,
   fetchFireIncidents,
@@ -40,6 +41,7 @@ type AdminCenter = ManagedCenter;
 interface Profile {
   role: "BARANGAY_ADMIN" | "SUPER_ADMIN";
   barangay_id: string | null;
+  barangay_name?: string | null;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -199,6 +201,17 @@ export default function AdminDashboardPage() {
     return data.session?.access_token;
   }
 
+  const barangayName =
+    profile?.barangay_name?.trim() ||
+    centers
+      .find((center) => center.barangay_id === profile?.barangay_id)
+      ?.barangays?.name?.trim();
+  const barangayTitle = barangayName
+    ? /^barangay\s/i.test(barangayName)
+      ? barangayName
+      : `Barangay ${barangayName}`
+    : "Barangay workspace";
+
   if (!ready) {
     return (
       <main className="flex h-dvh items-center justify-center text-sm text-slate-500">
@@ -237,7 +250,7 @@ export default function AdminDashboardPage() {
     );
   return (
     <main
-      className={`admin-app${profile?.role === "SUPER_ADMIN" ? " cdrrmo-workspace" : ""}`}
+      className={`admin-app ${profile.role === "SUPER_ADMIN" ? "cdrrmo-workspace" : `barangay-workspace ${publicSans.className}`}`}
     >
       <header className="app-header">
         <Link href="/admin/dashboard" aria-label="EvacuRosa administration">
@@ -282,12 +295,18 @@ export default function AdminDashboardPage() {
             <h1>
               {profile?.role === "SUPER_ADMIN"
                 ? "City response workspace"
-                : "Assigned evacuation centers"}
+                : barangayTitle}
             </h1>
-            <p>
+            <p
+              className={
+                profile.role === "BARANGAY_ADMIN"
+                  ? "barangay-workspace-subtitle"
+                  : undefined
+              }
+            >
               {profile?.role === "SUPER_ADMIN"
                 ? "Register evacuation centers, review shared locations and manage hazards across Santa Rosa."
-                : "Update occupancy and availability for your assigned barangay. Fullness is calculated consistently from occupancy."}
+                : "Evacuation center management"}
             </p>
             {error && (
               <p className="error-message" role="alert">
@@ -326,7 +345,7 @@ export default function AdminDashboardPage() {
                 <div
                   key={center.id}
                   id={`center-${center.id}`}
-                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                  className="barangay-center-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
                   {(() => {
                     const draft =
@@ -342,14 +361,6 @@ export default function AdminDashboardPage() {
                       center,
                       Number.isFinite(occupancy) ? occupancy : 0,
                     );
-                    const statusClass =
-                      status === "AVAILABLE"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : status === "NEARLY FULL"
-                          ? "bg-amber-50 text-amber-700"
-                          : status === "FULL"
-                            ? "bg-red-50 text-red-700"
-                            : "bg-slate-100 text-slate-600";
                     const percent =
                       center.capacity > 0 && Number.isFinite(occupancy)
                         ? Math.max(
@@ -369,7 +380,8 @@ export default function AdminDashboardPage() {
                             </p>
                           </div>
                           <span
-                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusClass}`}
+                            className="barangay-center-status rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                            data-status={status}
                           >
                             {status}
                           </span>
@@ -398,6 +410,7 @@ export default function AdminDashboardPage() {
                             ),
                           )}
                           className="mb-4 h-2 overflow-hidden rounded-full bg-slate-100"
+                          data-status={status}
                         >
                           <div
                             className="h-full rounded-full bg-blue-600 transition-[width]"
@@ -436,7 +449,7 @@ export default function AdminDashboardPage() {
                                   [center.id]: event.target.value,
                                 }))
                               }
-                              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900"
                             />
                           </label>
                           <button
@@ -452,7 +465,7 @@ export default function AdminDashboardPage() {
                                     ? "CLOSED"
                                     : "AVAILABLE"))
                             }
-                            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                            className="barangay-save-button rounded-lg px-4 py-2 text-sm font-medium disabled:cursor-not-allowed"
                           >
                             {savingId === center.id ? "Saving…" : "Save"}
                           </button>

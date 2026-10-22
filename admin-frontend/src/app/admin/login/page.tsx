@@ -8,6 +8,7 @@ import { Brand } from "@/components/ui/Brand";
 import { SecretInput } from "@/components/admin/SecretInput";
 import { LoginSlideshow } from "@/components/admin/LoginSlideshow";
 import { useLoginViewport } from "@/hooks/useLoginViewport";
+import { publicSans } from "@/app/fonts/publicSans";
 import {
   signInFailure,
   validateLogin,
@@ -15,12 +16,6 @@ import {
   type LoginField,
   type LoginFieldErrors,
 } from "@/lib/loginFeedback";
-
-const publicSans = localFont({
-  src: "../../fonts/PublicSans-Variable.ttf",
-  weight: "100 900",
-  display: "swap",
-});
 
 const headlineFont = localFont({
   src: "../../fonts/BodoniModa-Variable.ttf",

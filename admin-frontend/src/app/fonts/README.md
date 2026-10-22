@@ -1,6 +1,6 @@
 # Login fonts
 
-- Public Sans: login interface and supporting copy. Source:
+- Public Sans: login and barangay administration interfaces. Source:
   https://github.com/google/fonts/tree/main/ofl/publicsans
   License: `OFL.txt`.
 - Bodoni Moda: the “Ready to respond” headline, chosen for its high-contrast

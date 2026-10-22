@@ -7,6 +7,7 @@ import { Brand } from "@/components/ui/Brand";
 import { SecretInput } from "@/components/admin/SecretInput";
 import { BarangayEvacuationOverview } from "@/components/admin/BarangayEvacuationOverview";
 import { supabase } from "@/lib/supabaseClient";
+import { publicSans } from "@/app/fonts/publicSans";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 type Barangay = { id: string; name: string };
@@ -133,7 +134,9 @@ export default function BarangaySelectionPage() {
   }
 
   return (
-    <main className="staff-login">
+    <main
+      className={`staff-login barangay-access-page ${publicSans.className}`}
+    >
       <header className="app-header">
         <Brand />
         <span>Barangay administration &middot; Santa Rosa, Laguna</span>
