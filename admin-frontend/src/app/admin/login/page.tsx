@@ -83,8 +83,7 @@ export default function AdminLoginPage() {
             Santa Rosa City, Laguna
           </p>
           <h1 id="login-introduction-title">
-            Ready to
-            <br />
+            Ready to <br />
             respond.
           </h1>
           <p className="login-introduction-copy">
