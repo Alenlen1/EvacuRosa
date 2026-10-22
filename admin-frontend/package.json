@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --webpack -p 3001",
     "build": "next build",
-    "start": "next start -p 3001"
+    "start": "next start -p 3001",
+    "test": "vitest run"
   },
   "dependencies": {
     "@protomaps/basemaps": "^5.7.2",

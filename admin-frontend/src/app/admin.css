@@ -200,6 +200,26 @@
   outline: 0;
   box-shadow: 0 0 0 3px #8b292514;
 }
+.login-field input[aria-invalid="true"] {
+  border-color: #b5362c;
+  background: #fff7f4;
+}
+.login-field input[aria-invalid="true"]:focus-visible {
+  box-shadow: 0 0 0 3px #b5362c20;
+}
+.login-field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 6px;
+  color: #a52e25;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.login-field-error > svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
 .login-field .admin-secret-field {
   position: relative;
   margin: 0;
@@ -247,6 +267,9 @@
   opacity: 0.65;
 }
 .login-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin-top: 17px;
   padding: 12px;
   border: 1px solid #ecc5bd;
@@ -256,6 +279,22 @@
   font-size: 13px;
   line-height: 1.6;
   overflow-wrap: anywhere;
+}
+.login-error > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.login-error:focus-visible {
+  outline: 2px solid #b5362c;
+  outline-offset: 3px;
+}
+.admin-login-page:has(.login-error, .login-field-error) .login-panel-footnote {
+  display: none;
+}
+@media (max-height: 660px) {
+  .admin-login-page:has(.login-error, .login-field-error) .login-access-note {
+    display: none;
+  }
 }
 .login-access-note {
   margin-top: 25px;
@@ -583,8 +622,9 @@
   .login-layout {
     padding: 8px 0;
   }
-  .admin-login-page:has(.login-error) .login-panel-description,
-  .admin-login-page:has(.login-error) .login-access-note {
+  .admin-login-page:has(.login-error, .login-field-error)
+    .login-panel-description,
+  .admin-login-page:has(.login-error, .login-field-error) .login-access-note {
     display: none;
   }
 }
@@ -684,7 +724,7 @@
   .login-footer {
     min-height: 26px;
   }
-  .admin-login-page:has(.login-error) .login-access-note {
+  .admin-login-page:has(.login-error, .login-field-error) .login-access-note {
     display: none;
   }
 }
@@ -833,14 +873,14 @@
   }
 }
 @media (max-height: 360px) {
-  .admin-login-page:has(.login-error) .login-panel h2,
-  .admin-login-page:has(.login-error) .login-access-note {
+  .admin-login-page:has(.login-error, .login-field-error) .login-panel h2,
+  .admin-login-page:has(.login-error, .login-field-error) .login-access-note {
     display: none;
   }
-  .admin-login-page:has(.login-error) .login-panel {
+  .admin-login-page:has(.login-error, .login-field-error) .login-panel {
     padding-block: 10px;
   }
-  .admin-login-page:has(.login-error) .login-credentials {
+  .admin-login-page:has(.login-error, .login-field-error) .login-credentials {
     margin-top: 0;
   }
 }
