@@ -1,10 +1,11 @@
 ﻿"use client";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
+import { ArrowRight, LockKeyhole } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { Brand } from "@/components/ui/Brand";
 import { SecretInput } from "@/components/admin/SecretInput";
+import { LoginSlideshow } from "@/components/admin/LoginSlideshow";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -66,59 +67,100 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="staff-login">
-      <header className="app-header">
+    <main className="admin-login-page">
+      <LoginSlideshow />
+      <header className="login-masthead">
         <Brand />
-        <span>Administration &middot; Santa Rosa, Laguna</span>
+        <span className="login-portal-label">ADMINISTRATION PORTAL</span>
       </header>
-      <div className="staff-login-content staff-credentials-login">
-        <form
-          className="barangay-access-form"
-          onSubmit={submit}
-          aria-busy={busy}
+      <div className="login-layout">
+        <section
+          className="login-introduction"
+          aria-labelledby="login-introduction-title"
         >
-          <div className="staff-login-title">
-            <ShieldCheck size={32} aria-hidden="true" />
-            <span className="eyebrow">AUTHORIZED PERSONNEL</span>
-            <h1>Welcome back</h1>
-            <p>Sign in with your CDRRMO or barangay admin account.</p>
-          </div>
-          <label htmlFor="admin-email">Email address</label>
-          <input
-            id="admin-email"
-            type="email"
-            autoComplete="username"
-            autoCapitalize="none"
-            spellCheck={false}
-            required
-            disabled={busy}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <label htmlFor="admin-password">Password</label>
-          <SecretInput
-            id="admin-password"
-            secretLabel="password"
-            autoComplete="current-password"
-            required
-            disabled={busy}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          {error && (
-            <div className="error-message" role="alert">
-              {error}
-            </div>
-          )}
-          <button type="submit" className="primary-button" disabled={busy}>
-            {busy ? "Signing in..." : "Sign in"}
-          </button>
-          <p>
-            CDRRMO opens the city dashboard. Barangay staff select their
-            barangay and verify its access code.
+          <p className="login-city">
+            <span />
+            Santa Rosa City, Laguna
           </p>
-        </form>
+          <h1 id="login-introduction-title">
+            Ready to
+            <br />
+            respond.
+          </h1>
+          <p className="login-introduction-copy">
+            Manage evacuation centers, monitor reported hazards, and coordinate
+            assistance for your community.
+          </p>
+          <span className="login-introduction-rule" />
+          <p className="login-introduction-note">
+            One city. A coordinated response.
+          </p>
+        </section>
+        <section className="login-panel" aria-labelledby="staff-sign-in-title">
+          <div className="login-panel-kicker">
+            <LockKeyhole size={14} aria-hidden="true" />
+            AUTHORIZED PERSONNEL
+          </div>
+          <h2 id="staff-sign-in-title">Staff sign in</h2>
+          <p className="login-panel-description">
+            Welcome back. Sign in to your CDRRMO or barangay workspace.
+          </p>
+          <form
+            className="login-credentials"
+            onSubmit={submit}
+            aria-busy={busy}
+          >
+            <div className="login-field">
+              <label htmlFor="admin-email">Email address</label>
+              <input
+                id="admin-email"
+                type="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                required
+                disabled={busy}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </div>
+            <div className="login-field">
+              <label htmlFor="admin-password">Password</label>
+              <SecretInput
+                id="admin-password"
+                secretLabel="password"
+                autoComplete="current-password"
+                required
+                disabled={busy}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+              />
+            </div>
+            {error && (
+              <div className="login-error" role="alert">
+                {error}
+              </div>
+            )}
+            <button type="submit" className="login-submit" disabled={busy}>
+              <span>{busy ? "Signing in…" : "Sign in"}</span>
+              <ArrowRight size={18} aria-hidden="true" />
+            </button>
+          </form>
+          <div className="login-access-note">
+            <p>Need access to your workspace?</p>
+            <span>Contact your CDRRMO administrator.</span>
+          </div>
+          <p className="login-panel-footnote">
+            For authorized CDRRMO and barangay personnel.
+          </p>
+        </section>
       </div>
+      <footer className="login-footer">
+        <span>EvacuRosa &middot; Santa Rosa, Laguna</span>
+        <span>Community preparedness. Coordinated action.</span>
+      </footer>
     </main>
   );
 }
