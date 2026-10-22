@@ -10,7 +10,7 @@ const slides = [
     position: "50% 48%",
   },
   {
-    src: "/images/login/fire.jpg",
+    src: "/images/login/fire-enhanced.webp",
     label: "Fire response",
     position: "50% 50%",
   },
