@@ -1,11 +1,25 @@
 ﻿"use client";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import localFont from "next/font/local";
 import { ArrowRight, LockKeyhole } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { Brand } from "@/components/ui/Brand";
 import { SecretInput } from "@/components/admin/SecretInput";
 import { LoginSlideshow } from "@/components/admin/LoginSlideshow";
+
+const publicSans = localFont({
+  src: "../../fonts/PublicSans-Variable.ttf",
+  weight: "100 900",
+  display: "swap",
+});
+
+const headlineFont = localFont({
+  src: "../../fonts/BodoniModa-Variable.ttf",
+  weight: "400 900",
+  variable: "--font-login-display",
+  display: "swap",
+});
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -67,7 +81,9 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="admin-login-page">
+    <main
+      className={`admin-login-page ${publicSans.className} ${headlineFont.variable}`}
+    >
       <LoginSlideshow />
       <header className="login-masthead">
         <Brand />
@@ -78,10 +94,7 @@ export default function AdminLoginPage() {
           className="login-introduction"
           aria-labelledby="login-introduction-title"
         >
-          <p className="login-city">
-            <span />
-            Santa Rosa City, Laguna
-          </p>
+          <p className="login-city">Santa Rosa City, Laguna</p>
           <h1 id="login-introduction-title">
             Ready to <br />
             respond.
@@ -90,7 +103,6 @@ export default function AdminLoginPage() {
             Manage evacuation centers, monitor reported hazards, and coordinate
             assistance for your community.
           </p>
-          <span className="login-introduction-rule" />
           <p className="login-introduction-note">
             One city. A coordinated response.
           </p>

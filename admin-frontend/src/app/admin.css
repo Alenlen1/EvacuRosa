@@ -109,18 +109,14 @@
   text-transform: uppercase;
   color: #f0d6cf;
 }
-.login-city > span {
-  width: 28px;
-  height: 1px;
-  background: #efd1bc;
-}
 .login-introduction h1 {
   margin: 27px 0 26px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-login-display), serif;
   font-size: clamp(68px, 7.4vw, 108px);
-  font-weight: 400;
+  font-weight: 800;
+  font-optical-sizing: auto;
   line-height: 0.99;
-  letter-spacing: -3.5px;
+  letter-spacing: -0.04em;
   color: #fff9f0;
 }
 .login-introduction-copy {
@@ -129,14 +125,8 @@
   line-height: 1.8;
   color: #f0ded7;
 }
-.login-introduction-rule {
-  display: block;
-  margin: 30px 0 18px;
-  height: 1px;
-  width: 46px;
-  background: #dcad9b;
-}
 .login-introduction-note {
+  margin-top: 28px;
   font-size: 12px;
   line-height: 1.5;
   color: #e7c7bd;
@@ -406,7 +396,6 @@
     line-height: 1.65;
     font-size: 13px;
   }
-  .login-introduction-rule,
   .login-introduction-note {
     display: none;
   }
@@ -511,9 +500,6 @@
   .login-introduction h1 {
     font-size: clamp(58px, 8.8vh, 92px);
     margin: 20px 0;
-  }
-  .login-introduction-rule {
-    margin: 20px 0 14px;
   }
 }
 @media (max-width: 760px) {
@@ -628,7 +614,6 @@
     font-size: 12px;
     line-height: 1.5;
   }
-  .login-introduction-rule,
   .login-introduction-note {
     display: none;
   }
