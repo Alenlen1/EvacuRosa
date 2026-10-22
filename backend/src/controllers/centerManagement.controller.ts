@@ -100,13 +100,26 @@ export async function listAdminCenters(req: RoleAwareRequest, res: Response) {
     res.status(503).json({ error: "Could not load assigned centers." });
     return;
   }
+  let barangayName: string | null = null;
+  if (req.profile.barangay_id) {
+    const { data: barangay, error: barangayError } = await req.userSupabase
+      .from("barangays")
+      .select("name")
+      .eq("id", req.profile.barangay_id)
+      .maybeSingle();
+    if (!barangayError) barangayName = barangay?.name ?? null;
+  }
   res.setHeader("Cache-Control", "no-store");
   res.json({
     centers: (data ?? []).map((row) => ({
       ...row,
       status: deriveStatus(row.current_occupancy, row.capacity, row.status),
     })),
-    profile: { role: req.profile.role, barangay_id: req.profile.barangay_id },
+    profile: {
+      role: req.profile.role,
+      barangay_id: req.profile.barangay_id,
+      barangay_name: barangayName,
+    },
   });
 }
 async function validBarangay(req: RoleAwareRequest, id: unknown) {

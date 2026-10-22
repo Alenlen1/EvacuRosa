@@ -2,11 +2,12 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
-import { SecretInput } from "@/components/admin/SecretInput";
+import { BarangayAccessDialog } from "@/components/admin/BarangayAccessDialog";
 import { BarangayEvacuationOverview } from "@/components/admin/BarangayEvacuationOverview";
+import { BarangayAccessCard } from "@/components/admin/BarangayAccessCard";
 import { supabase } from "@/lib/supabaseClient";
+import { publicSans } from "@/app/fonts/publicSans";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 type Barangay = { id: string; name: string };
@@ -20,6 +21,7 @@ export default function BarangaySelectionPage() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [accessError, setAccessError] = useState("");
 
   async function loadBarangays() {
     setLoading(true);
@@ -87,19 +89,16 @@ export default function BarangaySelectionPage() {
     };
   }, [router]);
 
-  useEffect(() => {
-    if (selected) {
-      const input = document.getElementById("barangay-code");
-      input?.scrollIntoView({ behavior: "smooth", block: "center" });
-      input?.focus({ preventScroll: true });
-    }
-  }, [selected]);
-
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected || !supabase || busy) return;
+    if (!/^[A-Za-z0-9]{6}$/.test(code)) {
+      setAccessError("Enter all 6 characters using letters or numbers.");
+      document.getElementById("barangay-code")?.focus({ preventScroll: true });
+      return;
+    }
     setBusy(true);
-    setError("");
+    setAccessError("");
     try {
       const { data } = await supabase.auth.getSession();
       if (!data.session) throw Error("Your session expired. Sign in again.");
@@ -120,7 +119,7 @@ export default function BarangaySelectionPage() {
       setCode("");
       router.replace("/admin/dashboard");
     } catch (cause) {
-      setError(
+      setAccessError(
         cause instanceof TypeError
           ? "Cannot reach the backend. Check your connection and try again."
           : cause instanceof Error
@@ -133,7 +132,9 @@ export default function BarangaySelectionPage() {
   }
 
   return (
-    <main className="staff-login">
+    <main
+      className={`staff-login barangay-access-page ${publicSans.className}`}
+    >
       <header className="app-header">
         <Brand />
         <span>Barangay administration &middot; Santa Rosa, Laguna</span>
@@ -172,26 +173,18 @@ export default function BarangaySelectionPage() {
               className="barangay-access-grid"
               aria-labelledby="barangay-selection-title"
             >
-              {barangays.map((barangay, index) => (
-                <button
-                  type="button"
+              {barangays.map((barangay) => (
+                <BarangayAccessCard
                   key={barangay.id}
+                  barangay={barangay}
                   disabled={busy}
-                  aria-pressed={selected?.id === barangay.id}
-                  onClick={() => {
+                  selected={selected?.id === barangay.id}
+                  onSelect={() => {
                     setSelected(barangay);
                     setCode("");
-                    setError("");
+                    setAccessError("");
                   }}
-                >
-                  <span className={`barangay-card-icon tone-${index % 4}`}>
-                    <MapPin size={25} aria-hidden="true" />
-                  </span>
-                  <span>
-                    <strong>{barangay.name}</strong>
-                    <small>Barangay workspace</small>
-                  </span>
-                </button>
+                />
               ))}
             </div>
             {!barangays.length && (
@@ -203,41 +196,24 @@ export default function BarangaySelectionPage() {
               </button>
             )}
             {selected && (
-              <form
-                className="barangay-access-form"
+              <BarangayAccessDialog
+                key={selected.id}
+                barangay={selected}
+                code={code}
+                busy={busy}
+                error={accessError}
                 onSubmit={submit}
-                aria-busy={busy}
-              >
-                <h2>{selected.name}</h2>
-                <label htmlFor="barangay-code">Barangay access code</label>
-                <SecretInput
-                  key={selected.id}
-                  id="barangay-code"
-                  secretLabel="code"
-                  autoComplete="off"
-                  required
-                  minLength={6}
-                  maxLength={6}
-                  pattern="[A-Za-z0-9]{6}"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  disabled={busy}
-                  value={code}
-                  onChange={(event) => setCode(event.target.value)}
-                />
-                <p>
-                  Enter the 6-character code issued specifically to{" "}
-                  {selected.name}. Use letters or numbers. Letters are
-                  case-sensitive.
-                </p>
-                <button
-                  type="submit"
-                  className="primary-button"
-                  disabled={busy}
-                >
-                  {busy ? "Verifying..." : "Open barangay dashboard"}
-                </button>
-              </form>
+                onCodeChange={(value) => {
+                  setCode(value);
+                  setAccessError("");
+                }}
+                onClose={() => {
+                  if (busy) return;
+                  setSelected(null);
+                  setCode("");
+                  setAccessError("");
+                }}
+              />
             )}
           </>
         )}
