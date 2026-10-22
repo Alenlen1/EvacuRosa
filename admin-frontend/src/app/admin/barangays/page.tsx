@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MapPin } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import { SecretInput } from "@/components/admin/SecretInput";
+import { BarangayEvacuationOverview } from "@/components/admin/BarangayEvacuationOverview";
 import { supabase } from "@/lib/supabaseClient";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -150,10 +151,10 @@ export default function BarangaySelectionPage() {
       <div className="staff-login-content">
         <div className="staff-login-title">
           <span className="eyebrow">BARANGAY ACCESS</span>
-          <h1>Select your barangay</h1>
+          <h1>Barangay administration</h1>
           <p>
-            Choose your barangay, then enter its private code to manage its
-            evacuation centers.
+            View city evacuation centers, then choose your barangay and enter
+            its private code to update occupancy and availability.
           </p>
         </div>
         {error && (
@@ -165,7 +166,12 @@ export default function BarangaySelectionPage() {
           <p role="status">Loading barangays...</p>
         ) : (
           <>
-            <div className="barangay-access-grid">
+            <BarangayEvacuationOverview />
+            <h2 id="barangay-selection-title">Select your barangay</h2>
+            <div
+              className="barangay-access-grid"
+              aria-labelledby="barangay-selection-title"
+            >
               {barangays.map((barangay, index) => (
                 <button
                   type="button"

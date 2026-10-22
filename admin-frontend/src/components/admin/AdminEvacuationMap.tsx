@@ -1,87 +1,68 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect, useMemo } from "react";
+import { latLngBounds } from "leaflet";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import {
   SANTA_ROSA_CITY_BOUNDS,
   SANTA_ROSA_CITY_CENTER,
   SANTA_ROSA_CITY_DEFAULT_ZOOM,
 } from "@/lib/mapBounds";
-import { createDivIcon } from "@/components/map/icons";
+import { EvacuationCenterLayer } from "@/components/map/EvacuationCenterLayer";
+import type { EvacuationCenter } from "@/services/api";
 
-const statusColor: Record<string, string> = {
-  AVAILABLE: "#3B6D11",
-  NEARLY_FULL: "#BA7517",
-  FULL: "#B3261E",
-  CLOSED: "#6B7280",
-};
-
-function centerIcon(status: string) {
-  const color = statusColor[status] ?? statusColor.CLOSED;
-  return createDivIcon(
-    `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="3" y="9" width="18" height="12" rx="2" fill="${color}" stroke="white" stroke-width="1.5"/>
-      <path d="M3 9 L12 3 L21 9" fill="${color}" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
-      <path d="M10 21v-7h4v7M7 11v3M17 11v3" stroke="white" stroke-width="1.5"/>
-    </svg>`,
-    26,
-  );
+function FitCenters({ centers }: { centers: EvacuationCenter[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (centers.length)
+      map.fitBounds(
+        centers.map((center) => [center.latitude, center.longitude]),
+        {
+          padding: [30, 30],
+          maxZoom: 15,
+        },
+      );
+  }, [centers, map]);
+  return null;
 }
 
-interface MapCenter {
-  id: string;
-  name: string;
-  latitude: number | null;
-  longitude: number | null;
-  status: string;
-}
-
-interface AdminEvacuationMapProps {
-  centers: MapCenter[];
-  onSelectCenter: (id: string) => void;
-}
-
-/** Clicking a marker scrolls to and highlights that center's card in the
- * list below, rather than navigating anywhere — everything stays on one
- * screen since the map and the edit form are really one workflow. */
+/** Read-only city overview. Marker artwork and popups are shared with the public map. */
 export default function AdminEvacuationMap({
   centers,
-  onSelectCenter,
-}: AdminEvacuationMapProps) {
-  const withCoords = centers.filter(
-    (c): c is MapCenter & { latitude: number; longitude: number } =>
-      c.latitude != null && c.longitude != null,
+}: {
+  centers: EvacuationCenter[];
+}) {
+  const withCoords = useMemo(
+    () =>
+      centers.filter(
+        (center) =>
+          Number.isFinite(center.latitude) &&
+          Number.isFinite(center.longitude) &&
+          Math.abs(center.latitude) <= 90 &&
+          Math.abs(center.longitude) <= 180,
+      ),
+    [centers],
   );
 
   return (
     <MapContainer
       center={SANTA_ROSA_CITY_CENTER}
       zoom={SANTA_ROSA_CITY_DEFAULT_ZOOM}
-      minZoom={12}
+      minZoom={11}
       maxZoom={18}
-      maxBounds={SANTA_ROSA_CITY_BOUNDS}
+      // Leave room for edge-center popups and the whole city on small screens.
+      maxBounds={latLngBounds(SANTA_ROSA_CITY_BOUNDS).pad(0.5)}
       maxBoundsViscosity={1}
-      className="h-[55vh] min-h-[420px] max-h-[640px] w-full"
+      className="barangay-overview-map"
+      scrollWheelZoom={false}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {withCoords.map((c) => (
-        <Marker
-          key={c.id}
-          position={[c.latitude, c.longitude]}
-          icon={centerIcon(c.status)}
-          eventHandlers={{ click: () => onSelectCenter(c.id) }}
-        >
-          <Popup>
-            <div className="center-popup">
-              <strong>{c.name}</strong>
-              <span>{c.status.replaceAll("_", " ")}</span>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+      <FitCenters centers={withCoords} />
+      <EvacuationCenterLayer centers={withCoords} />
     </MapContainer>
   );
 }

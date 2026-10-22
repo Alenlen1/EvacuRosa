@@ -23,18 +23,6 @@ import {
   type EarthquakeRoadImpact,
 } from "@/services/api";
 
-const AdminEvacuationMap = dynamic(
-  () => import("@/components/admin/AdminEvacuationMap"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-64 w-full items-center justify-center bg-slate-100 text-xs text-slate-500">
-        Loading map…
-      </div>
-    ),
-  },
-);
-
 const HazardPlacementMap = dynamic(
   () => import("@/components/admin/HazardPlacementMap"),
   {
@@ -68,7 +56,6 @@ export default function AdminDashboardPage() {
   >({});
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [retrying, setRetrying] = useState(false);
 
@@ -206,18 +193,6 @@ export default function AdminDashboardPage() {
     return "AVAILABLE";
   }
 
-  function handleSelectCenterOnMap(id: string) {
-    setHighlightedId(id);
-    document.getElementById(`center-${id}`)?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-    setTimeout(
-      () => setHighlightedId((current) => (current === id ? null : current)),
-      2000,
-    );
-  }
-
   async function getAuthToken(): Promise<string | undefined> {
     if (!supabase) return undefined;
     const { data } = await supabase.auth.getSession();
@@ -271,7 +246,7 @@ export default function AdminDashboardPage() {
         <span className="city-label">Santa Rosa, Laguna</span>
         {profile.role === "BARANGAY_ADMIN" && (
           <Link className="secondary-button" href="/admin/barangays">
-            Change barangay
+            Barangay home
           </Link>
         )}
         {process.env.NEXT_PUBLIC_PUBLIC_APP_URL && (
@@ -340,29 +315,18 @@ export default function AdminDashboardPage() {
         )}
         <div
           className={
-            profile?.role !== "SUPER_ADMIN" ? "admin-center-layout" : undefined
+            profile?.role !== "SUPER_ADMIN"
+              ? "barangay-center-management"
+              : undefined
           }
         >
-          {profile?.role !== "SUPER_ADMIN" && (
-            <div className="admin-center-map">
-              <AdminEvacuationMap
-                centers={centers}
-                onSelectCenter={handleSelectCenterOnMap}
-              />
-            </div>
-          )}
-
           {profile?.role !== "SUPER_ADMIN" && (
             <div className="admin-center-cards">
               {centers.map((center) => (
                 <div
                   key={center.id}
                   id={`center-${center.id}`}
-                  className={`rounded-xl border bg-white p-4 shadow-sm transition-colors ${
-                    highlightedId === center.id
-                      ? "border-blue-500 ring-2 ring-blue-200"
-                      : "border-slate-200"
-                  }`}
+                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
                   {(() => {
                     const draft =
