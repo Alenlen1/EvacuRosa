@@ -142,6 +142,7 @@
 .login-panel-kicker {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-size: 9px;
   letter-spacing: 1.8px;
@@ -149,6 +150,7 @@
   color: #986552;
 }
 .login-panel h2 {
+  text-align: center;
   margin: 19px 0 10px;
   font-size: 31px;
   font-weight: 600;
@@ -156,6 +158,8 @@
   letter-spacing: -0.8px;
 }
 .login-panel-description {
+  margin-inline: auto;
+  text-align: center;
   font-size: 14px;
   line-height: 1.7;
   color: #746862;
@@ -214,9 +218,10 @@
   background: transparent;
 }
 .login-submit {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
   width: 100%;
   margin-top: 27px;
@@ -229,6 +234,10 @@
   font-weight: 600;
   border: 1px solid #800000;
   transition: background 0.15s;
+}
+.login-submit > svg {
+  position: absolute;
+  right: 18px;
 }
 .login-submit:hover:not(:disabled) {
   background: #640000;
