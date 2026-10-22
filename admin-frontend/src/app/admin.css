@@ -1037,8 +1037,8 @@
 }
 .barangay-access-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
   margin: 18px 0;
 }
 .barangay-overview {
@@ -1092,47 +1092,79 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
 }
-.barangay-access-grid button {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  text-align: left;
-  background: white;
-  padding: 20px;
-  border: 1px solid #e1e5eb;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px #17232f09;
+.barangay-access-page .barangay-access-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(44px, auto) 80px 1fr;
+  justify-items: center;
+  align-content: start;
+  gap: 16px;
+  text-align: center;
+  background: var(--barangay-card-background);
+  color: #302825;
+  min-height: 270px;
+  padding: 22px 20px 26px;
+  border: 1px solid transparent;
+  border-radius: 20px;
   min-width: 0;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms;
 }
-.barangay-access-grid button[aria-pressed="true"] {
-  border: 2px solid #bba42b;
-  background: #fffbed;
+.barangay-access-page
+  .barangay-access-card:hover:not(:disabled):not([aria-pressed="true"]) {
+  border-color: var(--barangay-card-accent);
+  box-shadow: 0 5px 16px #3028250c;
 }
-.barangay-access-grid small {
-  display: block;
-  color: #657181;
-  margin-top: 5px;
+.barangay-access-page .barangay-access-card[aria-pressed="true"] {
+  border-color: #800000;
+  box-shadow: inset 0 0 0 1px #800000;
 }
-.barangay-card-icon {
+.barangay-card-name {
+  align-self: center;
+  max-width: 100%;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.barangay-card-logo {
   display: grid;
   place-items: center;
-  min-width: 45px;
-  height: 45px;
-  border-radius: 10px;
-  background: #edf4fc;
-  color: #3d68a0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--barangay-card-accent);
+  color: #fffdf9;
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.5px;
 }
-.tone-1 {
-  background: #edf4e9;
-  color: #3b6d11;
+.barangay-card-info {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #514842;
 }
-.tone-2 {
-  background: #fff0ea;
-  color: #aa583a;
+.barangay-card-info small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
 }
-.tone-3 {
-  background: #f4edf7;
-  color: #885f9c;
+.barangay-card-selected {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #800000;
+  color: #fffdf9;
+}
+.barangay-access-page .barangay-access-card:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 .barangay-access-form {
   max-width: 560px;
@@ -1304,6 +1336,11 @@
   margin: 16px 0;
   font-size: 13px;
 }
+@media (max-width: 1100px) {
+  .barangay-access-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 @media (max-width: 800px) {
   .admin-app:not(.cdrrmo-workspace) .app-header {
     height: auto;
@@ -1348,9 +1385,6 @@
 @media (max-width: 440px) {
   .barangay-access-grid {
     grid-template-columns: 1fr;
-  }
-  .barangay-access-grid button {
-    padding: 15px;
   }
   .barangay-access-form {
     padding: 18px;
@@ -1420,8 +1454,7 @@
   color: var(--muted);
   line-height: 1.65;
 }
-.barangay-access-page
-  :is(.barangay-overview, .barangay-access-form, .barangay-access-grid button),
+.barangay-access-page :is(.barangay-overview, .barangay-access-form),
 .barangay-workspace .barangay-center-card,
 .barangay-workspace .admin-center-cards > div {
   background: #fffdf9;
@@ -1483,28 +1516,6 @@
   background: #eee7df;
   border-color: #eee7df;
   color: #8a7c73;
-}
-.barangay-access-page .barangay-access-grid button {
-  transition:
-    background 150ms,
-    border-color 150ms;
-}
-.barangay-access-page
-  .barangay-access-grid
-  button:hover:not(:disabled):not([aria-pressed="true"]) {
-  background: #fcf5ef;
-  border-color: #c49c91;
-}
-.barangay-access-page .barangay-access-grid button[aria-pressed="true"] {
-  border-color: #800000;
-  background: #faefeb;
-}
-.barangay-access-page .barangay-card-icon {
-  background: #f6e9e3;
-  color: #800000;
-}
-.barangay-access-page .barangay-access-grid small {
-  color: var(--muted);
 }
 :is(.barangay-access-page, .barangay-workspace)
   :is(a, button, input, select):focus-visible {

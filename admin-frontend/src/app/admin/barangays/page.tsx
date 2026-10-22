@@ -2,10 +2,10 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import { SecretInput } from "@/components/admin/SecretInput";
 import { BarangayEvacuationOverview } from "@/components/admin/BarangayEvacuationOverview";
+import { BarangayAccessCard } from "@/components/admin/BarangayAccessCard";
 import { supabase } from "@/lib/supabaseClient";
 import { publicSans } from "@/app/fonts/publicSans";
 
@@ -175,26 +175,18 @@ export default function BarangaySelectionPage() {
               className="barangay-access-grid"
               aria-labelledby="barangay-selection-title"
             >
-              {barangays.map((barangay, index) => (
-                <button
-                  type="button"
+              {barangays.map((barangay) => (
+                <BarangayAccessCard
                   key={barangay.id}
+                  barangay={barangay}
                   disabled={busy}
-                  aria-pressed={selected?.id === barangay.id}
-                  onClick={() => {
+                  selected={selected?.id === barangay.id}
+                  onSelect={() => {
                     setSelected(barangay);
                     setCode("");
                     setError("");
                   }}
-                >
-                  <span className={`barangay-card-icon tone-${index % 4}`}>
-                    <MapPin size={25} aria-hidden="true" />
-                  </span>
-                  <span>
-                    <strong>{barangay.name}</strong>
-                    <small>Barangay workspace</small>
-                  </span>
-                </button>
+                />
               ))}
             </div>
             {!barangays.length && (
