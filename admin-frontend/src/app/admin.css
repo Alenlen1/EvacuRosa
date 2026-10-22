@@ -1564,3 +1564,210 @@
     font-size: 16px;
   }
 }
+
+/* A top-layer dialog keeps code entry centered above the barangay grid. */
+.barangay-access-dialog {
+  position: fixed;
+  inset: auto 0;
+  top: var(--barangay-dialog-center, 50%);
+  transform: translateY(-50%);
+  margin: 0 auto;
+  width: min(440px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(var(--barangay-dialog-height, 100dvh) - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0;
+  border: 1px solid #e5ddd5;
+  border-radius: 18px;
+  background: #fffdf9;
+  color: #302825;
+  box-shadow: 0 24px 80px #24100e40;
+}
+.barangay-access-dialog::backdrop {
+  background: #29181480;
+  backdrop-filter: blur(2px);
+}
+.barangay-access-dialog .barangay-access-form {
+  max-width: none;
+  margin: 0;
+  padding: 28px;
+  border: 0;
+  border-radius: inherit;
+}
+.barangay-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.barangay-dialog-header h2 {
+  margin-top: 6px;
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.7px;
+}
+.barangay-access-form .barangay-dialog-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin: -8px -8px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #746862;
+}
+.barangay-dialog-close:hover:not(:disabled) {
+  background: #f6eee7;
+}
+.barangay-dialog-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--barangay-card-background);
+}
+.barangay-dialog-monogram {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--barangay-card-accent);
+  color: #fffdf9;
+  font-size: 15px;
+  font-weight: 650;
+}
+.barangay-dialog-identity > div {
+  min-width: 0;
+}
+.barangay-dialog-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.barangay-dialog-identity > div > span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: #514842;
+}
+.barangay-access-dialog .barangay-access-form label {
+  margin-top: 22px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4d403a;
+}
+.barangay-access-dialog #barangay-code {
+  height: 52px;
+  padding-inline: 48px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 5px;
+}
+.barangay-access-dialog #barangay-code::placeholder {
+  color: #a4968c;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.barangay-access-dialog #barangay-code[aria-invalid="true"] {
+  border-color: #b5362c;
+  background: #fff7f4;
+}
+.barangay-access-dialog .barangay-access-form #barangay-code-description {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #746862;
+}
+.barangay-access-dialog .barangay-access-form .barangay-code-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #ecc5bd;
+  border-radius: 6px;
+  background: #fff0eb;
+  color: #a52e25;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.barangay-code-error > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.barangay-dialog-actions {
+  position: sticky;
+  bottom: 12px;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 24px;
+  background: #fffdf9;
+  box-shadow: 0 -8px 0 4px #fffdf9;
+}
+.barangay-dialog-actions button {
+  margin: 0;
+  min-height: 46px;
+}
+.barangay-access-dialog[data-compact="true"] .barangay-access-form {
+  padding: 16px 20px;
+}
+.barangay-access-dialog[data-compact="true"] .eyebrow,
+.barangay-access-dialog[data-compact="true"] .barangay-dialog-monogram,
+.barangay-access-dialog[data-compact="true"]
+  .barangay-dialog-identity
+  > div
+  > span {
+  display: none;
+}
+.barangay-access-dialog[data-compact="true"] .barangay-dialog-header {
+  align-items: center;
+}
+.barangay-access-dialog[data-compact="true"] .barangay-dialog-header h2 {
+  margin-top: 0;
+  font-size: 22px;
+}
+.barangay-access-dialog[data-compact="true"] .barangay-dialog-close {
+  margin-block: -4px;
+}
+.barangay-access-dialog[data-compact="true"] .barangay-dialog-identity {
+  margin-top: 4px;
+  padding: 0;
+  background: transparent;
+}
+.barangay-access-dialog[data-compact="true"] .barangay-access-form label {
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+.barangay-access-dialog[data-compact="true"] #barangay-code {
+  height: 46px;
+}
+.barangay-access-dialog[data-compact="true"] .barangay-dialog-actions {
+  margin-top: 16px;
+}
+.barangay-access-dialog[data-short="true"] #barangay-code-description {
+  display: none;
+}
+@media (max-width: 440px) {
+  .barangay-access-dialog .barangay-access-form {
+    padding: 22px 20px;
+  }
+  .barangay-access-dialog[data-compact="true"] .barangay-access-form {
+    padding: 12px 18px;
+  }
+}

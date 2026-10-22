@@ -28,6 +28,7 @@ export function BarangayAccessCard({
       style={colors}
       disabled={disabled}
       aria-pressed={selected}
+      aria-haspopup="dialog"
       onClick={onSelect}
     >
       <strong className="barangay-card-name">{barangay.name}</strong>
