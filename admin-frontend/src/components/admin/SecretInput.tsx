@@ -6,9 +6,15 @@ import { Eye, EyeOff } from "lucide-react";
 type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
   id: string;
   secretLabel: "password" | "code";
+  retainInputFocus?: boolean;
 };
 
-export function SecretInput({ secretLabel, disabled, ...props }: Props) {
+export function SecretInput({
+  secretLabel,
+  disabled,
+  retainInputFocus = false,
+  ...props
+}: Props) {
   const [visible, setVisible] = useState(false);
   const Icon = visible ? EyeOff : Eye;
   return (
@@ -25,6 +31,10 @@ export function SecretInput({ secretLabel, disabled, ...props }: Props) {
         aria-controls={props.id}
         aria-pressed={visible}
         disabled={disabled}
+        onPointerDown={(event) => {
+          if (retainInputFocus && document.activeElement?.id === props.id)
+            event.preventDefault();
+        }}
         onClick={() => setVisible((current) => !current)}
       >
         <Icon size={18} aria-hidden="true" />

@@ -8,7 +8,7 @@
   display: grid;
   grid-template-areas: "masthead" "content" "slideshow" "footer";
   grid-template-rows: auto minmax(0, 1fr) auto auto;
-  height: 100dvh;
+  height: var(--login-viewport-height, 100dvh);
   overflow: clip;
   padding: 0 clamp(24px, 5.5vw, 88px);
   background: #54121d;
@@ -882,6 +882,102 @@
   }
   .admin-login-page:has(.login-error, .login-field-error) .login-credentials {
     margin-top: 0;
+  }
+}
+
+/* Use the actual visible area on touch devices when space is constrained. */
+.admin-login-page[data-login-viewport="compact"] {
+  position: fixed;
+  top: var(--login-viewport-top, 0px);
+  inset-inline: 0;
+  grid-template-areas: "masthead" "content";
+  grid-template-rows: auto minmax(0, 1fr);
+  padding-inline: max(16px, env(safe-area-inset-left))
+    max(16px, env(safe-area-inset-right));
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+}
+.admin-login-page[data-login-viewport="compact"]
+  :is(
+    .login-introduction,
+    .login-panel-kicker,
+    .login-panel h2,
+    .login-panel-description,
+    .login-access-note,
+    .login-panel-footnote,
+    .login-footer,
+    .login-slideshow-controls,
+    .login-portal-label,
+    .brand-caption
+  ) {
+  display: none;
+}
+.admin-login-page[data-login-viewport="compact"] .login-masthead {
+  padding: 6px 0;
+}
+.admin-login-page[data-login-viewport="compact"] .brand-mark {
+  width: 30px;
+  height: 30px;
+}
+.admin-login-page[data-login-viewport="compact"] .brand-name {
+  font-size: 21px;
+}
+.admin-login-page[data-login-viewport="compact"] .login-layout {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  max-width: 440px;
+  gap: 0;
+  padding: 6px 0;
+}
+.admin-login-page[data-login-viewport="compact"] .login-panel {
+  max-height: 100%;
+  min-height: 0;
+  padding: 12px 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scroll-padding-block: 8px 64px;
+}
+.admin-login-page[data-login-viewport="compact"] .login-credentials {
+  display: block;
+  margin-top: 0;
+}
+.admin-login-page[data-login-viewport="compact"] .login-field {
+  margin-top: 8px;
+}
+.admin-login-page[data-login-viewport="compact"] .login-field:first-child {
+  margin-top: 0;
+}
+.admin-login-page[data-login-viewport="compact"] .login-field > label {
+  margin-bottom: 4px;
+}
+.admin-login-page[data-login-viewport="compact"] .login-field input {
+  height: 44px;
+  font-size: 16px;
+}
+.admin-login-page[data-login-viewport="compact"] .secret-visibility-toggle {
+  height: 44px;
+  top: 0;
+}
+.admin-login-page[data-login-viewport="compact"] .login-submit {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  min-height: 44px;
+  margin-top: 12px;
+  box-shadow: 0 -8px 0 5px #fffdf9;
+}
+@media (min-width: 561px) {
+  .admin-login-page[data-login-viewport="compact"] .login-layout {
+    max-width: 520px;
+  }
+  .admin-login-page[data-login-viewport="compact"] .login-credentials {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 12px;
+  }
+  .admin-login-page[data-login-viewport="compact"] .login-submit,
+  .admin-login-page[data-login-viewport="compact"] .login-error {
+    grid-column: 1 / -1;
   }
 }
 

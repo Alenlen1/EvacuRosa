@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Brand } from "@/components/ui/Brand";
 import { SecretInput } from "@/components/admin/SecretInput";
 import { LoginSlideshow } from "@/components/admin/LoginSlideshow";
+import { useLoginViewport } from "@/hooks/useLoginViewport";
 import {
   signInFailure,
   validateLogin,
@@ -37,6 +38,8 @@ export default function AdminLoginPage() {
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const pageRef = useRef<HTMLElement>(null);
+  useLoginViewport(pageRef);
   const focusTarget = useRef<LoginFailure["focus"] | null>(null);
 
   // Focus after feedback is committed and the fields are re-enabled.
@@ -156,6 +159,7 @@ export default function AdminLoginPage() {
 
   return (
     <main
+      ref={pageRef}
       className={`admin-login-page ${publicSans.className} ${headlineFont.variable}`}
     >
       <LoginSlideshow />
@@ -203,6 +207,15 @@ export default function AdminLoginPage() {
                 id="admin-email"
                 name="email"
                 type="email"
+                enterKeyHint="next"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                    event.preventDefault();
+                    formRef.current
+                      ?.querySelector<HTMLInputElement>("#admin-password")
+                      ?.focus({ preventScroll: true });
+                  }
+                }}
                 autoComplete="username"
                 autoCapitalize="none"
                 spellCheck={false}
@@ -231,6 +244,8 @@ export default function AdminLoginPage() {
                 id="admin-password"
                 name="password"
                 secretLabel="password"
+                enterKeyHint="go"
+                retainInputFocus
                 autoComplete="current-password"
                 required
                 disabled={busy}
