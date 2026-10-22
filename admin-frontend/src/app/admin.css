@@ -60,6 +60,57 @@
   gap: 14px;
   margin: 18px 0;
 }
+.barangay-overview {
+  margin: 24px 0 32px;
+  padding: 20px;
+  border: 1px solid #e1e5eb;
+  border-radius: 12px;
+  background: white;
+}
+.barangay-overview-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.barangay-overview h2,
+#barangay-selection-title {
+  font-size: 20px;
+  font-weight: 650;
+}
+.barangay-overview p {
+  margin-top: 6px;
+  color: #596677;
+  font-size: 14px;
+}
+.barangay-overview .error-message {
+  margin-bottom: 16px;
+  color: #b3261e;
+}
+.barangay-overview-map {
+  height: clamp(320px, 45dvh, 500px);
+  width: 100%;
+  border-radius: 9px;
+}
+.barangay-overview-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 13px;
+}
+.barangay-center-management {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 28px 28px;
+}
+.barangay-center-management .admin-center-cards {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
 .barangay-access-grid button {
   display: flex;
   align-items: center;
@@ -273,6 +324,20 @@
   font-size: 13px;
 }
 @media (max-width: 800px) {
+  .admin-app:not(.cdrrmo-workspace) .app-header {
+    height: auto;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .barangay-center-management {
+    padding: 0 16px 20px;
+  }
+  .barangay-center-management .admin-center-cards {
+    grid-template-columns: 1fr;
+  }
+  .barangay-overview {
+    padding: 14px;
+  }
   .barangay-access-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

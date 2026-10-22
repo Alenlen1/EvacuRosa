@@ -59,10 +59,15 @@ ASSISTANCE_TRACKING_SECRET. See [the assistance guide](../backend/ASSISTANCE.md)
 - CDRRMO registers centers, edits record details/capacity/assignment, deletes
   centers, and retains the hazard and shared-location tools. Existing supply
   controls are available during CDRRMO center editing.
-- Barangays see only assigned centers in their administration workspace. They
+- The barangay home/selection page shows a read-only citywide evacuation map
+  using the public center endpoint and the public map's shelter markers/status
+  symbols. Popups show address, occupancy and availability; Refresh map reloads
+  the overview. A map failure does not prevent barangay selection.
+- Each barangay's occupancy dashboard has no map and shows only assigned centers. They
   can update occupancy and choose accepting evacuees or closed/unavailable.
   Availability is computed consistently: 70% nearly full, 90% full, zero capacity
   closed. Reopening a full center cannot override the occupancy restriction.
+  Barangay home returns to the citywide overview and barangay selection.
 - Public center details remain publicly readable for evacuation guidance.
   Private account mappings and administrative actions remain protected.
 - Backend filters and RLS restrict rows; a database trigger restricts columns
