@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Search, X } from "lucide-react";
+import { MapPin, Search, SearchX, X } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import { BarangayAccessDialog } from "@/components/admin/BarangayAccessDialog";
 import { BarangayEvacuationOverview } from "@/components/admin/BarangayEvacuationOverview";
@@ -16,6 +16,8 @@ import { normalizeBarangaySearch, searchBarangays } from "@/lib/barangaySearch";
 import { getBarangayShelterSummary } from "@/lib/barangayShelterSummary";
 import { useBarangayCenters } from "@/hooks/useBarangayCenters";
 import { barangayCardAppearance } from "@/lib/barangayCardAppearance";
+import { BarangayShelterSummary } from "@/components/admin/BarangayShelterSummary";
+import { BarangayShelterList } from "@/components/admin/BarangayShelterList";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 type Barangay = { id: string; name: string };
@@ -236,6 +238,11 @@ export default function BarangaySelectionPage() {
           <p role="status">Loading barangays...</p>
         ) : (
           <>
+            <BarangayShelterSummary
+              centers={centers}
+              loading={centersLoading}
+              error={centersError}
+            />
             <section
               className="barangay-finder"
               aria-label="Barangay search, map and access"
@@ -342,6 +349,12 @@ export default function BarangaySelectionPage() {
                       onSelect={() => openAccess(focusedBarangay)}
                     />
                     <p>Use the access code provided to your barangay.</p>
+                    <BarangayShelterList
+                      barangay={focusedBarangay}
+                      centers={centers}
+                      loading={centersLoading}
+                      error={centersError}
+                    />
                   </aside>
                 )}
                 <BarangayEvacuationOverview
@@ -364,6 +377,8 @@ export default function BarangaySelectionPage() {
                 </h2>
                 {normalizedQuery && matches.length === 0 ? (
                   <div className="barangay-search-empty">
+                    <SearchX size={28} strokeWidth={1.5} aria-hidden="true" />
+                    <h3>No barangay found</h3>
                     <p>
                       No barangay matches “{query}”. Check the spelling or clear
                       your search.

@@ -12,6 +12,7 @@ import {
 import { EvacuationCenterLayer } from "@/components/map/EvacuationCenterLayer";
 import type { EvacuationCenter } from "@/services/api";
 import { findBarangayLocation } from "@/lib/barangayLocations";
+import { BarangayShelterPopup } from "./BarangayShelterPopup";
 
 type FocusedBarangay = { id: string; name: string };
 
@@ -94,7 +95,10 @@ export default function AdminEvacuationMap({
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FitMap centers={centers} focusedBarangay={focusedBarangay} />
-      <EvacuationCenterLayer centers={centers} />
+      <EvacuationCenterLayer
+        centers={centers}
+        renderPopup={(center) => <BarangayShelterPopup center={center} />}
+      />
     </MapContainer>
   );
 }

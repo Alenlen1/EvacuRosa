@@ -1,6 +1,7 @@
 "use client";
 
 import { useLanguage } from "@/components/LanguageProvider";
+import type { ReactNode } from "react";
 import { Marker, Popup } from "react-leaflet";
 import { createDivIcon } from "./icons";
 import type { EvacuationCenter } from "@/services/api";
@@ -44,11 +45,13 @@ function centerIcon(status: string) {
 interface EvacuationCenterLayerProps {
   centers: EvacuationCenter[];
   onSelectCenter?: (center: EvacuationCenter) => void;
+  renderPopup?: (center: EvacuationCenter) => ReactNode;
 }
 
 export function EvacuationCenterLayer({
   centers,
   onSelectCenter,
+  renderPopup,
 }: EvacuationCenterLayerProps) {
   const { t } = useLanguage();
   return (
@@ -63,14 +66,18 @@ export function EvacuationCenterLayer({
           eventHandlers={{ click: () => onSelectCenter?.(center) }}
         >
           <Popup>
-            <div className="center-popup">
-              <strong>{center.name}</strong>
-              <div>{center.address}</div>
-              <div>
-                {center.currentOccupancy} / {center.capacity} occupied
+            {renderPopup ? (
+              renderPopup(center)
+            ) : (
+              <div className="center-popup">
+                <strong>{center.name}</strong>
+                <div>{center.address}</div>
+                <div>
+                  {center.currentOccupancy} / {center.capacity} occupied
+                </div>
+                <StatusBadge status={center.status} />
               </div>
-              <StatusBadge status={center.status} />
-            </div>
+            )}
           </Popup>
         </Marker>
       ))}

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
-import { RefreshCw } from "lucide-react";
+import { House, RefreshCw } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { EvacuationCenter } from "@/services/api";
 
@@ -126,7 +126,19 @@ export function BarangayEvacuationOverview({
             !loading &&
             !error &&
             matchingCenters.length === 0 && (
-              <p>No evacuation centers have been registered yet.</p>
+              <div className="barangay-shelter-empty">
+                <span
+                  className="barangay-empty-illustration"
+                  aria-hidden="true"
+                >
+                  <House size={32} strokeWidth={1.4} />
+                </span>
+                <strong>No shelters registered yet</strong>
+                <p>
+                  Registered evacuation centers will appear here with their
+                  locations and current status.
+                </p>
+              </div>
             )}
         </div>
       ) : loading ? (
