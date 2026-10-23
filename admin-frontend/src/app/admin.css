@@ -2298,9 +2298,55 @@
   letter-spacing: 1.6px;
 }
 .barangay-workspace .admin-heading {
+  position: relative;
+  isolation: isolate;
+  justify-content: flex-start;
+  gap: 24px;
+  overflow: hidden;
+  max-width: none;
+  margin: 0 0 22px;
+  padding: 28px 32px;
+  border: 1px solid color-mix(in srgb, var(--workspace-accent) 20%, #e5ddd5);
+  border-radius: 16px;
+  background: var(--workspace-color, #e7e2dc);
+}
+.barangay-workspace .admin-heading::after {
+  content: "";
+  position: absolute;
+  inset: -25px 20px -25px auto;
+  z-index: -1;
+  width: min(28%, 220px);
+  background: url("/images/santa-rosa-outline.svg") right center / contain
+    no-repeat;
+  opacity: 0.08;
+  pointer-events: none;
+}
+.barangay-workspace-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 36px 28px 28px;
+  padding: 28px 24px 0;
+}
+.barangay-workspace-seal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 88px;
+  width: 88px;
+  height: 88px;
+  overflow: hidden;
+  border: 4px solid #fffdf9;
+  border-radius: 50%;
+  background: #fffdf9;
+  color: var(--workspace-accent, #746257);
+  font-size: 20px;
+  font-weight: 650;
+  box-shadow: 0 3px 8px #3028250d;
+}
+.barangay-workspace-seal img {
+  object-fit: contain;
+}
+.barangay-workspace .admin-heading .eyebrow {
+  color: #704035;
 }
 .barangay-workspace .admin-heading > div {
   min-width: 0;
@@ -2319,7 +2365,70 @@
   margin-top: 9px;
   font-size: 15px;
   line-height: 1.6;
-  color: var(--muted);
+  color: #514842;
+}
+.barangay-workspace-summary {
+  margin-bottom: 24px;
+}
+.barangay-workspace-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+.barangay-workspace-metric {
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fffdf9;
+}
+.barangay-workspace-metric dt {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #66564c;
+  font-size: 13px;
+  font-weight: 550;
+}
+.barangay-workspace-metric-icon {
+  display: grid;
+  place-items: center;
+  color: #865542;
+}
+.barangay-workspace-metric dd {
+  margin: 12px 0 0;
+}
+.barangay-workspace-metric-value {
+  display: block;
+  font-size: 32px;
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.7px;
+  font-variant-numeric: tabular-nums;
+}
+.barangay-workspace-metric-detail {
+  display: block;
+  margin-top: 6px;
+  color: #746862;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.barangay-workspace-summary-note {
+  margin: 10px 0 0;
+  color: #66564c;
+  font-size: 13px;
+}
+.barangay-workspace .barangay-center-management {
+  max-width: none;
+  margin: 0;
+  padding: 0 0 32px;
+}
+.barangay-workspace .admin-center-cards {
+  gap: 18px;
+}
+.barangay-workspace .admin-center-cards[data-single="true"] {
+  grid-template-columns: minmax(0, 1fr);
 }
 .barangay-access-page
   :is(.staff-login-title, .barangay-overview, .barangay-access-form)
@@ -2398,6 +2507,9 @@
 .barangay-workspace [role="progressbar"] {
   background: #eee7df;
 }
+.barangay-workspace [role="progressbar"] > div {
+  background: #978a80;
+}
 .barangay-workspace .barangay-center-status[data-status="AVAILABLE"] {
   background: #edf5ee;
   color: #326641;
@@ -2450,13 +2562,62 @@
     letter-spacing: 1.6px;
   }
   .barangay-workspace .admin-heading {
-    padding: 28px 16px 22px;
+    gap: 16px;
+    padding: 22px;
+  }
+  .barangay-workspace-content {
+    padding: 22px 16px 0;
+  }
+  .barangay-workspace-seal {
+    flex-basis: 72px;
+    width: 72px;
+    height: 72px;
   }
   .barangay-workspace .barangay-center-card {
     padding: 20px;
   }
   :is(.barangay-access-page, .barangay-workspace) :is(input, select) {
     font-size: 16px;
+  }
+}
+@media (max-width: 540px) {
+  .barangay-workspace .admin-heading {
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px 16px;
+  }
+  .barangay-workspace .admin-heading h1 {
+    font-size: clamp(24px, 6vw, 30px);
+    letter-spacing: -0.7px;
+  }
+  .barangay-workspace .admin-heading .barangay-workspace-subtitle {
+    font-size: 13px;
+  }
+  .barangay-workspace-seal {
+    flex-basis: 54px;
+    width: 54px;
+    height: 54px;
+    border-width: 3px;
+    font-size: 14px;
+  }
+  .barangay-workspace-metrics {
+    gap: 8px;
+  }
+  .barangay-workspace-metric {
+    padding: 14px 10px;
+  }
+  .barangay-workspace-metric dt {
+    min-height: 36px;
+    align-items: flex-start;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .barangay-workspace-metric-icon,
+  .barangay-workspace-metric-detail {
+    display: none;
+  }
+  .barangay-workspace-metric-value {
+    font-size: 26px;
   }
 }
 

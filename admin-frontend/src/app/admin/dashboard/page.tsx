@@ -8,12 +8,16 @@ import {
 import { adminApi } from "@/lib/adminApi";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import Image from "next/image";
 import { Brand } from "@/components/ui/Brand";
 import { MapPin, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { publicSans } from "@/app/fonts/publicSans";
+import { barangayCardAppearance } from "@/lib/barangayCardAppearance";
+import { BarangayWorkspaceCenter } from "@/components/admin/BarangayWorkspaceCenter";
+import { BarangayWorkspaceSummary } from "@/components/admin/BarangayWorkspaceSummary";
 import {
   fetchFloodReports,
   fetchFireIncidents,
@@ -36,7 +40,8 @@ const HazardPlacementMap = dynamic(
   },
 );
 
-type AdminCenter = ManagedCenter;
+type AdminCenter = ManagedCenter & { updated_at?: string | null };
+type CenterFeedback = { kind: "success" | "error"; message: string };
 
 interface Profile {
   role: "BARANGAY_ADMIN" | "SUPER_ADMIN";
@@ -58,6 +63,9 @@ export default function AdminDashboardPage() {
   >({});
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [centerFeedback, setCenterFeedback] = useState<
+    Record<string, CenterFeedback | undefined>
+  >({});
   const [ready, setReady] = useState(false);
   const [retrying, setRetrying] = useState(false);
 
@@ -138,24 +146,30 @@ export default function AdminDashboardPage() {
   }
 
   async function updateOccupancy(id: string) {
-    if (!supabase) return;
+    if (!supabase || savingId !== null) return;
     const center = centers.find((item) => item.id === id);
     const draft = occupancyDrafts[id] ?? "";
     const currentOccupancy = Number(draft);
     if (
       !center ||
       draft.trim() === "" ||
-      !Number.isInteger(currentOccupancy) ||
+      !Number.isSafeInteger(currentOccupancy) ||
       currentOccupancy < 0 ||
+      !Number.isSafeInteger(center.capacity) ||
+      center.capacity < 0 ||
       currentOccupancy > center.capacity
     ) {
-      setError(
-        `Enter a whole number from 0 to ${center?.capacity ?? "the center's capacity"}.`,
-      );
+      setCenterFeedback((feedback) => ({
+        ...feedback,
+        [id]: {
+          kind: "error",
+          message: `Enter a whole number from 0 to ${center?.capacity ?? "the center's capacity"}.`,
+        },
+      }));
       return;
     }
     setSavingId(id);
-    setError(null);
+    clearCenterFeedback(id);
     try {
       const { data: session } = await supabase.auth.getSession();
       const token = session.session?.access_token;
@@ -163,6 +177,7 @@ export default function AdminDashboardPage() {
         throw new Error("Your session has expired. Please sign in again.");
       const res = await fetch(`${API_URL}/api/admin/evacuation-centers/${id}`, {
         method: "PUT",
+        signal: AbortSignal.timeout(25000),
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -174,25 +189,53 @@ export default function AdminDashboardPage() {
             (center.status === "CLOSED" ? "CLOSED" : "AVAILABLE"),
         }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Update failed.");
-      }
-      await loadCenters();
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(
+          body.error ?? "Could not save changes. Please try again.",
+        );
+      if (!body.center || body.center.id !== id)
+        throw new Error(
+          "Could not confirm the updated center details. Refresh the page before trying again.",
+        );
+      const savedCenter: AdminCenter = { ...center, ...body.center };
+      setCenters((rows) =>
+        rows.map((row) => (row.id === id ? savedCenter : row)),
+      );
+      setOccupancyDrafts((drafts) => ({
+        ...drafts,
+        [id]: String(savedCenter.current_occupancy),
+      }));
+      setAvailabilityDrafts((drafts) => ({
+        ...drafts,
+        [id]: savedCenter.status === "CLOSED" ? "CLOSED" : "AVAILABLE",
+      }));
+      setCenterFeedback((feedback) => ({
+        ...feedback,
+        [id]: { kind: "success", message: "Changes saved." },
+      }));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Update failed.");
+      setCenterFeedback((feedback) => ({
+        ...feedback,
+        [id]: {
+          kind: "error",
+          message:
+            cause instanceof TypeError
+              ? "Could not save changes. Check your connection and try again."
+              : cause instanceof Error && cause.name === "TimeoutError"
+                ? "Saving took too long. Please try again."
+                : cause instanceof Error
+                  ? cause.message
+                  : "Could not save changes. Please try again.",
+        },
+      }));
     } finally {
       setSavingId(null);
     }
   }
 
-  function getOccupancyStatus(center: AdminCenter, occupancy: number) {
-    if ((availabilityDrafts[center.id] ?? center.status) === "CLOSED")
-      return "CLOSED";
-    if (center.capacity <= 0 || occupancy / center.capacity >= 0.9)
-      return "FULL";
-    if (occupancy / center.capacity >= 0.7) return "NEARLY FULL";
-    return "AVAILABLE";
+  function clearCenterFeedback(id: string) {
+    setCenterFeedback((feedback) => ({ ...feedback, [id]: undefined }));
   }
 
   async function getAuthToken(): Promise<string | undefined> {
@@ -211,6 +254,9 @@ export default function AdminDashboardPage() {
       ? barangayName
       : `Barangay ${barangayName}`
     : "Barangay workspace";
+  const barangayAppearance = barangayCardAppearance(
+    (barangayName ?? "").replace(/^barangay\s+/i, ""),
+  );
 
   if (!ready) {
     return (
@@ -251,6 +297,14 @@ export default function AdminDashboardPage() {
   return (
     <main
       className={`admin-app ${profile.role === "SUPER_ADMIN" ? "cdrrmo-workspace" : `barangay-workspace ${publicSans.className}`}`}
+      style={
+        profile.role === "BARANGAY_ADMIN"
+          ? ({
+              "--workspace-color": barangayAppearance.background,
+              "--workspace-accent": barangayAppearance.accent,
+            } as CSSProperties)
+          : undefined
+      }
     >
       <header className="app-header">
         <Link href="/admin/dashboard" aria-label="EvacuRosa administration">
@@ -282,10 +336,26 @@ export default function AdminDashboardPage() {
       </header>
       <div
         className={
-          profile?.role === "SUPER_ADMIN" ? "cdrrmo-content" : undefined
+          profile?.role === "SUPER_ADMIN"
+            ? "cdrrmo-content"
+            : "barangay-workspace-content"
         }
       >
         <div className="admin-heading">
+          {profile.role === "BARANGAY_ADMIN" && (
+            <span className="barangay-workspace-seal" aria-hidden="true">
+              {barangayAppearance.logoSrc ? (
+                <Image
+                  src={barangayAppearance.logoSrc}
+                  alt=""
+                  fill
+                  sizes="80px"
+                />
+              ) : (
+                barangayAppearance.initials || "BRGY"
+              )}
+            </span>
+          )}
           <div>
             <span className="eyebrow">
               {profile?.role === "SUPER_ADMIN"
@@ -322,6 +392,13 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
+        {profile.role === "BARANGAY_ADMIN" && (
+          <BarangayWorkspaceSummary
+            centers={centers}
+            unavailable={Boolean(error)}
+          />
+        )}
+
         {profile?.role === "SUPER_ADMIN" && (
           <>
             <nav className="staff-section-nav">
@@ -340,140 +417,41 @@ export default function AdminDashboardPage() {
           }
         >
           {profile?.role !== "SUPER_ADMIN" && (
-            <div className="admin-center-cards">
+            <div
+              className="admin-center-cards"
+              data-single={centers.length === 1}
+            >
               {centers.map((center) => (
-                <div
+                <BarangayWorkspaceCenter
                   key={center.id}
-                  id={`center-${center.id}`}
-                  className="barangay-center-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-                >
-                  {(() => {
-                    const draft =
-                      occupancyDrafts[center.id] ??
-                      String(center.current_occupancy);
-                    const occupancy = Number(draft);
-                    const valid =
-                      draft.trim() !== "" &&
-                      Number.isInteger(occupancy) &&
-                      occupancy >= 0 &&
-                      occupancy <= center.capacity;
-                    const status = getOccupancyStatus(
-                      center,
-                      Number.isFinite(occupancy) ? occupancy : 0,
-                    );
-                    const percent =
-                      center.capacity > 0 && Number.isFinite(occupancy)
-                        ? Math.max(
-                            0,
-                            Math.min(100, (occupancy / center.capacity) * 100),
-                          )
-                        : 0;
-                    return (
-                      <>
-                        <div className="mb-4 flex items-start justify-between gap-3">
-                          <div>
-                            <h2 className="font-semibold text-slate-900">
-                              {center.name}
-                            </h2>
-                            <p className="mt-1 text-xs text-slate-500">
-                              Evacuation center
-                            </p>
-                          </div>
-                          <span
-                            className="barangay-center-status rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                            data-status={status}
-                          >
-                            {status}
-                          </span>
-                        </div>
-                        <div className="mb-2 flex items-baseline justify-between">
-                          <span className="text-sm text-slate-600">
-                            Current occupancy
-                          </span>
-                          <span className="text-sm font-semibold tabular-nums text-slate-900">
-                            {draft}{" "}
-                            <span className="font-normal text-slate-500">
-                              / {center.capacity}
-                            </span>
-                          </span>
-                        </div>
-                        <div
-                          role="progressbar"
-                          aria-label={`${center.name} occupancy`}
-                          aria-valuemin={0}
-                          aria-valuemax={center.capacity}
-                          aria-valuenow={Math.max(
-                            0,
-                            Math.min(
-                              center.capacity,
-                              Number.isFinite(occupancy) ? occupancy : 0,
-                            ),
-                          )}
-                          className="mb-4 h-2 overflow-hidden rounded-full bg-slate-100"
-                          data-status={status}
-                        >
-                          <div
-                            className="h-full rounded-full bg-blue-600 transition-[width]"
-                            style={{ width: `${percent}%` }}
-                          />
-                        </div>
-                        <label className="availability-field">
-                          Availability
-                          <select
-                            value={availabilityDrafts[center.id] ?? "AVAILABLE"}
-                            onChange={(event) =>
-                              setAvailabilityDrafts((values) => ({
-                                ...values,
-                                [center.id]: event.target.value,
-                              }))
-                            }
-                          >
-                            <option value="AVAILABLE">
-                              Accepting evacuees
-                            </option>
-                            <option value="CLOSED">Closed / unavailable</option>
-                          </select>
-                        </label>
-                        <div className="flex flex-wrap items-end gap-2">
-                          <label className="flex-1 text-xs font-medium text-slate-600">
-                            Update occupancy
-                            <input
-                              type="number"
-                              min={0}
-                              max={center.capacity}
-                              step={1}
-                              value={draft}
-                              onChange={(event) =>
-                                setOccupancyDrafts((drafts) => ({
-                                  ...drafts,
-                                  [center.id]: event.target.value,
-                                }))
-                              }
-                              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-900"
-                            />
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => updateOccupancy(center.id)}
-                            disabled={
-                              !valid ||
-                              savingId !== null ||
-                              (String(center.current_occupancy) === draft &&
-                                (availabilityDrafts[center.id] ??
-                                  "AVAILABLE") ===
-                                  (center.status === "CLOSED"
-                                    ? "CLOSED"
-                                    : "AVAILABLE"))
-                            }
-                            className="barangay-save-button rounded-lg px-4 py-2 text-sm font-medium disabled:cursor-not-allowed"
-                          >
-                            {savingId === center.id ? "Saving…" : "Save"}
-                          </button>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
+                  center={center}
+                  occupancyDraft={
+                    occupancyDrafts[center.id] ??
+                    String(center.current_occupancy)
+                  }
+                  availabilityDraft={
+                    availabilityDrafts[center.id] ??
+                    (center.status === "CLOSED" ? "CLOSED" : "AVAILABLE")
+                  }
+                  saving={savingId === center.id}
+                  updatesDisabled={savingId !== null}
+                  feedback={centerFeedback[center.id]}
+                  onOccupancyChange={(value) => {
+                    clearCenterFeedback(center.id);
+                    setOccupancyDrafts((drafts) => ({
+                      ...drafts,
+                      [center.id]: value,
+                    }));
+                  }}
+                  onAvailabilityChange={(value) => {
+                    clearCenterFeedback(center.id);
+                    setAvailabilityDrafts((drafts) => ({
+                      ...drafts,
+                      [center.id]: value,
+                    }));
+                  }}
+                  onSave={() => void updateOccupancy(center.id)}
+                />
               ))}
               {centers.length === 0 && !error && (
                 <div className="col-span-full rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
