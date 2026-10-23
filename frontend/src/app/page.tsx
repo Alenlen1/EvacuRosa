@@ -6,7 +6,6 @@ import {
   LanguageToggle,
 } from "@/components/LanguageProvider";
 import { LocationRecovery } from "@/components/LocationRecovery";
-import { ShelterSupplies } from "@/components/map/ShelterSupplies";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -561,7 +560,7 @@ function PublicHome() {
         : panel === "map"
           ? `${t(TRAVEL_MODES[travelMode].label)} · ${t("Tap for travel options")}`
           : panel === "centers"
-            ? t("Capacity, supplies and contact details")
+            ? t("Capacity and contact details")
             : t("Reported conditions and verified road impacts.");
 
   const displayedCenter =
@@ -1068,9 +1067,7 @@ function PublicHome() {
               {panel === "hazards"
                 ? t("Reported conditions and verified road impacts.")
                 : panel === "centers"
-                  ? t(
-                      "Choose a center to review capacity, supplies, and location.",
-                    )
+                  ? t("Choose a center to review capacity and location.")
                   : t(
                       "Choose a point on the map or find a recommended evacuation center.",
                     )}
@@ -1201,7 +1198,6 @@ function PublicHome() {
               {displayedCenter.contactInformation && (
                 <p>{displayedCenter.contactInformation}</p>
               )}
-              <ShelterSupplies center={displayedCenter} />
               {displayedCenter.notes && <p>{displayedCenter.notes}</p>}
               <button
                 type="button"

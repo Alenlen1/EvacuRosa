@@ -2941,139 +2941,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   color: #172033;
   font-size: 13px;
 }
-.shelter-supplies {
-  margin: 16px 0;
-  padding: 14px;
-  border: 1px solid #dfe5e8;
-  border-radius: 14px;
-  background: white;
-}
-.supply-heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #334155;
-  margin-bottom: 12px;
-}
-.supply-heading h4 {
-  font-size: 14px;
-  font-weight: 700;
-}
-.supply-list {
-  display: grid;
-  gap: 8px;
-}
-.supply-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
-  background: #f6f8fa;
-  border: 1px solid #edf0f3;
-  border-radius: 10px;
-}
-.supply-row dt {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #334155;
-}
-.supply-icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: white;
-  color: #526579;
-}
-.supply-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  padding: 5px 8px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
-  text-transform: capitalize;
-}
-.supply-status > span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  flex-shrink: 0;
-}
-.supply-adequate {
-  color: #23613e;
-  background: #e6f3e9;
-}
-.supply-low {
-  color: #85500b;
-  background: #fff0cd;
-}
-.supply-unavailable {
-  color: #9b352d;
-  background: #fde9e6;
-}
-.supply-unknown {
-  color: #536170;
-  background: #e8edf2;
-}
-.supply-updated {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  margin-top: 12px;
-  color: #647184;
-}
-.supply-updated > svg {
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-.shelter-supplies .supply-updated p {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.6;
-}
-.supply-updated span,
-.supply-updated time,
-.supply-updated strong {
-  display: block;
-}
-.supply-updated time,
-.supply-updated strong {
-  font-weight: 500;
-  color: #435266;
-}
-.supply-stale {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 10px;
-  border: 1px solid #f0dcac;
-  border-radius: 9px;
-  background: #fffaeb;
-  color: #805416;
-}
-.supply-stale > svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-.shelter-supplies .supply-stale p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: inherit;
-}
 .mobile-drawer-language {
   margin-top: 24px;
   padding-top: 20px;
@@ -3667,8 +3534,7 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .public-app .sheet-preview strong,
 .public-app .panel-heading h2,
 .public-app .selected-center h3,
-.public-app .mobile-drawer-heading h2,
-.public-app .supply-heading {
+.public-app .mobile-drawer-heading h2 {
   color: var(--ink);
 }
 .public-app .sheet-size-button,
@@ -3717,8 +3583,7 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   background: #f8fafc;
   border-color: var(--border);
 }
-.public-app .route-onboarding-icon,
-.public-app .supply-icon {
+.public-app .route-onboarding-icon {
   background: #fff4cf;
   color: #786119;
 }
