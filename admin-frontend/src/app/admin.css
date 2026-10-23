@@ -1041,6 +1041,11 @@
   gap: 18px;
   margin: 18px 0;
 }
+@media (min-width: 1101px) {
+  .barangay-access-grid > :nth-last-child(2):nth-child(4n + 1) {
+    grid-column: 2;
+  }
+}
 .barangay-overview {
   margin: 24px 0 32px;
   padding: 20px;

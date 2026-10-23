@@ -1,6 +1,5 @@
 "use client";
 import { useLanguage } from "@/components/LanguageProvider";
-import { ShelterSupplies } from "./ShelterSupplies";
 import { ShieldAlert, Users } from "lucide-react";
 import type {
   RouteResponse,
@@ -56,7 +55,6 @@ export function RouteDetails({
       {center && (
         <>
           <StatusBadge status={center.status} />
-          <ShelterSupplies center={center} />
           <p className="route-occupancy">
             <Users size={18} />
             {center.currentOccupancy} / {center.capacity} {t("occupied")}

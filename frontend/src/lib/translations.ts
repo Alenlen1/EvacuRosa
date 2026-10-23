@@ -94,14 +94,13 @@ export const filipino: Record<string, string> = {
     "Awtomatikong sine-save ang mga kalsada at ruta habang online. Ginagamit ng offline na ruta ang huling naka-save na datos ng panganib at mga center.",
   "More map": "Palakihin ang mapa",
   "Tap for travel options": "Pindutin para sa mga opsyon",
-  "Capacity, supplies and contact details":
-    "Kapasidad, suplay at mga detalye ng kontak",
+  "Capacity and contact details": "Kapasidad at mga detalye ng kontak",
   "Review route and assistance": "Tingnan ang ruta at tulong",
   "Where do you need to go?": "Saan mo kailangang pumunta?",
   "Search above or tap the map. No destination? Find an evacuation center below.":
     "Maghanap sa itaas o pindutin ang mapa. Walang destinasyon? Maghanap ng evacuation center sa ibaba.",
-  "Choose a center to review capacity, supplies, and location.":
-    "Pumili ng center upang tingnan ang kapasidad, suplay, at lokasyon.",
+  "Choose a center to review capacity and location.":
+    "Pumili ng center upang tingnan ang kapasidad at lokasyon.",
   "Use as destination": "Gawing destinasyon",
   "This center is not accepting arrivals. Choose another center.":
     "Hindi tumatanggap ang center na ito. Pumili ng ibang center.",
@@ -239,18 +238,10 @@ export const filipino: Record<string, string> = {
   "NEARLY FULL": "HALOS PUNO",
   FULL: "PUNO",
   CLOSED: "SARADO",
-  "Drinking water": "Inuming tubig",
-  Food: "Pagkain",
-  "First aid": "Paunang lunas",
-  "Shelter supplies": "Mga suplay sa center",
   unknown: "Hindi alam",
   adequate: "Sapat",
   low: "Kaunti",
   unavailable: "Wala",
-  "Last supply update": "Huling pag-update ng suplay",
-  "Not yet reported": "Hindi pa naiulat",
-  "Supply information is over 24 hours old. Confirm with staff.":
-    "Mahigit 24 oras na ang impormasyon sa suplay. Kumpirmahin sa kawani.",
   "Active route": "Kasalukuyang ruta",
   "Route distance": "Haba ng ruta",
   "ROUTE DESTINATION": "DESTINASYON NG RUTA",
