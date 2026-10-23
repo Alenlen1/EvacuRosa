@@ -1050,7 +1050,7 @@
 }
 .barangay-summary-metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin: 0;
 }
@@ -1082,6 +1082,10 @@
   background: #fff1cc;
   color: #895900;
 }
+.barangay-summary-metric[data-tone="full"] .barangay-summary-icon {
+  background: #fbe9e6;
+  color: #a52e25;
+}
 .barangay-summary-metric dt {
   display: flex;
   align-items: center;
@@ -1100,6 +1104,11 @@
   margin: 8px 0 0;
   color: var(--muted);
   font-size: 13px;
+}
+@media (max-width: 1100px) {
+  .barangay-summary-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .staff-credentials-login {
   max-width: 560px;

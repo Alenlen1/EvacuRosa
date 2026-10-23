@@ -1,4 +1,4 @@
-import { CircleCheck, House, TriangleAlert } from "lucide-react";
+import { CircleCheck, CircleMinus, House, TriangleAlert } from "lucide-react";
 import type { EvacuationCenter } from "@/services/api";
 
 export function BarangayShelterSummary({
@@ -30,6 +30,12 @@ export function BarangayShelterSummary({
         .length,
       Icon: TriangleAlert,
       tone: "nearly-full",
+    },
+    {
+      label: "Full",
+      count: centers?.filter((center) => center.status === "FULL").length,
+      Icon: CircleMinus,
+      tone: "full",
     },
   ];
 
