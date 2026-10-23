@@ -291,7 +291,6 @@ export default function BarangaySelectionPage() {
               id="barangay-search-results"
               className={`barangay-search-layout${focusedBarangay ? " has-focused-barangay" : ""}`}
             >
-              <BarangayEvacuationOverview focusedBarangay={focusedBarangay} />
               {focusedBarangay && (
                 <aside
                   className="barangay-search-access"
@@ -299,14 +298,16 @@ export default function BarangaySelectionPage() {
                 >
                   <h2>Barangay access</h2>
                   <BarangayAccessCard
+                    featured
                     barangay={focusedBarangay}
                     selected={selected?.id === focusedBarangay.id}
                     disabled={busy}
                     onSelect={() => openAccess(focusedBarangay)}
                   />
-                  <p>Select the card to enter your barangay access code.</p>
+                  <p>Use the access code provided to your barangay.</p>
                 </aside>
               )}
+              <BarangayEvacuationOverview focusedBarangay={focusedBarangay} />
             </div>
             {!focusedBarangay && (
               <>

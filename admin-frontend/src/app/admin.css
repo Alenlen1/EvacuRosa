@@ -1038,7 +1038,7 @@
 .barangay-access-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
+  gap: 14px;
   margin: 18px 0;
 }
 @media (min-width: 1101px) {
@@ -1186,16 +1186,19 @@
 .barangay-search-layout.has-focused-barangay {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-areas: "map access";
   align-items: start;
   gap: 18px;
 }
 .has-focused-barangay .barangay-overview {
+  grid-area: map;
   min-width: 0;
 }
 .has-focused-barangay .barangay-overview-map {
   height: clamp(280px, 40dvh, 420px);
 }
 .barangay-search-access {
+  grid-area: access;
   margin: 24px 0 32px;
   padding-top: 20px;
 }
@@ -1204,8 +1207,22 @@
   font-size: 20px;
   font-weight: 650;
 }
-.barangay-search-access .barangay-access-card {
+.barangay-search-access .barangay-access-feature {
   width: 100%;
+}
+.barangay-access-feature .barangay-card-logo {
+  width: 80px;
+  height: 80px;
+}
+.barangay-access-trigger {
+  width: 100%;
+  min-height: 48px;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.barangay-access-trigger svg:last-child {
+  margin-left: auto;
 }
 .barangay-search-access > p {
   max-width: 260px;
@@ -1236,17 +1253,47 @@
 @media (max-width: 900px) {
   .barangay-search-layout.has-focused-barangay {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "access" "map";
     gap: 0;
   }
   .barangay-search-access {
     width: 100%;
-    max-width: 340px;
     justify-self: center;
-    margin-top: 0;
+    margin-top: 24px;
+    margin-bottom: 0;
     padding-top: 0;
   }
   .barangay-search-access h2 {
-    text-align: center;
+    margin-bottom: 12px;
+    font-size: 18px;
+  }
+  .barangay-access-feature .barangay-feature-identity {
+    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    justify-items: start;
+    gap: 5px 14px;
+    min-height: 0;
+    padding: 16px;
+    text-align: left;
+  }
+  .barangay-feature-identity .barangay-card-name {
+    grid-column: 2;
+    align-self: end;
+    font-size: 18px;
+  }
+  .barangay-access-feature .barangay-card-logo {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 64px;
+    height: 64px;
+    align-self: center;
+  }
+  .barangay-feature-identity .barangay-card-info {
+    grid-column: 2;
+  }
+  .barangay-search-access > p {
+    max-width: none;
+    margin-top: 9px;
   }
 }
 @media (max-width: 560px) {
@@ -1270,24 +1317,35 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
 }
-.barangay-access-page .barangay-access-card {
+.barangay-access-page .barangay-access-card,
+.barangay-feature-identity {
   position: relative;
   display: grid;
-  grid-template-rows: minmax(44px, auto) 80px 1fr;
+  grid-template-rows: minmax(40px, auto) 64px 1fr;
   justify-items: center;
   align-content: start;
-  gap: 16px;
+  gap: 8px;
   text-align: center;
-  background: var(--barangay-card-background);
+  background: #fffdf9;
+  background: color-mix(in srgb, var(--barangay-card-background) 40%, #fffdf9);
   color: #302825;
-  min-height: 270px;
-  padding: 22px 20px 26px;
-  border: 1px solid transparent;
-  border-radius: 20px;
+  min-height: 196px;
+  padding: 14px 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--barangay-card-accent) 18%, #e5ddd5);
+  border-top: 3px solid color-mix(in srgb, var(--barangay-card-accent) 65%, #fffdf9);
+  border-radius: 12px;
   min-width: 0;
   transition:
     border-color 150ms,
     box-shadow 150ms;
+}
+.barangay-feature-identity {
+  grid-template-rows: minmax(40px, auto) 80px auto;
+  gap: 12px;
+  padding: 18px 20px 22px;
+}
+.barangay-feature-identity .barangay-card-name {
+  font-size: 18px;
 }
 .barangay-access-page
   .barangay-access-card:hover:not(:disabled):not([aria-pressed="true"]) {
@@ -1301,7 +1359,7 @@
 .barangay-card-name {
   align-self: center;
   max-width: 100%;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 650;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -1309,17 +1367,17 @@
 .barangay-card-logo {
   display: grid;
   place-items: center;
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: var(--barangay-card-accent);
   color: #fffdf9;
-  font-size: 24px;
+  font-size: 21px;
   font-weight: 650;
   letter-spacing: -0.5px;
 }
 .barangay-card-info {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.6;
   color: #514842;
 }
@@ -1343,12 +1401,12 @@
 }
 .barangay-card-selected {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 8px;
+  right: 8px;
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #800000;
   color: #fffdf9;
@@ -1575,7 +1633,7 @@
 }
 @media (max-width: 440px) {
   .barangay-access-grid {
-    grid-template-columns: 1fr;
+    gap: 10px;
   }
   .barangay-access-form {
     padding: 18px;
