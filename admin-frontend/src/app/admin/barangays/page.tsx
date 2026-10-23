@@ -6,10 +6,15 @@ import { MapPin, Search, X } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import { BarangayAccessDialog } from "@/components/admin/BarangayAccessDialog";
 import { BarangayEvacuationOverview } from "@/components/admin/BarangayEvacuationOverview";
-import { BarangayAccessCard } from "@/components/admin/BarangayAccessCard";
+import {
+  BarangayAccessCard,
+  type BarangayCardShelterSummary,
+} from "@/components/admin/BarangayAccessCard";
 import { supabase } from "@/lib/supabaseClient";
 import { publicSans } from "@/app/fonts/publicSans";
 import { normalizeBarangaySearch, searchBarangays } from "@/lib/barangaySearch";
+import { getBarangayShelterSummary } from "@/lib/barangayShelterSummary";
+import { useBarangayCenters } from "@/hooks/useBarangayCenters";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 type Barangay = { id: string; name: string };
@@ -26,6 +31,12 @@ export default function BarangaySelectionPage() {
   const [accessError, setAccessError] = useState("");
   const [query, setQuery] = useState("");
   const [focusRequest, setFocusRequest] = useState(0);
+  const {
+    centers,
+    loading: centersLoading,
+    error: centersError,
+    refresh: refreshCenters,
+  } = useBarangayCenters(ready);
   const searchRef = useRef<HTMLInputElement>(null);
   const findButtonRef = useRef<HTMLButtonElement>(null);
   const normalizedQuery = normalizeBarangaySearch(query);
@@ -42,6 +53,22 @@ export default function BarangaySelectionPage() {
       ) ?? (matches.length === 1 ? matches[0] : null);
     return match ? { ...match } : null;
   }, [matches, normalizedQuery, focusRequest]);
+
+  function shelterSummaryFor(barangayId: string): BarangayCardShelterSummary {
+    if (centersLoading)
+      return {
+        status: "LOADING",
+        label: "Loading shelter status",
+        detail: "Checking registered shelters...",
+      };
+    if (centersError || centers === null)
+      return {
+        status: "UNAVAILABLE",
+        label: "Status unavailable",
+        detail: "Refresh map to try again.",
+      };
+    return getBarangayShelterSummary(barangayId, centers);
+  }
 
   function findBarangay(barangay: Barangay) {
     setQuery(barangay.name);
@@ -300,6 +327,7 @@ export default function BarangaySelectionPage() {
                   <BarangayAccessCard
                     featured
                     barangay={focusedBarangay}
+                    shelterSummary={shelterSummaryFor(focusedBarangay.id)}
                     selected={selected?.id === focusedBarangay.id}
                     disabled={busy}
                     onSelect={() => openAccess(focusedBarangay)}
@@ -307,7 +335,13 @@ export default function BarangaySelectionPage() {
                   <p>Use the access code provided to your barangay.</p>
                 </aside>
               )}
-              <BarangayEvacuationOverview focusedBarangay={focusedBarangay} />
+              <BarangayEvacuationOverview
+                focusedBarangay={focusedBarangay}
+                centers={centers}
+                loading={centersLoading}
+                error={centersError}
+                onRefresh={refreshCenters}
+              />
             </div>
             {!focusedBarangay && (
               <>
@@ -339,6 +373,7 @@ export default function BarangaySelectionPage() {
                       <BarangayAccessCard
                         key={barangay.id}
                         barangay={barangay}
+                        shelterSummary={shelterSummaryFor(barangay.id)}
                         disabled={busy}
                         selected={selected?.id === barangay.id}
                         onSelect={() => openAccess(barangay)}

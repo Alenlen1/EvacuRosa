@@ -2,6 +2,13 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import { ArrowRight, Check, LockKeyhole } from "lucide-react";
 import { barangayCardAppearance } from "@/lib/barangayCardAppearance";
+import type { BarangayShelterSummary } from "@/lib/barangayShelterSummary";
+
+export type BarangayCardShelterSummary = {
+  status: BarangayShelterSummary["status"] | "LOADING" | "UNAVAILABLE";
+  label: string;
+  detail: string;
+};
 
 type Props = {
   barangay: { id: string; name: string };
@@ -9,6 +16,7 @@ type Props = {
   disabled: boolean;
   onSelect: () => void;
   featured?: boolean;
+  shelterSummary: BarangayCardShelterSummary;
 };
 
 export function BarangayAccessCard({
@@ -17,6 +25,7 @@ export function BarangayAccessCard({
   disabled,
   onSelect,
   featured = false,
+  shelterSummary,
 }: Props) {
   const appearance = barangayCardAppearance(barangay.name);
   const colors = {
@@ -42,9 +51,17 @@ export function BarangayAccessCard({
           appearance.initials
         )}
       </span>
-      <span className="barangay-card-info">
-        <span>Evacuation center workspace</span>
-        <small>Santa Rosa, Laguna</small>
+      <span
+        className="barangay-card-info"
+        aria-busy={shelterSummary.status === "LOADING"}
+      >
+        <span
+          className="barangay-card-status"
+          data-status={shelterSummary.status}
+        >
+          {shelterSummary.label}
+        </span>
+        <small>{shelterSummary.detail}</small>
       </span>
     </>
   );

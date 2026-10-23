@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { EvacuationCenter } from "@/services/api";
@@ -10,52 +9,24 @@ const AdminEvacuationMap = dynamic(() => import("./AdminEvacuationMap"), {
   ssr: false,
   loading: () => <p role="status">Loading evacuation map...</p>,
 });
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const EMPTY_CENTERS: EvacuationCenter[] = [];
 
 export function BarangayEvacuationOverview({
   focusedBarangay,
+  centers,
+  loading,
+  error,
+  onRefresh,
 }: {
   focusedBarangay?: { id: string; name: string } | null;
+  centers: EvacuationCenter[] | null;
+  loading: boolean;
+  error: string;
+  onRefresh: () => void;
 }) {
-  const [centers, setCenters] = useState<EvacuationCenter[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [refresh, setRefresh] = useState(0);
   const location = focusedBarangay
     ? findBarangayLocation(focusedBarangay.name)
     : undefined;
-
-  useEffect(() => {
-    const abort = new AbortController();
-    let active = true;
-    setLoading(true);
-    setError("");
-    // Citywide display uses the existing public data endpoint. Editing stays scoped.
-    void fetch(`${API}/api/evacuation-centers`, {
-      cache: "no-store",
-      signal: AbortSignal.any([abort.signal, AbortSignal.timeout(20000)]),
-    })
-      .then(async (response) => {
-        if (!response.ok) throw Error("Could not load evacuation centers.");
-        const body = await response.json();
-        if (!Array.isArray(body.centers)) throw Error("Invalid center list.");
-        if (active) setCenters(body.centers);
-      })
-      .catch(() => {
-        if (active)
-          setError(
-            "Could not refresh evacuation center information. Any displayed center details may be outdated. You can still search for your barangay and enter its access code.",
-          );
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-      abort.abort();
-    };
-  }, [refresh]);
 
   return (
     <section className="barangay-overview" aria-labelledby="barangay-map-title">
@@ -71,7 +42,7 @@ export function BarangayEvacuationOverview({
           type="button"
           className="secondary-button"
           disabled={loading}
-          onClick={() => setRefresh((value) => value + 1)}
+          onClick={onRefresh}
         >
           {loading ? "Refreshing..." : "Refresh map"}
         </button>
