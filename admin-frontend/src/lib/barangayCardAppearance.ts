@@ -20,6 +20,27 @@ const barangayThemes: Record<string, readonly [string, string]> = {
   tagapo: ["#eee0d0", "#80603d"],
 };
 
+const barangayLogos: Record<string, string> = {
+  aplaya: "/icons/aplaya.png",
+  balibago: "/icons/balibago.png",
+  caingin: "/icons/caingin.png",
+  dila: "/icons/dila.png",
+  dita: "/icons/dita.png",
+  "don jose": "/icons/don%20jose.png",
+  ibaba: "/icons/ibaba.png",
+  kanluran: "/icons/kanluran.png",
+  labas: "/icons/labas.png",
+  macabling: "/icons/macabling.png",
+  malitlit: "/icons/malitlit.png",
+  malusak: "/icons/malusak.png",
+  "market area (poblacion)": "/icons/marketarea.png",
+  pooc: "/icons/pooc.png",
+  "pulong santa cruz": "/icons/santacruz.png",
+  "santo domingo": "/icons/santodomingo.png",
+  sinalhan: "/icons/sinalhan.png",
+  tagapo: "/icons/tagapo.png",
+};
+
 export function barangayCardAppearance(name: string) {
   const normalized = name.trim().toLowerCase();
   const key = ["market area", "poblacion"].includes(normalized)
@@ -34,5 +55,5 @@ export function barangayCardAppearance(name: string) {
     .map((word) => word.charAt(0))
     .join("")
     .toUpperCase();
-  return { background, accent, initials };
+  return { background, accent, initials, logoSrc: barangayLogos[key] };
 }

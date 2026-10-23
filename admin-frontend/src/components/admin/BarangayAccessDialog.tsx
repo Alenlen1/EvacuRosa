@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type FormEvent } from "react";
+import Image from "next/image";
 import { CircleAlert, X } from "lucide-react";
 import { SecretInput } from "./SecretInput";
 import { barangayCardAppearance } from "@/lib/barangayCardAppearance";
@@ -182,8 +183,15 @@ export function BarangayAccessDialog({
           </button>
         </header>
         <div className="barangay-dialog-identity">
-          <span className="barangay-dialog-monogram" aria-hidden="true">
-            {appearance.initials}
+          <span
+            className={`barangay-dialog-monogram${appearance.logoSrc ? " has-logo" : ""}`}
+            aria-hidden="true"
+          >
+            {appearance.logoSrc ? (
+              <Image src={appearance.logoSrc} alt="" fill sizes="44px" />
+            ) : (
+              appearance.initials
+            )}
           </span>
           <div>
             <strong className="barangay-dialog-name">{barangay.name}</strong>
