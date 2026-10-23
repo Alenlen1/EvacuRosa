@@ -1354,6 +1354,18 @@
   grid-area: map;
   min-width: 0;
 }
+@media (min-width: 901px) {
+  .has-focused-barangay .barangay-overview {
+    display: flex;
+    flex-direction: column;
+  }
+  .has-focused-barangay .barangay-overview-map {
+    flex: 1 0 auto;
+  }
+  .has-focused-barangay .barangay-overview > :not(.barangay-overview-map) {
+    flex-shrink: 0;
+  }
+}
 .barangay-search-access {
   --muted: #514842;
   grid-area: access;
