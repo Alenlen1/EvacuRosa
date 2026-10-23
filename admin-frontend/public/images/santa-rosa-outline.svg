@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="560" viewBox="0 0 400 560" preserveAspectRatio="xMidYMid meet">
+  <title>Santa Rosa city outline</title>
+  <desc>North-up outline of Santa Rosa, Laguna derived from the published 2023 PSA and NAMRIA administrative data.</desc>
+  <metadata>City of Santa Rosa, Laguna outline.
+Derived from committed backend/src/data/santaRosaBoundary.json, the union of 18 barangay polygons from Philippines JSON Maps 2023 high-resolution extract by James Faeldon. Administrative data: Philippine Statistics Authority and NAMRIA.
+North is up. Equirectangular local projection with longitude scaled by cosine of midpoint latitude (14.27626940 degrees). Indicative administrative boundary, not a cadastral survey.
+
+Barangay navigation locations derived from Philippines JSON Maps (James Faeldon).
+Source: https://raw.githubusercontent.com/faeldon/philippines-json-maps/master/2023/geojson/municities/hires/bgysubmuns-municity-403428000.0.1.json
+Administrative data attribution: Philippine Statistics Authority and NAMRIA.
+Coordinates and bounding boxes are indicative map navigation aids, not cadastral boundaries or barangay-hall locations.
+
+The MIT License (MIT)
+
+Copyright (c) James Faeldon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</metadata>
+  <path d="M173.32 484.65 L154.62 484.03 L150.28 490.49 L142.97 490.56 L138.79 494.03 L134.12 495.06 L126.01 500.05 L125.29 502.81 L119.34 500.96 L117.10 502.52 L118.58 507.43 L117.62 510.48 L107.59 517.82 L101.64 518.56 L95.65 524.99 L93.21 518.77 L82.90 517.36 L80.82 523.63 L73.11 525.77 L70.56 532.00 L56.51 531.64 L43.14 498.84 L33.73 484.72 L30.27 483.45 L31.93 478.73 L36.13 475.24 L39.37 466.84 L43.57 461.90 L48.43 458.93 L52.19 450.95 L50.79 447.87 L53.88 439.74 L54.51 432.89 L50.77 427.69 L53.44 420.72 L52.86 416.88 L48.44 412.68 L49.37 408.54 L54.07 402.44 L58.84 398.06 L61.44 391.87 L59.71 382.19 L62.39 370.68 L61.14 366.87 L62.29 363.18 L69.59 358.57 L69.79 354.95 L74.85 347.19 L73.99 341.27 L77.75 339.68 L78.55 334.03 L85.23 334.20 L86.26 329.08 L92.48 325.08 L95.16 319.54 L99.21 318.78 L99.90 313.95 L104.94 307.06 L110.66 304.10 L113.73 295.86 L118.82 296.24 L122.21 294.75 L129.40 287.68 L127.63 282.91 L136.63 279.23 L137.21 277.73 L141.10 274.97 L146.01 273.63 L156.63 267.42 L160.42 269.01 L164.22 266.16 L165.63 262.30 L170.70 261.71 L178.34 255.24 L176.22 251.31 L181.81 249.88 L185.03 246.38 L184.47 241.28 L185.76 235.88 L188.44 233.63 L187.20 226.21 L194.00 221.89 L195.35 226.47 L201.57 225.80 L203.78 221.66 L208.63 219.27 L205.14 214.93 L201.21 202.61 L199.91 194.20 L201.87 189.86 L202.68 179.20 L205.39 179.40 L205.50 172.21 L203.98 169.50 L208.40 164.71 L206.13 156.61 L209.44 144.60 L208.53 139.01 L206.18 138.70 L202.03 127.08 L203.54 114.48 L202.49 107.39 L208.95 101.37 L229.70 93.60 L234.63 90.38 L236.99 84.14 L232.61 63.48 L232.65 59.59 L236.84 54.20 L237.83 44.61 L236.26 38.75 L239.39 37.27 L244.76 30.50 L248.90 28.00 L253.69 31.97 L258.90 33.20 L268.77 31.35 L281.44 37.98 L285.94 39.49 L287.00 42.03 L291.79 42.03 L299.16 51.81 L308.03 56.33 L312.95 66.80 L318.79 73.43 L319.98 76.57 L323.52 79.14 L324.48 83.69 L327.29 85.44 L331.19 93.13 L338.79 97.97 L340.75 102.17 L346.97 107.71 L348.73 111.67 L345.72 114.21 L347.58 117.13 L347.12 121.46 L349.44 131.31 L351.76 136.66 L350.71 140.37 L353.43 156.37 L356.45 166.72 L364.76 173.75 L367.08 184.11 L369.73 188.78 L367.79 192.66 L362.47 195.92 L360.56 200.53 L361.49 208.23 L363.61 211.37 L360.91 217.17 L357.25 220.11 L359.45 223.52 L360.95 232.57 L355.95 233.51 L356.55 235.61 L350.74 242.29 L350.88 244.26 L346.70 254.09 L347.09 256.48 L340.57 257.31 L338.61 264.49 L331.63 265.31 L333.46 269.30 L336.60 270.54 L337.67 275.34 L326.18 279.45 L326.78 281.80 L318.00 285.82 L311.81 286.93 L308.77 288.18 L305.69 293.57 L307.58 297.03 L305.49 313.86 L305.98 325.48 L311.69 347.10 L313.94 352.35 L323.29 366.06 L323.93 370.90 L319.79 373.29 L313.15 370.29 L313.81 376.41 L311.28 381.35 L306.12 385.22 L303.93 385.97 L300.50 393.44 L301.55 401.47 L298.56 402.38 L294.72 409.58 L282.08 410.70 L287.89 429.04 L267.68 432.74 L263.57 432.56 L257.18 430.24 L253.83 434.53 L249.94 433.35 L245.01 441.01 L241.80 443.37 L230.86 441.36 L222.32 446.59 L219.34 446.09 L217.42 451.88 L208.11 452.62 L205.51 458.21 L207.83 463.86 L197.96 464.22 L192.73 466.15 L191.61 471.42 L190.94 479.04 L184.78 477.20 L178.50 477.16 L173.32 484.65 Z" fill="#800000" fill-opacity="0.025" fill-rule="evenodd" stroke="#800000" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+</svg>

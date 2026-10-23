@@ -67,9 +67,14 @@ ASSISTANCE_TRACKING_SECRET. See [the assistance guide](../backend/ASSISTANCE.md)
   full, no available shelters, closed, or no shelters registered. Loading and
   failed requests have separate status messages. A map failure does not prevent
   barangay selection.
-- Barangay search filters the directory and focuses the map on a named barangay,
-  with its access card beside the map (above it on small screens). Clear search
-  restores the full directory. Search also works without registered center data;
+- Barangay search filters the directory and shows only shelters assigned to the
+  selected barangay ID. The map zooms to those shelters without an extra barangay
+  location pin; full and closed shelters remain visible with their status icons.
+  Search, the map and the selected access card share one compact panel. Its access
+  card appears beside the map (above it on small screens). Clear search
+  restores the full directory and citywide shelter map. If the barangay has no
+  mapped shelters, the map shows its area without adding a pin or other barangays'
+  shelters. Search also works without registered center data;
   opening a workspace still requires its private access code. Bundled area
   locations use the same PSA/NAMRIA-derived source as the city boundary; see
   [the location source and license](src/lib/barangayLocations.LICENSE.txt).

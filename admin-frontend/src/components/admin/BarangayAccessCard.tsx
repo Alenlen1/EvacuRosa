@@ -33,43 +33,45 @@ export function BarangayAccessCard({
     "--barangay-card-accent": appearance.accent,
   } as CSSProperties;
 
-  const identity = (
-    <>
-      <strong className="barangay-card-name">{barangay.name}</strong>
+  const name = <strong className="barangay-card-name">{barangay.name}</strong>;
+  const logo = (
+    <span
+      className={`barangay-card-logo${appearance.logoSrc ? " has-logo" : ""}`}
+      aria-hidden="true"
+    >
+      {appearance.logoSrc ? (
+        <Image src={appearance.logoSrc} alt="" fill sizes="64px" />
+      ) : (
+        appearance.initials
+      )}
+    </span>
+  );
+  const info = (
+    <span
+      className="barangay-card-info"
+      aria-busy={shelterSummary.status === "LOADING"}
+    >
       <span
-        className={`barangay-card-logo${appearance.logoSrc ? " has-logo" : ""}`}
-        aria-hidden="true"
+        className="barangay-card-status"
+        data-status={shelterSummary.status}
       >
-        {appearance.logoSrc ? (
-          <Image
-            src={appearance.logoSrc}
-            alt=""
-            fill
-            sizes={featured ? "(max-width: 900px) 64px, 80px" : "64px"}
-          />
-        ) : (
-          appearance.initials
-        )}
+        {shelterSummary.label}
       </span>
-      <span
-        className="barangay-card-info"
-        aria-busy={shelterSummary.status === "LOADING"}
-      >
-        <span
-          className="barangay-card-status"
-          data-status={shelterSummary.status}
-        >
-          {shelterSummary.label}
-        </span>
-        <small>{shelterSummary.detail}</small>
-      </span>
-    </>
+      <small>{shelterSummary.detail}</small>
+    </span>
   );
 
   if (featured) {
     return (
       <div className="barangay-access-feature" style={colors}>
-        <div className="barangay-feature-identity">{identity}</div>
+        <div
+          className="barangay-feature-identity barangay-selection-reveal"
+          key={barangay.id}
+        >
+          {name}
+          {logo}
+          {info}
+        </div>
         <button
           type="button"
           className="primary-button barangay-access-trigger"
@@ -96,7 +98,9 @@ export function BarangayAccessCard({
       aria-haspopup="dialog"
       onClick={onSelect}
     >
-      {identity}
+      <span className="barangay-card-header">{name}</span>
+      {logo}
+      {info}
       {selected && (
         <span className="barangay-card-selected" aria-hidden="true">
           <Check size={14} strokeWidth={2.5} />

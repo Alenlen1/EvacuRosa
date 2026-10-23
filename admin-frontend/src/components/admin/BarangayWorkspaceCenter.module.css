@@ -1,0 +1,377 @@
+:global(.barangay-workspace) .card:global(.barangay-center-card) {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #e5dcd3;
+  border-radius: 16px;
+  background: #fffdf9;
+  box-shadow: 0 4px 18px #49382b05;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 24px;
+  border-bottom: 1px solid #eee6dd;
+}
+
+.shelterIcon {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid #e8d8d0;
+  border-radius: 12px;
+  background: #f7eee8;
+  color: #800000;
+}
+
+.identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  color: #8a5e50;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.25px;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+:global(.barangay-workspace) .card:global(.barangay-center-card) h2 {
+  margin: 0;
+  color: #302825;
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: -0.35px;
+  overflow-wrap: anywhere;
+}
+
+.address {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 8px 0 0;
+  color: #75675e;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.address svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.card :global(.barangay-center-status) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: #efebe6;
+  color: #746862;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+}
+
+.statusDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.occupancy {
+  min-width: 0;
+  padding: 24px;
+}
+
+.card h3 {
+  margin: 0;
+  color: #4b3b33;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.occupancyCount {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 4px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.occupancyCount strong {
+  color: #302825;
+  font-size: clamp(34px, 3vw, 44px);
+  font-weight: 650;
+  letter-spacing: -1.8px;
+}
+
+.occupancyCount span {
+  color: #75675e;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.percentage {
+  margin: 0 0 16px;
+  color: #66584f;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.progress,
+.emptyProgress {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eee7df;
+}
+
+.progress > div {
+  height: 100%;
+  border-radius: inherit;
+  background: #978a80;
+}
+
+.remaining {
+  margin: 12px 0 0;
+  color: #66584f;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.remaining strong {
+  color: #302825;
+  font-weight: 650;
+}
+
+.updated {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 24px 0 0;
+  color: #786a61;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.updated svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 24px;
+  border-top: 1px solid #eee6dd;
+  background: #fcf9f5;
+}
+
+.formHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  margin: 0 0 18px;
+}
+
+.unsaved {
+  color: #855c15;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.form label {
+  margin: 0 0 7px;
+  color: #66584f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.form select,
+.form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid #ded7cf;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #302825;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.form select {
+  margin-bottom: 16px;
+}
+
+.capacityHint {
+  margin: -8px 0 16px;
+  color: #75675e;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.form :is(select, input):disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.inputWrap {
+  position: relative;
+  min-width: 0;
+}
+
+.inputWrap input {
+  padding-right: 80px;
+  font-variant-numeric: tabular-nums;
+}
+
+.inputWrap > span {
+  position: absolute;
+  top: 50%;
+  right: 30px;
+  transform: translateY(-50%);
+  color: #786a61;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.form input[aria-invalid="true"] {
+  border-color: #a52e25;
+}
+
+.inputError {
+  margin: 8px 0 0;
+  color: #a52e25;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.card .save:global(.barangay-save-button) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  margin: 18px 0 0;
+  padding: 11px 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.card .save:disabled {
+  cursor: not-allowed;
+}
+
+.feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 12px 0 0;
+  color: #326641;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.feedback svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.feedback[data-kind="error"] {
+  color: #a52e25;
+}
+
+@media (min-width: 900px) {
+  :global(.admin-center-cards[data-single="true"]) .body {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+
+  :global(.admin-center-cards[data-single="true"]) .occupancy {
+    padding: 28px;
+  }
+
+  :global(.admin-center-cards[data-single="true"]) .form {
+    padding: 28px;
+    border-top: 0;
+    border-left: 1px solid #eee6dd;
+  }
+
+  :global(.admin-center-cards[data-single="true"]) .occupancyCount {
+    margin-top: 22px;
+  }
+
+  :global(.admin-center-cards[data-single="true"]) .updated {
+    margin-top: 36px;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 10px;
+    padding: 20px;
+  }
+
+  .shelterIcon {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  :global(.barangay-workspace) .card:global(.barangay-center-card) h2 {
+    font-size: 17px;
+  }
+
+  .header :global(.barangay-center-status) {
+    grid-column: 2;
+    justify-self: start;
+    margin: 0;
+  }
+
+  .occupancy,
+  .form {
+    padding: 20px;
+  }
+
+  .form select,
+  .form input {
+    font-size: 16px;
+  }
+}
