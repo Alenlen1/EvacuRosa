@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import Image from "next/image";
 import { Check } from "lucide-react";
 import { barangayCardAppearance } from "@/lib/barangayCardAppearance";
 
@@ -32,8 +33,15 @@ export function BarangayAccessCard({
       onClick={onSelect}
     >
       <strong className="barangay-card-name">{barangay.name}</strong>
-      <span className="barangay-card-logo" aria-hidden="true">
-        {appearance.initials}
+      <span
+        className={`barangay-card-logo${appearance.logoSrc ? " has-logo" : ""}`}
+        aria-hidden="true"
+      >
+        {appearance.logoSrc ? (
+          <Image src={appearance.logoSrc} alt="" fill sizes="80px" />
+        ) : (
+          appearance.initials
+        )}
       </span>
       <span className="barangay-card-info">
         <span>Evacuation center workspace</span>
