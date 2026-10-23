@@ -37,7 +37,7 @@ export function BarangayAccessDialog({
     const dialog = dialogRef.current;
     if (!dialog) return;
     const trigger = document.querySelector<HTMLButtonElement>(
-      '.barangay-access-card[aria-pressed="true"]',
+      '.barangay-access-card[aria-pressed="true"], .barangay-access-trigger',
     );
     const page = document.documentElement;
     const previousOverflow = page.style.overflow;
