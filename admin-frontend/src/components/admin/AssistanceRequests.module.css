@@ -1,0 +1,369 @@
+:global(.cdrrmo-workspace) .panel {
+  margin: 0;
+  padding: 24px;
+  border: 1px solid #e5ddd5;
+  border-radius: 16px;
+  background: #fffdf9;
+  color: #302825;
+  box-shadow: 0 4px 18px #40231a05;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-list-heading) {
+  gap: 16px;
+  align-items: flex-start;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-eyebrow) {
+  color: #925749;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
+  margin: 5px 0 0;
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.6px;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-count) {
+  min-width: 30px;
+  border-radius: 8px;
+  background: #f4e8e2;
+  color: #800000;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-caption) {
+  margin-top: 7px;
+  max-width: 540px;
+  color: #746862;
+  line-height: 1.6;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
+  align-items: center;
+  margin: 22px 0 12px;
+  padding: 12px 14px;
+  gap: 12px 20px;
+  border: 1px solid #e9e1da;
+  border-radius: 10px;
+  background: #f8f4ee;
+  color: #665950;
+  font-size: 12px;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-toolbar label) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-toolbar select) {
+  width: auto;
+  max-width: 100%;
+  min-height: 40px;
+  margin: 0;
+  padding: 8px 30px 8px 10px;
+  border: 1px solid #dfd4ca;
+  border-radius: 7px;
+  background: #fffdf9;
+  color: #302825;
+  font: inherit;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-connection-status) {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+}
+
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-connection-status > span) {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #aa7518;
+}
+
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-connection-status[data-connected="true"] > span) {
+  background: #2c714c;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-disclaimer) {
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: #f5eee6;
+  color: #6f5948;
+  line-height: 1.65;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-disclaimer svg) {
+  margin-top: 2px;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-section) {
+  margin-top: 24px;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-heading) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-heading h3) {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-selection) {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: #800000;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-selection svg) {
+  flex-shrink: 0;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-location-map) {
+  height: clamp(280px, 38dvh, 400px);
+  border-color: #e2d8ce;
+  border-radius: 11px;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-list) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+  margin-top: 20px;
+  padding: 2px;
+  gap: 16px;
+  scrollbar-color: #cfbfb1 transparent;
+  scrollbar-width: thin;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-record) {
+  --request-color: #295b86;
+  --request-tint: #edf4fa;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #e5ddd5;
+  border-radius: 12px;
+  background: #fffdf9;
+}
+
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-record[data-status="ACKNOWLEDGED"]) {
+  --request-color: #845d0f;
+  --request-tint: #fff2cf;
+}
+
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-record[data-status="DISPATCHED"]) {
+  --request-color: #9a332c;
+  --request-tint: #fae9e4;
+}
+
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-record[data-status="COMPLETED"]) {
+  --request-color: #286240;
+  --request-tint: #e8f2eb;
+}
+
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-record[data-status="CANCELLED"]) {
+  --request-color: #655f5b;
+  --request-tint: #f0ede9;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-record-heading) {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-record h3) {
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-mode) {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #f1ede7;
+  color: #655b54;
+  white-space: normal;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-status-line) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  margin-bottom: 16px;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-status-badge) {
+  padding: 5px 9px;
+  border-radius: 6px;
+  color: var(--request-color);
+  background: var(--request-tint);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-status-line time) {
+  color: #746862;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-location) {
+  padding: 12px;
+  border: 1px solid #e9dfd4;
+  border-radius: 8px;
+  background: #f8f4ee;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-location > svg) {
+  color: #985c47;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-location strong) {
+  margin-block: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-field-label),
+:global(.cdrrmo-workspace) .panel :global(.assistance-coordinates),
+:global(.cdrrmo-workspace) .panel :global(.assistance-record-details summary),
+:global(.cdrrmo-workspace) .panel :global(.assistance-record-details dt) {
+  color: #746862;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-key-details) {
+  gap: 14px;
+  padding-block: 15px 8px;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-capture-time) {
+  margin: 4px 0;
+  color: #746862;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-record-details summary) {
+  font-weight: 500;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-record-details dl) {
+  padding-inline: 10px;
+  border-left: 2px solid #e5d8cb;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-reference) {
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-record-actions) {
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-color: #e9e1da;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-record-actions button) {
+  min-height: 40px;
+  padding: 9px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-record-actions .assistance-delete-button) {
+  color: #9a332c;
+  border-color: #d9b6ac;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-timeline) {
+  margin-top: 16px;
+  padding: 12px 12px 12px 28px;
+  border-radius: 8px;
+  background: #f8f4ee;
+  font-size: 12px;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-timeline time),
+:global(.cdrrmo-workspace) .panel :global(.assistance-timeline small) {
+  color: #746862;
+}
+
+:global(.cdrrmo-workspace) .panel :global(.assistance-empty) {
+  margin-top: 18px;
+  border: 1px dashed #dfd3c7;
+  border-radius: 10px;
+  color: #746862;
+}
+
+@media (max-width: 600px) {
+  :global(.cdrrmo-workspace) .panel {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
+    font-size: 21px;
+  }
+
+  :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar label) {
+    display: grid;
+    width: 100%;
+  }
+
+  :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar select) {
+    width: 100%;
+  }
+
+  :global(.cdrrmo-workspace) .panel :global(.assistance-record) {
+    padding: 16px;
+  }
+
+  :global(.cdrrmo-workspace) .panel :global(.assistance-location-map) {
+    height: 280px;
+  }
+}

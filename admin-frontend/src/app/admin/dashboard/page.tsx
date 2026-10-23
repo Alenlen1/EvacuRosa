@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { Brand } from "@/components/ui/Brand";
-import { MapPin, ShieldCheck } from "lucide-react";
+import { House, MapPin, ShieldCheck, TriangleAlert } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -296,7 +296,7 @@ export default function AdminDashboardPage() {
     );
   return (
     <main
-      className={`admin-app ${profile.role === "SUPER_ADMIN" ? "cdrrmo-workspace" : `barangay-workspace ${publicSans.className}`}`}
+      className={`admin-app ${publicSans.className} ${profile.role === "SUPER_ADMIN" ? "cdrrmo-workspace" : "barangay-workspace"}`}
       style={
         profile.role === "BARANGAY_ADMIN"
           ? ({
@@ -401,10 +401,22 @@ export default function AdminDashboardPage() {
 
         {profile?.role === "SUPER_ADMIN" && (
           <>
-            <nav className="staff-section-nav">
-              <a href="#evacuation-centers">Evacuation centers</a>
-              <a href="#shared-locations">Shared locations</a>
-              <a href="#hazard-management">Hazard management</a>
+            <nav
+              className="staff-section-nav"
+              aria-label="CDRRMO workspace sections"
+            >
+              <a href="#evacuation-centers">
+                <House size={19} aria-hidden="true" />
+                <span>Evacuation centers</span>
+              </a>
+              <a href="#shared-locations">
+                <MapPin size={19} aria-hidden="true" />
+                <span>Shared locations</span>
+              </a>
+              <a href="#hazard-management">
+                <TriangleAlert size={19} aria-hidden="true" />
+                <span>Hazard management</span>
+              </a>
             </nav>
             <CenterManager centers={centers} onSaved={loadCenters} />
           </>
@@ -485,10 +497,15 @@ export default function AdminDashboardPage() {
             aria-labelledby="hazard-management-title"
           >
             <div className="cdrrmo-section-heading">
-              <div>
-                <span className="eyebrow">CITYWIDE REPORTING</span>
-                <h2 id="hazard-management-title">Hazard management</h2>
-                <p>Flood, fire and verified earthquake road impacts.</p>
+              <div className="cdrrmo-heading-identity">
+                <span className="cdrrmo-section-symbol" aria-hidden="true">
+                  <TriangleAlert size={22} />
+                </span>
+                <div>
+                  <span className="eyebrow">CITYWIDE REPORTING</span>
+                  <h2 id="hazard-management-title">Hazard management</h2>
+                  <p>Flood, fire and verified earthquake road impacts.</p>
+                </div>
               </div>
               <span className="cdrrmo-map-label">
                 <MapPin size={15} aria-hidden="true" />

@@ -10,6 +10,7 @@ import {
   Polyline,
   CircleMarker,
   Tooltip,
+  useMap,
   useMapEvents,
 } from "react-leaflet";
 import { Trash2, PersonStanding, ExternalLink, X } from "lucide-react";
@@ -68,6 +69,18 @@ const pendingIcon = createDivIcon(
   </svg>`,
   22,
 );
+
+function KeepMapSized() {
+  const map = useMap();
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize({ animate: false, pan: true });
+    });
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map]);
+  return null;
+}
 
 function ClickCapture({
   onClick,
@@ -532,6 +545,7 @@ export default function HazardPlacementMap({
           minZoom={10}
           className="h-full w-full"
         >
+          <KeepMapSized />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -769,7 +783,7 @@ export default function HazardPlacementMap({
         )}
 
         {pendingPoint && (
-          <div className="space-y-2 rounded border border-slate-200 bg-slate-50 p-2">
+          <div className="hazard-report-fields space-y-2 rounded border border-slate-200 bg-slate-50 p-2">
             {mode !== "fire" && (
               <div>
                 <label
@@ -960,7 +974,7 @@ export default function HazardPlacementMap({
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded border border-slate-300 px-3 py-1.5 text-xs text-slate-600"
+                className="secondary-button"
               >
                 Cancel
               </button>

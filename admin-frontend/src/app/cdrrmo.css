@@ -1,0 +1,413 @@
+.cdrrmo-workspace {
+  --ink: #302825;
+  --muted: #655a53;
+  --border: #e5ddd5;
+  --surface: #f7f3ee;
+  --accent: #800000;
+  background: var(--surface);
+  color: var(--ink);
+}
+.cdrrmo-workspace .app-header {
+  min-height: 80px;
+  height: auto;
+  padding: 16px 28px;
+  border-color: var(--border);
+  background: #fffdf9;
+}
+.cdrrmo-workspace .brand-name {
+  color: var(--ink);
+}
+.cdrrmo-workspace .brand-name > span {
+  color: #800000;
+}
+.cdrrmo-workspace .city-label {
+  color: var(--muted);
+  background: #f7f3ee;
+}
+.cdrrmo-workspace .cdrrmo-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1360px;
+  padding: 28px 24px 40px;
+}
+.cdrrmo-workspace .cdrrmo-content > div:empty {
+  display: none;
+}
+.cdrrmo-workspace .cdrrmo-content > .center-management,
+.cdrrmo-workspace #shared-locations .admin-assistance {
+  margin: 0;
+}
+.cdrrmo-workspace .admin-heading {
+  --ink: #fff7ed;
+  --muted: #f4e4dc;
+  position: relative;
+  isolation: isolate;
+  align-items: flex-start;
+  gap: 24px;
+  overflow: hidden;
+  margin: 0;
+  padding: 30px 32px;
+  border-radius: 16px;
+  background: #800000;
+  color: var(--ink);
+}
+.cdrrmo-workspace .admin-heading::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: -1;
+  width: 48%;
+  background:
+    linear-gradient(90deg, #800000, #800000b3 40%, #80000085),
+    url("/images/barangay/santa-rosa-arch.webp") center 25% / cover no-repeat;
+  pointer-events: none;
+}
+.cdrrmo-workspace .admin-heading > div {
+  min-width: 0;
+}
+.cdrrmo-workspace .eyebrow {
+  color: #865247;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 1.4px;
+}
+.cdrrmo-workspace .admin-heading .eyebrow {
+  color: #edc6b5;
+}
+.cdrrmo-workspace .admin-heading h1 {
+  margin: 8px 0 10px;
+  color: var(--ink);
+  font-size: clamp(27px, 3.5vw, 38px);
+  font-weight: 650;
+  letter-spacing: -1px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.cdrrmo-workspace .admin-heading p {
+  max-width: 640px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.cdrrmo-workspace .admin-heading .error-message {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #a52e25;
+}
+.cdrrmo-workspace .cdrrmo-access {
+  flex-shrink: 0;
+  border-color: #fff7ed4d;
+  background: #80000066;
+  color: #fff7ed;
+  font-size: 12px;
+}
+.cdrrmo-workspace .staff-section-nav {
+  position: sticky;
+  top: 12px;
+  z-index: 1100;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fffdf9f5;
+  box-shadow: 0 4px 14px #49382b08;
+  backdrop-filter: blur(8px);
+}
+.cdrrmo-workspace .staff-section-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 11px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #583c35;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+}
+.cdrrmo-workspace .staff-section-nav a svg {
+  flex-shrink: 0;
+  color: #865542;
+}
+.cdrrmo-workspace .staff-section-nav a:hover {
+  border-color: #e8d5ca;
+  background: #f7eee7;
+}
+.cdrrmo-workspace .cdrrmo-section-anchor,
+.cdrrmo-workspace #center-registration {
+  scroll-margin-top: 100px;
+}
+.cdrrmo-workspace
+  :is(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid #94524f;
+  outline-offset: 3px;
+}
+.cdrrmo-workspace :is(input:not([type="checkbox"]), select, textarea) {
+  min-width: 0;
+  border-color: #ded7cf;
+  background: #fffdf9;
+  color: var(--ink);
+  font-family: inherit;
+}
+.cdrrmo-workspace input[type="checkbox"] {
+  accent-color: #800000;
+}
+.cdrrmo-workspace .primary-button,
+.cdrrmo-workspace .hazard-form button.bg-blue-600 {
+  border: 1px solid #800000;
+  background: #800000;
+  color: #fffaf6;
+}
+.cdrrmo-workspace .primary-button:hover:not(:disabled),
+.cdrrmo-workspace .hazard-form button.bg-blue-600:hover:not(:disabled) {
+  border-color: #600000;
+  background: #600000;
+}
+.cdrrmo-workspace .primary-button:disabled,
+.cdrrmo-workspace .hazard-form button.bg-blue-600:disabled {
+  border-color: #eee7df;
+  background: #eee7df;
+  color: #8a7c73;
+}
+.cdrrmo-workspace .secondary-button {
+  border-color: #ded7cf;
+  background: #fffdf9;
+  color: #583c35;
+}
+.cdrrmo-workspace .secondary-button:hover:not(:disabled) {
+  background: #f6eee7;
+}
+.cdrrmo-workspace .error-message {
+  color: #a52e25;
+}
+.cdrrmo-workspace .admin-hazard-section {
+  padding: 24px;
+  border-color: var(--border);
+  border-radius: 16px;
+  background: #fffdf9;
+  box-shadow: 0 3px 18px #49382b05;
+}
+.cdrrmo-workspace .cdrrmo-heading-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  min-width: 0;
+}
+.cdrrmo-workspace .cdrrmo-section-symbol {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #ead7cb;
+  border-radius: 12px;
+  background: #f7eee7;
+  color: #800000;
+}
+.cdrrmo-workspace .cdrrmo-section-heading h2 {
+  color: var(--ink);
+  font-size: 23px;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.45px;
+}
+.cdrrmo-workspace .cdrrmo-section-heading p,
+.cdrrmo-workspace .cdrrmo-map-label {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.cdrrmo-workspace .cdrrmo-report-steps {
+  gap: 10px 22px;
+  margin: 18px 0;
+  padding: 13px 16px;
+  border: 1px solid #eee2d7;
+  border-radius: 10px;
+  background: #fcf8f3;
+}
+.cdrrmo-workspace .cdrrmo-report-steps li {
+  color: #66564c;
+}
+.cdrrmo-workspace .cdrrmo-report-steps li > span {
+  background: #f0dfd3;
+  color: #704035;
+}
+.cdrrmo-workspace .hazard-editor {
+  grid-template-columns: minmax(0, 1fr) 350px;
+  border-color: var(--border);
+  background: #fffdf9;
+}
+.cdrrmo-workspace .hazard-tabs {
+  padding: 7px;
+  gap: 7px;
+  border-color: var(--border);
+  background: #f8f3ed;
+}
+.cdrrmo-workspace .hazard-tabs button {
+  color: #66564c;
+}
+.cdrrmo-workspace .hazard-tabs button[aria-pressed="true"] {
+  border: 1px solid #800000;
+  background: #800000;
+  color: #fff7ed;
+  box-shadow: none;
+}
+.cdrrmo-workspace .hazard-event-selector {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  background: #fffdf9;
+}
+.cdrrmo-workspace .hazard-event-selector p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.cdrrmo-workspace .hazard-editor-map {
+  align-self: stretch;
+  min-width: 0;
+  min-height: 420px;
+  height: auto;
+}
+.cdrrmo-workspace .hazard-editor .leaflet-container {
+  font-family: inherit;
+}
+.cdrrmo-workspace .hazard-form {
+  min-width: 0;
+  max-height: none;
+  overflow: visible;
+  border-color: var(--border);
+  background: #fcf9f5;
+}
+.cdrrmo-workspace .hazard-form p {
+  line-height: 1.65;
+}
+.cdrrmo-workspace .hazard-form :is(.text-slate-500, .text-slate-600),
+.cdrrmo-workspace .hazard-records > h3 {
+  color: var(--muted);
+}
+.cdrrmo-workspace .hazard-report-fields {
+  border-color: var(--border);
+  background: #fffdf9;
+}
+.cdrrmo-workspace .hazard-form-empty {
+  border-color: #d9c6b8;
+  background: #fffdf9;
+}
+.cdrrmo-workspace .hazard-form-empty strong {
+  color: var(--ink);
+}
+.cdrrmo-workspace .hazard-form-empty :is(p, small) {
+  color: var(--muted);
+}
+.cdrrmo-workspace .hazard-form-empty small {
+  border-color: var(--border);
+}
+.cdrrmo-workspace .hazard-records {
+  border-color: var(--border);
+  background: #f8f3ed;
+}
+.cdrrmo-workspace .hazard-records > p {
+  color: var(--muted);
+}
+.cdrrmo-workspace .hazard-records section > div {
+  border: 1px solid var(--border);
+  background: #fffdf9;
+}
+.cdrrmo-workspace .hazard-street-view-toggle,
+.cdrrmo-workspace .hazard-street-view-use {
+  border-color: #ded7cf;
+  background: #fffdf9;
+  color: #583c35;
+}
+.cdrrmo-workspace .hazard-street-view-toggle[aria-pressed="true"],
+.cdrrmo-workspace .hazard-street-view-panel a {
+  border-color: #800000;
+  background: #800000;
+  color: #fff7ed;
+}
+@media (max-width: 1000px) {
+  .cdrrmo-workspace .hazard-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cdrrmo-workspace .hazard-editor-map {
+    min-height: 280px;
+    height: clamp(280px, 45dvh, 400px);
+  }
+  .cdrrmo-workspace .hazard-form {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+}
+@media (max-width: 800px) {
+  .cdrrmo-workspace .app-header {
+    min-height: 72px;
+    padding: 12px 16px;
+  }
+  .cdrrmo-workspace .cdrrmo-content {
+    padding: 22px 16px 28px;
+  }
+  .cdrrmo-workspace .admin-heading {
+    flex-direction: column;
+    gap: 18px;
+    padding: 24px;
+  }
+  .cdrrmo-workspace .admin-heading::before {
+    width: 75%;
+    background-image:
+      linear-gradient(90deg, #800000, #800000e6 40%, #800000b3),
+      url("/images/barangay/santa-rosa-arch.webp");
+  }
+  .cdrrmo-workspace .admin-hazard-section {
+    padding: 18px;
+  }
+  .cdrrmo-workspace .hazard-form {
+    padding: 18px;
+  }
+  .cdrrmo-workspace :is(input:not([type="checkbox"]), select, textarea) {
+    font-size: 16px;
+  }
+}
+@media (max-width: 540px) {
+  .cdrrmo-workspace .admin-heading {
+    padding: 22px 20px;
+  }
+  .cdrrmo-workspace .staff-section-nav {
+    top: 6px;
+    gap: 4px;
+    padding: 5px;
+  }
+  .cdrrmo-workspace .staff-section-nav a {
+    flex-direction: column;
+    gap: 5px;
+    padding: 9px 4px;
+    font-size: 12px;
+  }
+  .cdrrmo-workspace .cdrrmo-section-heading h2 {
+    font-size: 21px;
+  }
+  .cdrrmo-workspace .cdrrmo-report-steps {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cdrrmo-workspace .cdrrmo-heading-identity {
+    gap: 10px;
+  }
+  .cdrrmo-workspace .cdrrmo-section-symbol {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+  }
+  .cdrrmo-workspace .hazard-tabs button {
+    gap: 5px;
+    font-size: 12px;
+  }
+}
