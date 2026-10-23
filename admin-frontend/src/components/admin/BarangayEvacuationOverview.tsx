@@ -100,36 +100,35 @@ export function BarangayEvacuationOverview({
         focusedBarangay={focusedBarangay}
       />
       {centers !== null ? (
-        <>
+        <div className="barangay-map-footer">
+          {!loading && !error && (
+            <div className="barangay-map-totals">
+              <span>
+                {mappedCenters.length}{" "}
+                {mappedCenters.length === 1 ? "shelter" : "shelters"} on map
+              </span>
+              {missingLocations > 0 && (
+                <span>{missingLocations} without a map location</span>
+              )}
+            </div>
+          )}
           <div
             className="barangay-overview-legend"
             aria-label="Evacuation center status legend"
           >
-            <span>
-              {mappedCenters.length}{" "}
-              {mappedCenters.length === 1 ? "shelter" : "shelters"}
-              {focusedBarangay ? ` in ${areaName}` : " across Santa Rosa"}
-            </span>
             {(["AVAILABLE", "NEARLY_FULL", "FULL", "CLOSED"] as const).map(
               (status) => (
                 <StatusBadge key={status} status={status} />
               ),
             )}
           </div>
-          {missingLocations > 0 && (
-            <p>
-              {missingLocations}{" "}
-              {missingLocations === 1 ? "shelter has" : "shelters have"} no map
-              location.
-            </p>
-          )}
           {!focusedBarangay &&
             !loading &&
             !error &&
             matchingCenters.length === 0 && (
               <p>No evacuation centers have been registered yet.</p>
             )}
-        </>
+        </div>
       ) : loading ? (
         <p role="status">Loading evacuation centers...</p>
       ) : null}

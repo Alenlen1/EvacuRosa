@@ -41,12 +41,7 @@ export function BarangayAccessCard({
         aria-hidden="true"
       >
         {appearance.logoSrc ? (
-          <Image
-            src={appearance.logoSrc}
-            alt=""
-            fill
-            sizes={featured ? "(max-width: 900px) 64px, 80px" : "64px"}
-          />
+          <Image src={appearance.logoSrc} alt="" fill sizes="64px" />
         ) : (
           appearance.initials
         )}

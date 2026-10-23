@@ -998,6 +998,21 @@
   color: #596677;
   max-width: 700px;
 }
+.barangay-access-page .staff-login-title {
+  position: relative;
+  isolation: isolate;
+}
+.barangay-access-page .staff-login-title::before {
+  content: "";
+  position: absolute;
+  inset: -16px 0 -16px auto;
+  z-index: -1;
+  width: min(34%, 280px);
+  background: url("/images/santa-rosa-outline.svg") right center / contain
+    no-repeat;
+  opacity: 0.04;
+  pointer-events: none;
+}
 .staff-credentials-login {
   max-width: 560px;
   padding-top: clamp(24px, 6vh, 64px);
@@ -1053,6 +1068,9 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   background: #fffdf9;
+  box-shadow:
+    0 2px 6px #30282505,
+    0 14px 36px -24px #582b2b26;
 }
 .barangay-finder .barangay-overview {
   min-width: 0;
@@ -1084,10 +1102,16 @@
   font-size: 20px;
   font-weight: 650;
 }
+.barangay-directory-count {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+}
 .barangay-overview p {
   margin-top: 6px;
   color: #596677;
-  font-size: 12px;
+  font-size: 13px;
 }
 .barangay-overview .error-message {
   margin-bottom: 16px;
@@ -1098,13 +1122,42 @@
   width: 100%;
   border-radius: 9px;
 }
-.barangay-overview-legend {
+.barangay-map-footer {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.barangay-map-totals {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  gap: 6px 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.barangay-map-totals > span:first-child {
+  color: var(--ink);
+  font-weight: 600;
+}
+.barangay-map-totals > span + span {
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+.barangay-overview-legend {
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
   gap: 8px;
-  margin-top: 12px;
-  font-size: 12px;
+}
+.barangay-overview-legend .status-badge {
+  justify-content: center;
+  margin-top: 0;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 .barangay-search {
   display: grid;
@@ -1173,7 +1226,7 @@
 .barangay-search #barangay-search-hint,
 .barangay-search-status {
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.6;
   color: var(--muted);
 }
@@ -1196,7 +1249,7 @@
   border-radius: 8px;
   background: #fffcf8;
   color: #583c35;
-  font-size: 12px;
+  font-size: 13px;
 }
 .barangay-search-suggestions button:hover:not(:disabled) {
   background: #f6eee7;
@@ -1204,7 +1257,7 @@
 }
 .barangay-search-layout.has-focused-barangay {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   grid-template-areas: "map access";
   align-items: stretch;
   gap: 0;
@@ -1217,7 +1270,7 @@
   grid-area: access;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   margin: 0;
   padding: 20px;
   border-left: 1px solid var(--border);
@@ -1225,22 +1278,22 @@
 }
 .barangay-search-access h2 {
   margin-bottom: 14px;
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 650;
 }
 .barangay-search-access .barangay-access-feature {
   width: 100%;
 }
 .barangay-access-feature .barangay-card-logo {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
 }
 .barangay-access-trigger {
   width: 100%;
   min-height: 48px;
   gap: 10px;
   margin-top: 12px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .barangay-access-trigger svg:last-child {
   margin-left: auto;
@@ -1249,7 +1302,7 @@
   max-width: 260px;
   margin: 12px auto 0;
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.65;
   color: var(--muted);
 }
@@ -1287,30 +1340,6 @@
   .barangay-search-access h2 {
     margin-bottom: 10px;
   }
-  .barangay-access-feature .barangay-feature-identity {
-    grid-template-columns: 64px minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    justify-items: start;
-    gap: 5px 14px;
-    min-height: 0;
-    padding: 16px;
-    text-align: left;
-  }
-  .barangay-feature-identity .barangay-card-name {
-    grid-column: 2;
-    align-self: end;
-    font-size: 18px;
-  }
-  .barangay-access-feature .barangay-card-logo {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    width: 64px;
-    height: 64px;
-    align-self: center;
-  }
-  .barangay-feature-identity .barangay-card-info {
-    grid-column: 2;
-  }
   .barangay-search-access > p {
     max-width: none;
     margin-top: 9px;
@@ -1346,6 +1375,17 @@
   .barangay-map-refresh-label {
     display: none;
   }
+  .barangay-map-totals {
+    display: grid;
+    gap: 4px;
+  }
+  .barangay-map-totals > span + span {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .barangay-overview-legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 380px) {
   .barangay-search-row {
@@ -1369,7 +1409,7 @@
 .barangay-feature-identity {
   position: relative;
   display: grid;
-  grid-template-rows: minmax(40px, auto) 64px 1fr;
+  grid-template-rows: minmax(44px, auto) 64px 1fr;
   justify-items: center;
   align-content: start;
   gap: 8px;
@@ -1378,28 +1418,55 @@
   background: color-mix(in srgb, var(--barangay-card-background) 40%, #fffdf9);
   color: #302825;
   min-height: 196px;
-  padding: 14px 12px 16px;
+  padding: 12px 10px 14px;
   border: 1px solid color-mix(in srgb, var(--barangay-card-accent) 18%, #e5ddd5);
   border-top: 3px solid
     color-mix(in srgb, var(--barangay-card-accent) 65%, #fffdf9);
   border-radius: 12px;
   min-width: 0;
   transition:
-    border-color 150ms,
-    box-shadow 150ms;
+    transform 180ms ease,
+    border-color 180ms,
+    box-shadow 180ms;
 }
 .barangay-feature-identity {
-  grid-template-rows: minmax(40px, auto) 80px auto;
-  gap: 12px;
-  padding: 18px 20px 22px;
+  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  justify-items: start;
+  gap: 5px 14px;
+  min-height: 0;
+  padding: 16px;
+  text-align: left;
 }
 .barangay-feature-identity .barangay-card-name {
-  font-size: 18px;
+  grid-column: 2;
+  align-self: end;
+  font-size: 20px;
+}
+.barangay-feature-identity .barangay-card-logo {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+.barangay-feature-identity .barangay-card-info {
+  display: block;
+  grid-column: 2;
 }
 .barangay-access-page
   .barangay-access-card:hover:not(:disabled):not([aria-pressed="true"]) {
   border-color: var(--barangay-card-accent);
-  box-shadow: 0 5px 16px #3028250c;
+  box-shadow: 0 9px 20px #30282512;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .barangay-access-page
+    .barangay-access-card:hover:not(:disabled):not([aria-pressed="true"]) {
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .barangay-access-page .barangay-access-card {
+    transition: none;
+  }
 }
 .barangay-access-page .barangay-access-card[aria-pressed="true"] {
   border-color: #800000;
@@ -1408,7 +1475,7 @@
 .barangay-card-name {
   align-self: center;
   max-width: 100%;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 650;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -1426,8 +1493,13 @@
   letter-spacing: -0.5px;
 }
 .barangay-card-info {
+  display: grid;
+  grid-template-rows: minmax(44px, auto) 1fr;
+  align-items: center;
+  justify-items: center;
+  gap: 4px;
   max-width: 100%;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.6;
   color: #514842;
 }
@@ -1441,7 +1513,7 @@
   border-radius: 6px;
   background: #efebe6;
   color: #746862;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 650;
   line-height: 1.45;
 }
@@ -1483,8 +1555,11 @@
 }
 .barangay-card-info small {
   display: block;
+  margin-top: 0;
+  font-size: 13px;
+}
+.barangay-feature-identity .barangay-card-info small {
   margin-top: 4px;
-  font-size: 11px;
 }
 .barangay-card-selected {
   position: absolute;
@@ -1737,6 +1812,27 @@
   background: var(--surface);
   color: var(--ink);
 }
+.barangay-access-page {
+  --muted: #655a53;
+}
+.barangay-access-page .app-header {
+  min-height: 80px;
+  height: 80px;
+  padding: 0;
+}
+.barangay-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.barangay-header-content > button {
+  font-size: 13px;
+}
 :is(.barangay-access-page, .barangay-workspace) .app-header {
   background: #fffdf9;
   border-color: var(--border);
@@ -1750,9 +1846,6 @@
 :is(.barangay-access-page, .barangay-workspace) .app-header > span:not(.brand) {
   color: var(--muted);
   font-size: 12px;
-}
-.barangay-access-page .app-header > span:not(.brand) {
-  margin-right: auto;
 }
 :is(.barangay-access-page, .barangay-workspace) .eyebrow {
   color: #8c5148;
@@ -1890,6 +1983,28 @@
   background: #978a80;
 }
 @media (max-width: 800px) {
+  .barangay-access-page .app-header {
+    min-height: 72px;
+    height: 72px;
+    padding: 0;
+  }
+  .barangay-header-content {
+    padding: 0 14px;
+  }
+  .barangay-header-content .brand {
+    gap: 8px;
+  }
+  .barangay-header-content .brand-mark {
+    width: 38px;
+    height: 38px;
+  }
+  .barangay-header-content .brand-name {
+    font-size: 21px;
+  }
+  .barangay-header-content .brand-caption {
+    font-size: 8px;
+    letter-spacing: 1.6px;
+  }
   .barangay-workspace .admin-heading {
     padding: 28px 16px 22px;
   }

@@ -201,18 +201,19 @@ export default function BarangaySelectionPage() {
       className={`staff-login barangay-access-page ${publicSans.className}`}
     >
       <header className="app-header">
-        <Brand />
-        <span>Barangay administration &middot; Santa Rosa, Laguna</span>
-        <button
-          className="secondary-button"
-          disabled={busy}
-          onClick={async () => {
-            await supabase?.auth.signOut();
-            router.replace("/admin/login");
-          }}
-        >
-          Sign out
-        </button>
+        <div className="barangay-header-content">
+          <Brand />
+          <button
+            className="secondary-button"
+            disabled={busy}
+            onClick={async () => {
+              await supabase?.auth.signOut();
+              router.replace("/admin/login");
+            }}
+          >
+            Sign out
+          </button>
+        </div>
       </header>
       <div className="staff-login-content">
         <div className="staff-login-title">
@@ -350,9 +351,11 @@ export default function BarangaySelectionPage() {
             {!focusedBarangay && (
               <>
                 <h2 id="barangay-selection-title">
-                  {normalizedQuery
-                    ? "Matching barangays"
-                    : "Select your barangay"}
+                  {normalizedQuery ? "Matching barangays" : "All barangays"}
+                  <span className="barangay-directory-count">
+                    {" "}
+                    &middot; {matches.length}
+                  </span>
                 </h2>
                 {normalizedQuery && matches.length === 0 ? (
                   <div className="barangay-search-empty">
