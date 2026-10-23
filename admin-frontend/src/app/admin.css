@@ -999,18 +999,33 @@
   max-width: 700px;
 }
 .barangay-access-page .staff-login-title {
+  --ink: #fff7ed;
+  --muted: #f4e4dc;
   position: relative;
   isolation: isolate;
+  min-height: 176px;
+  overflow: hidden;
+  padding: 28px 32px;
+  border-radius: 16px;
+  background: #800000;
+  color: var(--ink);
+}
+.barangay-access-page .staff-login-title .eyebrow {
+  color: #edc6b5;
+}
+.barangay-access-page .staff-login-title :is(h1, p) {
+  max-width: min(680px, calc(100% - 150px));
 }
 .barangay-access-page .staff-login-title::before {
   content: "";
   position: absolute;
-  inset: -16px 0 -16px auto;
+  inset: -24px 20px -24px auto;
   z-index: -1;
-  width: min(34%, 280px);
+  width: min(32%, 280px);
   background: url("/images/santa-rosa-outline.svg") right center / contain
     no-repeat;
-  opacity: 0.04;
+  opacity: 0.18;
+  filter: brightness(0) invert(1);
   pointer-events: none;
 }
 .staff-credentials-login {
@@ -1267,6 +1282,7 @@
   min-width: 0;
 }
 .barangay-search-access {
+  --muted: #514842;
   grid-area: access;
   display: flex;
   flex-direction: column;
@@ -1275,6 +1291,7 @@
   padding: 20px;
   border-left: 1px solid var(--border);
   background: #fbf8f4;
+  transition: background-color 180ms ease;
 }
 .barangay-search-access h2 {
   margin-bottom: 14px;
@@ -1346,6 +1363,17 @@
   }
 }
 @media (max-width: 740px) {
+  .barangay-access-page .staff-login-title {
+    padding: 24px 20px;
+  }
+  .barangay-access-page .staff-login-title :is(h1, p) {
+    max-width: 100%;
+  }
+  .barangay-access-page .staff-login-title::before {
+    right: 8px;
+    width: 44%;
+    opacity: 0.1;
+  }
   .barangay-search {
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
@@ -1409,25 +1437,62 @@
 .barangay-feature-identity {
   position: relative;
   display: grid;
-  grid-template-rows: minmax(44px, auto) 64px 1fr;
-  justify-items: center;
-  align-content: start;
-  gap: 8px;
-  text-align: center;
-  background: #fffdf9;
-  background: color-mix(in srgb, var(--barangay-card-background) 40%, #fffdf9);
   color: #302825;
-  min-height: 196px;
-  padding: 12px 10px 14px;
   border: 1px solid color-mix(in srgb, var(--barangay-card-accent) 18%, #e5ddd5);
-  border-top: 3px solid
-    color-mix(in srgb, var(--barangay-card-accent) 65%, #fffdf9);
-  border-radius: 12px;
+  border-radius: 14px;
   min-width: 0;
   transition:
     transform 180ms ease,
     border-color 180ms,
     box-shadow 180ms;
+}
+.barangay-access-page .barangay-access-card {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 36px 1fr;
+  justify-items: center;
+  min-height: 240px;
+  overflow: hidden;
+  padding: 0;
+  background: #fffdf9;
+  text-align: center;
+}
+.barangay-card-header {
+  align-self: stretch;
+  justify-self: stretch;
+  display: flex;
+  justify-content: center;
+  min-height: 94px;
+  padding: 12px 12px 38px;
+  background: var(--barangay-card-background);
+  color: #302825;
+  color: color-mix(in srgb, var(--barangay-card-accent) 80%, #302825);
+}
+.barangay-card-header .barangay-card-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+.barangay-access-card .barangay-card-logo {
+  align-self: start;
+  z-index: 1;
+  width: 72px;
+  height: 72px;
+  margin-top: -36px;
+  border: 4px solid #fffdf9;
+  background: #fffdf9;
+  color: var(--barangay-card-accent);
+  box-shadow: 0 2px 5px #3028250c;
+}
+.barangay-access-card .barangay-card-logo.has-logo {
+  border-radius: 50%;
+  background: #fffdf9;
+}
+.barangay-access-card .barangay-card-info {
+  align-self: stretch;
+  width: 100%;
+  padding: 8px 10px 14px;
+  background: #fffdf9;
 }
 .barangay-feature-identity {
   grid-template-columns: 64px minmax(0, 1fr);
@@ -1436,7 +1501,21 @@
   gap: 5px 14px;
   min-height: 0;
   padding: 16px;
+  background: #fffdf9;
   text-align: left;
+}
+.barangay-selection-reveal {
+  animation: barangay-selection-in 180ms ease-out both;
+}
+@keyframes barangay-selection-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .barangay-feature-identity .barangay-card-name {
   grid-column: 2;
@@ -1464,8 +1543,12 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .barangay-access-page .barangay-access-card {
+  .barangay-access-page .barangay-access-card,
+  .barangay-search-access {
     transition: none;
+  }
+  .barangay-selection-reveal {
+    animation: none;
   }
 }
 .barangay-access-page .barangay-access-card[aria-pressed="true"] {

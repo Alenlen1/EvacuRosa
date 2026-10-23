@@ -15,6 +15,7 @@ import { publicSans } from "@/app/fonts/publicSans";
 import { normalizeBarangaySearch, searchBarangays } from "@/lib/barangaySearch";
 import { getBarangayShelterSummary } from "@/lib/barangayShelterSummary";
 import { useBarangayCenters } from "@/hooks/useBarangayCenters";
+import { barangayCardAppearance } from "@/lib/barangayCardAppearance";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 type Barangay = { id: string; name: string };
@@ -53,6 +54,9 @@ export default function BarangaySelectionPage() {
       ) ?? (matches.length === 1 ? matches[0] : null);
     return match ? { ...match } : null;
   }, [matches, normalizedQuery, focusRequest]);
+  const focusedAppearance = focusedBarangay
+    ? barangayCardAppearance(focusedBarangay.name)
+    : null;
 
   function shelterSummaryFor(barangayId: string): BarangayCardShelterSummary {
     if (centersLoading)
@@ -326,6 +330,7 @@ export default function BarangaySelectionPage() {
                   <aside
                     className="barangay-search-access"
                     aria-label={`${focusedBarangay.name} access`}
+                    style={{ backgroundColor: focusedAppearance?.background }}
                   >
                     <h2>Barangay access</h2>
                     <BarangayAccessCard
