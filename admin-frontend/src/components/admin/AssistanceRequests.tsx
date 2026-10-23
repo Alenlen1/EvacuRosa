@@ -1,6 +1,7 @@
 ﻿"use client";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { Info, MapPin, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import {
   assistanceEventsUrl,
@@ -19,6 +20,7 @@ import {
   type AssistanceHistory,
 } from "@/lib/assistance";
 import { TRAVEL_MODES } from "@/lib/travelTime";
+import styles from "./AssistanceRequests.module.css";
 const AssistanceLocationMap = dynamic(() => import("./AssistanceLocationMap"), {
   ssr: false,
   loading: () => <p role="status">Loading reported-location map...</p>,
@@ -279,7 +281,7 @@ export function AssistanceRequests() {
   }
   return (
     <section
-      className="admin-assistance"
+      className={`admin-assistance ${styles.panel}`}
       aria-labelledby="assistance-requests-title"
     >
       <div className="assistance-list-heading">
@@ -298,11 +300,19 @@ export function AssistanceRequests() {
           disabled={loading}
           onClick={() => setRefresh((n) => n + 1)}
         >
+          <RefreshCw size={16} aria-hidden="true" />
           {loading ? "Refreshing..." : "Refresh"}
         </button>
       </div>
       <div className="assistance-toolbar">
-        <span role="status">{connection}</span>
+        <span
+          className="assistance-connection-status"
+          data-connected={connection === "Connected"}
+          role="status"
+        >
+          <span aria-hidden="true" />
+          {connection}
+        </span>
         <label>
           Request status{" "}
           <select
@@ -320,8 +330,11 @@ export function AssistanceRequests() {
         <span>Automatic updates - Latest 100</span>
       </div>
       <div className="assistance-disclaimer">
-        Locations are GPS snapshots, not live tracking. Acknowledge confirms
-        receipt; dispatch only after a team is actually sent.
+        <Info size={16} aria-hidden="true" />
+        <span>
+          Locations are GPS snapshots, not live tracking. Acknowledge confirms
+          receipt; dispatch only after a team is actually sent.
+        </span>
       </div>
       {error && (
         <p className="assistance-feedback is-error" role="alert">
@@ -334,32 +347,51 @@ export function AssistanceRequests() {
         </p>
       )}
       {!loading && !requests.length && !error && (
-        <p>No assistance requests match this filter.</p>
+        <p className="assistance-empty">
+          No assistance requests match this filter.
+        </p>
       )}
       {!!requests.length && (
         <div ref={mapSection} className="assistance-map-section">
-          <h3>Reported-location map</h3>
+          <div className="assistance-map-heading">
+            <h3>Reported-location map</h3>
+            {selection && requests.some((item) => item.id === selection.id) && (
+              <p className="assistance-map-selection">
+                <MapPin size={14} aria-hidden="true" />
+                Selected request:{" "}
+                {requests.find((item) => item.id === selection.id)
+                  ?.display_name || "Name not provided"}
+              </p>
+            )}
+          </div>
           <AssistanceLocationMap requests={requests} selection={selection} />
         </div>
       )}
       <div className="assistance-list">
         {requests.map((item) => (
-          <article className="assistance-record" key={item.id}>
+          <article
+            className="assistance-record"
+            data-status={item.status}
+            key={item.id}
+          >
             <header className="assistance-record-heading">
               <h3>{item.display_name || "Name not provided"}</h3>
               <span className="assistance-mode">
                 {TRAVEL_MODES[item.travel_mode].label}
               </span>
             </header>
-            <p>
-              <strong>{ASSISTANCE_LABELS[item.status]}</strong> -{" "}
-              {new Date(
-                item.status_updated_at ?? item.created_at,
-              ).toLocaleString()}
-            </p>
-            <p className="assistance-reference">Request ID: {item.id}</p>
-            <p>Received: {new Date(item.created_at).toLocaleString()}</p>
+            <div className="assistance-status-line">
+              <strong className="assistance-status-badge">
+                {ASSISTANCE_LABELS[item.status]}
+              </strong>
+              <time dateTime={item.status_updated_at ?? item.created_at}>
+                {new Date(
+                  item.status_updated_at ?? item.created_at,
+                ).toLocaleString()}
+              </time>
+            </div>
             <div className="assistance-location">
+              <MapPin size={18} aria-hidden="true" />
               <div>
                 <span className="assistance-field-label">
                   Reported location
@@ -386,10 +418,23 @@ export function AssistanceRequests() {
                 <strong>+/-{Math.round(item.accuracy_meters)} m</strong>
               </div>
             </div>
-            <p>
+            <p className="assistance-capture-time">
               Location captured:{" "}
               {new Date(item.location_recorded_at).toLocaleString()}
             </p>
+            <details className="assistance-record-details">
+              <summary>Request details</summary>
+              <dl>
+                <div>
+                  <dt>Request ID</dt>
+                  <dd className="assistance-reference">{item.id}</dd>
+                </div>
+                <div>
+                  <dt>Received</dt>
+                  <dd>{new Date(item.created_at).toLocaleString()}</dd>
+                </div>
+              </dl>
+            </details>
             <div className="assistance-record-actions">
               <button
                 className="secondary-button"
