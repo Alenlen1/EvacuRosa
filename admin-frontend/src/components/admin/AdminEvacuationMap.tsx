@@ -1,15 +1,9 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect, useMemo } from "react";
-import { divIcon, latLngBounds } from "leaflet";
-import {
-  MapContainer,
-  Marker,
-  TileLayer,
-  Tooltip,
-  useMap,
-} from "react-leaflet";
+import { useEffect } from "react";
+import { latLngBounds } from "leaflet";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import {
   SANTA_ROSA_CITY_BOUNDS,
   SANTA_ROSA_CITY_CENTER,
@@ -20,14 +14,6 @@ import type { EvacuationCenter } from "@/services/api";
 import { findBarangayLocation } from "@/lib/barangayLocations";
 
 type FocusedBarangay = { id: string; name: string };
-
-const barangayLocationIcon = divIcon({
-  className: "barangay-location-icon",
-  iconSize: [32, 40],
-  iconAnchor: [16, 40],
-  tooltipAnchor: [0, -38],
-  html: '<svg width="32" height="40" viewBox="0 0 32 40" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M16 38S2 24 2 16a14 14 0 1 1 28 0c0 8-14 22-14 22Z" fill="#800000" stroke="#fffdf9" stroke-width="2"/><circle cx="16" cy="16" r="5" fill="#fffdf9"/></svg>',
-});
 
 function FitMap({
   centers,
@@ -53,7 +39,16 @@ function FitMap({
     const location = focusedBarangay
       ? findBarangayLocation(focusedBarangay.name)
       : undefined;
-    if (location) {
+    if (centers.length) {
+      map.fitBounds(
+        centers.map((center) => [center.latitude, center.longitude]),
+        {
+          padding: [35, 35],
+          maxZoom: focusedBarangay ? 16 : 15,
+          animate: false,
+        },
+      );
+    } else if (location) {
       if (location.bounds) {
         map.fitBounds(location.bounds, {
           padding: [35, 35],
@@ -63,15 +58,6 @@ function FitMap({
       } else {
         map.setView(location.center, 15, { animate: false });
       }
-    } else if (centers.length) {
-      map.fitBounds(
-        centers.map((center) => [center.latitude, center.longitude]),
-        {
-          padding: [30, 30],
-          maxZoom: 15,
-          animate: false,
-        },
-      );
     } else {
       map.fitBounds(SANTA_ROSA_CITY_BOUNDS, {
         padding: [25, 25],
@@ -83,7 +69,7 @@ function FitMap({
   return null;
 }
 
-/** Read-only city overview. Marker artwork and popups are shared with the public map. */
+/** Receives only the visible shelters with map coordinates from the overview. */
 export default function AdminEvacuationMap({
   centers,
   focusedBarangay,
@@ -91,21 +77,6 @@ export default function AdminEvacuationMap({
   centers: EvacuationCenter[];
   focusedBarangay?: FocusedBarangay | null;
 }) {
-  const location = focusedBarangay
-    ? findBarangayLocation(focusedBarangay.name)
-    : undefined;
-  const withCoords = useMemo(
-    () =>
-      centers.filter(
-        (center) =>
-          Number.isFinite(center.latitude) &&
-          Number.isFinite(center.longitude) &&
-          Math.abs(center.latitude) <= 90 &&
-          Math.abs(center.longitude) <= 180,
-      ),
-    [centers],
-  );
-
   return (
     <MapContainer
       center={SANTA_ROSA_CITY_CENTER}
@@ -122,22 +93,8 @@ export default function AdminEvacuationMap({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <FitMap centers={withCoords} focusedBarangay={focusedBarangay} />
-      <EvacuationCenterLayer centers={withCoords} />
-      {location && (
-        <Marker
-          key={location.name}
-          position={location.center}
-          icon={barangayLocationIcon}
-          title={`Barangay ${location.name} location`}
-          alt={`Barangay ${location.name} location`}
-          zIndexOffset={1000}
-        >
-          <Tooltip direction="top" permanent>
-            Barangay {location.name}
-          </Tooltip>
-        </Marker>
-      )}
+      <FitMap centers={centers} focusedBarangay={focusedBarangay} />
+      <EvacuationCenterLayer centers={centers} />
     </MapContainer>
   );
 }
