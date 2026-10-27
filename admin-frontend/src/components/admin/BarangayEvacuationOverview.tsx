@@ -5,10 +5,16 @@ import { useMemo } from "react";
 import { House, RefreshCw } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { EvacuationCenter } from "@/services/api";
+import { MapSkeleton } from "./LoadingSkeleton";
 
 const AdminEvacuationMap = dynamic(() => import("./AdminEvacuationMap"), {
   ssr: false,
-  loading: () => <p role="status">Loading evacuation map...</p>,
+  loading: () => (
+    <MapSkeleton
+      className="barangay-overview-map"
+      label="Loading evacuation map..."
+    />
+  ),
 });
 const EMPTY_CENTERS: EvacuationCenter[] = [];
 
@@ -95,10 +101,17 @@ export function BarangayEvacuationOverview({
       >
         {mapCaption}
       </p>
-      <AdminEvacuationMap
-        centers={mappedCenters}
-        focusedBarangay={focusedBarangay}
-      />
+      {loading && centers === null ? (
+        <MapSkeleton
+          className="barangay-overview-map"
+          label="Loading evacuation centers..."
+        />
+      ) : (
+        <AdminEvacuationMap
+          centers={mappedCenters}
+          focusedBarangay={focusedBarangay}
+        />
+      )}
       {centers !== null ? (
         <div className="barangay-map-footer">
           {!loading && !error && (
@@ -141,8 +154,6 @@ export function BarangayEvacuationOverview({
               </div>
             )}
         </div>
-      ) : loading ? (
-        <p role="status">Loading evacuation centers...</p>
       ) : null}
     </section>
   );

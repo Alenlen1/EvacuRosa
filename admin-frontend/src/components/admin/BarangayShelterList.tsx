@@ -1,6 +1,7 @@
 import { House, MapPin } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { EvacuationCenter } from "@/services/api";
+import { RecordsSkeleton } from "./LoadingSkeleton";
 
 function ShelterRow({ center }: { center: EvacuationCenter }) {
   return (
@@ -42,9 +43,7 @@ export function BarangayShelterList({
         {available && <span>{shelters.length}</span>}
       </div>
       {loading ? (
-        <p className="barangay-shelter-list-message" role="status">
-          Loading shelters...
-        </p>
+        <RecordsSkeleton label="Loading shelters..." />
       ) : !available ? (
         <p className="barangay-shelter-list-message" role="status">
           Shelter list unavailable. Refresh the map to try again.

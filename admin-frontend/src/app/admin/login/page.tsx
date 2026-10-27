@@ -9,6 +9,7 @@ import { SecretInput } from "@/components/admin/SecretInput";
 import { LoginSlideshow } from "@/components/admin/LoginSlideshow";
 import { useLoginViewport } from "@/hooks/useLoginViewport";
 import { publicSans } from "@/app/fonts/publicSans";
+import { rememberWorkspaceRole } from "@/lib/workspaceLoading";
 import {
   signInFailure,
   validateLogin,
@@ -139,6 +140,7 @@ export default function AdminLoginPage() {
         showFailure({ message: accessError, invalidFields: [], focus: "form" });
         return;
       }
+      rememberWorkspaceRole(profile!.role, data.user.id);
       setPassword("");
       router.replace(
         profile?.role === "BARANGAY_ADMIN"

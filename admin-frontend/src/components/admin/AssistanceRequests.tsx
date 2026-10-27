@@ -21,9 +21,10 @@ import {
 } from "@/lib/assistance";
 import { TRAVEL_MODES } from "@/lib/travelTime";
 import styles from "./AssistanceRequests.module.css";
+import { MapSkeleton, RecordsSkeleton } from "./LoadingSkeleton";
 const AssistanceLocationMap = dynamic(() => import("./AssistanceLocationMap"), {
   ssr: false,
-  loading: () => <p role="status">Loading reported-location map...</p>,
+  loading: () => <MapSkeleton label="Loading reported-location map..." />,
 });
 export function AssistanceRequests() {
   const [requests, setRequests] = useState<AssistanceRequest[]>([]),
@@ -350,6 +351,9 @@ export function AssistanceRequests() {
         <p className="assistance-empty">
           No assistance requests match this filter.
         </p>
+      )}
+      {loading && !requests.length && !error && (
+        <RecordsSkeleton label="Loading assistance requests..." />
       )}
       {!!requests.length && (
         <div ref={mapSection} className="assistance-map-section">

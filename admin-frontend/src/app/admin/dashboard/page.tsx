@@ -7,9 +7,8 @@ import {
 } from "@/components/admin/CenterManager";
 import { adminApi } from "@/lib/adminApi";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import Image from "next/image";
-import { Brand } from "@/components/ui/Brand";
+import { StaffHeader } from "@/components/admin/StaffHeader";
 import { House, MapPin, ShieldCheck, TriangleAlert } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
@@ -18,6 +17,16 @@ import { publicSans } from "@/app/fonts/publicSans";
 import { barangayCardAppearance } from "@/lib/barangayCardAppearance";
 import { BarangayWorkspaceCenter } from "@/components/admin/BarangayWorkspaceCenter";
 import { BarangayWorkspaceSummary } from "@/components/admin/BarangayWorkspaceSummary";
+import { useWorkspaceLoadingRole } from "@/hooks/useWorkspaceLoadingRole";
+import {
+  clearWorkspaceRole,
+  readWorkspaceRole,
+  rememberWorkspaceRole,
+} from "@/lib/workspaceLoading";
+import {
+  DashboardSkeleton,
+  MapSkeleton,
+} from "@/components/admin/LoadingSkeleton";
 import {
   fetchFloodReports,
   fetchFireIncidents,
@@ -32,11 +41,7 @@ const HazardPlacementMap = dynamic(
   () => import("@/components/admin/HazardPlacementMap"),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-64 w-full items-center justify-center bg-slate-100 text-xs text-slate-500">
-        Loading map…
-      </div>
-    ),
+    loading: () => <MapSkeleton label="Loading hazard map..." />,
   },
 );
 
@@ -53,6 +58,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
+  const [loadingRole, setLoadingRole] = useWorkspaceLoadingRole();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [centers, setCenters] = useState<AdminCenter[]>([]);
   const [availabilityDrafts, setAvailabilityDrafts] = useState<
@@ -86,10 +92,15 @@ export default function AdminDashboardPage() {
     }
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
+        clearWorkspaceRole();
         router.push("/admin/login");
         return;
       }
+      setLoadingRole(readWorkspaceRole(data.session.user.id));
       loadCenters()
+        .then((loadedProfile) =>
+          rememberWorkspaceRole(loadedProfile.role, data.session!.user.id),
+        )
         .catch(() => {})
         .finally(() => setReady(true));
     });
@@ -135,6 +146,7 @@ export default function AdminDashboardPage() {
           rows.map((center) => [center.id, String(center.current_occupancy)]),
         ),
       );
+      return body.profile as Profile;
     } catch (error) {
       setError(
         error instanceof Error
@@ -258,13 +270,8 @@ export default function AdminDashboardPage() {
     (barangayName ?? "").replace(/^barangay\s+/i, ""),
   );
 
-  if (!ready) {
-    return (
-      <main className="flex h-dvh items-center justify-center text-sm text-slate-500">
-        Loading…
-      </main>
-    );
-  }
+  if (!ready || (!profile && retrying))
+    return <DashboardSkeleton role={profile?.role ?? loadingRole} />;
 
   if (!profile)
     return (
@@ -306,34 +313,14 @@ export default function AdminDashboardPage() {
           : undefined
       }
     >
-      <header className="app-header">
-        <Link href="/admin/dashboard" aria-label="EvacuRosa administration">
-          <Brand />
-        </Link>
-        <span className="city-label">Santa Rosa, Laguna</span>
-        {profile.role === "BARANGAY_ADMIN" && (
-          <Link className="secondary-button" href="/admin/barangays">
-            Barangay home
-          </Link>
-        )}
-        {process.env.NEXT_PUBLIC_PUBLIC_APP_URL && (
-          <a
-            href={process.env.NEXT_PUBLIC_PUBLIC_APP_URL}
-            className="admin-link"
-          >
-            Public map
-          </a>
-        )}
-        <button
-          className="secondary-button"
-          onClick={async () => {
-            await supabase?.auth.signOut();
-            router.replace("/admin/login");
-          }}
-        >
-          Sign out
-        </button>
-      </header>
+      <StaffHeader
+        role={profile.role}
+        onSignOut={async () => {
+          await supabase?.auth.signOut();
+          clearWorkspaceRole();
+          router.replace("/admin/login");
+        }}
+      />
       <div
         className={
           profile?.role === "SUPER_ADMIN"
@@ -418,7 +405,12 @@ export default function AdminDashboardPage() {
                 <span>Hazard management</span>
               </a>
             </nav>
-            <CenterManager centers={centers} onSaved={loadCenters} />
+            <CenterManager
+              centers={centers}
+              onSaved={async () => {
+                await loadCenters();
+              }}
+            />
           </>
         )}
         <div
@@ -575,7 +567,7 @@ function HazardPlacementMapWrapper({
   }, [getAuthToken]);
 
   if (!token) {
-    return <p className="text-xs text-slate-400">Preparing hazard tools…</p>;
+    return <MapSkeleton label="Preparing hazard tools..." />;
   }
 
   return <HazardPlacementMap {...rest} authToken={token} />;

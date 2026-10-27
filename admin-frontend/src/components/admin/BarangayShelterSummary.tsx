@@ -1,5 +1,6 @@
 import { CircleCheck, CircleMinus, House, TriangleAlert } from "lucide-react";
 import type { EvacuationCenter } from "@/services/api";
+import { SkeletonBlock } from "./LoadingSkeleton";
 
 export function BarangayShelterSummary({
   centers,
@@ -55,7 +56,15 @@ export function BarangayShelterSummary({
               </span>
               {label}
             </dt>
-            <dd>{available ? count : "—"}</dd>
+            <dd>
+              {loading ? (
+                <SkeletonBlock className="staff-skeleton-metric-value" />
+              ) : available ? (
+                count
+              ) : (
+                "—"
+              )}
+            </dd>
           </div>
         ))}
       </dl>
