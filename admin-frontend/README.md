@@ -56,6 +56,14 @@ are imported from `frontend/src` through the TypeScript alias fallback.
 Emergency request status tracking also requires migration 0018 and the backend's
 ASSISTANCE_TRACKING_SECRET. See [the assistance guide](../backend/ASSISTANCE.md).
 
+For direct earthquake road reporting, apply
+[`0019_standalone_earthquake_road_impacts.sql`](../supabase/migrations/0019_standalone_earthquake_road_impacts.sql)
+in Supabase before using the updated earthquake tools. This allows a verified
+road impact without an earthquake event; existing records and event links stay
+intact. CDRRMO selects a mapped road, sets the impact level, optionally confirms
+it is blocked, and saves notes. Only confirmed blockages close roads for routing.
+The map highlights reported roads, and records show verification times in PHT.
+
 - CDRRMO registers centers, edits record details/capacity/assignment, deletes
   centers, and retains the hazard and shared-location tools. Existing supply
   controls are available during CDRRMO center editing.

@@ -1,6 +1,7 @@
 "use client";
 
-import { Circle, Tooltip } from "react-leaflet";
+import { Circle, Polyline, Tooltip } from "react-leaflet";
+import { useLanguage } from "@/components/LanguageProvider";
 import type { EarthquakeEvent, EarthquakeRoadImpact } from "@/services/api";
 
 interface EarthquakeLayerProps {
@@ -16,8 +17,10 @@ function magnitudeToRadiusMeters(magnitude: number): number {
 }
 
 export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
+  const { t } = useLanguage();
   const impactCountByEvent = new Map<string, number>();
   for (const impact of roadImpacts) {
+    if (!impact.earthquakeEventId) continue;
     impactCountByEvent.set(
       impact.earthquakeEventId,
       (impactCountByEvent.get(impact.earthquakeEventId) ?? 0) + 1,
@@ -26,6 +29,34 @@ export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
 
   return (
     <>
+      {roadImpacts.flatMap((impact) =>
+        (impact.affectedSegments ?? [])
+          .filter((segment) => segment.length >= 2)
+          .map((segment, index) => (
+            <Polyline
+              key={`impact-${impact.id}-${index}`}
+              className="earthquake-road-impact"
+              positions={segment.map(({ latitude, longitude }) => [
+                latitude,
+                longitude,
+              ])}
+              pathOptions={{
+                color: impact.confirmedBlocked ? "#b91c1c" : "#b45309",
+                weight: impact.confirmedBlocked ? 8 : 6,
+                opacity: 0.85,
+                dashArray: impact.confirmedBlocked ? undefined : "8 6",
+              }}
+            >
+              <Tooltip sticky className="hazard-tooltip">
+                {t(impact.impactLevel)} {t("Earthquake road impact")} ·{" "}
+                {impact.confirmedBlocked
+                  ? t("Road blocked")
+                  : t("No confirmed road blockage")}
+                {impact.notes && <div>{impact.notes}</div>}
+              </Tooltip>
+            </Polyline>
+          )),
+      )}
       {events.map((event) => {
         const impactCount = impactCountByEvent.get(event.id) ?? 0;
         // Muted gray for anything without a verified road impact — this is

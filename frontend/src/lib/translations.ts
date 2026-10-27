@@ -223,6 +223,15 @@ export const filipino: Record<string, string> = {
   "Flood reports": "Mga ulat ng baha",
   "Fire incidents": "Mga insidente ng sunog",
   "Earthquake events": "Mga lindol",
+  "Earthquake road impacts": "Mga epekto ng lindol sa kalsada",
+  "Earthquake road impact": "Epekto ng lindol sa kalsada",
+  "No earthquake road impacts loaded.":
+    "Walang na-load na epekto ng lindol sa kalsada.",
+  "No confirmed road blockage": "Walang kumpirmadong pagbara sa kalsada",
+  "{count} road impacts · {blocked} blocked":
+    "{count} epekto sa kalsada · {blocked} sarado",
+  "Earthquake-blocked road": "Kalsadang sarado dahil sa lindol",
+  "Earthquake-affected road": "Kalsadang apektado ng lindol",
   "Road blocked": "Sarado ang kalsada",
   "Road passable": "Maaaring daanan ang kalsada",
   "No fire incidents loaded.": "Walang na-load na insidente ng sunog.",

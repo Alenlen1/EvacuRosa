@@ -43,7 +43,6 @@ const cityOutline = santaRosaBoundary.geometry.coordinates.map((polygon) =>
 );
 import { FloodLayer } from "@/components/map/FloodLayer";
 import { FireLayer } from "@/components/map/FireLayer";
-import { EarthquakeLayer } from "@/components/map/EarthquakeLayer";
 import {
   fetchNearestRoads,
   fetchFloodSection,
@@ -54,10 +53,8 @@ import {
   deleteFloodReport,
   deleteFireIncident,
   deleteEarthquakeRoadImpact,
-  deleteEarthquakeEvent,
   type FloodReport,
   type FireIncident,
-  type EarthquakeEvent,
   type EarthquakeRoadImpact,
   type NearestRoad,
 } from "@/services/api";
@@ -98,7 +95,6 @@ function ClickCapture({
 interface HazardPlacementMapProps {
   floodReports: FloodReport[];
   fireIncidents: FireIncident[];
-  earthquakeEvents: EarthquakeEvent[];
   earthquakeRoadImpacts: EarthquakeRoadImpact[];
   authToken: string;
   onCreated: () => void;
@@ -114,7 +110,6 @@ interface HazardPlacementMapProps {
 export default function HazardPlacementMap({
   floodReports,
   fireIncidents,
-  earthquakeEvents,
   earthquakeRoadImpacts,
   authToken,
   onCreated,
@@ -146,7 +141,6 @@ export default function HazardPlacementMap({
   } | null>(null);
   const [nearestRoads, setNearestRoads] = useState<NearestRoad[]>([]);
   const [selectedRoadId, setSelectedRoadId] = useState<string>("");
-  const [selectedEarthquakeId, setSelectedEarthquakeId] = useState<string>("");
   const [severity, setSeverity] = useState("MODERATE");
   const [radiusMeters, setRadiusMeters] = useState(200);
   const [waterLevelMeters, setWaterLevelMeters] = useState<string>("");
@@ -211,7 +205,10 @@ export default function HazardPlacementMap({
           ? sectionPreview?.affectedSegments
           : nearestRoads.find((road) => road.roadId === selectedRoadId)
               ?.affectedSegments) ?? [])
-      : [];
+      : mode === "earthquake"
+        ? (nearestRoads.find((road) => road.roadId === selectedRoadId)
+            ?.affectedSegments ?? [])
+        : [];
 
   const snappedPreview =
     mode === "flood" && floodCoverage === "section" ? sectionPreview : null;
@@ -340,10 +337,7 @@ export default function HazardPlacementMap({
         });
       } else {
         if (!selectedRoadId) throw new Error("Select a road first.");
-        if (!selectedEarthquakeId)
-          throw new Error("Select an earthquake event first.");
         await createEarthquakeRoadImpact(authToken, {
-          earthquakeEventId: selectedEarthquakeId,
           roadId: selectedRoadId,
           impactLevel: severity as "LOW" | "MODERATE" | "HIGH",
           confirmedBlocked,
@@ -361,10 +355,7 @@ export default function HazardPlacementMap({
     }
   }
 
-  async function removeHazard(
-    kind: "flood" | "fire" | "earthquake" | "impact",
-    id: string,
-  ) {
+  async function removeHazard(kind: "flood" | "fire" | "impact", id: string) {
     if (removalPending.current || loading) return;
     const label =
       kind === "impact" ? "earthquake road impact" : `${kind} record`;
@@ -385,9 +376,7 @@ export default function HazardPlacementMap({
     try {
       if (kind === "flood") await deleteFloodReport(authToken, id);
       else if (kind === "fire") await deleteFireIncident(authToken, id);
-      else if (kind === "impact")
-        await deleteEarthquakeRoadImpact(authToken, id);
-      else await deleteEarthquakeEvent(authToken, id);
+      else await deleteEarthquakeRoadImpact(authToken, id);
       onCreated();
     } catch (err) {
       setError(
@@ -402,17 +391,14 @@ export default function HazardPlacementMap({
   async function removeAllHazards() {
     if (removalPending.current || loading) return;
     const count =
-      floodReports.length +
-      fireIncidents.length +
-      earthquakeEvents.length +
-      earthquakeRoadImpacts.length;
+      floodReports.length + fireIncidents.length + earthquakeRoadImpacts.length;
     if (
       !count ||
       !(await confirmDelete({
         title: "Remove all hazard records?",
         subject: `${count} loaded records`,
         description:
-          "This removes loaded floods, fires, earthquake events and verified road impacts. Routing changes immediately. This action cannot be undone.",
+          "This removes loaded flood reports, fire incidents and earthquake road impacts. Routing changes immediately. This action cannot be undone.",
         confirmLabel: "Remove all records",
       }))
     )
@@ -422,9 +408,7 @@ export default function HazardPlacementMap({
     setError(null);
     setRemovalNotice(null);
     try {
-      // Remove impacts first, then their events. Never remove an event if any
-      // impact deletion failed, so a failed impact remains available to retry.
-      const first = await removeHazardBatch([
+      const result = await removeHazardBatch([
         ...floodReports.map(
           (item) => () => deleteFloodReport(authToken, item.id),
         ),
@@ -435,16 +419,7 @@ export default function HazardPlacementMap({
           (item) => () => deleteEarthquakeRoadImpact(authToken, item.id),
         ),
       ]);
-      const events =
-        first.failed === 0
-          ? await removeHazardBatch(
-              earthquakeEvents.map(
-                (item) => () => deleteEarthquakeEvent(authToken, item.id),
-              ),
-            )
-          : { removed: 0, failed: earthquakeEvents.length };
-      const failed = first.failed + events.failed;
-      const removed = first.removed + events.removed;
+      const { failed, removed } = result;
       setRemovalNotice(`Removed ${removed} hazard record(s).`);
       if (failed)
         setError(
@@ -476,7 +451,6 @@ export default function HazardPlacementMap({
           Manage records (
           {floodReports.length +
             fireIncidents.length +
-            earthquakeEvents.length +
             earthquakeRoadImpacts.length}
           )
         </button>
@@ -553,28 +527,10 @@ export default function HazardPlacementMap({
         )}
 
         {mode === "earthquake" && (
-          <div className="hazard-event-selector">
-            <label
-              htmlFor="earthquake-event"
-              className="mb-1 block text-xs text-slate-600"
-            >
-              Earthquake event to verify impact for
-            </label>
-            <select
-              id="earthquake-event"
-              value={selectedEarthquakeId}
-              onChange={(e) => setSelectedEarthquakeId(e.target.value)}
-              className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
-            >
-              <option value="">Select an event…</option>
-              {earthquakeEvents.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  M{ev.magnitude.toFixed(1)} —{" "}
-                  {new Date(ev.occurredAt).toLocaleDateString()} ({ev.status})
-                </option>
-              ))}
-            </select>
-          </div>
+          <p className="text-sm text-slate-600">
+            Select an affected road, assess the damage and mark it blocked if it
+            cannot be used.
+          </p>
         )}
 
         <div
@@ -605,10 +561,28 @@ export default function HazardPlacementMap({
             />
             <FloodLayer reports={floodReports} />
             <FireLayer incidents={fireIncidents} />
-            <EarthquakeLayer
-              events={earthquakeEvents}
-              roadImpacts={earthquakeRoadImpacts}
-            />
+            {earthquakeRoadImpacts.map((impact) => (
+              <Polyline
+                key={impact.id}
+                positions={(impact.affectedSegments ?? []).map((segment) =>
+                  segment.map(
+                    ({ latitude, longitude }) =>
+                      [latitude, longitude] as [number, number],
+                  ),
+                )}
+                pathOptions={{
+                  color: impact.confirmedBlocked ? "#b91c1c" : "#b45309",
+                  weight: 6,
+                  opacity: 0.85,
+                  dashArray: impact.confirmedBlocked ? undefined : "8 6",
+                }}
+              >
+                <Tooltip sticky className="hazard-tooltip">
+                  Earthquake road impact · {impact.impactLevel} ·{" "}
+                  {impact.confirmedBlocked ? "Blocked" : "Not marked blocked"}
+                </Tooltip>
+              </Polyline>
+            ))}
             {mode === "flood" && inspectStreet && streetViewPoint && (
               <CircleMarker
                 center={[streetViewPoint.latitude, streetViewPoint.longitude]}
@@ -775,6 +749,11 @@ export default function HazardPlacementMap({
                   : "Tap the start of the affected road section."
                 : "Tap the map near the affected road."}
           </p>
+          {mode === "earthquake" && selectedRoadId && (
+            <p className="mb-2 text-xs text-slate-600">
+              The purple preview shows the mapped road this impact will affect.
+            </p>
+          )}
           {mode === "flood" && pendingPoint && (
             <div className="mb-3 text-xs">
               <p>
@@ -1045,7 +1024,6 @@ export default function HazardPlacementMap({
               !(
                 floodReports.length +
                 fireIncidents.length +
-                earthquakeEvents.length +
                 earthquakeRoadImpacts.length
               )
             }
@@ -1061,7 +1039,6 @@ export default function HazardPlacementMap({
           )}
           {floodReports.length === 0 &&
             fireIncidents.length === 0 &&
-            earthquakeEvents.length === 0 &&
             earthquakeRoadImpacts.length === 0 && (
               <p className="text-xs text-slate-500">
                 No active hazard records.
@@ -1130,73 +1107,41 @@ export default function HazardPlacementMap({
               ))}
             </section>
           )}
-          {earthquakeEvents.length > 0 && (
+          {earthquakeRoadImpacts.length > 0 && (
             <section className="space-y-1">
               <h4 className="text-xs font-medium text-amber-900">
-                Earthquakes and verified impacts
+                Earthquake road impacts
               </h4>
-              {earthquakeEvents.map((event) => {
-                const impacts = earthquakeRoadImpacts.filter(
-                  (impact) => impact.earthquakeEventId === event.id,
-                );
-                return (
-                  <div
-                    key={event.id}
-                    className="rounded border border-slate-200 px-2 py-1.5 text-xs"
+              {earthquakeRoadImpacts.map((impact) => (
+                <div
+                  key={impact.id}
+                  className="flex items-center justify-between gap-3 rounded border border-slate-200 px-2 py-1.5 text-xs"
+                >
+                  <span>
+                    {impact.impactLevel} impact · Road location:{" "}
+                    {roadCoordinates(impact.affectedSegments)}
+                    {impact.confirmedBlocked
+                      ? " · blocked"
+                      : " · not marked blocked"}
+                    {impact.notes && (
+                      <span className="block">{impact.notes}</span>
+                    )}
+                    <HazardRecordTime
+                      value={impact.verifiedAt}
+                      label="Verified"
+                    />
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeHazard("impact", impact.id)}
+                    disabled={removingId !== null || loading}
+                    className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <span>
-                        M{event.magnitude.toFixed(1)} · {event.status}
-                        {" · "}
-                        {hazardCoordinates(event)}
-                        <HazardRecordTime
-                          value={event.occurredAt}
-                          label="Occurred"
-                        />
-                        <HazardRecordTime
-                          value={event.createdAt}
-                          label="Added"
-                        />
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeHazard("earthquake", event.id)}
-                        disabled={removingId !== null || loading}
-                        className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
-                      >
-                        <Trash2 size={13} />{" "}
-                        {removingId === event.id ? "Removing…" : "Remove event"}
-                      </button>
-                    </div>
-                    {impacts.map((impact) => (
-                      <div
-                        key={impact.id}
-                        className="mt-1 flex items-center justify-between gap-3 border-t border-slate-100 pt-1"
-                      >
-                        <span>
-                          {impact.impactLevel} impact · Road location:{" "}
-                          {roadCoordinates(impact.affectedSegments)}
-                          {impact.confirmedBlocked ? " · blocked" : ""}
-                          <HazardRecordTime
-                            value={impact.verifiedAt}
-                            label="Verified"
-                          />
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeHazard("impact", impact.id)}
-                          disabled={removingId !== null || loading}
-                          className="text-red-700 disabled:opacity-50"
-                        >
-                          {removingId === impact.id
-                            ? "Removing…"
-                            : "Remove impact"}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
+                    <Trash2 size={13} aria-hidden="true" />
+                    {removingId === impact.id ? "Removing..." : "Remove impact"}
+                  </button>
+                </div>
+              ))}
             </section>
           )}
         </div>

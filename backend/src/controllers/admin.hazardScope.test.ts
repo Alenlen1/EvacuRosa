@@ -80,11 +80,7 @@ async function call(
 describe("CDRRMO hazard city enforcement", () => {
   for (const [name, handler, fields] of [
     ["flood", createFloodReport, { severity: "MODERATE" }],
-    [
-      "earthquake impact",
-      createEarthquakeRoadImpact,
-      { earthquakeEventId: "external-event", impactLevel: "LOW" },
-    ],
+    ["earthquake impact", createEarthquakeRoadImpact, { impactLevel: "LOW" }],
   ] as const) {
     it.each(["outside", "crossing", "missing"])(
       `rejects ${name} on %s roads before writing`,
@@ -102,6 +98,56 @@ describe("CDRRMO hazard city enforcement", () => {
       );
     });
   }
+  it("saves a blocked earthquake road without creating or selecting an event", async () => {
+    const { db, from, res } = await call(createEarthquakeRoadImpact, {
+      roadId: "inside",
+      impactLevel: "HIGH",
+      confirmedBlocked: true,
+      notes: "Debris blocks the road",
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(from).toHaveBeenCalledExactlyOnceWith("earthquake_road_impacts");
+    expect(db.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        earthquake_event_id: null,
+        road_id: "inside",
+        impact_level: "HIGH",
+        confirmed_blocked: true,
+        notes: "Debris blocks the road",
+      }),
+    );
+  });
+  it("continues accepting an existing event link", async () => {
+    const { db, res } = await call(createEarthquakeRoadImpact, {
+      earthquakeEventId: "legacy-event",
+      roadId: "inside",
+      impactLevel: "MODERATE",
+      confirmedBlocked: false,
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(db.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        earthquake_event_id: "legacy-event",
+        confirmed_blocked: false,
+      }),
+    );
+  });
+  it.each([
+    { impactLevel: "SEVERE" },
+    { impactLevel: "HIGH", confirmedBlocked: "false" },
+    { impactLevel: "HIGH", earthquakeEventId: "" },
+    { impactLevel: "HIGH", earthquakeEventId: 42 },
+  ])(
+    "rejects invalid road-impact fields before writing: %j",
+    async (fields) => {
+      const { from, res } = await call(createEarthquakeRoadImpact, {
+        roadId: "inside",
+        ...fields,
+      });
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(from).not.toHaveBeenCalled();
+    },
+  );
   it.each([
     [14.338, 121.085],
     [14.275, 121.125],

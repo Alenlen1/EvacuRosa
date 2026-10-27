@@ -41,7 +41,6 @@ import {
   fetchEarthquakes,
   type FloodReport,
   type FireIncident,
-  type EarthquakeEvent,
   type EarthquakeRoadImpact,
 } from "@/services/api";
 
@@ -85,9 +84,6 @@ export default function AdminDashboardPage() {
 
   const [floodReports, setFloodReports] = useState<FloodReport[]>([]);
   const [fireIncidents, setFireIncidents] = useState<FireIncident[]>([]);
-  const [earthquakeEvents, setEarthquakeEvents] = useState<EarthquakeEvent[]>(
-    [],
-  );
   const [earthquakeRoadImpacts, setEarthquakeRoadImpacts] = useState<
     EarthquakeRoadImpact[]
   >([]);
@@ -107,7 +103,6 @@ export default function AdminDashboardPage() {
     if (floods.status === "fulfilled") setFloodReports(floods.value);
     if (fires.status === "fulfilled") setFireIncidents(fires.value);
     if (earthquakes.status === "fulfilled") {
-      setEarthquakeEvents(earthquakes.value.events);
       setEarthquakeRoadImpacts(earthquakes.value.roadImpacts);
     }
     setDashboardHazards({
@@ -115,7 +110,7 @@ export default function AdminDashboardPage() {
       fires: fires.status === "fulfilled" ? fires.value.length : null,
       earthquakes:
         earthquakes.status === "fulfilled"
-          ? earthquakes.value.events.length
+          ? earthquakes.value.roadImpacts.length
           : null,
     });
     setHazardsLoading(false);
@@ -505,7 +500,6 @@ export default function AdminDashboardPage() {
             <HazardPlacementMapWrapper
               floodReports={floodReports}
               fireIncidents={fireIncidents}
-              earthquakeEvents={earthquakeEvents}
               earthquakeRoadImpacts={earthquakeRoadImpacts}
               getAuthToken={getAuthToken}
               onCreated={() => void refreshHazards()}
@@ -553,7 +547,6 @@ function HazardPlacementMapWrapper({
 }: {
   floodReports: FloodReport[];
   fireIncidents: FireIncident[];
-  earthquakeEvents: EarthquakeEvent[];
   earthquakeRoadImpacts: EarthquakeRoadImpact[];
   getAuthToken: () => Promise<string | undefined>;
   onCreated: () => void;

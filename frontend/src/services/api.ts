@@ -456,10 +456,11 @@ export interface EarthquakeEvent {
 
 export interface EarthquakeRoadImpact {
   id: string;
-  earthquakeEventId: string;
+  earthquakeEventId: string | null;
   roadId: string;
   impactLevel: string;
   confirmedBlocked: boolean;
+  notes?: string;
   verifiedAt?: string;
   affectedSegments?: LatLng[][];
 }
@@ -574,7 +575,7 @@ export function createFireIncident(
 export function createEarthquakeRoadImpact(
   token: string,
   data: {
-    earthquakeEventId: string;
+    earthquakeEventId?: string | null;
     roadId: string;
     impactLevel: "LOW" | "MODERATE" | "HIGH";
     confirmedBlocked: boolean;

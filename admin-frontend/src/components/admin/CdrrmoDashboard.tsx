@@ -77,7 +77,7 @@ export function CdrrmoDashboard({
       tone: "fire",
     },
     {
-      label: "Earthquake events",
+      label: "Earthquake road impacts",
       value: hazards.earthquakes,
       icon: TriangleAlert,
       tone: "earthquake",
