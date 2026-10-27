@@ -222,6 +222,38 @@ export function AssistanceProvider({
       setCredentials(saved);
     }
   }, []);
+  const resetRequest = useCallback(() => {
+    try {
+      localStorage.removeItem(ASSISTANCE_STORAGE_KEY);
+    } catch {
+      setError(
+        "Browser storage could not be cleared. Allow site storage before starting a new request.",
+      );
+      return;
+    }
+    credentialsRef.current = null;
+    trackingRef.current = null;
+    confirmed.current = false;
+    setCredentials(null);
+    setTracking(null);
+    setIntent((current) => ({ kind: "emergency", travelMode: current.travelMode }));
+    setUnavailable(false);
+    setFix(null);
+    setFixSource(null);
+    setName("");
+    setContact("");
+    setCancelTarget(null);
+    setCancelError("");
+    setConnection("Reconnecting");
+    clearAssistanceView();
+    setRequestView("overview");
+    setError("");
+  }, []);
+  useEffect(() => {
+    // Also clear a saved cancellation on refresh without needing its old
+    // tracking link to remain valid. Failed cancellations retain the request.
+    if (tracking?.request.status === "CANCELLED" && !busy) resetRequest();
+  }, [tracking?.request.status, busy, resetRequest]);
   const terminal =
     confirmed.current &&
     !!tracking &&
@@ -588,26 +620,8 @@ export function AssistanceProvider({
     }
   }
   function newRequest() {
-    if (!terminal) return;
-    try {
-      localStorage.removeItem(ASSISTANCE_STORAGE_KEY);
-    } catch {
-      setError(
-        "Browser storage could not be cleared. Allow site storage before starting a new request.",
-      );
-      return;
-    }
-    setIntent({ kind: "emergency", travelMode: intent.travelMode });
-    setUnavailable(false);
-    setCredentials(null);
-    credentialsRef.current = null;
-    setTracking(null);
-    trackingRef.current = null;
-    confirmed.current = false;
-    setFix(null);
-    clearAssistanceView();
-    setRequestView("overview");
-    setError("");
+    if (!terminal || busyRef.current) return;
+    resetRequest();
   }
   return (
     <AssistanceContext.Provider

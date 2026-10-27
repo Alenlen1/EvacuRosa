@@ -1,6 +1,8 @@
 import { publicSans } from "@/app/fonts/publicSans";
 import type { WorkspaceRole } from "@/lib/workspaceLoading";
 import { StaffHeader } from "./StaffHeader";
+import { CdrrmoSection, CdrrmoWorkspace } from "./CdrrmoWorkspace";
+import { CdrrmoDashboardSkeleton } from "./CdrrmoDashboard";
 import { SkeletonBlock, SkeletonRegion } from "./Skeleton";
 import centerStyles from "./CenterManager.module.css";
 import workspaceStyles from "./BarangayWorkspaceCenter.module.css";
@@ -110,9 +112,6 @@ function WorkspaceHeadingSkeleton({ role }: { role: WorkspaceRole | null }) {
         <SkeletonBlock className="staff-skeleton-workspace-title" />
         <SkeletonBlock className="staff-skeleton-line" />
       </div>
-      {role === "SUPER_ADMIN" && (
-        <SkeletonBlock className="staff-skeleton-header-home" />
-      )}
     </div>
   );
 }
@@ -227,38 +226,46 @@ export function DashboardSkeleton({
 }: {
   role?: WorkspaceRole | null;
 }) {
+  if (role === "SUPER_ADMIN") {
+    return (
+      <main className={`admin-app cdrrmo-workspace ${publicSans.className}`}>
+        <CdrrmoWorkspace loading>
+          <SkeletonRegion
+            label="Loading CDRRMO workspace..."
+            className="cdrrmo-content staff-dashboard-skeleton"
+          >
+            <CdrrmoSection id="dashboard-overview">
+              <CdrrmoDashboardSkeleton />
+            </CdrrmoSection>
+            <CdrrmoSection id="evacuation-centers">
+              <CenterManagementSkeleton />
+            </CdrrmoSection>
+            <CdrrmoSection id="shared-locations">
+              <RecordsSkeleton label="Loading shared locations..." />
+            </CdrrmoSection>
+            <CdrrmoSection id="hazard-management">
+              <MapSkeleton label="Loading hazard management..." />
+            </CdrrmoSection>
+          </SkeletonRegion>
+        </CdrrmoWorkspace>
+      </main>
+    );
+  }
   const workspaceClass =
-    role === "SUPER_ADMIN"
-      ? "cdrrmo-workspace"
-      : role === "BARANGAY_ADMIN"
-        ? "barangay-workspace"
-        : "staff-loading-page";
-  const contentClass =
-    role === "SUPER_ADMIN" ? "cdrrmo-content" : "barangay-workspace-content";
+    role === "BARANGAY_ADMIN" ? "barangay-workspace" : "staff-loading-page";
   return (
     <main className={`admin-app ${workspaceClass} ${publicSans.className}`}>
       <StaffHeader role={role} loading />
       <SkeletonRegion
         label={
-          role === "SUPER_ADMIN"
-            ? "Loading CDRRMO workspace..."
-            : role === "BARANGAY_ADMIN"
-              ? "Loading barangay workspace..."
-              : "Loading your workspace..."
+          role === "BARANGAY_ADMIN"
+            ? "Loading barangay workspace..."
+            : "Loading your workspace..."
         }
-        className={`${contentClass} staff-dashboard-skeleton`}
+        className="barangay-workspace-content staff-dashboard-skeleton"
       >
         <WorkspaceHeadingSkeleton role={role} />
-        {role === "SUPER_ADMIN" ? (
-          <>
-            <div className="staff-section-nav staff-skeleton-navigation">
-              {Array.from({ length: 3 }, (_, index) => (
-                <SkeletonBlock key={index} />
-              ))}
-            </div>
-            <CenterManagementSkeleton />
-          </>
-        ) : role === "BARANGAY_ADMIN" ? (
+        {role === "BARANGAY_ADMIN" ? (
           <BarangayWorkspaceSkeleton />
         ) : (
           <div className="staff-skeleton-card staff-skeleton-neutral-panel">

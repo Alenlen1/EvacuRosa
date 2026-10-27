@@ -18,6 +18,8 @@ import { adminApi } from "@/lib/adminApi";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ShelterSuppliesForm } from "./ShelterSuppliesForm";
 import styles from "./CenterManager.module.css";
+import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
+import { isAcceptingCenter } from "@/lib/barangayWorkspaceSummary";
 
 const LocationPicker = dynamic(() => import("./CenterLocationPicker"), {
   ssr: false,
@@ -60,6 +62,7 @@ export function CenterManager({
   centers: ManagedCenter[];
   onSaved: () => Promise<void>;
 }) {
+  const { confirmDelete, deleteDialog } = useDeleteConfirmation();
   const [barangays, setBarangays] = useState<{ id: string; name: string }[]>(
     [],
   );
@@ -175,7 +178,7 @@ export function CenterManager({
     },
     {
       label: "Available",
-      count: centers.filter((center) => center.status === "AVAILABLE").length,
+      count: centers.filter(isAcceptingCenter).length,
       icon: CircleCheck,
       tone: "safe",
     },
@@ -199,6 +202,8 @@ export function CenterManager({
     <section
       className={`center-management cdrrmo-section-anchor ${styles.manager}`}
       id="evacuation-centers"
+      data-editing={editorOpen}
+      tabIndex={-1}
       aria-labelledby="center-management-title"
     >
       <div className={styles.sectionHeading}>
@@ -225,7 +230,10 @@ export function CenterManager({
           aria-expanded={editorOpen}
           aria-controls="center-editor"
           disabled={busy}
-          onClick={() => setEditorOpen((open) => !open)}
+          onClick={() => {
+            setMessage("");
+            setEditorOpen((open) => !open);
+          }}
         >
           {editorOpen ? (
             <ChevronDown size={18} aria-hidden="true" />
@@ -567,9 +575,13 @@ export function CenterManager({
                   aria-label={`Delete ${center.name}`}
                   onClick={async () => {
                     if (
-                      !window.confirm(
-                        `Delete ${center.name}? This removes it from public shelter recommendations.`,
-                      )
+                      !(await confirmDelete({
+                        title: "Delete evacuation center?",
+                        subject: center.name,
+                        description:
+                          "This removes the center from the shelter directory and public recommendations. This action cannot be undone.",
+                        confirmLabel: "Delete center",
+                      }))
                     )
                       return;
                     setBusy(true);
@@ -587,6 +599,7 @@ export function CenterManager({
                       }
                       await onSaved();
                       setMessage("Center deleted.");
+                      returnFocus.current = true;
                     } catch (e) {
                       setError(
                         e instanceof Error
@@ -630,6 +643,7 @@ export function CenterManager({
           )}
         </div>
       )}
+      {deleteDialog}
     </section>
   );
 }

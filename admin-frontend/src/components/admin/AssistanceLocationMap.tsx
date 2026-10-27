@@ -13,6 +13,7 @@ import {
 } from "react-leaflet";
 import type { AssistanceRequest } from "@/services/api";
 import { SANTA_ROSA_CITY_CENTER } from "@/lib/mapBounds";
+import { isVisibleAssistanceRequest } from "@/lib/assistanceVisibility";
 
 const colors = {
   PENDING: "#2563eb",
@@ -38,19 +39,33 @@ function Locations({
   const selected = requests.find((request) => request.id === selectedId);
 
   useEffect(() => {
-    if (!fitted.current && requests.length) {
-      map.fitBounds(
-        L.latLngBounds(requests.map((item) => [item.latitude, item.longitude])),
-        { padding: [32, 32], maxZoom: 16 },
-      );
-      fitted.current = true;
-    }
+    const resize = () => {
+      const container = map.getContainer();
+      if (!container.clientWidth || !container.clientHeight) return;
+      map.invalidateSize({ animate: false });
+      if (!fitted.current && requests.length) {
+        map.fitBounds(
+          L.latLngBounds(
+            requests.map((item) => [item.latitude, item.longitude]),
+          ),
+          { padding: [32, 32], maxZoom: 16 },
+        );
+        fitted.current = true;
+      }
+    };
+    const observer = new ResizeObserver(resize);
+    observer.observe(map.getContainer());
+    resize();
+    return () => observer.disconnect();
   }, [map, requests]);
 
   useEffect(() => {
     if (!selection || focusedVersion.current === selection.version) return;
     const item = requests.find((request) => request.id === selection.id);
     if (!item) return;
+    if (!map.getContainer().clientWidth || !map.getContainer().clientHeight)
+      return;
+    map.invalidateSize({ animate: false });
     focusedVersion.current = selection.version;
     setSelectedId(item.id);
     const center = L.latLng(item.latitude, item.longitude);
@@ -95,7 +110,9 @@ function Locations({
           <Popup>
             <div className="assistance-map-popup">
               <strong>{item.display_name || "Name not provided"}</strong>
-              <span className="assistance-reference">Request ID: {item.id}</span>
+              <span className="assistance-reference">
+                Request ID: {item.id}
+              </span>
               <span>{item.status.replaceAll("_", " ")}</span>
               <span>
                 {item.contact_number
@@ -137,6 +154,7 @@ export default function AssistanceLocationMap({
 }) {
   const valid = requests.filter(
     (item) =>
+      isVisibleAssistanceRequest(item) &&
       Number.isFinite(item.latitude) &&
       Number.isFinite(item.longitude) &&
       Math.abs(item.latitude) <= 90 &&

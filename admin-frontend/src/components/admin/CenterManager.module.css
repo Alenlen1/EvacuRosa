@@ -561,7 +561,7 @@
   font-size: 13px;
   line-height: 1.7;
 }
-@media (max-width: 1100px) {
+@container cdrrmo-main (max-width: 1100px) {
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -569,7 +569,7 @@
     grid-template-columns: 1fr;
   }
 }
-@media (max-width: 740px) {
+@container cdrrmo-main (max-width: 740px) {
   :global(.cdrrmo-workspace) .manager {
     padding: 18px;
   }
@@ -625,7 +625,7 @@
     padding: 16px;
   }
 }
-@media (max-width: 400px) {
+@container cdrrmo-main (max-width: 400px) {
   :global(.cdrrmo-workspace) .manager {
     padding: 14px;
   }
@@ -655,4 +655,151 @@
   .supplies summary > svg {
     transition: none;
   }
+}
+
+:global(.cdrrmo-workspace) .manager {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  min-height: 0;
+  padding: 20px;
+  overflow: hidden;
+}
+.manager > * {
+  flex-shrink: 0;
+}
+.manager :is(.success, .error) {
+  margin: 0;
+}
+.manager .stats {
+  margin: 0;
+}
+.manager .stat {
+  padding: 10px 12px;
+}
+.manager .stat dd {
+  font-size: 22px;
+}
+.manager .centerGrid {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+  padding: 3px;
+}
+.manager .centerGrid:empty {
+  display: none;
+}
+.manager .editor {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+}
+.manager .editor[hidden] {
+  display: none;
+}
+.manager[data-editing="true"]
+  :is(.stats, .directoryToolbar, .centerGrid, .empty) {
+  display: none;
+}
+.manager .empty {
+  min-height: 0;
+  overflow: auto;
+}
+.manager .formActions {
+  position: sticky;
+  bottom: -20px;
+  z-index: 5;
+  padding: 12px 0;
+  background: #f8f2ec;
+}
+:global(.cdrrmo-workspace) .manager .headingCopy p {
+  font-size: 12px;
+}
+.manager .centerCard {
+  padding: 16px;
+}
+.manager .centerMeta {
+  margin: 12px 0;
+}
+@container cdrrmo-main (max-width: 740px) {
+  :global(.cdrrmo-workspace) .manager {
+    padding: 14px;
+    gap: 12px;
+  }
+  :global(.cdrrmo-workspace) .manager .sectionHeading {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  :global(.cdrrmo-workspace) .manager .headingCopy h2 {
+    font-size: 18px;
+    margin: 0;
+    gap: 6px;
+  }
+  .manager .headingCopy > .sectionIcon {
+    display: none;
+  }
+  .manager .headingCopy :global(.eyebrow),
+  :global(.cdrrmo-workspace) .manager .headingCopy p {
+    display: none;
+  }
+  :global(.cdrrmo-workspace) .manager .registerButton {
+    padding: 8px 10px;
+    min-height: 40px;
+    font-size: 11px;
+  }
+  .manager .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .manager .stat {
+    padding: 8px 6px;
+  }
+  .manager .statIcon {
+    display: none;
+  }
+  .manager .stat dt {
+    font-size: 9px;
+    line-height: 1.3;
+  }
+  .manager .stat dd {
+    font-size: 19px;
+  }
+  .manager .directoryToolbar {
+    gap: 8px;
+  }
+  .manager .formActions {
+    bottom: -16px;
+  }
+}
+@media (max-height: 650px) {
+  :global(.cdrrmo-workspace) .manager {
+    padding: 12px;
+    gap: 10px;
+  }
+  :global(.cdrrmo-workspace) .manager .headingCopy p,
+  .manager .headingCopy :global(.eyebrow) {
+    display: none;
+  }
+  :global(.cdrrmo-workspace) .manager .headingCopy h2 {
+    margin: 0;
+    font-size: 19px;
+  }
+  .manager .formActions {
+    bottom: -16px;
+  }
+}
+:global([data-workspace-scroll="true"]) .manager {
+  height: auto;
+  overflow: visible;
+}
+:global([data-workspace-scroll="true"])
+  .manager
+  :is(.centerGrid, .editor, .empty) {
+  flex: none;
+  height: auto;
+  overflow: visible;
 }

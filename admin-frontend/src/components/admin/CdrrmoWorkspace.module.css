@@ -1,0 +1,416 @@
+.shell {
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr);
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.sidebar,
+.drawer {
+  --ink: #fff8f1;
+  --muted: #efd5c9;
+  background:
+    linear-gradient(180deg, #74150d73 0%, #74150dcc 42%, #681b13f5 100%),
+    url("/images/barangay/santa-rosa-arch.webp") 55% center / cover no-repeat
+      #74150d;
+  color: var(--ink);
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c27b6b transparent;
+}
+.sidebarContent {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 26px 18px 18px;
+}
+.brandRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 7px;
+}
+.brandRow :global(.brand) {
+  gap: 9px;
+}
+.brandRow :global(.brand-mark) {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+}
+.brandRow :global(.brand-mark img) {
+  width: 40px;
+  height: 40px;
+}
+:global(.cdrrmo-workspace) .brandRow :global(.brand-name) {
+  color: #fff8f1;
+  font-size: 23px;
+  letter-spacing: -0.7px;
+}
+:global(.cdrrmo-workspace) .brandRow :global(.brand-name > span) {
+  color: #edb1a0;
+}
+.brandRow :global(.brand-caption) {
+  color: #efcbbf;
+  font-size: 7px;
+  letter-spacing: 1.8px;
+}
+.workspaceCard {
+  position: relative;
+  margin-top: 28px;
+  padding: 22px 12px 24px;
+  border-bottom: 1px solid #ffffff24;
+}
+.workspaceEyebrow {
+  color: #f8d7ba;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 1.5px;
+}
+.workspaceCard h2 {
+  margin: 14px 0 12px;
+  color: #fff8f1;
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.65px;
+  line-height: 1.2;
+}
+.workspaceCard p {
+  margin: 0;
+  color: #f4ded4;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.accessBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  padding: 7px 9px;
+  border: 1px solid #ffffff30;
+  border-radius: 6px;
+  background: #ffffff0c;
+  color: #fff0e1;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.navigationGroup {
+  margin: 30px 0 32px;
+}
+.navigationLabel {
+  margin: 0 12px 12px;
+  color: #f0c6b5;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 1.6px;
+}
+.navigationGroup nav {
+  display: grid;
+  gap: 7px;
+}
+.navigationGroup a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 50px;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #f6e0d3;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.5;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+.navigationGroup a > svg {
+  flex-shrink: 0;
+}
+.navigationGroup a:hover {
+  background: #ffffff16;
+  color: white;
+}
+.navigationGroup a[aria-current] {
+  border-color: #fff0e152;
+  background: #ffffff23;
+  color: #fff8f1;
+}
+:global(.cdrrmo-workspace) :is(.sidebar, .drawer) :is(a, button):focus-visible {
+  outline-color: #fff0d8;
+}
+.navArrow {
+  margin-left: auto;
+  opacity: 0;
+}
+.navigationGroup a[aria-current] .navArrow {
+  opacity: 1;
+}
+
+.mobilePublicMap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  margin: 0 7px 20px;
+  color: #e4c6b5;
+  font-size: 12px;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100dvh;
+  container: cdrrmo-main / inline-size;
+}
+.viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+.viewport[data-workspace-scroll="true"] {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.viewport[data-workspace-scroll="true"] .sectionPanel {
+  height: auto;
+  min-height: 100%;
+  flex: none;
+  overflow: visible;
+}
+.sectionPanel {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+.sectionPanel[hidden] {
+  display: none;
+}
+.topbar {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 76px;
+  padding: 12px 24px;
+  border-bottom: 1px solid #e5ddd5;
+  background: #fffdf9;
+}
+.topbarIdentity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.title > span {
+  color: #886158;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 1.4px;
+}
+.title h1 {
+  margin: 5px 0 0;
+  color: #302825;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.4px;
+  line-height: 1.25;
+}
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+.city {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #766960;
+  font-size: 11px;
+}
+.publicMap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  color: #70453c;
+  font-size: 12px;
+  font-weight: 600;
+}
+.signOut,
+.menuButton,
+.closeMenu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  height: 44px;
+  border: 1px solid #e1d8d0;
+  border-radius: 9px;
+  background: transparent;
+  color: #604c42;
+  cursor: pointer;
+}
+.signOut {
+  padding: 0 13px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.signOut:hover,
+.menuButton:hover {
+  background: #f7f0ea;
+}
+.menuButton,
+.menuSkeleton {
+  display: none;
+}
+.drawer {
+  width: min(320px, calc(100vw - 32px));
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.drawer::backdrop {
+  background: #141b2b88;
+  backdrop-filter: blur(2px);
+}
+.drawer .sidebarContent {
+  padding-top: 22px;
+}
+.closeMenu {
+  flex-shrink: 0;
+  border-color: #ffffff24;
+  color: #fff8f1;
+}
+.closeMenu:hover {
+  background: #ffffff0c;
+}
+.drawer .workspaceCard {
+  margin-top: 24px;
+}
+.skipLink {
+  position: fixed;
+  left: 290px;
+  top: 8px;
+  z-index: 2000;
+  transform: translateY(-150%);
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #74150d;
+  font-size: 13px;
+}
+.skipLink:focus {
+  transform: translateY(0);
+}
+.navigationSkeleton {
+  display: grid;
+  gap: 7px;
+}
+.navigationSkeleton :global(.staff-skeleton) {
+  width: 100%;
+  height: 50px;
+  background: #b35f53;
+}
+.publicMapSkeleton {
+  width: 88px;
+  height: 18px;
+}
+.signOutSkeleton {
+  width: 100px;
+  height: 44px;
+}
+@media (max-width: 1280px) {
+  .topbar {
+    padding-inline: 24px;
+  }
+  .city {
+    display: none;
+  }
+}
+@media (max-width: 1100px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sidebar {
+    display: none;
+  }
+  .menuButton,
+  .menuSkeleton {
+    display: inline-flex;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+  }
+  .topbar {
+    min-height: 72px;
+    padding: 12px 20px;
+  }
+  .skipLink {
+    left: 12px;
+  }
+}
+@media (max-width: 600px) {
+  .topbar {
+    gap: 12px;
+    min-height: 64px;
+    padding: 10px 16px;
+  }
+  .topbarIdentity {
+    gap: 10px;
+  }
+  .topbarActions {
+    gap: 10px;
+  }
+  .title > span {
+    font-size: 8px;
+    letter-spacing: 0.8px;
+  }
+  .title h1 {
+    font-size: 15px;
+  }
+  .publicMap,
+  .publicMapSkeleton {
+    display: none;
+  }
+  .signOut {
+    width: 44px;
+    padding: 0;
+  }
+  .signOut span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .signOutSkeleton {
+    width: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .navigationGroup a {
+    transition: none;
+  }
+}

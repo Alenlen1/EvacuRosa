@@ -9,8 +9,16 @@ import { adminApi } from "@/lib/adminApi";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { StaffHeader } from "@/components/admin/StaffHeader";
-import { House, MapPin, ShieldCheck, TriangleAlert } from "lucide-react";
-import { useEffect, useState, type CSSProperties } from "react";
+import {
+  CdrrmoSection,
+  CdrrmoWorkspace,
+} from "@/components/admin/CdrrmoWorkspace";
+import {
+  CdrrmoDashboard,
+  type DashboardHazards,
+} from "@/components/admin/CdrrmoDashboard";
+import { MapPin, TriangleAlert } from "lucide-react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { publicSans } from "@/app/fonts/publicSans";
@@ -83,6 +91,35 @@ export default function AdminDashboardPage() {
   const [earthquakeRoadImpacts, setEarthquakeRoadImpacts] = useState<
     EarthquakeRoadImpact[]
   >([]);
+  const [dashboardHazards, setDashboardHazards] = useState<DashboardHazards>({
+    floods: null,
+    fires: null,
+    earthquakes: null,
+  });
+  const [hazardsLoading, setHazardsLoading] = useState(true);
+  const refreshHazards = useCallback(async () => {
+    setHazardsLoading(true);
+    const [floods, fires, earthquakes] = await Promise.allSettled([
+      fetchFloodReports(),
+      fetchFireIncidents(),
+      fetchEarthquakes(),
+    ]);
+    if (floods.status === "fulfilled") setFloodReports(floods.value);
+    if (fires.status === "fulfilled") setFireIncidents(fires.value);
+    if (earthquakes.status === "fulfilled") {
+      setEarthquakeEvents(earthquakes.value.events);
+      setEarthquakeRoadImpacts(earthquakes.value.roadImpacts);
+    }
+    setDashboardHazards({
+      floods: floods.status === "fulfilled" ? floods.value.length : null,
+      fires: fires.status === "fulfilled" ? fires.value.length : null,
+      earthquakes:
+        earthquakes.status === "fulfilled"
+          ? earthquakes.value.events.length
+          : null,
+    });
+    setHazardsLoading(false);
+  }, []);
 
   useEffect(() => {
     if (!supabase) {
@@ -109,22 +146,8 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (profile?.role !== "SUPER_ADMIN") return;
-    fetchFloodReports()
-      .then(setFloodReports)
-      .catch(() => setFloodReports([]));
-    fetchFireIncidents()
-      .then(setFireIncidents)
-      .catch(() => setFireIncidents([]));
-    fetchEarthquakes()
-      .then(({ events, roadImpacts }) => {
-        setEarthquakeEvents(events);
-        setEarthquakeRoadImpacts(roadImpacts);
-      })
-      .catch(() => {
-        setEarthquakeEvents([]);
-        setEarthquakeRoadImpacts([]);
-      });
-  }, [profile?.role]);
+    void refreshHazards();
+  }, [profile?.role, refreshHazards]);
 
   async function loadCenters() {
     setError(null);
@@ -301,69 +324,33 @@ export default function AdminDashboardPage() {
         </button>
       </main>
     );
-  return (
-    <main
-      className={`admin-app ${publicSans.className} ${profile.role === "SUPER_ADMIN" ? "cdrrmo-workspace" : "barangay-workspace"}`}
-      style={
-        profile.role === "BARANGAY_ADMIN"
-          ? ({
-              "--workspace-color": barangayAppearance.background,
-              "--workspace-accent": barangayAppearance.accent,
-            } as CSSProperties)
-          : undefined
+  const content = (
+    <div
+      className={
+        profile?.role === "SUPER_ADMIN"
+          ? "cdrrmo-content"
+          : "barangay-workspace-content"
       }
     >
-      <StaffHeader
-        role={profile.role}
-        onSignOut={async () => {
-          await supabase?.auth.signOut();
-          clearWorkspaceRole();
-          router.replace("/admin/login");
-        }}
-      />
-      <div
-        className={
-          profile?.role === "SUPER_ADMIN"
-            ? "cdrrmo-content"
-            : "barangay-workspace-content"
-        }
-      >
+      {profile.role === "BARANGAY_ADMIN" && (
         <div className="admin-heading">
-          {profile.role === "BARANGAY_ADMIN" && (
-            <span className="barangay-workspace-seal" aria-hidden="true">
-              {barangayAppearance.logoSrc ? (
-                <Image
-                  src={barangayAppearance.logoSrc}
-                  alt=""
-                  fill
-                  sizes="80px"
-                />
-              ) : (
-                barangayAppearance.initials || "BRGY"
-              )}
-            </span>
-          )}
+          <span className="barangay-workspace-seal" aria-hidden="true">
+            {barangayAppearance.logoSrc ? (
+              <Image
+                src={barangayAppearance.logoSrc}
+                alt=""
+                fill
+                sizes="80px"
+              />
+            ) : (
+              barangayAppearance.initials || "BRGY"
+            )}
+          </span>
           <div>
-            <span className="eyebrow">
-              {profile?.role === "SUPER_ADMIN"
-                ? "CDRRMO WORKSPACE"
-                : "BARANGAY WORKSPACE"}
-            </span>
-            <h1>
-              {profile?.role === "SUPER_ADMIN"
-                ? "City response workspace"
-                : barangayTitle}
-            </h1>
-            <p
-              className={
-                profile.role === "BARANGAY_ADMIN"
-                  ? "barangay-workspace-subtitle"
-                  : undefined
-              }
-            >
-              {profile?.role === "SUPER_ADMIN"
-                ? "Register evacuation centers, review shared locations and manage hazards across Santa Rosa."
-                : "Evacuation center management"}
+            <span className="eyebrow">BARANGAY WORKSPACE</span>
+            <h1>{barangayTitle}</h1>
+            <p className="barangay-workspace-subtitle">
+              Evacuation center management
             </p>
             {error && (
               <p className="error-message" role="alert">
@@ -371,108 +358,103 @@ export default function AdminDashboardPage() {
               </p>
             )}
           </div>
-          {profile?.role === "SUPER_ADMIN" && (
-            <span className="cdrrmo-access">
-              <ShieldCheck size={17} aria-hidden="true" />
-              CDRRMO staff access
-            </span>
-          )}
         </div>
+      )}
 
-        {profile.role === "BARANGAY_ADMIN" && (
-          <BarangayWorkspaceSummary
+      {profile.role === "SUPER_ADMIN" && error && (
+        <p className="cdrrmo-workspace-error error-message" role="alert">
+          {error}
+        </p>
+      )}
+
+      {profile.role === "SUPER_ADMIN" && (
+        <CdrrmoSection id="dashboard-overview">
+          <CdrrmoDashboard
             centers={centers}
-            unavailable={Boolean(error)}
+            centersUnavailable={Boolean(error)}
+            hazards={dashboardHazards}
+            hazardsLoading={hazardsLoading}
           />
-        )}
+        </CdrrmoSection>
+      )}
 
-        {profile?.role === "SUPER_ADMIN" && (
-          <>
-            <nav
-              className="staff-section-nav"
-              aria-label="CDRRMO workspace sections"
-            >
-              <a href="#evacuation-centers">
-                <House size={19} aria-hidden="true" />
-                <span>Evacuation centers</span>
-              </a>
-              <a href="#shared-locations">
-                <MapPin size={19} aria-hidden="true" />
-                <span>Shared locations</span>
-              </a>
-              <a href="#hazard-management">
-                <TriangleAlert size={19} aria-hidden="true" />
-                <span>Hazard management</span>
-              </a>
-            </nav>
-            <CenterManager
-              centers={centers}
-              onSaved={async () => {
-                await loadCenters();
-              }}
-            />
-          </>
-        )}
-        <div
-          className={
-            profile?.role !== "SUPER_ADMIN"
-              ? "barangay-center-management"
-              : undefined
-          }
-        >
-          {profile?.role !== "SUPER_ADMIN" && (
-            <div
-              className="admin-center-cards"
-              data-single={centers.length === 1}
-            >
-              {centers.map((center) => (
-                <BarangayWorkspaceCenter
-                  key={center.id}
-                  center={center}
-                  occupancyDraft={
-                    occupancyDrafts[center.id] ??
-                    String(center.current_occupancy)
-                  }
-                  availabilityDraft={
-                    availabilityDrafts[center.id] ??
-                    (center.status === "CLOSED" ? "CLOSED" : "AVAILABLE")
-                  }
-                  saving={savingId === center.id}
-                  updatesDisabled={savingId !== null}
-                  feedback={centerFeedback[center.id]}
-                  onOccupancyChange={(value) => {
-                    clearCenterFeedback(center.id);
-                    setOccupancyDrafts((drafts) => ({
-                      ...drafts,
-                      [center.id]: value,
-                    }));
-                  }}
-                  onAvailabilityChange={(value) => {
-                    clearCenterFeedback(center.id);
-                    setAvailabilityDrafts((drafts) => ({
-                      ...drafts,
-                      [center.id]: value,
-                    }));
-                  }}
-                  onSave={() => void updateOccupancy(center.id)}
-                />
-              ))}
-              {centers.length === 0 && !error && (
-                <div className="col-span-full rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
-                  <p className="font-medium text-slate-700">
-                    No evacuation centers are assigned to your account.
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Contact your designated system operator about access. CDRRMO
-                    registers and assigns evacuation centers.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+      {profile.role === "BARANGAY_ADMIN" && (
+        <BarangayWorkspaceSummary
+          centers={centers}
+          unavailable={Boolean(error)}
+        />
+      )}
 
-        {profile?.role === "SUPER_ADMIN" && (
+      {profile?.role === "SUPER_ADMIN" && (
+        <CdrrmoSection id="evacuation-centers">
+          <CenterManager
+            centers={centers}
+            onSaved={async () => {
+              await loadCenters();
+            }}
+          />
+        </CdrrmoSection>
+      )}
+      <div
+        className={
+          profile?.role !== "SUPER_ADMIN"
+            ? "barangay-center-management"
+            : undefined
+        }
+      >
+        {profile?.role !== "SUPER_ADMIN" && (
+          <div
+            className="admin-center-cards"
+            data-single={centers.length === 1}
+          >
+            {centers.map((center) => (
+              <BarangayWorkspaceCenter
+                key={center.id}
+                center={center}
+                occupancyDraft={
+                  occupancyDrafts[center.id] ?? String(center.current_occupancy)
+                }
+                availabilityDraft={
+                  availabilityDrafts[center.id] ??
+                  (center.status === "CLOSED" ? "CLOSED" : "AVAILABLE")
+                }
+                saving={savingId === center.id}
+                updatesDisabled={savingId !== null}
+                feedback={centerFeedback[center.id]}
+                onOccupancyChange={(value) => {
+                  clearCenterFeedback(center.id);
+                  setOccupancyDrafts((drafts) => ({
+                    ...drafts,
+                    [center.id]: value,
+                  }));
+                }}
+                onAvailabilityChange={(value) => {
+                  clearCenterFeedback(center.id);
+                  setAvailabilityDrafts((drafts) => ({
+                    ...drafts,
+                    [center.id]: value,
+                  }));
+                }}
+                onSave={() => void updateOccupancy(center.id)}
+              />
+            ))}
+            {centers.length === 0 && !error && (
+              <div className="col-span-full rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
+                <p className="font-medium text-slate-700">
+                  No evacuation centers are assigned to your account.
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Contact your designated system operator about access. CDRRMO
+                  registers and assigns evacuation centers.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {profile?.role === "SUPER_ADMIN" && (
+        <CdrrmoSection id="shared-locations">
           <div
             id="shared-locations"
             className="cdrrmo-section-anchor"
@@ -480,8 +462,10 @@ export default function AdminDashboardPage() {
           >
             <AssistanceRequests />
           </div>
-        )}
-        {profile?.role === "SUPER_ADMIN" && (
+        </CdrrmoSection>
+      )}
+      {profile?.role === "SUPER_ADMIN" && (
+        <CdrrmoSection id="hazard-management">
           <section
             id="hazard-management"
             className="admin-hazard-section cdrrmo-section-anchor"
@@ -524,24 +508,38 @@ export default function AdminDashboardPage() {
               earthquakeEvents={earthquakeEvents}
               earthquakeRoadImpacts={earthquakeRoadImpacts}
               getAuthToken={getAuthToken}
-              onCreated={() => {
-                fetchFloodReports()
-                  .then(setFloodReports)
-                  .catch(() => {});
-                fetchFireIncidents()
-                  .then(setFireIncidents)
-                  .catch(() => {});
-                fetchEarthquakes()
-                  .then(({ events, roadImpacts }) => {
-                    setEarthquakeEvents(events);
-                    setEarthquakeRoadImpacts(roadImpacts);
-                  })
-                  .catch(() => {});
-              }}
+              onCreated={() => void refreshHazards()}
             />
           </section>
-        )}
-      </div>
+        </CdrrmoSection>
+      )}
+    </div>
+  );
+  const signOut = async () => {
+    await supabase?.auth.signOut();
+    clearWorkspaceRole();
+    router.replace("/admin/login");
+  };
+  return (
+    <main
+      className={`admin-app ${publicSans.className} ${profile.role === "SUPER_ADMIN" ? "cdrrmo-workspace" : "barangay-workspace"}`}
+      style={
+        profile.role === "BARANGAY_ADMIN"
+          ? ({
+              "--workspace-color": barangayAppearance.background,
+              "--workspace-accent": barangayAppearance.accent,
+            } as CSSProperties)
+          : undefined
+      }
+    >
+      {profile.role === "SUPER_ADMIN" ? (
+        <CdrrmoWorkspace onSignOut={signOut}>{content}</CdrrmoWorkspace>
+      ) : (
+        <>
+          <StaffHeader role={profile.role} onSignOut={signOut} />
+          {content}
+        </>
+      )}
     </main>
   );
 }

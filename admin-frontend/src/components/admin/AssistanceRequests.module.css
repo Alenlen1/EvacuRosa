@@ -367,3 +367,212 @@
     height: 280px;
   }
 }
+
+:global(.cdrrmo-workspace) .panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 20px;
+  overflow: hidden;
+}
+.panel > * {
+  flex-shrink: 0;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
+  margin: 14px 0 10px;
+  padding: 8px 12px;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-caption) {
+  margin-top: 4px;
+  font-size: 12px;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-disclaimer) {
+  padding: 8px 12px;
+  font-size: 11px;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-workspace-body) {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 18px;
+  flex: 1;
+  min-height: 0;
+  margin-top: 16px;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-section) {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  margin: 0;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-heading h3) {
+  font-size: 14px;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-location-map) {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-list) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  gap: 12px;
+  margin: 0;
+  padding: 3px;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-record) {
+  flex-shrink: 0;
+  padding: 16px;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-view-tabs) {
+  display: none;
+}
+@container cdrrmo-main (max-width: 760px) {
+  :global(.cdrrmo-workspace) .panel {
+    padding: 14px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading) {
+    align-items: center;
+    gap: 10px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
+    margin: 0;
+    font-size: 18px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-eyebrow),
+  :global(.cdrrmo-workspace) .panel :global(.assistance-caption),
+  :global(.cdrrmo-workspace)
+    .panel
+    :global(.assistance-toolbar > span:last-child) {
+    display: none;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin-block: 12px 8px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar label) {
+    display: flex;
+    flex: 1;
+    width: auto;
+    justify-content: flex-end;
+    font-size: 0;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar select) {
+    width: 100%;
+    max-width: 160px;
+    font-size: 11px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-connection-status) {
+    max-width: 110px;
+    font-size: 10px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-disclaimer) {
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-view-tabs) {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 4px;
+    border-radius: 9px;
+    background: #f5eee6;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-view-tabs button) {
+    flex: 1;
+    min-height: 36px;
+    border-radius: 6px;
+    color: #765e4e;
+    font-size: 11px;
+  }
+  :global(.cdrrmo-workspace)
+    .panel
+    :global(.assistance-view-tabs button[aria-pressed="true"]) {
+    background: #fffdf9;
+    color: #800000;
+    box-shadow: 0 1px 4px #30100c12;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-workspace-body) {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 10px;
+  }
+  :global(.cdrrmo-workspace)
+    .panel
+    :global(
+      .assistance-workspace-body[data-mobile-view="requests"]
+        .assistance-map-section
+    ),
+  :global(.cdrrmo-workspace)
+    .panel
+    :global(
+      .assistance-workspace-body[data-mobile-view="map"] .assistance-list
+    ) {
+    display: none;
+  }
+}
+@media (max-height: 650px) {
+  :global(.cdrrmo-workspace) .panel {
+    padding: 12px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-eyebrow),
+  :global(.cdrrmo-workspace) .panel :global(.assistance-caption) {
+    display: none;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
+    font-size: 18px;
+    margin: 0;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
+    margin: 8px 0 6px;
+    padding: 6px 10px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-workspace-body) {
+    margin-top: 10px;
+  }
+}
+@media (max-height: 500px) {
+  :global(.cdrrmo-workspace) .panel :global(.assistance-disclaimer) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    padding: 0;
+    clip-path: inset(50%);
+  }
+}
+:global([data-workspace-scroll="true"]) .panel {
+  height: auto;
+  overflow: visible;
+}
+:global([data-workspace-scroll="true"])
+  .panel
+  :global(.assistance-workspace-body) {
+  flex: none;
+}
+:global([data-workspace-scroll="true"]) .panel :global(.assistance-list) {
+  overflow: visible;
+  max-height: none;
+  height: auto;
+}
+:global([data-workspace-scroll="true"])
+  .panel
+  :global(.assistance-map-section) {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+  height: clamp(320px, 50dvh, 520px);
+}
+@container cdrrmo-main (max-width: 760px) {
+  :global([data-workspace-scroll="true"])
+    .panel
+    :global(.assistance-map-section) {
+    position: relative;
+    top: auto;
+    height: clamp(320px, 55dvh, 520px);
+  }
+}
