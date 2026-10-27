@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import {
   createContext,
   useCallback,
@@ -8,19 +8,35 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import dynamic from "next/dynamic";
+import { ArrowRight, HandHeart, LoaderCircle, Send, X } from "lucide-react";
+import type { GeolocationState } from "@/hooks/useGeolocation";
+import {
+  captureAssistanceLocation,
+  type AssistanceLocation,
+} from "@/lib/assistanceLocation";
+import { AssistanceRequestForm } from "./AssistanceRequestForm";
+import { AssistanceRequestStatus } from "./AssistanceRequestStatus";
+import { AssistanceRequestTabs } from "./AssistanceRequestTabs";
+import {
+  clearAssistanceView,
+  readAssistanceView,
+  writeAssistanceView,
+  type AssistanceView,
+} from "@/lib/assistanceView";
+import { CancelAssistanceDialog } from "./CancelAssistanceDialog";
+import styles from "./AssistanceProvider.module.css";
 import { useLanguage } from "@/components/LanguageProvider";
 import {
   assistanceActive,
   acceptAssistance,
   ASSISTANCE_LABELS,
-  ASSISTANCE_MESSAGES,
   ASSISTANCE_STORAGE_KEY,
   consumeAssistanceEvents,
   newAssistanceCredentials,
   readAssistance,
   writeAssistance,
   type AssistanceCredentials,
+  type AssistanceStatus,
   type TrackedAssistance,
 } from "@/lib/assistance";
 import {
@@ -31,27 +47,55 @@ import {
   recoverAssistance,
   AssistanceTrackingError,
 } from "@/services/api";
-const ReportedLocationMap = dynamic(() => import("./ReportedLocationMap"), {
-  ssr: false,
-  loading: () => <p>Loading reported location...</p>,
-});
 import type { AssistanceContext as RequestIntent } from "@/services/api";
 const AssistanceContext = createContext<{
   openRequest: (intent?: RequestIntent) => void;
   hasRequest: boolean;
+  requestOpen: boolean;
+  status: AssistanceStatus | null;
 } | null>(null);
 export function useAssistance() {
   const value = useContext(AssistanceContext);
   if (!value) throw Error("Assistance provider is missing");
   return value;
 }
-type Fix = {
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  recordedAt: string;
-};
-export function AssistanceProvider({ children }: { children: ReactNode }) {
+export function AssistanceRequestShortcut() {
+  const { hasRequest, requestOpen, status, openRequest } = useAssistance();
+  if (!hasRequest || requestOpen) return null;
+  return (
+    <button
+      type="button"
+      className={styles.requestShortcut}
+      aria-label="View my assistance request"
+      aria-haspopup="dialog"
+      aria-controls="assistance-dialog"
+      onClick={() => openRequest()}
+    >
+      <span
+        className={styles.shortcutDot}
+        data-status={status}
+        aria-hidden="true"
+      />
+      <span className={styles.shortcutCopy}>
+        <small>Emergency assistance</small>
+        <strong aria-live="polite">
+          {status ? ASSISTANCE_LABELS[status] : "Your saved request"}
+        </strong>
+      </span>
+      <span className={styles.shortcutAction}>
+        View request
+        <ArrowRight size={17} aria-hidden="true" />
+      </span>
+    </button>
+  );
+}
+export function AssistanceProvider({
+  children,
+  geolocation,
+}: {
+  children: ReactNode;
+  geolocation?: GeolocationState;
+}) {
   const [intent, setIntent] = useState<RequestIntent>({
     kind: "emergency",
     travelMode: "walking",
@@ -66,14 +110,23 @@ export function AssistanceProvider({ children }: { children: ReactNode }) {
   const trackingRef = useRef<TrackedAssistance | null>(null);
   const confirmed = useRef(false);
   const [open, setOpen] = useState(false),
-    [busy, setBusy] = useState(false),
+    [operation, setOperation] = useState<
+      "locating" | "submitting" | "cancelling" | null
+    >(null),
     [error, setError] = useState("");
+  const busy = operation !== null;
+  const [cancelTarget, setCancelTarget] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState("");
+  const locationCapture = useRef<AbortController | null>(null);
+  const [fixSource, setFixSource] = useState<"map" | "device" | null>(null);
   const [unavailable, setUnavailable] = useState(false);
-  const [fix, setFix] = useState<Fix | null>(null),
+  const [fix, setFix] = useState<AssistanceLocation | null>(null),
     [name, setName] = useState(""),
     [contact, setContact] = useState("");
   const [connection, setConnection] = useState("Reconnecting"),
-    [showMap, setShowMap] = useState(false);
+    [requestView, setRequestView] = useState<AssistanceView>("overview");
+  const [viewReady, setViewReady] = useState(false);
+  const hasExistingRequest = Boolean(credentials?.trackingToken);
   const dialog = useRef<HTMLDialogElement>(null),
     previousFocus = useRef<HTMLElement | null>(null);
   const busyRef = useRef(false),
@@ -84,6 +137,7 @@ export function AssistanceProvider({ children }: { children: ReactNode }) {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      locationCapture.current?.abort();
     };
   }, []);
   useEffect(() => {
@@ -94,10 +148,17 @@ export function AssistanceProvider({ children }: { children: ReactNode }) {
       setCredentials(saved);
       setTracking(saved.cached ?? null);
       trackingRef.current = null;
-      setOpen(!saved.cached || assistanceActive(saved.cached.request.status));
+      const view = readAssistanceView(saved.id);
+      setRequestView(view?.view ?? "overview");
+      setOpen(view?.open ?? !saved.trackingToken);
     }
+    setViewReady(true);
     setOnline(navigator.onLine);
   }, []);
+  useEffect(() => {
+    if (viewReady && credentials?.id)
+      writeAssistanceView(credentials.id, open, requestView);
+  }, [viewReady, credentials?.id, open, requestView]);
   useEffect(() => {
     const yes = () => setOnline(true),
       no = () => {
@@ -126,6 +187,7 @@ export function AssistanceProvider({ children }: { children: ReactNode }) {
         trackingRef.current = null;
         setCredentials(saved);
         setTracking(saved.cached ?? null);
+        setRequestView("overview");
         setFix(null);
         setConnection("Reconnecting");
       }
@@ -164,6 +226,12 @@ export function AssistanceProvider({ children }: { children: ReactNode }) {
     confirmed.current &&
     !!tracking &&
     !assistanceActive(tracking.request.status);
+  useEffect(() => {
+    if (!open || terminal || unavailable || credentials?.id !== cancelTarget) {
+      setCancelTarget(null);
+      setCancelError("");
+    }
+  }, [open, terminal, unavailable, credentials?.id, cancelTarget]);
   useEffect(() => {
     const saved = credentialsRef.current;
     if (!saved?.submissionKey || saved.trackingToken || busy || !online) return;
@@ -347,64 +415,79 @@ export function AssistanceProvider({ children }: { children: ReactNode }) {
     }
     if (!open && dialog.current?.open) dialog.current.close();
   }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const viewport = window.visualViewport;
+    const resize = () => {
+      dialog.current?.style.setProperty(
+        "--assistance-viewport-height",
+        `${viewport?.height ?? window.innerHeight}px`,
+      );
+      dialog.current?.style.setProperty(
+        "--assistance-viewport-top",
+        `${viewport?.offsetTop ?? 0}px`,
+      );
+    };
+    resize();
+    viewport?.addEventListener("resize", resize);
+    viewport?.addEventListener("scroll", resize);
+    window.addEventListener("resize", resize);
+    return () => {
+      viewport?.removeEventListener("resize", resize);
+      viewport?.removeEventListener("scroll", resize);
+      window.removeEventListener("resize", resize);
+    };
+  }, [open]);
   function openRequest(context?: RequestIntent) {
     setIntent(context ?? { kind: "emergency", travelMode: "walking" });
     setOpen(true);
   }
-  async function locate() {
+  async function locate(forceFresh = false) {
     if (busyRef.current) return;
     busyRef.current = true;
-    setBusy(true);
+    setOperation("locating");
     setError("");
+    const capture = new AbortController();
+    locationCapture.current = capture;
     try {
       if (!navigator.onLine)
         throw Error(
           "You are offline. This request cannot be submitted until connected. Use official emergency communication channels.",
         );
-      if (!navigator.geolocation)
-        throw Error(
-          "GPS is unavailable. Use official emergency communication channels and report your location manually.",
-        );
-      const position = await new Promise<GeolocationPosition>(
-        (resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(
-            resolve,
-            (e) =>
-              reject(
-                Error(
-                  e.code === 1
-                    ? "Location permission was denied. Enable it in browser settings or report your location through official emergency channels."
-                    : e.code === 3
-                      ? "GPS timed out. Move to an open area and try again, or use official emergency channels."
-                      : "GPS is unavailable. Try again or report your location through official emergency channels.",
-                ),
-              ),
-            { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
-          ),
-      );
-      if (!mounted.current) return;
-      setFix({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy,
-        recordedAt: new Date(position.timestamp).toISOString(),
+      const result = await captureAssistanceLocation({
+        cached: geolocation,
+        forceFresh,
+        geolocation: navigator.geolocation,
+        signal: capture.signal,
       });
+      if (!mounted.current || capture.signal.aborted) return;
+      setFix(result.fix);
+      setFixSource(result.source);
     } catch (cause) {
-      if (mounted.current)
+      if (mounted.current && !capture.signal.aborted)
         setError(
           cause instanceof Error
             ? cause.message
             : "Could not retrieve location.",
         );
     } finally {
+      locationCapture.current = null;
       busyRef.current = false;
-      if (mounted.current) setBusy(false);
+      if (mounted.current) setOperation(null);
     }
   }
   async function submit() {
     if (!fix || busyRef.current) return;
     busyRef.current = true;
-    setBusy(true);
+    setOperation("submitting");
     setError("");
     try {
       if (!navigator.onLine)
@@ -470,31 +553,38 @@ export function AssistanceProvider({ children }: { children: ReactNode }) {
         );
     } finally {
       busyRef.current = false;
-      if (mounted.current) setBusy(false);
+      if (mounted.current) setOperation(null);
     }
   }
   async function cancel() {
     const saved = credentialsRef.current;
-    if (!saved?.trackingToken || busyRef.current) return;
     if (
-      !window.confirm(
-        "Cancel this assistance request? This notifies CDRRMO that you no longer need assistance for this request.",
-      )
+      !saved?.trackingToken ||
+      saved.id !== cancelTarget ||
+      busyRef.current ||
+      terminal ||
+      unavailable
     )
       return;
     busyRef.current = true;
-    setBusy(true);
+    setOperation("cancelling");
+    setCancelError("");
     try {
+      if (!navigator.onLine)
+        throw Error(
+          "You are offline. Reconnect before cancelling your request.",
+        );
       apply(await cancelMyAssistance(saved.id, saved.trackingToken));
+      setCancelTarget(null);
     } catch (cause) {
-      setError(
+      setCancelError(
         cause instanceof Error
           ? cause.message
           : "Cancellation could not be confirmed.",
       );
     } finally {
       busyRef.current = false;
-      setBusy(false);
+      if (mounted.current) setOperation(null);
     }
   }
   function newRequest() {
@@ -515,246 +605,226 @@ export function AssistanceProvider({ children }: { children: ReactNode }) {
     trackingRef.current = null;
     confirmed.current = false;
     setFix(null);
-    setShowMap(false);
+    clearAssistanceView();
+    setRequestView("overview");
     setError("");
   }
   return (
     <AssistanceContext.Provider
-      value={{ openRequest, hasRequest: !!credentials?.trackingToken }}
+      value={{
+        openRequest,
+        hasRequest: hasExistingRequest,
+        requestOpen: open,
+        status: tracking?.request.status ?? null,
+      }}
     >
       {children}
-      {credentials?.trackingToken && !open && (
-        <button
-          className="assistance-reopen"
-          onClick={() => openRequest()}
-          aria-label="View my assistance request"
-        >
-          <span aria-live="polite">
-            {tracking
-              ? ASSISTANCE_LABELS[tracking.request.status]
-              : "Assistance request"}
-          </span>{" "}
-          <strong>View request</strong>
-        </button>
-      )}
       <dialog
+        id="assistance-dialog"
         ref={dialog}
-        className="assistance-tracking-dialog"
+        className={`assistance-tracking-dialog ${styles.dialog}`}
         aria-labelledby="assistance-dialog-title"
+        data-view={hasExistingRequest ? requestView : "form"}
         onCancel={(e) => {
-          if (busy) e.preventDefault();
+          if (busy && operation !== "locating") e.preventDefault();
+          else locationCapture.current?.abort();
         }}
         onClose={() => {
+          locationCapture.current?.abort();
           setOpen(false);
-          previousFocus.current?.focus();
+          requestAnimationFrame(() => {
+            if (previousFocus.current?.isConnected)
+              previousFocus.current.focus();
+            else
+              document
+                .querySelector<HTMLButtonElement>(
+                  '[aria-controls="assistance-dialog"]',
+                )
+                ?.focus();
+          });
         }}
       >
         <header>
-          <div>
-            <small>EVACUROSA</small>
-            <h2 id="assistance-dialog-title">{t("Emergency Assistance")}</h2>
+          <div className={styles.dialogIdentity}>
+            <span className={styles.headerIcon}>
+              <HandHeart size={24} aria-hidden="true" />
+            </span>
+            <div>
+              <small>EVACUROSA · CDRRMO</small>
+              <h2 id="assistance-dialog-title">
+                {hasExistingRequest
+                  ? "View request"
+                  : t("Emergency Assistance")}
+              </h2>
+            </div>
           </div>
           <button
             type="button"
-            className="secondary-button"
-            disabled={busy}
-            aria-label="Close assistance"
-            onClick={() => setOpen(false)}
+            className={styles.closeButton}
+            disabled={busy && operation !== "locating"}
+            aria-label={
+              hasExistingRequest ? "Close request" : "Close assistance"
+            }
+            onClick={() => {
+              locationCapture.current?.abort();
+              setOpen(false);
+            }}
           >
-            Close
+            <X size={20} aria-hidden="true" />
           </button>
         </header>
-        {tracking ? (
-          <>
-            <p>
-              <strong>Request ID:</strong>{" "}
-              <span className="assistance-reference">
-                {tracking.request.id}
-              </span>
-            </p>
-            <h3 aria-live="polite">
-              {ASSISTANCE_LABELS[tracking.request.status]}
-            </h3>
-            <p>
-              <strong>Status:</strong>{" "}
-              {tracking.request.status === "PENDING"
-                ? "Pending"
-                : ASSISTANCE_LABELS[tracking.request.status]}
-            </p>
-            <p role="status">{ASSISTANCE_MESSAGES[tracking.request.status]}</p>
-            <p className="assistance-connection">
-              {!online ? "Offline" : terminal ? "Status confirmed" : connection}
-              {(!online ||
-                !confirmed.current ||
-                connection === "Status May Be Outdated") &&
-                " - Status may be outdated"}
-            </p>
-            {unavailable && (
-              <button
-                className="secondary-button"
-                onClick={() => setUnavailable(false)}
-              >
-                Check status again
-              </button>
-            )}
-            <dl className="assistance-tracking-details">
-              <div>
-                <dt>Submitted</dt>
-                <dd>
-                  {new Date(tracking.request.created_at).toLocaleString()}
-                </dd>
-              </div>
-              <div>
-                <dt>Latest status update</dt>
-                <dd>
-                  {new Date(
-                    tracking.request.status_updated_at ??
-                      tracking.request.created_at,
-                  ).toLocaleString()}
-                </dd>
-              </div>
-            </dl>
-            <h3>Status history</h3>
-            <ol className="assistance-timeline">
-              {tracking.history.map((item) => (
-                <li key={item.version}>
-                  <strong>{ASSISTANCE_LABELS[item.new_status]}</strong>
-                  <time dateTime={item.changed_at}>
-                    {new Date(item.changed_at).toLocaleString()}
-                  </time>
-                  <small>
-                    {item.actor_kind === "CDRRMO"
-                      ? "CDRRMO operator"
-                      : item.actor_kind === "PUBLIC_USER"
-                        ? "Request owner"
-                        : "Previous system record"}
-                  </small>
-                </li>
-              ))}
-            </ol>
-            {!terminal && (
-              <p>Further stages are pending confirmation by CDRRMO.</p>
-            )}
-            <h3>Last reported location</h3>
-            <p>
-              {tracking.request.latitude.toFixed(6)},{" "}
-              {tracking.request.longitude.toFixed(6)}
-              <br />
-              Reported GPS accuracy: +/-
-              {Math.round(tracking.request.accuracy_meters)} m<br />
-              Captured{" "}
-              {new Date(tracking.request.location_recorded_at).toLocaleString()}
-            </p>
-            <p>
-              This is a one-time GPS submission, not live tracking. If you move,
-              contact CDRRMO through official channels.
-            </p>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => setShowMap((v) => !v)}
-            >
-              {showMap ? "Hide reported location" : "View reported location"}
-            </button>
-            {showMap && <ReportedLocationMap request={tracking.request} />}
-            {!terminal ? (
-              <button
-                type="button"
-                className="secondary-button"
-                disabled={busy || !online || unavailable}
-                onClick={() => void cancel()}
-              >
-                {busy ? "Updating..." : "Cancel Request"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="primary-button"
-                onClick={newRequest}
-              >
-                Start a new assistance request
-              </button>
-            )}
-          </>
-        ) : (
-          <>
-            <p>
-              Your GPS coordinates, accuracy and capture time will be shared
-              with authorized CDRRMO personnel when you confirm submission. This
-              does not guarantee assistance or dispatch.
-            </p>
-            <p>Location is shared once. No live or background tracking.</p>
-            <label>
-              Name (optional)
-              <input
-                value={name}
-                maxLength={100}
-                autoComplete="name"
-                disabled={busy}
-                onChange={(e) => setName(e.target.value)}
+        {hasExistingRequest && (
+          <AssistanceRequestTabs view={requestView} onChange={setRequestView} />
+        )}
+        <div
+          className={`${styles.body} ${hasExistingRequest && requestView === "location" ? styles.mapBody : ""}`}
+        >
+          {tracking ? (
+            <AssistanceRequestStatus
+              tracking={tracking}
+              terminal={terminal}
+              online={online}
+              confirmed={confirmed.current}
+              connection={connection}
+              unavailable={unavailable}
+              view={requestView}
+              onRetry={() => setUnavailable(false)}
+              onViewChange={setRequestView}
+            />
+          ) : hasExistingRequest ? (
+            <div className={styles.requestLoading} role="status">
+              <LoaderCircle
+                size={24}
+                className={styles.spinner}
+                aria-hidden="true"
               />
-            </label>
-            <label>
-              Contact number (optional)
-              <input
-                type="tel"
-                value={contact}
-                maxLength={40}
-                autoComplete="tel"
-                disabled={busy}
-                onChange={(e) => setContact(e.target.value)}
-              />
-            </label>
-            <button
-              type="button"
-              className="secondary-button"
-              disabled={busy}
-              onClick={() => void locate()}
-            >
-              {busy
-                ? "Please wait..."
-                : fix
-                  ? "Get a fresh location"
-                  : "Share GPS location"}
-            </button>
-            {fix && (
-              <section className="assistance-location-preview">
-                <h3>Review your reported location</h3>
-                <p>
-                  {fix.latitude.toFixed(6)}, {fix.longitude.toFixed(6)}
-                  <br />
-                  GPS accuracy: +/-{Math.round(fix.accuracy)} m
-                </p>
-                {fix.accuracy > 100 && (
-                  <p role="status">
-                    GPS accuracy is poor. Your position may vary within this
-                    radius. Try a fresh reading in an open area or explain your
-                    exact location to CDRRMO.
-                  </p>
+              <h3>
+                {online ? "Loading your request..." : "Your request is saved"}
+              </h3>
+              <p>
+                {online
+                  ? "Checking the latest status with CDRRMO."
+                  : "Reconnect to view its latest status."}
+              </p>
+            </div>
+          ) : (
+            <AssistanceRequestForm
+              fix={fix}
+              source={fixSource}
+              name={name}
+              contact={contact}
+              locating={operation === "locating"}
+              submitting={operation === "submitting"}
+              online={online}
+              onNameChange={setName}
+              onContactChange={setContact}
+              onLocate={(forceFresh) => void locate(forceFresh)}
+              onStopLocating={() => locationCapture.current?.abort()}
+              onSubmit={() => void submit()}
+            />
+          )}
+          {error && (
+            <p className={styles.feedback} role="alert">
+              {error}
+            </p>
+          )}
+        </div>
+        <footer className={styles.footer}>
+          {hasExistingRequest ? (
+            <>
+              <div className={styles.pinnedActions}>
+                {requestView !== "overview" && (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setRequestView("overview")}
+                  >
+                    Back to request
+                  </button>
                 )}
-                <button
-                  type="button"
-                  className="primary-button"
-                  disabled={busy}
-                  onClick={() => void submit()}
-                >
-                  Confirm and Submit Request
-                </button>
-              </section>
-            )}
-          </>
-        )}
-        {error && (
-          <p className="error-message" role="alert">
-            {error}
-          </p>
-        )}
-        <p className="assistance-caption">
-          If you are in immediate danger, use verified official emergency
-          communication channels. Updates require this PWA to be open and
-          connected. Closing it does not provide background updates.
-        </p>
+                {tracking &&
+                  (!terminal ? (
+                    <button
+                      type="button"
+                      className={styles.cancelRequestButton}
+                      disabled={
+                        busy ||
+                        !online ||
+                        unavailable ||
+                        !assistanceActive(tracking.request.status)
+                      }
+                      onClick={() => {
+                        setCancelError("");
+                        setCancelTarget(tracking.request.id);
+                      }}
+                    >
+                      Cancel request
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={newRequest}
+                    >
+                      Start a new request
+                    </button>
+                  ))}
+                {!tracking && unavailable && (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setUnavailable(false)}
+                  >
+                    Check status again
+                  </button>
+                )}
+              </div>
+              <p>Updates require this page to stay open and connected.</p>
+            </>
+          ) : (
+            <>
+              <p id="assistance-consent" className={styles.submitConsent}>
+                Confirming sends this location, accuracy, capture time and any
+                contact details to CDRRMO. No live tracking. Assistance or
+                dispatch is not guaranteed.
+              </p>
+              <button
+                type="submit"
+                form="assistance-request-form"
+                className={`primary-button ${styles.submitButton}`}
+                aria-describedby="assistance-consent"
+                disabled={!fix || busy || !online}
+              >
+                {operation === "submitting" ? (
+                  <LoaderCircle
+                    size={18}
+                    className={styles.spinner}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Send size={18} aria-hidden="true" />
+                )}
+                {operation === "submitting"
+                  ? "Sending request..."
+                  : "Confirm and send request"}
+              </button>
+              <p>
+                If you are in immediate danger, use verified official emergency
+                channels.
+              </p>
+            </>
+          )}
+        </footer>
       </dialog>
+      <CancelAssistanceDialog
+        open={cancelTarget !== null}
+        busy={operation === "cancelling"}
+        error={cancelError}
+        onDismiss={() => {
+          if (operation !== "cancelling") setCancelTarget(null);
+        }}
+        onConfirm={() => void cancel()}
+      />
     </AssistanceContext.Provider>
   );
 }
