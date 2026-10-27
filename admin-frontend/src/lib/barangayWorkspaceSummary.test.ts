@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { ManagedCenter } from "@/components/admin/CenterManager";
-import { getBarangayWorkspaceSummary } from "./barangayWorkspaceSummary";
+import {
+  getBarangayWorkspaceSummary,
+  isAcceptingCenter,
+} from "./barangayWorkspaceSummary";
 
 type SummaryCenter = Pick<
   ManagedCenter,
@@ -15,6 +18,31 @@ const center = (overrides: Partial<SummaryCenter> = {}): SummaryCenter => ({
 });
 
 describe("barangay workspace summary", () => {
+  it("counts nearly full centers with remaining spaces as accepting evacuees", () => {
+    const centers = [
+      center({ capacity: 500, current_occupancy: 200 }),
+      center({ capacity: 500, current_occupancy: 103 }),
+      center({ capacity: 500, current_occupancy: 400, status: "NEARLY_FULL" }),
+      center({ capacity: 500, current_occupancy: 400, status: "NEARLY_FULL" }),
+    ];
+    expect(centers.filter(isAcceptingCenter)).toHaveLength(4);
+    expect(getBarangayWorkspaceSummary(centers)).toEqual({
+      centerCount: 4,
+      occupancy: 1103,
+      remainingSpaces: 897,
+    });
+  });
+
+  it("does not count full, closed, zero-capacity or occupied-to-capacity centers as accepting", () => {
+    expect(
+      [
+        center({ status: "FULL", current_occupancy: 100 }),
+        center({ status: "CLOSED", current_occupancy: 10 }),
+        center({ status: "NEARLY_FULL", current_occupancy: 100 }),
+        center({ capacity: 0, current_occupancy: 0 }),
+      ].filter(isAcceptingCenter),
+    ).toHaveLength(0);
+  });
   it("shows known zero totals for no assigned centers", () => {
     expect(getBarangayWorkspaceSummary([])).toEqual({
       centerCount: 0,

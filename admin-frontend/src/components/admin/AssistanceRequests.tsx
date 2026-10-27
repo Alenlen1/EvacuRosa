@@ -21,12 +21,16 @@ import {
 } from "@/lib/assistance";
 import { TRAVEL_MODES } from "@/lib/travelTime";
 import styles from "./AssistanceRequests.module.css";
+import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
+import { isVisibleAssistanceRequest } from "@/lib/assistanceVisibility";
 import { MapSkeleton, RecordsSkeleton } from "./LoadingSkeleton";
 const AssistanceLocationMap = dynamic(() => import("./AssistanceLocationMap"), {
   ssr: false,
   loading: () => <MapSkeleton label="Loading reported-location map..." />,
 });
 export function AssistanceRequests() {
+  const { confirmDelete, deleteDialog } = useDeleteConfirmation();
+  const [mobileView, setMobileView] = useState<"requests" | "map">("requests");
   const [requests, setRequests] = useState<AssistanceRequest[]>([]),
     [filter, setFilter] = useState<AssistanceStatus | "">("");
   const [selection, setSelection] = useState<{
@@ -83,7 +87,13 @@ export function AssistanceRequests() {
           );
           if (stopped) return;
           if (version === mutationVersion.current && !pending.current) {
-            setRequests(rows);
+            const visible = rows.filter(isVisibleAssistanceRequest);
+            setRequests(visible);
+            setSelection((current) =>
+              current && visible.some((row) => row.id === current.id)
+                ? current
+                : null,
+            );
             setError("");
             lastSuccess = Date.now();
           }
@@ -207,8 +217,13 @@ export function AssistanceRequests() {
       );
       if (!mounted.current) return;
       setRequests((rows) =>
-        rows.map((row) => (row.id === item.id ? { ...row, ...updated } : row)),
+        rows
+          .map((row) => (row.id === item.id ? { ...row, ...updated } : row))
+          .filter(isVisibleAssistanceRequest),
       );
+      if (!isVisibleAssistanceRequest(updated)) {
+        setSelection((current) => (current?.id === item.id ? null : current));
+      }
       setHistories((previous) => {
         const next = { ...previous };
         delete next[item.id];
@@ -238,9 +253,13 @@ export function AssistanceRequests() {
   async function remove(item: AssistanceRequest) {
     if (
       pending.current ||
-      !window.confirm(
-        "Permanently delete this closed request, its location, contact details and status history? This cannot be undone.",
-      )
+      !(await confirmDelete({
+        title: "Delete closed request?",
+        subject: item.display_name || "Assistance request",
+        description:
+          "This permanently removes the request, its reported location, contact details and status history. This action cannot be undone.",
+        confirmLabel: "Delete request",
+      }))
     )
       return;
     pending.current = true;
@@ -321,11 +340,13 @@ export function AssistanceRequests() {
             onChange={(e) => setFilter(e.target.value as AssistanceStatus | "")}
           >
             <option value="">All statuses</option>
-            {ASSISTANCE_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {ASSISTANCE_LABELS[status]}
-              </option>
-            ))}
+            {ASSISTANCE_STATUSES.filter((status) => status !== "CANCELLED").map(
+              (status) => (
+                <option key={status} value={status}>
+                  {ASSISTANCE_LABELS[status]}
+                </option>
+              ),
+            )}
           </select>
         </label>
         <span>Automatic updates - Latest 100</span>
@@ -356,170 +377,196 @@ export function AssistanceRequests() {
         <RecordsSkeleton label="Loading assistance requests..." />
       )}
       {!!requests.length && (
-        <div ref={mapSection} className="assistance-map-section">
-          <div className="assistance-map-heading">
-            <h3>Reported-location map</h3>
-            {selection && requests.some((item) => item.id === selection.id) && (
-              <p className="assistance-map-selection">
-                <MapPin size={14} aria-hidden="true" />
-                Selected request:{" "}
-                {requests.find((item) => item.id === selection.id)
-                  ?.display_name || "Name not provided"}
-              </p>
-            )}
-          </div>
-          <AssistanceLocationMap requests={requests} selection={selection} />
+        <div className="assistance-view-tabs" aria-label="Shared location view">
+          <button
+            type="button"
+            aria-pressed={mobileView === "requests"}
+            onClick={() => setMobileView("requests")}
+          >
+            Requests ({requests.length})
+          </button>
+          <button
+            type="button"
+            aria-pressed={mobileView === "map"}
+            onClick={() => setMobileView("map")}
+          >
+            Location map
+          </button>
         </div>
       )}
-      <div className="assistance-list">
-        {requests.map((item) => (
-          <article
-            className="assistance-record"
-            data-status={item.status}
-            key={item.id}
+      <div className="assistance-workspace-body" data-mobile-view={mobileView}>
+        {!!requests.length && (
+          <div
+            ref={mapSection}
+            className="assistance-map-section"
+            tabIndex={-1}
           >
-            <header className="assistance-record-heading">
-              <h3>{item.display_name || "Name not provided"}</h3>
-              <span className="assistance-mode">
-                {TRAVEL_MODES[item.travel_mode].label}
-              </span>
-            </header>
-            <div className="assistance-status-line">
-              <strong className="assistance-status-badge">
-                {ASSISTANCE_LABELS[item.status]}
-              </strong>
-              <time dateTime={item.status_updated_at ?? item.created_at}>
-                {new Date(
-                  item.status_updated_at ?? item.created_at,
-                ).toLocaleString()}
-              </time>
+            <div className="assistance-map-heading">
+              <h3>Reported-location map</h3>
+              {selection &&
+                requests.some((item) => item.id === selection.id) && (
+                  <p className="assistance-map-selection">
+                    <MapPin size={14} aria-hidden="true" />
+                    Selected request:{" "}
+                    {requests.find((item) => item.id === selection.id)
+                      ?.display_name || "Name not provided"}
+                  </p>
+                )}
             </div>
-            <div className="assistance-location">
-              <MapPin size={18} aria-hidden="true" />
-              <div>
-                <span className="assistance-field-label">
-                  Reported location
+            <AssistanceLocationMap requests={requests} selection={selection} />
+          </div>
+        )}
+        <div className="assistance-list">
+          {requests.map((item) => (
+            <article
+              className="assistance-record"
+              data-status={item.status}
+              key={item.id}
+            >
+              <header className="assistance-record-heading">
+                <h3>{item.display_name || "Name not provided"}</h3>
+                <span className="assistance-mode">
+                  {TRAVEL_MODES[item.travel_mode].label}
                 </span>
-                <strong>
-                  {item.location_name
-                    ? `Near ${item.location_name.roadName}`
-                    : "Street name unavailable"}
+              </header>
+              <div className="assistance-status-line">
+                <strong className="assistance-status-badge">
+                  {ASSISTANCE_LABELS[item.status]}
                 </strong>
-                <span className="assistance-coordinates">
-                  {item.latitude.toFixed(6)}, {item.longitude.toFixed(6)}
-                </span>
+                <time dateTime={item.status_updated_at ?? item.created_at}>
+                  {new Date(
+                    item.status_updated_at ?? item.created_at,
+                  ).toLocaleString()}
+                </time>
               </div>
-            </div>
-            <div className="assistance-key-details">
-              <div>
-                <span className="assistance-field-label">Contact number</span>
-                <strong>{item.contact_number || "Not provided"}</strong>
-              </div>
-              <div>
-                <span className="assistance-field-label">
-                  Reported GPS accuracy
-                </span>
-                <strong>+/-{Math.round(item.accuracy_meters)} m</strong>
-              </div>
-            </div>
-            <p className="assistance-capture-time">
-              Location captured:{" "}
-              {new Date(item.location_recorded_at).toLocaleString()}
-            </p>
-            <details className="assistance-record-details">
-              <summary>Request details</summary>
-              <dl>
+              <div className="assistance-location">
+                <MapPin size={18} aria-hidden="true" />
                 <div>
-                  <dt>Request ID</dt>
-                  <dd className="assistance-reference">{item.id}</dd>
+                  <span className="assistance-field-label">
+                    Reported location
+                  </span>
+                  <strong>
+                    {item.location_name
+                      ? `Near ${item.location_name.roadName}`
+                      : "Street name unavailable"}
+                  </strong>
+                  <span className="assistance-coordinates">
+                    {item.latitude.toFixed(6)}, {item.longitude.toFixed(6)}
+                  </span>
+                </div>
+              </div>
+              <div className="assistance-key-details">
+                <div>
+                  <span className="assistance-field-label">Contact number</span>
+                  <strong>{item.contact_number || "Not provided"}</strong>
                 </div>
                 <div>
-                  <dt>Received</dt>
-                  <dd>{new Date(item.created_at).toLocaleString()}</dd>
+                  <span className="assistance-field-label">
+                    Reported GPS accuracy
+                  </span>
+                  <strong>+/-{Math.round(item.accuracy_meters)} m</strong>
                 </div>
-              </dl>
-            </details>
-            <div className="assistance-record-actions">
-              <button
-                className="secondary-button"
-                onClick={() => {
-                  setSelection((previous) => ({
-                    id: item.id,
-                    version: (previous?.version ?? 0) + 1,
-                  }));
-                  mapSection.current?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                }}
-              >
-                View on map
-              </button>
-              {item.status === "PENDING" && (
-                <button
-                  className="primary-button"
-                  disabled={busy !== null}
-                  onClick={() => void change(item, "ACKNOWLEDGED")}
-                >
-                  Acknowledge Request
-                </button>
-              )}
-              {item.status === "ACKNOWLEDGED" && (
-                <button
-                  className="primary-button"
-                  disabled={busy !== null}
-                  onClick={() => void change(item, "DISPATCHED")}
-                >
-                  Dispatch Assistance
-                </button>
-              )}
-              {item.status === "DISPATCHED" && (
-                <button
-                  className="primary-button"
-                  disabled={busy !== null}
-                  onClick={() => void change(item, "COMPLETED")}
-                >
-                  Mark Completed
-                </button>
-              )}
-              {assistanceActive(item.status) ? (
+              </div>
+              <p className="assistance-capture-time">
+                Location captured:{" "}
+                {new Date(item.location_recorded_at).toLocaleString()}
+              </p>
+              <details className="assistance-record-details">
+                <summary>Request details</summary>
+                <dl>
+                  <div>
+                    <dt>Request ID</dt>
+                    <dd className="assistance-reference">{item.id}</dd>
+                  </div>
+                  <div>
+                    <dt>Received</dt>
+                    <dd>{new Date(item.created_at).toLocaleString()}</dd>
+                  </div>
+                </dl>
+              </details>
+              <div className="assistance-record-actions">
                 <button
                   className="secondary-button"
-                  disabled={busy !== null}
-                  onClick={() => void change(item, "CANCELLED")}
+                  onClick={() => {
+                    setSelection((previous) => ({
+                      id: item.id,
+                      version: (previous?.version ?? 0) + 1,
+                    }));
+                    setMobileView("map");
+                    requestAnimationFrame(() =>
+                      mapSection.current?.focus({ preventScroll: true }),
+                    );
+                  }}
                 >
-                  Cancel Request
+                  View on map
                 </button>
-              ) : (
+                {item.status === "PENDING" && (
+                  <button
+                    className="primary-button"
+                    disabled={busy !== null}
+                    onClick={() => void change(item, "ACKNOWLEDGED")}
+                  >
+                    Acknowledge Request
+                  </button>
+                )}
+                {item.status === "ACKNOWLEDGED" && (
+                  <button
+                    className="primary-button"
+                    disabled={busy !== null}
+                    onClick={() => void change(item, "DISPATCHED")}
+                  >
+                    Dispatch Assistance
+                  </button>
+                )}
+                {item.status === "DISPATCHED" && (
+                  <button
+                    className="primary-button"
+                    disabled={busy !== null}
+                    onClick={() => void change(item, "COMPLETED")}
+                  >
+                    Mark Completed
+                  </button>
+                )}
+                {assistanceActive(item.status) ? (
+                  <button
+                    className="secondary-button"
+                    disabled={busy !== null}
+                    onClick={() => void change(item, "CANCELLED")}
+                  >
+                    Cancel Request
+                  </button>
+                ) : (
+                  <button
+                    className="secondary-button assistance-delete-button"
+                    disabled={busy !== null}
+                    onClick={() => void remove(item)}
+                  >
+                    Delete closed request
+                  </button>
+                )}
                 <button
-                  className="secondary-button assistance-delete-button"
-                  disabled={busy !== null}
-                  onClick={() => void remove(item)}
+                  className="secondary-button"
+                  onClick={() => void history(item.id)}
                 >
-                  Delete closed request
+                  View status history
                 </button>
+              </div>
+              {histories[item.id] && (
+                <ol className="assistance-timeline">
+                  {histories[item.id].map((event) => (
+                    <li key={event.version}>
+                      <strong>{ASSISTANCE_LABELS[event.new_status]}</strong>
+                      <time>{new Date(event.changed_at).toLocaleString()}</time>
+                      <small>{event.actor_kind}</small>
+                    </li>
+                  ))}
+                </ol>
               )}
-              <button
-                className="secondary-button"
-                onClick={() => void history(item.id)}
-              >
-                View status history
-              </button>
-            </div>
-            {histories[item.id] && (
-              <ol className="assistance-timeline">
-                {histories[item.id].map((event) => (
-                  <li key={event.version}>
-                    <strong>{ASSISTANCE_LABELS[event.new_status]}</strong>
-                    <time>{new Date(event.changed_at).toLocaleString()}</time>
-                    <small>{event.actor_kind}</small>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </article>
-        ))}
+            </article>
+          ))}
+        </div>
       </div>
+      {deleteDialog}
     </section>
   );
 }

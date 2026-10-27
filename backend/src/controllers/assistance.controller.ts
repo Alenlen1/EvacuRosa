@@ -279,6 +279,7 @@ export async function listAssistance(req: RoleAwareRequest, res: Response) {
   let query = req.userSupabase
     .from("assistance_requests")
     .select(requestColumns)
+    .neq("status", "CANCELLED")
     .order("created_at", { ascending: false })
     .limit(100);
   if (req.query.status) {

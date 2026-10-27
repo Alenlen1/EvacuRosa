@@ -1,0 +1,147 @@
+.preview {
+  overflow: hidden;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.refresh {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e6dcd3;
+  border-radius: 7px;
+  color: #865542;
+}
+.refresh:hover:not(:disabled) {
+  background: #f7eee7;
+}
+.refresh:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+.list {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 10px;
+}
+.request,
+.loadingRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 64px;
+  min-width: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee6df;
+}
+.request:hover {
+  background: #fcf8f3;
+}
+.pin {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #f5eae3;
+  color: #8b4b3e;
+}
+.copy {
+  flex: 1;
+  min-width: 0;
+}
+.copy strong,
+.copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.copy strong {
+  color: #40322b;
+  font-size: 12px;
+  font-weight: 600;
+}
+.copy small {
+  margin-top: 5px;
+  color: #827066;
+  font-size: 10px;
+}
+.status {
+  flex-shrink: 0;
+  max-width: 120px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  background: #edf4fa;
+  color: #295b86;
+  font-size: 9px;
+  line-height: 1.4;
+  text-align: center;
+}
+.status[data-status="ACKNOWLEDGED"] {
+  color: #845d0f;
+  background: #fff2cf;
+}
+.status[data-status="DISPATCHED"] {
+  color: #9a332c;
+  background: #fae9e4;
+}
+.status[data-status="COMPLETED"] {
+  color: #286240;
+  background: #e8f2eb;
+}
+.status[data-status="CANCELLED"] {
+  color: #666;
+  background: #efeeeb;
+}
+.feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  color: #827066;
+  font-size: 12px;
+  text-align: center;
+}
+.feedback button {
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid #e6dcd3;
+  border-radius: 7px;
+  color: #800000;
+  font-size: 11px;
+}
+.loadingIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+}
+@container cdrrmo-main (max-width: 700px) {
+  .list {
+    margin-top: 4px;
+  }
+  .request {
+    gap: 7px;
+  }
+  .pin {
+    flex-basis: 26px;
+    height: 28px;
+  }
+  .copy strong {
+    font-size: 11px;
+  }
+  .status {
+    max-width: 90px;
+    font-size: 8px;
+    padding: 4px 5px;
+  }
+  .feedback {
+    font-size: 11px;
+  }
+}

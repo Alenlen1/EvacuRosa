@@ -15,7 +15,16 @@ function isValidCount(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 }
 
-/** Summarize saved centers already scoped to the staff member's barangay. */
+export function isAcceptingCenter(center: WorkspaceCenter): boolean {
+  return (
+    (center.status === "AVAILABLE" || center.status === "NEARLY_FULL") &&
+    isValidCount(center.capacity) &&
+    isValidCount(center.current_occupancy) &&
+    center.current_occupancy < center.capacity
+  );
+}
+
+/** Summarize saved centers for a barangay or citywide workspace. */
 export function getBarangayWorkspaceSummary(
   centers: readonly WorkspaceCenter[],
 ): BarangayWorkspaceTotals {

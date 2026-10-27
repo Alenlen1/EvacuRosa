@@ -448,6 +448,7 @@ export interface EarthquakeEvent {
   magnitude: number;
   depthKm?: number | null;
   occurredAt: string;
+  createdAt?: string;
   source: string;
   status: string;
   notes?: string;
@@ -459,6 +460,7 @@ export interface EarthquakeRoadImpact {
   roadId: string;
   impactLevel: string;
   confirmedBlocked: boolean;
+  verifiedAt?: string;
   affectedSegments?: LatLng[][];
 }
 
