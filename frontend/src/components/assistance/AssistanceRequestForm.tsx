@@ -101,8 +101,8 @@ export function AssistanceRequestForm({
             </p>
             {fix.accuracy > 100 && (
               <p className={styles.accuracyWarning} role="status">
-                Accuracy is limited. Try a fresh reading or explain your exact
-                location to CDRRMO.
+                Location accuracy is limited. Please try again or contact CDRRMO
+                for assistance.
               </p>
             )}
           </div>
