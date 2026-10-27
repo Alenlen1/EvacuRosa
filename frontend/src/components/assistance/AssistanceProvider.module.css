@@ -1,0 +1,819 @@
+dialog.dialog {
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(var(--assistance-viewport-height, 100dvh) - 24px);
+  top: calc(
+    var(--assistance-viewport-top, 0px) +
+      var(--assistance-viewport-height, 100dvh) / 2
+  );
+  bottom: auto;
+  transform: translateY(-50%);
+  margin: 0 auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #e3dcd4;
+  border-radius: 20px;
+  background: #fffdf9;
+  color: #302825;
+  box-shadow: 0 24px 80px #25130d38;
+}
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.dialog[data-view="location"] {
+  height: min(720px, calc(var(--assistance-viewport-height, 100dvh) - 24px));
+}
+.dialog::backdrop,
+.cancelDialog::backdrop {
+  background: #21191580;
+  backdrop-filter: blur(3px);
+}
+.dialog > header {
+  flex-shrink: 0;
+  padding: 16px 22px;
+  border-bottom: 1px solid #e9e1d8;
+  background: #fffdf9;
+}
+.dialogIdentity,
+.sectionHeading,
+.locationActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dialogIdentity {
+  min-width: 0;
+}
+.dialogIdentity small {
+  display: block;
+  margin-bottom: 5px;
+  color: #86564a;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+.dialog h2 {
+  margin: 0;
+  font-size: clamp(19px, 3vw, 24px);
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+}
+.headerIcon,
+.sectionIcon,
+.statusIcon,
+.cancelIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: #f3e7df;
+  color: #800000;
+}
+.dialog button,
+.cancelDialog button {
+  margin: 0;
+  min-height: 44px;
+  font-family: inherit;
+}
+.dialog .closeButton,
+.cancelDialog .closeButton {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #75685e;
+  cursor: pointer;
+}
+.closeButton:hover:not(:disabled) {
+  background: #f0e9e1;
+}
+.dialog :is(button, input):focus-visible,
+.cancelDialog button:focus-visible {
+  outline: 3px solid #9d6c27;
+  outline-offset: 3px;
+}
+.dialog button:disabled,
+.cancelDialog button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.body {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 22px;
+}
+.dialog p {
+  line-height: 1.65;
+  font-size: 14px;
+}
+.dialog .intro {
+  margin: 0 0 12px;
+  color: #655b52;
+}
+.requestForm {
+  margin: 0;
+}
+.steps {
+  display: flex;
+  gap: 24px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #81766c;
+  font-size: 12px;
+  font-weight: 600;
+}
+.steps li > span {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border: 1px solid #dfd5ca;
+  border-radius: 50%;
+  background: #f4f0ea;
+}
+.steps li[aria-current="step"] {
+  color: #800000;
+}
+.steps li[aria-current="step"] > span {
+  border-color: #800000;
+  background: #800000;
+  color: #fff;
+}
+.steps li[data-complete="true"] > span {
+  border-color: #c9ddca;
+  background: #edf5ed;
+  color: #326441;
+}
+.locationCard {
+  padding: 14px;
+  border: 1px solid #e5ddd3;
+  border-radius: 13px;
+  background: #f8f5f0;
+}
+.dialog .sectionHeading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.dialog .sectionHeading p {
+  margin: 3px 0 0;
+  color: #75685e;
+  font-size: 12px;
+}
+.sectionIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+.dialog .locationHint {
+  margin: 16px 0;
+  color: #706156;
+  font-size: 13px;
+}
+.locationDetails {
+  margin-top: 12px;
+}
+.accuracy {
+  display: inline-flex;
+  padding: 5px 9px;
+  border: 1px solid #cdddcf;
+  border-radius: 7px;
+  background: #edf5ee;
+  color: #356046;
+  font-size: 11px;
+  font-weight: 600;
+}
+.accuracy[data-poor="true"] {
+  border-color: #e4c997;
+  background: #fff3d9;
+  color: #805e24;
+}
+.dialog .coordinates {
+  margin: 12px 0 4px;
+  font-size: clamp(14px, 2.6vw, 18px);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.dialog .captureTime,
+.dialog .smallNote {
+  margin: 6px 0 12px;
+  color: #78685b;
+  font-size: 12px;
+}
+.dialog .accuracyWarning {
+  margin: 10px 0;
+  padding: 8px 10px;
+  border-left: 3px solid #bc942d;
+  background: #fff6df;
+  color: #745421;
+  font-size: 12px;
+}
+.locationActions {
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.dialog .locationActions .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-color: #dacfbe;
+  background: #fffdf9;
+  color: #593f32;
+}
+.textButton {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #800000;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dialog .progressMessage {
+  margin: 12px 0 0;
+  color: #74645b;
+  font-size: 12px;
+}
+.contactSection {
+  margin-top: 14px;
+  padding: 0 12px;
+  border: 1px solid #e5ddd3;
+  border-radius: 10px;
+}
+.contactSection summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.contactSection summary::-webkit-details-marker {
+  display: none;
+}
+.contactSection summary > span {
+  color: #8a7c72;
+  font-size: 11px;
+  font-weight: 500;
+}
+.contactSection summary > svg {
+  margin-left: auto;
+}
+.contactSection[open] summary > svg {
+  transform: rotate(180deg);
+}
+.contactGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 4px 0 14px;
+}
+.dialog .contactGrid label {
+  min-width: 0;
+  margin: 0;
+  color: #63544a;
+  font-size: 12px;
+  font-weight: 550;
+}
+.contactGrid label > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dialog .contactGrid input {
+  min-width: 0;
+  min-height: 46px;
+  margin-top: 7px;
+  padding: 11px 12px;
+  border: 1px solid #d8cfc4;
+  border-radius: 9px;
+  background: #fffdf9;
+  color: #302825;
+  font-size: 14px;
+  font-weight: 400;
+}
+.contactGrid input::placeholder {
+  color: #a29488;
+}
+.dialog .submitButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+}
+.footer {
+  flex-shrink: 0;
+  padding: 12px 22px;
+  border-top: 1px solid #e9e1d8;
+  background: #f8f5ef;
+}
+.dialog .footer p {
+  margin: 0;
+  color: #7b6d61;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.dialog .footer .submitConsent {
+  margin: 0 0 10px;
+}
+.dialog .footer > p:last-child {
+  margin-top: 8px;
+}
+.statusCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #ead5a4;
+  border-radius: 13px;
+  background: #fff7de;
+}
+.dialog .statusCard h3 {
+  margin: 0 0 6px;
+  font-size: 19px;
+}
+.dialog .statusCard p {
+  margin: 0;
+  color: #6f5d3b;
+  font-size: 13px;
+}
+.statusIcon {
+  background: #f4e7bf;
+  color: #8d6b24;
+}
+.statusCard[data-status="COMPLETED"],
+.statusCard[data-status="DISPATCHED"] {
+  border-color: #cbdccb;
+  background: #edf5ed;
+}
+.statusCard[data-status="COMPLETED"] .statusIcon,
+.statusCard[data-status="DISPATCHED"] .statusIcon {
+  background: #dcebdc;
+  color: #326441;
+}
+.statusCard[data-status="CANCELLED"] {
+  border-color: #ddd4ca;
+  background: #f1ede7;
+}
+.dialog .connection {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 10px 0 14px;
+  color: #64735f;
+  font-size: 11px;
+}
+.connection > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #578351;
+}
+.connection[data-outdated="true"] {
+  color: #9b752b;
+}
+.connection[data-outdated="true"] > span {
+  background: #ab842e;
+}
+.trackingDetails {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid #e9e1d8;
+  border-radius: 10px;
+}
+.trackingDetails dt {
+  margin-bottom: 5px;
+  color: #8a796d;
+  font-size: 11px;
+}
+.trackingDetails dd {
+  margin: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.requestReference {
+  grid-column: 1 / -1;
+}
+.requestReference dd {
+  overflow-wrap: anywhere;
+}
+.history {
+  margin-bottom: 24px;
+}
+.dialog .history h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+.dialog .history ol {
+  margin: 12px 0;
+  padding-left: 16px;
+  border-left: 2px solid #ddc276;
+}
+.history li strong {
+  font-size: 13px;
+}
+.dialog .history :is(time, small) {
+  margin-top: 3px;
+  color: #8a796d;
+  font-size: 11px;
+}
+.pinnedActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.pinnedActions > button {
+  flex: 1;
+  justify-content: center;
+  font-size: 12px;
+}
+.cancelRequestButton {
+  padding: 10px 14px;
+  border: 1px solid #d9bfb4;
+  border-radius: 9px;
+  background: transparent;
+  color: #943a2d;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cancelRequestButton:hover:not(:disabled) {
+  background: #fbede7;
+}
+.dialog .feedback,
+.cancelDialog .feedback {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #e6c5b9;
+  border-radius: 9px;
+  background: #fbede7;
+  color: #963a2e;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.cancelDialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 26px;
+  overflow-y: auto;
+  border: 1px solid #e4d8ce;
+  border-radius: 18px;
+  background: #fffdf9;
+  color: #302825;
+  box-shadow: 0 24px 80px #25130d40;
+}
+.cancelHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.cancelIcon {
+  width: 52px;
+  height: 52px;
+  background: #f8e6de;
+  color: #a13b2e;
+}
+.cancelDialog h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+}
+.cancelDialog p {
+  margin: 12px 0 0;
+  color: #7b685c;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.cancelActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+.cancelActions > button {
+  flex: 1;
+  justify-content: center;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.dangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #9b382b;
+  border-radius: 9px;
+  background: #9b382b;
+  color: #fffdf9;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dangerButton:hover:not(:disabled) {
+  background: #7c271f;
+}
+.spinner {
+  flex-shrink: 0;
+  animation: assistance-spin 1s linear infinite;
+}
+.requestTabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 5px 16px;
+  border-bottom: 1px solid #e9e1d8;
+  background: #f8f5ef;
+}
+.dialog .requestTabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #806e60;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dialog .requestTabs [aria-selected="true"] {
+  background: #fffdf9;
+  color: #800000;
+  box-shadow: 0 1px 4px #49382b0d;
+}
+.locationSummary {
+  padding: 12px;
+  border: 1px solid #e5ddd3;
+  border-radius: 10px;
+  background: #f8f5f0;
+}
+.dialog .locationSummary .coordinates {
+  margin: 8px 0 3px;
+  font-size: 15px;
+}
+.dialog .locationSummary .captureTime {
+  margin: 0 0 10px;
+}
+.locationSummary > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  justify-content: center;
+}
+.body.mapBody {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.locationPanel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  min-width: 0;
+}
+.locationMetadata {
+  flex-shrink: 0;
+}
+.dialog .locationMetadata .coordinates {
+  margin: 0 0 7px;
+  font-size: 16px;
+}
+.dialog .locationMetadata .captureTime {
+  margin: 6px 0 0;
+  font-size: 11px;
+}
+.locationMap {
+  flex: 1;
+  min-height: 100px;
+  overflow: hidden;
+  border: 1px solid #e5ddd3;
+  border-radius: 12px;
+  background: #f1ece6;
+}
+.locationMap :global(.assistance-reported-map) {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+}
+.mapLoading {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 100px;
+  color: #806e60;
+  font-size: 12px;
+}
+.dialog .mapNote {
+  flex-shrink: 0;
+  margin: 0;
+  color: #806e60;
+  font-size: 11px;
+}
+.requestLoading {
+  padding: 20px 0;
+  text-align: center;
+  color: #806e60;
+}
+.requestLoading > svg {
+  margin: 0 auto;
+}
+.dialog .requestLoading h3 {
+  margin: 12px 0 0;
+  font-size: 17px;
+}
+.requestShortcut {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  padding: 8px clamp(12px, 2vw, 24px);
+  border: 0;
+  border-bottom: 1px solid #e5d7a8;
+  background: #fff9df;
+  color: #5b472b;
+  text-align: left;
+  cursor: pointer;
+}
+.requestShortcut:hover {
+  background: #fff1bf;
+}
+.requestShortcut:focus-visible {
+  outline: 3px solid #9d6c27;
+  outline-offset: -3px;
+}
+.shortcutDot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #a88728;
+}
+.shortcutDot[data-status="CANCELLED"] {
+  background: #8a796d;
+}
+.shortcutDot[data-status="COMPLETED"],
+.shortcutDot[data-status="DISPATCHED"] {
+  background: #4d7e50;
+}
+.shortcutCopy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.shortcutCopy small {
+  font-size: 10px;
+  color: #877553;
+}
+.shortcutCopy strong {
+  font-size: 12px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.shortcutAction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+}
+@media (max-height: 650px) {
+  .dialog > header {
+    padding: 10px 16px;
+  }
+  .body {
+    padding: 10px 14px;
+  }
+  .footer {
+    padding: 10px 14px;
+  }
+  .dialog .intro {
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .steps {
+    margin-bottom: 10px;
+  }
+  .locationPanel {
+    gap: 7px;
+  }
+  .dialog .locationMetadata .captureTime {
+    margin-top: 4px;
+  }
+}
+@media (max-height: 480px) and (min-width: 600px) {
+  .locationPanel {
+    display: grid;
+    grid-template-columns: minmax(190px, 0.8fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px 16px;
+  }
+  .locationMap {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    min-height: 80px;
+  }
+  .dialog .mapNote {
+    grid-column: 1;
+  }
+}
+@keyframes assistance-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 540px) {
+  dialog.dialog {
+    width: calc(100vw - 20px);
+    max-height: calc(var(--assistance-viewport-height, 100dvh) - 20px);
+    border-radius: 16px;
+  }
+  .dialog > header {
+    padding: 16px;
+  }
+  .headerIcon {
+    display: none;
+  }
+  .body {
+    padding: 14px 16px;
+  }
+  .locationCard {
+    padding: 14px;
+  }
+  .contactGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dialog .contactGrid input {
+    font-size: 16px;
+  }
+  .footer {
+    padding: 12px 16px;
+  }
+  .steps {
+    gap: 16px;
+  }
+  .steps li {
+    font-size: 11px;
+  }
+  .statusCard {
+    gap: 10px;
+    padding: 14px;
+  }
+  .statusIcon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+  .cancelDialog {
+    padding: 22px;
+  }
+  .cancelActions {
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

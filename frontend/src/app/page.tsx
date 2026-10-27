@@ -1,5 +1,8 @@
 "use client";
-import { AssistanceProvider } from "@/components/assistance/AssistanceProvider";
+import {
+  AssistanceProvider,
+  AssistanceRequestShortcut,
+} from "@/components/assistance/AssistanceProvider";
 import {
   useLanguage,
   LanguageProvider,
@@ -118,16 +121,21 @@ type ActiveResult =
   | null;
 
 export default function Home() {
+  const geolocation = useGeolocation();
   return (
     <LanguageProvider>
-      <AssistanceProvider>
-        <PublicHome />
+      <AssistanceProvider geolocation={geolocation}>
+        <PublicHome geolocation={geolocation} />
       </AssistanceProvider>
     </LanguageProvider>
   );
 }
 
-function PublicHome() {
+function PublicHome({
+  geolocation,
+}: {
+  geolocation: ReturnType<typeof useGeolocation>;
+}) {
   const { t } = useLanguage();
   const [panel, setPanel] = useState<"map" | "centers" | "hazards">("map");
   const [sheetState, setSheetState] = useState<SheetState>("collapsed");
@@ -138,7 +146,6 @@ function PublicHome() {
   const [searchSelection, setSearchSelection] = useState<PlaceResult | null>(
     null,
   );
-  const geolocation = useGeolocation();
   const isOnline = useOnlineStatus();
   const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>({
     state: "checking",
@@ -779,6 +786,7 @@ function PublicHome() {
             )}
         </div>
       </details>
+      <AssistanceRequestShortcut />
       <LocationRecovery location={geolocation} onRetry={geolocation.retry} />
       <div className="public-workspace">
         <nav className="navigation-rail" aria-label={t("Map views")}>
