@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight, Check, LockKeyhole } from "lucide-react";
 import { barangayCardAppearance } from "@/lib/barangayCardAppearance";
 import type { BarangayShelterSummary } from "@/lib/barangayShelterSummary";
+import { SkeletonBlock } from "./LoadingSkeleton";
 
 export type BarangayCardShelterSummary = {
   status: BarangayShelterSummary["status"] | "LOADING" | "UNAVAILABLE";
@@ -51,13 +52,23 @@ export function BarangayAccessCard({
       className="barangay-card-info"
       aria-busy={shelterSummary.status === "LOADING"}
     >
-      <span
-        className="barangay-card-status"
-        data-status={shelterSummary.status}
-      >
-        {shelterSummary.label}
-      </span>
-      <small>{shelterSummary.detail}</small>
+      {shelterSummary.status === "LOADING" ? (
+        <>
+          <span className="staff-skeleton-label">{shelterSummary.label}</span>
+          <SkeletonBlock className="staff-skeleton-line" />
+          <SkeletonBlock className="staff-skeleton-line staff-skeleton-short" />
+        </>
+      ) : (
+        <>
+          <span
+            className="barangay-card-status"
+            data-status={shelterSummary.status}
+          >
+            {shelterSummary.label}
+          </span>
+          <small>{shelterSummary.detail}</small>
+        </>
+      )}
     </span>
   );
 

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, Search, SearchX, X } from "lucide-react";
-import { Brand } from "@/components/ui/Brand";
+import { StaffHeader } from "@/components/admin/StaffHeader";
 import { BarangayAccessDialog } from "@/components/admin/BarangayAccessDialog";
 import { BarangayEvacuationOverview } from "@/components/admin/BarangayEvacuationOverview";
 import {
@@ -18,6 +18,11 @@ import { useBarangayCenters } from "@/hooks/useBarangayCenters";
 import { barangayCardAppearance } from "@/lib/barangayCardAppearance";
 import { BarangayShelterSummary } from "@/components/admin/BarangayShelterSummary";
 import { BarangayShelterList } from "@/components/admin/BarangayShelterList";
+import { BarangayPageSkeleton } from "@/components/admin/LoadingSkeleton";
+import {
+  clearWorkspaceRole,
+  rememberWorkspaceRole,
+} from "@/lib/workspaceLoading";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 type Barangay = { id: string; name: string };
@@ -185,8 +190,11 @@ export default function BarangaySelectionPage() {
         throw Error(body.error ?? "Could not verify the barangay code.");
       // The backend verifies the code and returns a session scoped to this barangay.
       // The shared entry account itself never gains access to every center.
-      const { error: sessionError } = await supabase.auth.setSession(body);
+      const { data: scopedSession, error: sessionError } =
+        await supabase.auth.setSession(body);
       if (sessionError) throw sessionError;
+      if (scopedSession.user)
+        rememberWorkspaceRole("BARANGAY_ADMIN", scopedSession.user.id);
       setCode("");
       router.replace("/admin/dashboard");
     } catch (cause) {
@@ -202,25 +210,22 @@ export default function BarangaySelectionPage() {
     }
   }
 
+  if (!ready || loading) return <BarangayPageSkeleton />;
+
   return (
     <main
       className={`staff-login barangay-access-page ${publicSans.className}`}
     >
-      <header className="app-header">
-        <div className="barangay-header-content">
-          <Brand />
-          <button
-            className="secondary-button"
-            disabled={busy}
-            onClick={async () => {
-              await supabase?.auth.signOut();
-              router.replace("/admin/login");
-            }}
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
+      <StaffHeader
+        role="BARANGAY_ADMIN"
+        directory
+        busy={busy}
+        onSignOut={async () => {
+          await supabase?.auth.signOut();
+          clearWorkspaceRole();
+          router.replace("/admin/login");
+        }}
+      />
       <div className="staff-login-content">
         <div className="staff-login-title">
           <span className="eyebrow">BARANGAY ACCESS</span>
@@ -234,212 +239,208 @@ export default function BarangaySelectionPage() {
             {error}
           </p>
         )}
-        {!ready || loading ? (
-          <p role="status">Loading barangays...</p>
-        ) : (
-          <>
-            <BarangayShelterSummary
-              centers={centers}
-              loading={centersLoading}
-              error={centersError}
-            />
-            <section
-              className="barangay-finder"
-              aria-label="Barangay search, map and access"
+        <>
+          <BarangayShelterSummary
+            centers={centers}
+            loading={centersLoading}
+            error={centersError}
+          />
+          <section
+            className="barangay-finder"
+            aria-label="Barangay search, map and access"
+          >
+            <form
+              className="barangay-search"
+              role="search"
+              aria-label="Find a barangay"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (normalizedQuery && matches[0] && !busy)
+                  findBarangay(matches[0]);
+              }}
             >
-              <form
-                className="barangay-search"
-                role="search"
-                aria-label="Find a barangay"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (normalizedQuery && matches[0] && !busy)
-                    findBarangay(matches[0]);
-                }}
-              >
-                <div className="barangay-search-heading">
-                  <label htmlFor="barangay-search">Find your barangay</label>
-                  <p id="barangay-search-hint">Search to view shelters.</p>
-                  <p
-                    className="barangay-search-status"
-                    role="status"
-                    aria-live="polite"
-                    aria-atomic="true"
-                  >
-                    {normalizedQuery
-                      ? `${matches.length} ${matches.length === 1 ? "barangay" : "barangays"} found.`
-                      : ""}
-                  </p>
-                </div>
-                <div className="barangay-search-row">
-                  <div className="barangay-search-input">
-                    <Search size={18} aria-hidden="true" />
-                    <input
-                      ref={searchRef}
-                      id="barangay-search"
-                      name="barangay"
-                      type="search"
-                      placeholder="Search barangay name…"
-                      autoComplete="off"
-                      enterKeyHint="search"
-                      spellCheck={false}
-                      value={query}
-                      disabled={busy}
-                      aria-describedby="barangay-search-hint"
-                      aria-controls="barangay-search-results"
-                      onChange={(event) => setQuery(event.target.value)}
-                    />
-                    {query && (
-                      <button
-                        type="button"
-                        aria-label="Clear barangay search"
-                        disabled={busy}
-                        onClick={clearSearch}
-                      >
-                        <X size={17} aria-hidden="true" />
-                      </button>
-                    )}
-                  </div>
-                  <button
-                    ref={findButtonRef}
-                    type="submit"
-                    className="primary-button"
-                    disabled={busy || !normalizedQuery || matches.length === 0}
-                  >
-                    <MapPin size={16} aria-hidden="true" />
-                    Find on map
-                  </button>
-                </div>
-                {normalizedQuery && !focusedBarangay && matches.length > 1 && (
-                  <div
-                    className="barangay-search-suggestions"
-                    aria-label="Matching barangays"
-                  >
-                    {matches.slice(0, 6).map((barangay) => (
-                      <button
-                        key={barangay.id}
-                        type="button"
-                        disabled={busy}
-                        onClick={() => findBarangay(barangay)}
-                      >
-                        <MapPin size={14} aria-hidden="true" />
-                        {barangay.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </form>
-              <div
-                id="barangay-search-results"
-                className={`barangay-search-layout${focusedBarangay ? " has-focused-barangay" : ""}`}
-              >
-                {focusedBarangay && (
-                  <aside
-                    className="barangay-search-access"
-                    aria-label={`${focusedBarangay.name} access`}
-                    style={{ backgroundColor: focusedAppearance?.background }}
-                  >
-                    <h2>Barangay access</h2>
-                    <BarangayAccessCard
-                      featured
-                      barangay={focusedBarangay}
-                      shelterSummary={shelterSummaryFor(focusedBarangay.id)}
-                      selected={selected?.id === focusedBarangay.id}
-                      disabled={busy}
-                      onSelect={() => openAccess(focusedBarangay)}
-                    />
-                    <p>Use the access code provided to your barangay.</p>
-                    <BarangayShelterList
-                      barangay={focusedBarangay}
-                      centers={centers}
-                      loading={centersLoading}
-                      error={centersError}
-                    />
-                  </aside>
-                )}
-                <BarangayEvacuationOverview
-                  focusedBarangay={focusedBarangay}
-                  centers={centers}
-                  loading={centersLoading}
-                  error={centersError}
-                  onRefresh={refreshCenters}
-                />
+              <div className="barangay-search-heading">
+                <label htmlFor="barangay-search">Find your barangay</label>
+                <p id="barangay-search-hint">Search to view shelters.</p>
+                <p
+                  className="barangay-search-status"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {normalizedQuery
+                    ? `${matches.length} ${matches.length === 1 ? "barangay" : "barangays"} found.`
+                    : ""}
+                </p>
               </div>
-            </section>
-            {!focusedBarangay && (
-              <>
-                <h2 id="barangay-selection-title">
-                  {normalizedQuery ? "Matching barangays" : "All barangays"}
-                  <span className="barangay-directory-count">
-                    {" "}
-                    &middot; {matches.length}
-                  </span>
-                </h2>
-                {normalizedQuery && matches.length === 0 ? (
-                  <div className="barangay-search-empty">
-                    <SearchX size={28} strokeWidth={1.5} aria-hidden="true" />
-                    <h3>No barangay found</h3>
-                    <p>
-                      No barangay matches “{query}”. Check the spelling or clear
-                      your search.
-                    </p>
+              <div className="barangay-search-row">
+                <div className="barangay-search-input">
+                  <Search size={18} aria-hidden="true" />
+                  <input
+                    ref={searchRef}
+                    id="barangay-search"
+                    name="barangay"
+                    type="search"
+                    placeholder="Search barangay name…"
+                    autoComplete="off"
+                    enterKeyHint="search"
+                    spellCheck={false}
+                    value={query}
+                    disabled={busy}
+                    aria-describedby="barangay-search-hint"
+                    aria-controls="barangay-search-results"
+                    onChange={(event) => setQuery(event.target.value)}
+                  />
+                  {query && (
                     <button
                       type="button"
-                      className="secondary-button"
+                      aria-label="Clear barangay search"
+                      disabled={busy}
                       onClick={clearSearch}
                     >
-                      Show all barangays
+                      <X size={17} aria-hidden="true" />
                     </button>
-                  </div>
-                ) : (
-                  <div
-                    className="barangay-access-grid"
-                    aria-labelledby="barangay-selection-title"
-                  >
-                    {matches.map((barangay) => (
-                      <BarangayAccessCard
-                        key={barangay.id}
-                        barangay={barangay}
-                        shelterSummary={shelterSummaryFor(barangay.id)}
-                        disabled={busy}
-                        selected={selected?.id === barangay.id}
-                        onSelect={() => openAccess(barangay)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-            {!barangays.length && (
-              <button
-                className="secondary-button"
-                onClick={() => void loadBarangays()}
-              >
-                Retry loading barangays
-              </button>
-            )}
-            {selected && (
-              <BarangayAccessDialog
-                key={selected.id}
-                barangay={selected}
-                code={code}
-                busy={busy}
-                error={accessError}
-                onSubmit={submit}
-                onCodeChange={(value) => {
-                  setCode(value);
-                  setAccessError("");
-                }}
-                onClose={() => {
-                  if (busy) return;
-                  setSelected(null);
-                  setCode("");
-                  setAccessError("");
-                }}
+                  )}
+                </div>
+                <button
+                  ref={findButtonRef}
+                  type="submit"
+                  className="primary-button"
+                  disabled={busy || !normalizedQuery || matches.length === 0}
+                >
+                  <MapPin size={16} aria-hidden="true" />
+                  Find on map
+                </button>
+              </div>
+              {normalizedQuery && !focusedBarangay && matches.length > 1 && (
+                <div
+                  className="barangay-search-suggestions"
+                  aria-label="Matching barangays"
+                >
+                  {matches.slice(0, 6).map((barangay) => (
+                    <button
+                      key={barangay.id}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => findBarangay(barangay)}
+                    >
+                      <MapPin size={14} aria-hidden="true" />
+                      {barangay.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </form>
+            <div
+              id="barangay-search-results"
+              className={`barangay-search-layout${focusedBarangay ? " has-focused-barangay" : ""}`}
+            >
+              {focusedBarangay && (
+                <aside
+                  className="barangay-search-access"
+                  aria-label={`${focusedBarangay.name} access`}
+                  style={{ backgroundColor: focusedAppearance?.background }}
+                >
+                  <h2>Barangay access</h2>
+                  <BarangayAccessCard
+                    featured
+                    barangay={focusedBarangay}
+                    shelterSummary={shelterSummaryFor(focusedBarangay.id)}
+                    selected={selected?.id === focusedBarangay.id}
+                    disabled={busy}
+                    onSelect={() => openAccess(focusedBarangay)}
+                  />
+                  <p>Use the access code provided to your barangay.</p>
+                  <BarangayShelterList
+                    barangay={focusedBarangay}
+                    centers={centers}
+                    loading={centersLoading}
+                    error={centersError}
+                  />
+                </aside>
+              )}
+              <BarangayEvacuationOverview
+                focusedBarangay={focusedBarangay}
+                centers={centers}
+                loading={centersLoading}
+                error={centersError}
+                onRefresh={refreshCenters}
               />
-            )}
-          </>
-        )}
+            </div>
+          </section>
+          {!focusedBarangay && (
+            <>
+              <h2 id="barangay-selection-title">
+                {normalizedQuery ? "Matching barangays" : "All barangays"}
+                <span className="barangay-directory-count">
+                  {" "}
+                  &middot; {matches.length}
+                </span>
+              </h2>
+              {normalizedQuery && matches.length === 0 ? (
+                <div className="barangay-search-empty">
+                  <SearchX size={28} strokeWidth={1.5} aria-hidden="true" />
+                  <h3>No barangay found</h3>
+                  <p>
+                    No barangay matches “{query}”. Check the spelling or clear
+                    your search.
+                  </p>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={clearSearch}
+                  >
+                    Show all barangays
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className="barangay-access-grid"
+                  aria-labelledby="barangay-selection-title"
+                >
+                  {matches.map((barangay) => (
+                    <BarangayAccessCard
+                      key={barangay.id}
+                      barangay={barangay}
+                      shelterSummary={shelterSummaryFor(barangay.id)}
+                      disabled={busy}
+                      selected={selected?.id === barangay.id}
+                      onSelect={() => openAccess(barangay)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+          {!barangays.length && (
+            <button
+              className="secondary-button"
+              onClick={() => void loadBarangays()}
+            >
+              Retry loading barangays
+            </button>
+          )}
+          {selected && (
+            <BarangayAccessDialog
+              key={selected.id}
+              barangay={selected}
+              code={code}
+              busy={busy}
+              error={accessError}
+              onSubmit={submit}
+              onCodeChange={(value) => {
+                setCode(value);
+                setAccessError("");
+              }}
+              onClose={() => {
+                if (busy) return;
+                setSelected(null);
+                setCode("");
+                setAccessError("");
+              }}
+            />
+          )}
+        </>
       </div>
     </main>
   );
