@@ -21,7 +21,7 @@ export interface EarthquakeEvent {
  * damage on their own (section 31's explicit rule). */
 export interface EarthquakeRoadImpact {
   id: string;
-  earthquakeEventId: string;
+  earthquakeEventId: string | null;
   roadId: string;
   impactLevel: EarthquakeImpactLevel;
   confirmedBlocked: boolean;

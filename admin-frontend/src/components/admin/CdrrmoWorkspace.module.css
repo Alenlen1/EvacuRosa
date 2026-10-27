@@ -20,14 +20,14 @@
   top: 0;
   align-self: start;
   height: 100dvh;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #c27b6b transparent;
+  overflow: hidden;
 }
 .sidebarContent {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
   padding: 26px 18px 18px;
 }
 .brandRow {
@@ -36,6 +36,7 @@
   justify-content: space-between;
   gap: 10px;
   min-height: 48px;
+  flex-shrink: 0;
   padding: 0 7px;
 }
 .brandRow :global(.brand) {
@@ -65,6 +66,7 @@
 }
 .workspaceCard {
   position: relative;
+  flex-shrink: 0;
   margin-top: 28px;
   padding: 22px 12px 24px;
   border-bottom: 1px solid #ffffff24;
@@ -103,6 +105,7 @@
   line-height: 1.5;
 }
 .navigationGroup {
+  flex-shrink: 0;
   margin: 30px 0 32px;
 }
 .navigationLabel {
@@ -290,6 +293,7 @@
   margin: 0;
   padding: 0;
   border: 0;
+  overflow: hidden;
 }
 .drawer::backdrop {
   background: #141b2b88;
@@ -308,6 +312,9 @@
 }
 .drawer .workspaceCard {
   margin-top: 24px;
+}
+:global(.cdrrmo-workspace) .drawer .brandRow :global(.brand-name) {
+  font-size: 20px;
 }
 .skipLink {
   position: fixed;
@@ -407,6 +414,74 @@
   }
   .signOutSkeleton {
     width: 44px;
+  }
+}
+@media (max-height: 760px) {
+  .sidebarContent,
+  .drawer .sidebarContent {
+    padding-block: 16px;
+  }
+  .workspaceCard,
+  .drawer .workspaceCard {
+    margin-top: 12px;
+    padding-block: 14px;
+  }
+  .workspaceCard h2 {
+    margin-block: 8px;
+    font-size: 22px;
+  }
+  .workspaceCard p {
+    line-height: 1.5;
+  }
+  .accessBadge {
+    margin-top: 12px;
+  }
+  .navigationGroup {
+    margin-block: 18px 12px;
+  }
+  .navigationGroup a {
+    min-height: 44px;
+    padding-block: 9px;
+  }
+  .navigationSkeleton :global(.staff-skeleton) {
+    height: 44px;
+  }
+  .mobilePublicMap {
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+}
+@media (max-height: 600px) {
+  .workspaceCard p,
+  .accessBadge {
+    display: none;
+  }
+}
+@media (max-height: 420px) {
+  .sidebarContent,
+  .drawer .sidebarContent {
+    padding-block: 12px;
+  }
+  .workspaceCard,
+  .navigationLabel {
+    display: none;
+  }
+  .navigationGroup {
+    margin-block: 8px;
+  }
+  .navigationGroup nav,
+  .navigationSkeleton {
+    gap: 2px;
+  }
+  .navigationGroup a {
+    min-height: 40px;
+    padding-block: 7px;
+  }
+  .navigationSkeleton :global(.staff-skeleton) {
+    height: 40px;
+  }
+  .mobilePublicMap {
+    min-height: 36px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

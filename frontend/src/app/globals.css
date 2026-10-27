@@ -1410,6 +1410,12 @@ select:focus-visible {
 .legend-line.flood {
   background: #2563eb;
 }
+.legend-line.earthquake-blocked {
+  border-top: 5px solid #b91c1c;
+}
+.legend-line.earthquake-impact {
+  border-top: 4px dashed #b45309;
+}
 .leaflet-container {
   font-family: inherit !important;
   background: #e8ecee !important;

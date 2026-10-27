@@ -246,7 +246,7 @@ function PublicHome({
     setError(null);
     setLoading(null);
   }
-  // Oldest of the four data sources' timestamps — the most conservative
+  // Oldest of the data sources' timestamps — the most conservative
   // "as of" claim to show, and whether ANY of them came from cache rather
   // than a live fetch just now.
   const [dataAsOf, setDataAsOf] = useState<string | null>(null);
@@ -266,29 +266,42 @@ function PublicHome({
     }
 
     async function loadAll() {
-      const [centersResult, floodResult, fireResult, earthquakeResult] =
-        await Promise.allSettled([
-          fetchWithCache(
-            fetchEvacuationCenters,
-            getCachedEvacuationCenters,
-            cacheEvacuationCenters,
-          ),
-          fetchWithCache(
-            fetchFloodReports,
-            getCachedFloodReports,
-            cacheFloodReports,
-          ),
-          fetchWithCache(
-            fetchFireIncidents,
-            getCachedFireIncidents,
-            cacheFireIncidents,
-          ),
-          fetchWithCache(
-            () => fetchEarthquakes().then((r) => r.events),
-            getCachedEarthquakeEvents,
-            cacheEarthquakeEvents,
-          ),
-        ]);
+      // Events and verified road impacts share one response, but each has its
+      // own offline snapshot and contributes to the data freshness banner.
+      const earthquakeSnapshot = fetchEarthquakes();
+      const [
+        centersResult,
+        floodResult,
+        fireResult,
+        earthquakeResult,
+        impactResult,
+      ] = await Promise.allSettled([
+        fetchWithCache(
+          fetchEvacuationCenters,
+          getCachedEvacuationCenters,
+          cacheEvacuationCenters,
+        ),
+        fetchWithCache(
+          fetchFloodReports,
+          getCachedFloodReports,
+          cacheFloodReports,
+        ),
+        fetchWithCache(
+          fetchFireIncidents,
+          getCachedFireIncidents,
+          cacheFireIncidents,
+        ),
+        fetchWithCache(
+          () => earthquakeSnapshot.then((r) => r.events),
+          getCachedEarthquakeEvents,
+          cacheEarthquakeEvents,
+        ),
+        fetchWithCache(
+          () => earthquakeSnapshot.then((r) => r.roadImpacts),
+          getCachedEarthquakeRoadImpacts,
+          cacheEarthquakeRoadImpacts,
+        ),
+      ]);
 
       if (cancelled) return;
 
@@ -309,18 +322,9 @@ function PublicHome({
         record(earthquakeResult.value);
       }
 
-      // Road impacts are small and only meaningful alongside events, so
-      // they piggyback on the network's success/failure rather than
-      // getting their own online/offline banner accounting.
-      try {
-        const { roadImpacts } = await fetchEarthquakes();
-        if (!cancelled) {
-          setEarthquakeRoadImpacts(roadImpacts);
-          cacheEarthquakeRoadImpacts(roadImpacts).catch(() => {});
-        }
-      } catch {
-        const cached = await getCachedEarthquakeRoadImpacts().catch(() => null);
-        if (!cancelled && cached) setEarthquakeRoadImpacts(cached.data);
+      if (impactResult.status === "fulfilled") {
+        setEarthquakeRoadImpacts(impactResult.value.data);
+        record(impactResult.value);
       }
 
       if (!cancelled) {
@@ -658,7 +662,12 @@ function PublicHome({
         <span>
           <strong>{t("Earthquake")}</strong>
           <small>
-            {t("{count} events loaded", { count: earthquakeEvents.length })}
+            {t("{count} road impacts · {blocked} blocked", {
+              count: earthquakeRoadImpacts.length,
+              blocked: earthquakeRoadImpacts.filter(
+                (impact) => impact.confirmedBlocked,
+              ).length,
+            })}
           </small>
         </span>
       </button>
@@ -1146,10 +1155,31 @@ function PublicHome({
                 </article>
               ))}
               <h3>
-                <Activity size={18} /> {t("Earthquake events")}
+                <Activity size={18} /> {t("Earthquake road impacts")}
               </h3>
-              {earthquakeEvents.length === 0 && (
-                <p>{t("No earthquake events loaded.")}</p>
+              {earthquakeRoadImpacts.length === 0 && (
+                <p>{t("No earthquake road impacts loaded.")}</p>
+              )}
+              {earthquakeRoadImpacts.map((impact) => (
+                <article
+                  className="record-card earthquake-impact-record"
+                  key={impact.id}
+                >
+                  <strong>
+                    {t(impact.impactLevel)} {t("Earthquake road impact")}
+                  </strong>
+                  <span>
+                    {impact.confirmedBlocked
+                      ? t("Road blocked")
+                      : t("No confirmed road blockage")}
+                  </span>
+                  {impact.notes && <p>{impact.notes}</p>}
+                </article>
+              ))}
+              {earthquakeEvents.length > 0 && (
+                <h3>
+                  <Activity size={18} /> {t("Earthquake events")}
+                </h3>
               )}
               {earthquakeEvents.map((event) => (
                 <article className="record-card" key={event.id}>

@@ -139,6 +139,14 @@ export function MapLegend() {
                   <span className="legend-dot earthquake" />
                   {t("Earthquake — see verified impacts")}
                 </li>
+                <li>
+                  <span className="legend-line earthquake-blocked" />
+                  {t("Earthquake-blocked road")}
+                </li>
+                <li>
+                  <span className="legend-line earthquake-impact" />
+                  {t("Earthquake-affected road")}
+                </li>
               </ul>
             </div>
           </div>,

@@ -43,6 +43,9 @@ The location-sharing sections below describe the earlier 0011-0013 implementatio
 6. For emergency request tracking, apply `0018_emergency_assistance_tracking.sql`
    and configure the backend-only `ASSISTANCE_TRACKING_SECRET` as described in
    [the assistance guide](../backend/ASSISTANCE.md).
+7. For CDRRMO to report earthquake road damage directly, apply
+   `0019_standalone_earthquake_road_impacts.sql`. It makes the source event
+   optional without deleting events, road impacts, or role policies.
 
 ## Without a Supabase project
 

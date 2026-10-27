@@ -394,12 +394,15 @@ export async function createEarthquakeRoadImpact(
     return;
   }
   if (
-    typeof earthquakeEventId !== "string" ||
     typeof roadId !== "string" ||
-    typeof impactLevel !== "string"
+    !["LOW", "MODERATE", "HIGH"].includes(impactLevel) ||
+    (earthquakeEventId != null &&
+      (typeof earthquakeEventId !== "string" || !earthquakeEventId.trim())) ||
+    (confirmedBlocked !== undefined && typeof confirmedBlocked !== "boolean")
   ) {
     res.status(400).json({
-      error: "earthquakeEventId, roadId, and impactLevel are required.",
+      error:
+        "Provide a roadId and impactLevel (LOW, MODERATE, HIGH). confirmedBlocked must be a boolean when provided; the earthquake event link is optional.",
     });
     return;
   }
@@ -415,7 +418,7 @@ export async function createEarthquakeRoadImpact(
   const { data, error } = await req.userSupabase
     .from("earthquake_road_impacts")
     .insert({
-      earthquake_event_id: earthquakeEventId,
+      earthquake_event_id: earthquakeEventId ?? null,
       road_id: roadId,
       impact_level: impactLevel,
       confirmed_blocked: Boolean(confirmedBlocked),

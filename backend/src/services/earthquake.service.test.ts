@@ -20,6 +20,32 @@ function impact(
 }
 
 describe("earthquake impact routing", () => {
+  it("applies standalone road impacts to routing and fuzzy risk without an event", () => {
+    const impacts = [
+      impact({
+        earthquakeEventId: null,
+        roadId: "R1",
+        confirmedBlocked: true,
+        impactLevel: "HIGH",
+      }),
+      impact({
+        id: "impact-2",
+        earthquakeEventId: null,
+        roadId: "R2",
+        confirmedBlocked: false,
+        impactLevel: "LOW",
+      }),
+    ];
+    const overrides = earthquakeStatusOverridesForImpacts(impacts);
+    expect(overrides.get("R1")).toBe("BLOCKED");
+    expect(overrides.has("R2")).toBe(false);
+    expect(earthquakeImpactByRoadId(impacts)).toEqual(
+      new Map([
+        ["R1", 3],
+        ["R2", 1],
+      ]),
+    );
+  });
   it("blocks only roads explicitly confirmed as blocked", () => {
     const overrides = earthquakeStatusOverridesForImpacts([
       impact({ roadId: "R1", confirmedBlocked: true }),
