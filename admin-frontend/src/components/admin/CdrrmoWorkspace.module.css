@@ -1,6 +1,6 @@
 .shell {
   display: grid;
-  grid-template-columns: 272px minmax(0, 1fr);
+  grid-template-columns: 288px minmax(0, 1fr);
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
@@ -9,10 +9,7 @@
 .drawer {
   --ink: #fff8f1;
   --muted: #efd5c9;
-  background:
-    linear-gradient(180deg, #74150d73 0%, #74150dcc 42%, #681b13f5 100%),
-    url("/images/barangay/santa-rosa-arch.webp") 55% center / cover no-repeat
-      #74150d;
+  background: #681b13;
   color: var(--ink);
 }
 .sidebar {
@@ -28,7 +25,17 @@
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
-  padding: 26px 18px 18px;
+  padding: 0 20px 20px;
+}
+.sidebarHeader {
+  flex-shrink: 0;
+  min-height: 144px;
+  margin: 0 -20px;
+  padding: 26px 20px;
+  background:
+    linear-gradient(180deg, #30120bd9 0%, #4f1b15cc 52%, #681b13 100%),
+    url("/images/barangay/santa-rosa-arch.webp") center 28% / cover no-repeat
+      #681b13;
 }
 .brandRow {
   display: flex;
@@ -37,7 +44,7 @@
   gap: 10px;
   min-height: 48px;
   flex-shrink: 0;
-  padding: 0 7px;
+  padding: 0;
 }
 .brandRow :global(.brand) {
   gap: 9px;
@@ -57,79 +64,70 @@
   letter-spacing: -0.7px;
 }
 :global(.cdrrmo-workspace) .brandRow :global(.brand-name > span) {
-  color: #edb1a0;
+  color: #f3cbb9;
 }
 .brandRow :global(.brand-caption) {
-  color: #efcbbf;
-  font-size: 7px;
+  color: #f3d8ca;
+  font-size: 8px;
   letter-spacing: 1.8px;
 }
 .workspaceCard {
   position: relative;
   flex-shrink: 0;
-  margin-top: 28px;
-  padding: 22px 12px 24px;
+  margin-top: 0;
+  padding: 20px 0 22px;
   border-bottom: 1px solid #ffffff24;
 }
 .workspaceEyebrow {
-  color: #f8d7ba;
-  font-size: 9px;
+  color: #e9bdab;
+  font-size: 10px;
   font-weight: 650;
   letter-spacing: 1.5px;
 }
 .workspaceCard h2 {
-  margin: 14px 0 12px;
+  margin: 8px 0;
   color: #fff8f1;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 650;
-  letter-spacing: -0.65px;
-  line-height: 1.2;
-}
-.workspaceCard p {
-  margin: 0;
-  color: #f4ded4;
-  font-size: 12px;
-  line-height: 1.7;
+  letter-spacing: -0.35px;
+  line-height: 1.3;
 }
 .accessBadge {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-top: 18px;
-  padding: 7px 9px;
-  border: 1px solid #ffffff30;
-  border-radius: 6px;
-  background: #ffffff0c;
-  color: #fff0e1;
-  font-size: 10px;
+  margin-top: 10px;
+  color: #edcdbc;
+  font-size: 11px;
   line-height: 1.5;
 }
 .navigationGroup {
   flex-shrink: 0;
-  margin: 30px 0 32px;
+  margin: 22px 0 24px;
 }
 .navigationLabel {
   margin: 0 12px 12px;
-  color: #f0c6b5;
-  font-size: 9px;
+  color: #e9bdab;
+  font-size: 10px;
   font-weight: 650;
   letter-spacing: 1.6px;
 }
 .navigationGroup nav {
   display: grid;
-  gap: 7px;
+  gap: 6px;
 }
 .navigationGroup a {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   min-height: 50px;
   padding: 12px;
   border: 1px solid transparent;
   border-radius: 8px;
-  color: #f6e0d3;
-  font-size: 12px;
-  font-weight: 550;
+  color: #f0dcd0;
+  font-size: 14px;
+  font-weight: 500;
   line-height: 1.5;
   transition:
     background-color 150ms,
@@ -139,25 +137,27 @@
   flex-shrink: 0;
 }
 .navigationGroup a:hover {
-  background: #ffffff16;
+  background: #fff1df12;
   color: white;
 }
 .navigationGroup a[aria-current] {
-  border-color: #fff0e152;
-  background: #ffffff23;
+  background: #fff1df1f;
   color: #fff8f1;
+  font-weight: 600;
+}
+.navigationGroup a[aria-current]::before {
+  content: "";
+  position: absolute;
+  top: 11px;
+  bottom: 11px;
+  left: -1px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #f8dec1;
 }
 :global(.cdrrmo-workspace) :is(.sidebar, .drawer) :is(a, button):focus-visible {
   outline-color: #fff0d8;
 }
-.navArrow {
-  margin-left: auto;
-  opacity: 0;
-}
-.navigationGroup a[aria-current] .navArrow {
-  opacity: 1;
-}
-
 .mobilePublicMap {
   display: flex;
   align-items: center;
@@ -299,9 +299,6 @@
   background: #141b2b88;
   backdrop-filter: blur(2px);
 }
-.drawer .sidebarContent {
-  padding-top: 22px;
-}
 .closeMenu {
   flex-shrink: 0;
   border-color: #ffffff24;
@@ -310,15 +307,12 @@
 .closeMenu:hover {
   background: #ffffff0c;
 }
-.drawer .workspaceCard {
-  margin-top: 24px;
-}
 :global(.cdrrmo-workspace) .drawer .brandRow :global(.brand-name) {
   font-size: 20px;
 }
 .skipLink {
   position: fixed;
-  left: 290px;
+  left: 306px;
   top: 8px;
   z-index: 2000;
   transform: translateY(-150%);
@@ -419,32 +413,33 @@
 @media (max-height: 760px) {
   .sidebarContent,
   .drawer .sidebarContent {
-    padding-block: 16px;
+    padding: 0 18px 16px;
+  }
+  .sidebarHeader {
+    min-height: 116px;
+    margin-inline: -18px;
+    padding: 22px 18px;
   }
   .workspaceCard,
   .drawer .workspaceCard {
-    margin-top: 12px;
-    padding-block: 14px;
+    padding-block: 18px;
   }
   .workspaceCard h2 {
     margin-block: 8px;
-    font-size: 22px;
-  }
-  .workspaceCard p {
-    line-height: 1.5;
+    font-size: 20px;
   }
   .accessBadge {
-    margin-top: 12px;
+    margin-top: 8px;
   }
   .navigationGroup {
     margin-block: 18px 12px;
   }
   .navigationGroup a {
-    min-height: 44px;
+    min-height: 46px;
     padding-block: 9px;
   }
   .navigationSkeleton :global(.staff-skeleton) {
-    height: 44px;
+    height: 46px;
   }
   .mobilePublicMap {
     margin-bottom: 0;
@@ -452,7 +447,31 @@
   }
 }
 @media (max-height: 600px) {
-  .workspaceCard p,
+  .sidebarContent,
+  .drawer .sidebarContent {
+    padding-bottom: 12px;
+  }
+  .sidebarHeader {
+    min-height: 96px;
+    padding-block: 20px;
+  }
+  .workspaceCard,
+  .drawer .workspaceCard {
+    padding-block: 14px;
+  }
+  .navigationGroup {
+    margin-block: 14px 8px;
+  }
+  .navigationGroup nav {
+    gap: 4px;
+  }
+  .navigationGroup a {
+    min-height: 44px;
+    padding-block: 9px;
+  }
+}
+@media (max-height: 520px) {
+  .workspaceEyebrow,
   .accessBadge {
     display: none;
   }
@@ -460,7 +479,11 @@
 @media (max-height: 420px) {
   .sidebarContent,
   .drawer .sidebarContent {
-    padding-block: 12px;
+    padding-bottom: 12px;
+  }
+  .sidebarHeader {
+    min-height: 80px;
+    padding-block: 16px;
   }
   .workspaceCard,
   .navigationLabel {

@@ -1803,7 +1803,8 @@
 }
 .barangay-center-management .admin-center-cards {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
+  grid-auto-rows: 1fr;
+  align-items: stretch;
 }
 .barangay-access-page .barangay-access-card,
 .barangay-feature-identity {

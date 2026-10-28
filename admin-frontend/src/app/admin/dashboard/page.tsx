@@ -369,6 +369,7 @@ export default function AdminDashboardPage() {
             centersUnavailable={Boolean(error)}
             hazards={dashboardHazards}
             hazardsLoading={hazardsLoading}
+            onRefreshHazards={() => void refreshHazards()}
           />
         </CdrrmoSection>
       )}

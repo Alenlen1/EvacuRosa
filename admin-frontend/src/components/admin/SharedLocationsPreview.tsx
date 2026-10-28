@@ -58,13 +58,23 @@ export function SharedLocationsPreview() {
     };
   }, [active, reload]);
 
+  const statusCounts = [
+    { status: "PENDING", label: "Pending" },
+    { status: "ACKNOWLEDGED", label: "Acknowledged" },
+    { status: "DISPATCHED", label: "Dispatched" },
+  ] as const;
+  const openRequests = statusCounts.flatMap(({ status }) =>
+    requests.filter((request) => request.status === status),
+  );
+  const available = !loading && !error;
+
   return (
     <section
       className={`${dashboardStyles.panel} ${styles.preview}`}
-      aria-label="Shared locations preview"
+      aria-label="Assistance requests overview"
     >
       <div className={dashboardStyles.panelHeading}>
-        <h3>Shared locations</h3>
+        <h3>Assistance requests</h3>
         <div className={styles.controls}>
           <button
             type="button"
@@ -80,12 +90,35 @@ export function SharedLocationsPreview() {
           </a>
         </div>
       </div>
-      <p>Latest reported locations from assistance requests.</p>
+      <div className={styles.scope}>Among latest 100 requests</div>
+      <dl
+        className={styles.stats}
+        aria-label="Assistance status counts"
+        aria-busy={loading}
+      >
+        {statusCounts.map(({ status, label }) => (
+          <div key={status} data-status={status}>
+            <dt>{label}</dt>
+            <dd>
+              {available ? (
+                requests
+                  .filter((request) => request.status === status)
+                  .length.toLocaleString()
+              ) : (
+                <span aria-label={loading ? "Loading" : "Unavailable"}>—</span>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className={styles.pendingHint}>
+        Pending requests are waiting for acknowledgment.
+      </p>
       <div className={styles.list} ref={listRef} aria-busy={loading}>
         {loading ? (
           <>
             <span className="staff-skeleton-label" role="status">
-              Loading shared locations...
+              Loading assistance requests...
             </span>
             {Array.from({ length: limit }, (_, index) => (
               <div className={styles.loadingRow} key={index}>
@@ -99,7 +132,7 @@ export function SharedLocationsPreview() {
           </>
         ) : error ? (
           <div className={styles.feedback} role="status">
-            <p>Could not load shared locations.</p>
+            <p>Could not load assistance requests.</p>
             <button
               type="button"
               onClick={() => setReload((value) => value + 1)}
@@ -107,13 +140,13 @@ export function SharedLocationsPreview() {
               Try again
             </button>
           </div>
-        ) : !requests.length ? (
+        ) : !openRequests.length ? (
           <div className={styles.feedback} role="status">
             <MapPin size={24} aria-hidden="true" />
-            <p>No shared locations yet.</p>
+            <p>No open requests among the latest 100.</p>
           </div>
         ) : (
-          requests.slice(0, limit).map((request) => (
+          openRequests.slice(0, limit).map((request) => (
             <a
               className={styles.request}
               href="#shared-locations"
