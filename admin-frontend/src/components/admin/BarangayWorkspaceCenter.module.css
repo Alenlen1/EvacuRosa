@@ -1,4 +1,6 @@
 :global(.barangay-workspace) .card:global(.barangay-center-card) {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   padding: 0;
   overflow: hidden;
@@ -95,7 +97,9 @@
 
 .body {
   display: grid;
+  flex: 1;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
 }
 
 .occupancy {
@@ -319,6 +323,7 @@
 @media (min-width: 900px) {
   :global(.admin-center-cards[data-single="true"]) .body {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-rows: 1fr;
   }
 
   :global(.admin-center-cards[data-single="true"]) .occupancy {
