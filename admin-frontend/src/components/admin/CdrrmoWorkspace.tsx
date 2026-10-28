@@ -10,7 +10,6 @@ import {
 } from "react";
 import {
   ArrowUpRight,
-  ChevronRight,
   House,
   LayoutDashboard,
   LogOut,
@@ -142,28 +141,26 @@ export function CdrrmoWorkspace({
   function sidebar(mobile = false) {
     return (
       <div className={styles.sidebarContent}>
-        <div className={styles.brandRow}>
-          <Brand />
-          {mobile && (
-            <button
-              className={styles.closeMenu}
-              type="button"
-              aria-label="Close navigation"
-              onClick={() => drawerRef.current?.close()}
-              autoFocus
-            >
-              <X size={21} aria-hidden="true" />
-            </button>
-          )}
+        <div className={styles.sidebarHeader}>
+          <div className={styles.brandRow}>
+            <Brand />
+            {mobile && (
+              <button
+                className={styles.closeMenu}
+                type="button"
+                aria-label="Close navigation"
+                onClick={() => drawerRef.current?.close()}
+                autoFocus
+              >
+                <X size={21} aria-hidden="true" />
+              </button>
+            )}
+          </div>
         </div>
 
         <section className={styles.workspaceCard} aria-label="CDRRMO workspace">
-          <span className={styles.workspaceEyebrow}>CDRRMO WORKSPACE</span>
-          <h2>City response workspace</h2>
-          <p>
-            Register evacuation centers, review shared locations and manage
-            hazards across Santa Rosa.
-          </p>
+          <span className={styles.workspaceEyebrow}>CITY RESPONSE</span>
+          <h2>CDRRMO workspace</h2>
           <span className={styles.accessBadge}>
             <ShieldCheck size={15} aria-hidden="true" />
             CDRRMO staff access
@@ -188,11 +185,6 @@ export function CdrrmoWorkspace({
                 >
                   <Icon size={20} aria-hidden="true" />
                   <span>{label}</span>
-                  <ChevronRight
-                    className={styles.navArrow}
-                    size={16}
-                    aria-hidden="true"
-                  />
                 </a>
               ))}
             </nav>
