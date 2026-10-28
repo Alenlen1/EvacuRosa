@@ -150,7 +150,7 @@ export function CdrrmoDashboard({
       </section>
       <div className={styles.panels}>
         <section
-          className={styles.panel}
+          className={`${styles.panel} ${styles.hazardPanel}`}
           aria-labelledby="active-hazards-title"
         >
           <div className={styles.panelHeading}>
@@ -211,8 +211,7 @@ export function CdrrmoDashboard({
           {!hazardsLoading &&
             hazardRows.some(({ value }) => value === null) && (
               <p className={styles.unavailable} role="status">
-                Some hazard information could not be loaded. Refresh the
-                overview to try again.
+                Some counts are unavailable. Refresh to try again.
               </p>
             )}
         </section>

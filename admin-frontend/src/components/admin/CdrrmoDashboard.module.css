@@ -477,3 +477,121 @@
     grid-template-rows: auto minmax(0, 1fr);
   }
 }
+
+.hazardPanel {
+  container: hazard-summary / size;
+  overflow: clip;
+  padding: 16px;
+}
+.hazardPanel .hazardList {
+  flex: 0 1 auto;
+  min-height: 0;
+  margin-top: 10px;
+}
+.hazardPanel .hazardList > div {
+  padding-block: 8px;
+}
+.hazardPanel .hazardList dd {
+  line-height: 1.1;
+}
+.hazardPanel .hazardTotal {
+  margin-top: 10px;
+  padding: 10px;
+}
+.hazardPanel > .unavailable {
+  flex-shrink: 0;
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+@container cdrrmo-main (max-width: 700px) {
+  .panels {
+    grid-template-rows: minmax(200px, 1fr) minmax(0, 1fr);
+  }
+  .hazardPanel {
+    padding: 12px;
+  }
+}
+@container hazard-summary (max-height: 300px) {
+  .hazardPanel > p:not(.unavailable) {
+    display: none;
+  }
+  .hazardPanel .hazardTotal {
+    margin-top: 6px;
+    padding: 6px 8px;
+  }
+  .hazardPanel .hazardTotal dd {
+    font-size: 22px;
+  }
+  .hazardPanel .hazardTotal dd[data-unavailable="true"] {
+    font-size: 11px;
+  }
+  .hazardPanel .hazardList {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .hazardPanel .hazardList > div {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-width: 0;
+    gap: 4px;
+    padding: 4px 0;
+    border-bottom: 0;
+    border-right: 1px solid #eee6df;
+  }
+  .hazardPanel .hazardList > div:last-child {
+    border-right: 0;
+  }
+  .hazardPanel .hazardList dt {
+    gap: 5px;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  .hazardPanel .hazardList dd {
+    font-size: 21px;
+  }
+  .hazardPanel .hazardList .unavailableCount {
+    font-size: 10px;
+  }
+  .hazardPanel .hazardIcon {
+    width: 20px;
+    height: 20px;
+  }
+  .hazardPanel .hazardIcon svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+@container hazard-summary (max-height: 200px) {
+  .hazardPanel .hazardTotal {
+    margin-top: 4px;
+    padding-block: 4px;
+  }
+  .hazardPanel .hazardList {
+    margin-top: 4px;
+  }
+  .hazardPanel .hazardList > div {
+    gap: 2px;
+    padding-block: 2px;
+  }
+  .hazardPanel .hazardList dt {
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  .hazardPanel .hazardList dd {
+    font-size: 20px;
+  }
+  .hazardPanel .hazardList .unavailableCount {
+    font-size: 10px;
+  }
+  .hazardPanel .hazardIcon {
+    display: none;
+  }
+  .hazardPanel > .unavailable {
+    margin-top: 4px;
+    font-size: 10px;
+  }
+}
