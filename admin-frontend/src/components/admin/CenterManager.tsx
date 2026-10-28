@@ -7,11 +7,13 @@ import {
   CircleCheck,
   CircleMinus,
   House,
+  LockKeyhole,
   MapPin,
   Pencil,
   Plus,
   Search,
   Trash2,
+  TriangleAlert,
   X,
 } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
@@ -19,7 +21,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ShelterSuppliesForm } from "./ShelterSuppliesForm";
 import styles from "./CenterManager.module.css";
 import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
-import { isAcceptingCenter } from "@/lib/barangayWorkspaceSummary";
+import { getCdrrmoShelterStatusCounts } from "@/lib/cdrrmoShelterStatus";
 
 const LocationPicker = dynamic(() => import("./CenterLocationPicker"), {
   ssr: false,
@@ -169,6 +171,7 @@ export function CenterManager({
       .includes(search),
   );
   const editingCenter = centers.find((center) => center.id === editing);
+  const statusCounts = getCdrrmoShelterStatusCounts(centers);
   const stats = [
     {
       label: "Registered centers",
@@ -178,16 +181,26 @@ export function CenterManager({
     },
     {
       label: "Available",
-      count: centers.filter(isAcceptingCenter).length,
+      count: statusCounts.AVAILABLE,
       icon: CircleCheck,
       tone: "safe",
     },
     {
-      label: "Full or closed",
-      count: centers.filter(
-        (center) => center.status === "FULL" || center.status === "CLOSED",
-      ).length,
+      label: "Nearly full",
+      count: statusCounts.NEARLY_FULL,
+      icon: TriangleAlert,
+      tone: "warning",
+    },
+    {
+      label: "Full",
+      count: statusCounts.FULL,
       icon: CircleMinus,
+      tone: "danger",
+    },
+    {
+      label: "Closed",
+      count: statusCounts.CLOSED,
+      icon: LockKeyhole,
       tone: "neutral",
     },
     {

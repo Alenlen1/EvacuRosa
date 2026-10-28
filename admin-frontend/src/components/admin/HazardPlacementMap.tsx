@@ -28,6 +28,10 @@ import {
 } from "@/components/ui/HazardIcons";
 import { createDivIcon } from "@/components/map/icons";
 import {
+  SANTA_ROSA_CITY_CENTER,
+  SANTA_ROSA_CITY_DEFAULT_ZOOM,
+} from "@/lib/mapBounds";
+import {
   isInsideSantaRosa,
   santaRosaBounds,
   santaRosaBoundary,
@@ -71,11 +75,21 @@ const pendingIcon = createDivIcon(
 
 function KeepMapSized() {
   const map = useMap();
+  const fitted = useRef(false);
   useEffect(() => {
-    const observer = new ResizeObserver(() => {
+    const resize = () => {
+      const container = map.getContainer();
+      // A retained section can become hidden before this dynamic map mounts.
+      if (!container.clientWidth || !container.clientHeight) return;
       map.invalidateSize({ animate: false, pan: true });
-    });
+      if (!fitted.current) {
+        map.fitBounds(santaRosaBounds, { padding: [16, 16], animate: false });
+        fitted.current = true;
+      }
+    };
+    const observer = new ResizeObserver(resize);
     observer.observe(map.getContainer());
+    resize();
     return () => observer.disconnect();
   }, [map]);
   return null;
@@ -537,8 +551,8 @@ export default function HazardPlacementMap({
           className={`hazard-editor-map${inspectStreet ? " is-inspecting-street" : ""}`}
         >
           <MapContainer
-            bounds={santaRosaBounds}
-            boundsOptions={{ padding: [16, 16] }}
+            center={SANTA_ROSA_CITY_CENTER}
+            zoom={SANTA_ROSA_CITY_DEFAULT_ZOOM}
             maxBounds={santaRosaBounds}
             maxBoundsViscosity={0.8}
             minZoom={10}

@@ -25,6 +25,11 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
+.shelters {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
 .metric {
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr);
@@ -40,7 +45,6 @@
 .metricIcon {
   display: grid;
   place-items: center;
-  grid-row: 1 / 3;
   width: 38px;
   height: 38px;
   border-radius: 10px;
@@ -51,12 +55,24 @@
   background: #e7f2e9;
   color: #286344;
 }
+.metricIcon[data-tone="warning"] {
+  background: #fff1cc;
+  color: #895900;
+}
+.metricIcon[data-tone="danger"] {
+  background: #fbe9e6;
+  color: #a52e25;
+}
+.metricIcon[data-tone="neutral"] {
+  background: #efebe6;
+  color: #655a53;
+}
 .metric dl {
   margin: 0;
 }
 .metric dt {
   color: #716158;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
 }
 .metric dd {
@@ -67,6 +83,57 @@
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
+}
+.metric dd[data-unavailable="true"] {
+  color: #9a502a;
+  font-size: 12px;
+  font-weight: 500;
+}
+.capacitySummary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 18px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid #e6dcd3;
+  border-radius: 10px;
+  background: #fffdf9;
+}
+.capacitySummary > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  min-width: 0;
+}
+.capacitySummary dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #716158;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.capacitySummary dt svg {
+  flex-shrink: 0;
+}
+.capacitySummary dd {
+  margin: 0;
+  color: #302825;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+.capacityNote {
+  margin: -3px 0 0;
+  color: #716158;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.capacitySkeleton {
+  width: 100%;
+  height: 40px;
 }
 .metric p {
   grid-column: 2;
@@ -115,6 +182,57 @@
   color: #800000;
   font-size: 11px;
   font-weight: 600;
+}
+.panelControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.refresh {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e6dcd3;
+  border-radius: 7px;
+  color: #865542;
+}
+.refresh:hover:not(:disabled) {
+  background: #f7eee7;
+}
+.refresh:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+.hazardTotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 12px;
+  border: 1px solid #ead5c9;
+  border-radius: 9px;
+  background: #fbf2eb;
+}
+.hazardTotal dt {
+  color: #704035;
+  font-size: 12px;
+  font-weight: 550;
+}
+.hazardTotal dd {
+  margin: 0;
+  color: #800000;
+  font-size: 27px;
+  font-weight: 650;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.hazardTotal dd[data-unavailable="true"] {
+  color: #9a502a;
+  font-size: 12px;
+  font-weight: 500;
 }
 .panel > p {
   margin: 6px 0 0;
@@ -209,17 +327,16 @@
     display: none;
   }
   .metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
   }
   .metric {
-    grid-template-columns: 28px minmax(0, 1fr);
-    padding: 12px;
-    gap: 6px 8px;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 10px 8px;
+    gap: 5px;
   }
   .metricIcon {
-    width: 28px;
-    height: 28px;
+    display: none;
   }
   .metricIcon svg {
     width: 17px;
@@ -232,7 +349,28 @@
     font-size: 23px;
   }
   .metric dt {
+    font-size: 11px;
+  }
+  .capacitySummary {
+    gap: 10px;
+    padding: 9px 10px;
+  }
+  .capacitySummary > div {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .capacitySummary dt {
     font-size: 10px;
+  }
+  .capacitySummary dt svg {
+    display: none;
+  }
+  .shelters {
+    gap: 8px;
+  }
+  .capacityNote {
+    font-size: 9px;
   }
   .panels {
     grid-template-columns: minmax(0, 1fr);
@@ -260,6 +398,13 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
     margin-top: 4px;
+  }
+  .hazardTotal {
+    margin-top: 8px;
+    padding: 8px 10px;
+  }
+  .hazardTotal dd {
+    font-size: 23px;
   }
   .hazardList > div {
     flex-direction: column;

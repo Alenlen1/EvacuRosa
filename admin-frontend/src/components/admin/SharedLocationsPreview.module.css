@@ -1,5 +1,54 @@
 .preview {
-  overflow: hidden;
+  overflow: auto;
+}
+.scope {
+  flex-shrink: 0;
+  margin-top: 6px;
+  color: #716158;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex-shrink: 0;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+.stats > div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #e8ded4;
+  border-radius: 8px;
+  background: #fcf8f3;
+}
+.stats > div[data-status="PENDING"] {
+  border-color: #e8c0b8;
+  background: #fbede8;
+}
+.stats dt {
+  color: #66564c;
+  font-size: 10px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.stats dd {
+  margin: 4px 0 0;
+  color: #302825;
+  font-size: 23px;
+  font-weight: 650;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.stats > div[data-status="PENDING"] dd {
+  color: #8d332b;
+}
+.preview > .pendingHint {
+  flex-shrink: 0;
+  margin-top: 8px;
+  color: #716158;
+  font-size: 10px;
+  line-height: 1.5;
 }
 .controls {
   display: flex;
@@ -23,9 +72,9 @@
   cursor: wait;
 }
 .list {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  flex: 1 0 64px;
+  min-height: 64px;
+  overflow: auto;
   margin-top: 10px;
 }
 .request,
@@ -105,7 +154,8 @@
   justify-content: center;
   gap: 8px;
   height: 100%;
-  color: #827066;
+  min-height: 64px;
+  color: #716158;
   font-size: 12px;
   text-align: center;
 }
@@ -123,6 +173,16 @@
   border-radius: 9px;
 }
 @container cdrrmo-main (max-width: 700px) {
+  .stats {
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .stats > div {
+    padding: 8px;
+  }
+  .stats dd {
+    font-size: 21px;
+  }
   .list {
     margin-top: 4px;
   }
