@@ -9,7 +9,7 @@
 .drawer {
   --ink: #fff8f1;
   --muted: #efd5c9;
-  background: #681b13;
+  background: #54151b;
   color: var(--ink);
 }
 .sidebar {
@@ -20,6 +20,8 @@
   overflow: hidden;
 }
 .sidebarContent {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -27,15 +29,28 @@
   box-sizing: border-box;
   padding: 0 20px 20px;
 }
+.sidebarContent::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  bottom: 35px;
+  width: 180px;
+  height: 252px;
+  background: url("/images/santa-rosa-outline.svg") center / contain no-repeat;
+  filter: brightness(0) invert(1);
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: -1;
+}
 .sidebarHeader {
   flex-shrink: 0;
   min-height: 144px;
   margin: 0 -20px;
   padding: 26px 20px;
   background:
-    linear-gradient(180deg, #30120bd9 0%, #4f1b15cc 52%, #681b13 100%),
+    linear-gradient(180deg, #27111bcc 0%, #48171ecc 52%, #54151b 100%),
     url("/images/barangay/santa-rosa-arch.webp") center 28% / cover no-repeat
-      #681b13;
+      #54151b;
 }
 .brandRow {
   display: flex;
@@ -76,20 +91,14 @@
   flex-shrink: 0;
   margin-top: 0;
   padding: 20px 0 22px;
-  border-bottom: 1px solid #ffffff24;
-}
-.workspaceEyebrow {
-  color: #e9bdab;
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 1.5px;
+  border-bottom: 1px solid #fff3e522;
 }
 .workspaceCard h2 {
-  margin: 8px 0;
+  margin: 0;
   color: #fff8f1;
-  font-size: 20px;
-  font-weight: 650;
-  letter-spacing: -0.35px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
   line-height: 1.3;
 }
 .accessBadge {
@@ -97,7 +106,7 @@
   align-items: center;
   gap: 7px;
   margin-top: 10px;
-  color: #edcdbc;
+  color: #e9c8c4;
   font-size: 11px;
   line-height: 1.5;
 }
@@ -105,16 +114,9 @@
   flex-shrink: 0;
   margin: 22px 0 24px;
 }
-.navigationLabel {
-  margin: 0 12px 12px;
-  color: #e9bdab;
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 1.6px;
-}
 .navigationGroup nav {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 .navigationGroup a {
   position: relative;
@@ -125,7 +127,7 @@
   padding: 12px;
   border: 1px solid transparent;
   border-radius: 8px;
-  color: #f0dcd0;
+  color: #f4dfd7;
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
@@ -141,19 +143,10 @@
   color: white;
 }
 .navigationGroup a[aria-current] {
-  background: #fff1df1f;
-  color: #fff8f1;
-  font-weight: 600;
-}
-.navigationGroup a[aria-current]::before {
-  content: "";
-  position: absolute;
-  top: 11px;
-  bottom: 11px;
-  left: -1px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: #f8dec1;
+  border-color: #fff3e5;
+  background: #fff3e5;
+  color: #54151b;
+  font-weight: 650;
 }
 :global(.cdrrmo-workspace) :is(.sidebar, .drawer) :is(a, button):focus-visible {
   outline-color: #fff0d8;
@@ -420,13 +413,14 @@
     margin-inline: -18px;
     padding: 22px 18px;
   }
+  .sidebarContent::after {
+    bottom: 24px;
+    width: 120px;
+    height: 168px;
+  }
   .workspaceCard,
   .drawer .workspaceCard {
     padding-block: 18px;
-  }
-  .workspaceCard h2 {
-    margin-block: 8px;
-    font-size: 20px;
   }
   .accessBadge {
     margin-top: 8px;
@@ -447,6 +441,9 @@
   }
 }
 @media (max-height: 600px) {
+  .sidebarContent::after {
+    display: none;
+  }
   .sidebarContent,
   .drawer .sidebarContent {
     padding-bottom: 12px;
@@ -471,7 +468,6 @@
   }
 }
 @media (max-height: 520px) {
-  .workspaceEyebrow,
   .accessBadge {
     display: none;
   }
@@ -485,8 +481,7 @@
     min-height: 80px;
     padding-block: 16px;
   }
-  .workspaceCard,
-  .navigationLabel {
+  .workspaceCard {
     display: none;
   }
   .navigationGroup {

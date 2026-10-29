@@ -159,7 +159,6 @@ export function CdrrmoWorkspace({
         </div>
 
         <section className={styles.workspaceCard} aria-label="CDRRMO workspace">
-          <span className={styles.workspaceEyebrow}>CITY RESPONSE</span>
           <h2>CDRRMO workspace</h2>
           <span className={styles.accessBadge}>
             <ShieldCheck size={15} aria-hidden="true" />
@@ -168,7 +167,6 @@ export function CdrrmoWorkspace({
         </section>
 
         <div className={styles.navigationGroup}>
-          <p className={styles.navigationLabel}>WORKSPACE</p>
           {loading ? (
             <div className={styles.navigationSkeleton} aria-hidden="true">
               {sections.map(({ id }) => (
