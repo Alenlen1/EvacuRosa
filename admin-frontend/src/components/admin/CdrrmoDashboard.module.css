@@ -1,29 +1,56 @@
 ﻿.dashboard {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 430px);
+  align-content: start;
   height: 100%;
   min-height: 0;
-  gap: 16px;
+  gap: 20px;
   min-width: 0;
 }
+.heading {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 18px 24px;
+  border: 1px solid #eadbd0;
+  border-radius: 14px;
+  background: linear-gradient(110deg, #f3e6d9, #fcf7ef 80%);
+  box-shadow: 0 3px 14px #40231a04;
+}
+.heading::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: 48px;
+  top: 7px;
+  width: 78px;
+  height: 110px;
+  background: url("/images/santa-rosa-outline.svg") center / contain no-repeat;
+  opacity: 0.15;
+  pointer-events: none;
+}
+.heading :global(.eyebrow) {
+  color: #825550;
+  letter-spacing: 1.6px;
+}
 .heading h2 {
-  margin: 4px 0 6px;
-  color: #302825;
-  font-size: 25px;
+  margin: 5px 0 6px;
+  color: #54151b;
+  font-size: 28px;
   font-weight: 650;
   line-height: 1.2;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.7px;
 }
 .heading p {
   margin: 0;
-  color: #716158;
-  font-size: 12px;
-  line-height: 1.6;
+  color: #706159;
+  font-size: 13px;
+  line-height: 1.5;
 }
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 .shelters {
   display: grid;
@@ -32,22 +59,40 @@
 }
 .metric {
   display: grid;
-  grid-template-columns: 38px minmax(0, 1fr);
+  grid-template-columns: 42px minmax(0, 1fr);
   align-content: center;
   align-items: center;
-  gap: 6px 12px;
+  gap: 14px;
+  min-height: 100px;
   min-width: 0;
-  padding: 16px;
+  padding: 18px;
   border: 1px solid #e6dcd3;
   border-radius: 13px;
   background: #fffdf9;
+  box-shadow: 0 3px 14px #40231a05;
+}
+.metric[data-tone="safe"] {
+  border-color: #dbe8dd;
+  background: #f0f7f1;
+}
+.metric[data-tone="warning"] {
+  border-color: #eee2c4;
+  background: #fff8e9;
+}
+.metric[data-tone="danger"] {
+  border-color: #ecd9d5;
+  background: #fdf0ed;
+}
+.metric[data-tone="neutral"] {
+  border-color: #e1dcd6;
+  background: #f0eeeb;
 }
 .metricIcon {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
   background: #f4e8e3;
   color: #800000;
 }
@@ -71,14 +116,14 @@
   margin: 0;
 }
 .metric dt {
-  color: #716158;
-  font-size: 12px;
+  color: #66584f;
+  font-size: 13px;
   line-height: 1.4;
 }
 .metric dd {
   margin: 4px 0 0;
   color: #302825;
-  font-size: clamp(22px, 2.2cqi, 30px);
+  font-size: 32px;
   font-weight: 650;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
@@ -94,10 +139,11 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px 18px;
   margin: 0;
-  padding: 10px 14px;
-  border: 1px solid #e6dcd3;
-  border-radius: 10px;
-  background: #fffdf9;
+  padding: 12px 16px;
+  border: 1px solid #e9e0d8;
+  border-radius: 11px;
+  background: #fffefb;
+  box-shadow: 0 3px 14px #40231a04;
 }
 .capacitySummary > div {
   display: flex;
@@ -111,7 +157,7 @@
   align-items: center;
   gap: 6px;
   color: #716158;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
 }
 .capacitySummary dt svg {
@@ -120,7 +166,7 @@
 .capacitySummary dd {
   margin: 0;
   color: #302825;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 650;
   line-height: 1.4;
   font-variant-numeric: tabular-nums;
@@ -128,7 +174,7 @@
 .capacityNote {
   margin: -3px 0 0;
   color: #716158;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.4;
 }
 .capacitySkeleton {
@@ -145,7 +191,7 @@
 .panels {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  gap: 16px;
+  gap: 18px;
   min-height: 0;
 }
 .panel {
@@ -154,10 +200,11 @@
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  padding: 20px;
-  border: 1px solid #e6dcd3;
-  border-radius: 13px;
-  background: #fffdf9;
+  padding: 22px;
+  border: 1px solid #e9e0d8;
+  border-radius: 14px;
+  background: #fffefb;
+  box-shadow: 0 4px 18px #40231a07;
 }
 .panelHeading {
   display: flex;
@@ -166,21 +213,22 @@
   flex-wrap: wrap;
   gap: 8px;
   flex-shrink: 0;
+  min-height: 34px;
 }
 .panelHeading h3 {
   margin: 0;
-  color: #302825;
-  font-size: 16px;
+  color: #54151b;
+  font-size: 18px;
   font-weight: 650;
-  letter-spacing: -0.25px;
+  letter-spacing: -0.3px;
 }
 .panelHeading a {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   min-height: 32px;
-  color: #800000;
-  font-size: 11px;
+  color: #702831;
+  font-size: 12px;
   font-weight: 600;
 }
 .panelControls {
@@ -191,11 +239,12 @@
 .refresh {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border: 1px solid #e6dcd3;
-  border-radius: 7px;
-  color: #865542;
+  border-radius: 8px;
+  background: #fffdfa;
+  color: #80574e;
 }
 .refresh:hover:not(:disabled) {
   background: #f7eee7;
@@ -210,21 +259,21 @@
   justify-content: space-between;
   flex-shrink: 0;
   gap: 12px;
-  margin: 14px 0 0;
-  padding: 12px;
-  border: 1px solid #ead5c9;
-  border-radius: 9px;
-  background: #fbf2eb;
+  margin: 16px 0 0;
+  padding: 14px;
+  border: 1px solid #ead4cb;
+  border-radius: 10px;
+  background: #faf0eb;
 }
 .hazardTotal dt {
-  color: #704035;
-  font-size: 12px;
+  color: #77433b;
+  font-size: 13px;
   font-weight: 550;
 }
 .hazardTotal dd {
   margin: 0;
-  color: #800000;
-  font-size: 27px;
+  color: #68212a;
+  font-size: 30px;
   font-weight: 650;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -236,8 +285,8 @@
 }
 .panel > p {
   margin: 6px 0 0;
-  color: #716158;
-  font-size: 11px;
+  color: #78695f;
+  font-size: 12px;
   line-height: 1.6;
 }
 .hazardList {
@@ -261,14 +310,14 @@
 .hazardList dt {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   color: #604c42;
-  font-size: 12px;
+  font-size: 13px;
 }
 .hazardList dd {
   margin: 0;
   color: #302825;
-  font-size: 21px;
+  font-size: 23px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
@@ -280,10 +329,10 @@
 .hazardIcon {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 .hazardIcon[data-tone="flood"] {
   color: #4568a8;
@@ -332,6 +381,7 @@
   }
   .metric {
     grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
     padding: 10px 8px;
     gap: 5px;
   }
@@ -363,6 +413,9 @@
   .capacitySummary dt {
     font-size: 10px;
   }
+  .capacitySummary dd {
+    font-size: 14px;
+  }
   .capacitySummary dt svg {
     display: none;
   }
@@ -382,6 +435,13 @@
   }
   .panelHeading h3 {
     font-size: 14px;
+  }
+  .panelHeading {
+    min-height: 32px;
+  }
+  .refresh {
+    width: 32px;
+    height: 32px;
   }
   .panelHeading a {
     font-size: 10px;
@@ -449,8 +509,23 @@
     margin: 0;
     font-size: 21px;
   }
+  .heading {
+    padding: 12px 16px;
+  }
+  .heading::after {
+    top: 50%;
+    right: 24px;
+    width: 48px;
+    height: 68px;
+    transform: translateY(-50%);
+  }
   .metric {
+    min-height: 0;
     padding: 10px;
+  }
+  .metricIcon {
+    width: 34px;
+    height: 34px;
   }
   .panel {
     padding: 12px;
@@ -481,28 +556,33 @@
 .hazardPanel {
   container: hazard-summary / size;
   overflow: clip;
-  padding: 16px;
+  padding: 22px;
 }
 .hazardPanel .hazardList {
   flex: 0 1 auto;
   min-height: 0;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 .hazardPanel .hazardList > div {
-  padding-block: 8px;
+  padding-block: 13px;
 }
 .hazardPanel .hazardList dd {
   line-height: 1.1;
 }
 .hazardPanel .hazardTotal {
-  margin-top: 10px;
-  padding: 10px;
+  margin-top: 16px;
+  padding: 14px;
 }
 .hazardPanel > .unavailable {
   flex-shrink: 0;
   margin: 8px 0 0;
   font-size: 11px;
   line-height: 1.4;
+}
+@media (max-height: 650px) {
+  .hazardPanel {
+    padding: 12px;
+  }
 }
 @container cdrrmo-main (max-width: 700px) {
   .panels {
@@ -593,5 +673,16 @@
   .hazardPanel > .unavailable {
     margin-top: 4px;
     font-size: 10px;
+  }
+}
+@media (max-height: 700px) {
+  @container cdrrmo-main (max-width: 700px) {
+    .dashboard {
+      height: auto;
+      grid-template-rows: auto auto;
+    }
+    .panels {
+      grid-template-rows: minmax(180px, auto) minmax(180px, auto);
+    }
   }
 }

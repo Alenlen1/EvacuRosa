@@ -20,14 +20,14 @@ export function SharedLocationsPreview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reload, setReload] = useState(0);
-  const [limit, setLimit] = useState(1);
+  const [limit, setLimit] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
     const observer = new ResizeObserver(() => {
-      setLimit(Math.max(1, Math.min(3, Math.floor(list.clientHeight / 64))));
+      setLimit(Math.max(0, Math.min(3, Math.floor(list.clientHeight / 64))));
     });
     observer.observe(list);
     return () => observer.disconnect();

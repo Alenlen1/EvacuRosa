@@ -110,7 +110,7 @@ export function CdrrmoDashboard({
       <section className={styles.shelters} aria-label="Shelter availability">
         <div className={styles.metrics}>
           {metrics.map(({ label, value, icon: Icon, tone }) => (
-            <div className={styles.metric} key={label}>
+            <div className={styles.metric} key={label} data-tone={tone}>
               <span className={styles.metricIcon} data-tone={tone}>
                 <Icon size={21} aria-hidden="true" />
               </span>
