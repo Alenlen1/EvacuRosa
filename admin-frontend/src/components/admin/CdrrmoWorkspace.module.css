@@ -175,6 +175,9 @@
   overflow: hidden;
   overscroll-behavior: contain;
 }
+.viewport[data-workspace-scroll="false"] {
+  background: #f5f1eb;
+}
 .viewport[data-workspace-scroll="true"] {
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -184,6 +187,23 @@
   min-height: 100%;
   flex: none;
   overflow: visible;
+}
+@media (max-height: 700px) {
+  @container cdrrmo-main (max-width: 700px) {
+    .viewport[data-workspace-scroll="false"] {
+      overflow-y: auto;
+    }
+    .viewport[data-workspace-scroll="false"] .sectionPanel {
+      height: auto;
+      min-height: 100%;
+      overflow: visible;
+    }
+    .viewport[data-workspace-scroll="false"] :global(.cdrrmo-content) {
+      height: auto;
+      min-height: 100%;
+      overflow: visible;
+    }
+  }
 }
 .sectionPanel {
   min-width: 0;
