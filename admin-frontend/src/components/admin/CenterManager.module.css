@@ -188,20 +188,32 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
 }
+.coordinatesSection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e4d8cd;
+}
 .detailsSection,
 .locationSection {
   min-width: 0;
 }
-:global(.cdrrmo-workspace) .editorColumns h4 {
+:global(.cdrrmo-workspace) :is(.editorColumns, .coordinatesSection) h4 {
   margin: 0 0 12px;
   font-size: 14px;
   font-weight: 650;
 }
-:global(.cdrrmo-workspace) .locationSection > p {
+:global(.cdrrmo-workspace) :is(.locationSection > p, .coordinatesSection p) {
   margin: 0 0 14px;
   font-size: 13px;
   line-height: 1.6;
   color: #716158;
+}
+:global(.cdrrmo-workspace) .coordinatesSection p {
+  margin: 0;
 }
 .fieldGrid {
   display: grid;
@@ -575,6 +587,10 @@
   }
 }
 @container cdrrmo-main (max-width: 740px) {
+  .coordinatesSection {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
   :global(.cdrrmo-workspace) .manager {
     padding: 18px;
   }

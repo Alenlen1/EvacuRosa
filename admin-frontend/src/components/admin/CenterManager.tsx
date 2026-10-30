@@ -50,7 +50,6 @@ const empty = {
   longitude: "",
   capacity: "",
   contactInformation: "",
-  notes: "",
 };
 
 function nonNegativeInteger(value: number): number | null {
@@ -116,7 +115,6 @@ export function CenterManager({
       longitude: String(center.longitude),
       capacity: String(center.capacity),
       contactInformation: center.contact_information ?? "",
-      notes: center.notes ?? "",
     });
     setError("");
     setMessage("");
@@ -305,6 +303,46 @@ export function CenterManager({
               </p>
             </div>
             <fieldset disabled={busy} className={styles.fields}>
+              <section
+                className={styles.coordinatesSection}
+                aria-labelledby="center-coordinates-title"
+              >
+                <div>
+                  <h4 id="center-coordinates-title">
+                    Verified entrance coordinates
+                  </h4>
+                  <p>
+                    Enter coordinates or select the entrance on the map. The
+                    location must be inside Santa Rosa.
+                  </p>
+                </div>
+                <div className={styles.fieldGrid}>
+                  <label>
+                    Latitude
+                    <input
+                      type="number"
+                      step="any"
+                      required
+                      value={draft.latitude}
+                      onChange={(e) =>
+                        setDraft({ ...draft, latitude: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Longitude
+                    <input
+                      type="number"
+                      step="any"
+                      required
+                      value={draft.longitude}
+                      onChange={(e) =>
+                        setDraft({ ...draft, longitude: e.target.value })
+                      }
+                    />
+                  </label>
+                </div>
+              </section>
               <div className={styles.editorColumns}>
                 <div className={styles.detailsSection}>
                   <h4>Center details</h4>
@@ -376,24 +414,13 @@ export function CenterManager({
                         }
                       />
                     </label>
-                    <label className={styles.wide}>
-                      Notes
-                      <textarea
-                        maxLength={3000}
-                        rows={3}
-                        value={draft.notes}
-                        onChange={(e) =>
-                          setDraft({ ...draft, notes: e.target.value })
-                        }
-                      />
-                    </label>
                   </div>
                 </div>
                 <div className={styles.locationSection}>
-                  <h4>Verified entrance</h4>
+                  <h4>Entrance map</h4>
                   <p>
-                    Select the entrance on the map or enter its coordinates.
-                    Locations must be inside Santa Rosa.
+                    Select the verified entrance. The coordinates above update
+                    automatically.
                   </p>
                   <LocationPicker
                     centers={centers}
@@ -407,32 +434,6 @@ export function CenterManager({
                       }))
                     }
                   />
-                  <div className={styles.fieldGrid}>
-                    <label>
-                      Latitude
-                      <input
-                        type="number"
-                        step="any"
-                        required
-                        value={draft.latitude}
-                        onChange={(e) =>
-                          setDraft({ ...draft, latitude: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      Longitude
-                      <input
-                        type="number"
-                        step="any"
-                        required
-                        value={draft.longitude}
-                        onChange={(e) =>
-                          setDraft({ ...draft, longitude: e.target.value })
-                        }
-                      />
-                    </label>
-                  </div>
                 </div>
               </div>
               <div className={styles.formActions}>
