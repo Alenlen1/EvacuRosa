@@ -1,7 +1,7 @@
 ﻿"use client";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Info, MapPin, RefreshCw } from "lucide-react";
+import { Clock3, Info, MapPin, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import {
   assistanceEventsUrl,
@@ -23,6 +23,10 @@ import { TRAVEL_MODES } from "@/lib/travelTime";
 import styles from "./AssistanceRequests.module.css";
 import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
 import { isVisibleAssistanceRequest } from "@/lib/assistanceVisibility";
+import {
+  assistanceDisplayName,
+  assistanceTime,
+} from "@/lib/assistancePresentation";
 import { MapSkeleton, RecordsSkeleton } from "./LoadingSkeleton";
 const AssistanceLocationMap = dynamic(() => import("./AssistanceLocationMap"), {
   ssr: false,
@@ -46,10 +50,27 @@ export function AssistanceRequests() {
   const [histories, setHistories] = useState<
     Record<string, AssistanceHistory[]>
   >({});
+  const [historyLoading, setHistoryLoading] = useState<string | null>(null);
+  const recordRefs = useRef(new Map<string, HTMLElement>());
+  const requestList = useRef<HTMLDivElement>(null);
+  const selectedRequest = requests.find((item) => item.id === selection?.id);
   const mounted = useRef(true),
     pending = useRef(false),
     mutationVersion = useRef(0),
     mapSection = useRef<HTMLDivElement>(null);
+  function revealRequest(id: string, focus = false) {
+    requestAnimationFrame(() => {
+      const card = recordRefs.current.get(id);
+      const list = requestList.current;
+      if (!card || !list || !list.clientHeight) return;
+      list.scrollTo({ top: card.offsetTop - 3, behavior: "instant" });
+      if (focus) card.focus({ preventScroll: true });
+    });
+  }
+  function selectRequest(id: string, fromMap = false) {
+    setSelection((previous) => ({ id, version: (previous?.version ?? 0) + 1 }));
+    if (fromMap) revealRequest(id);
+  }
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -288,15 +309,28 @@ export function AssistanceRequests() {
     }
   }
   async function history(id: string) {
+    if (historyLoading) return;
+    if (histories[id]) {
+      setHistories((previous) => {
+        const next = { ...previous };
+        delete next[id];
+        return next;
+      });
+      return;
+    }
+    setHistoryLoading(id);
+    const version = mutationVersion.current;
     try {
       const result = await fetchAssistanceDetails(await token(), id);
-      if (mounted.current)
+      if (mounted.current && version === mutationVersion.current)
         setHistories((value) => ({ ...value, [id]: result.history }));
     } catch (cause) {
       if (mounted.current)
         setError(
           cause instanceof Error ? cause.message : "Could not load history.",
         );
+    } finally {
+      if (mounted.current) setHistoryLoading(null);
     }
   }
   return (
@@ -308,21 +342,13 @@ export function AssistanceRequests() {
         <div>
           <span className="assistance-eyebrow">CDRRMO</span>
           <h2 id="assistance-requests-title">
-            Assistance Requests{" "}
+            Shared locations{" "}
             <span className="assistance-count">{requests.length}</span>
           </h2>
           <p className="assistance-caption">
-            Emergency assistance requests and one-time reported GPS locations.
+            Review reported locations and update assistance requests.
           </p>
         </div>
-        <button
-          className="secondary-button"
-          disabled={loading}
-          onClick={() => setRefresh((n) => n + 1)}
-        >
-          <RefreshCw size={16} aria-hidden="true" />
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
       </div>
       <div className="assistance-toolbar">
         <span
@@ -349,13 +375,25 @@ export function AssistanceRequests() {
             )}
           </select>
         </label>
-        <span>Automatic updates - Latest 100</span>
+        <span className={styles.updateHint}>
+          Automatic updates - Latest 100
+        </span>
+        <button
+          className={`secondary-button ${styles.refreshButton}`}
+          aria-label="Refresh shared locations"
+          disabled={loading}
+          onClick={() => setRefresh((n) => n + 1)}
+        >
+          <RefreshCw size={16} aria-hidden="true" />
+          <span className={styles.refreshLabel}>
+            {loading ? "Refreshing..." : "Refresh"}
+          </span>
+        </button>
       </div>
       <div className="assistance-disclaimer">
         <Info size={16} aria-hidden="true" />
         <span>
-          Locations are GPS snapshots, not live tracking. Acknowledge confirms
-          receipt; dispatch only after a team is actually sent.
+          Locations are GPS snapshots, not live tracking. People may have moved.
         </span>
       </div>
       {error && (
@@ -381,7 +419,10 @@ export function AssistanceRequests() {
           <button
             type="button"
             aria-pressed={mobileView === "requests"}
-            onClick={() => setMobileView("requests")}
+            onClick={() => {
+              setMobileView("requests");
+              if (selection) revealRequest(selection.id);
+            }}
           >
             Requests ({requests.length})
           </button>
@@ -399,32 +440,66 @@ export function AssistanceRequests() {
           <div
             ref={mapSection}
             className="assistance-map-section"
+            role="region"
+            aria-label="Reported-location map"
             tabIndex={-1}
           >
             <div className="assistance-map-heading">
-              <h3>Reported-location map</h3>
+              <h3>Reported locations</h3>
               {selection &&
                 requests.some((item) => item.id === selection.id) && (
                   <p className="assistance-map-selection">
                     <MapPin size={14} aria-hidden="true" />
-                    Selected request:{" "}
-                    {requests.find((item) => item.id === selection.id)
-                      ?.display_name || "Name not provided"}
+                    <span>
+                      {selectedRequest &&
+                        assistanceDisplayName(selectedRequest)}
+                    </span>
                   </p>
                 )}
             </div>
-            <AssistanceLocationMap requests={requests} selection={selection} />
+            <AssistanceLocationMap
+              requests={requests}
+              selection={selection}
+              onSelectRequest={(id) => selectRequest(id, true)}
+            />
+            <div className={styles.mapFooter}>
+              <span>The circle shows the reported GPS accuracy.</span>
+              {selectedRequest && (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    setMobileView("requests");
+                    revealRequest(selectedRequest.id, true);
+                  }}
+                >
+                  View request
+                </button>
+              )}
+            </div>
           </div>
         )}
-        <div className="assistance-list">
+        <div
+          className="assistance-list"
+          ref={requestList}
+          aria-label="Assistance requests"
+        >
           {requests.map((item) => (
             <article
               className="assistance-record"
               data-status={item.status}
+              data-selected={selection?.id === item.id}
+              aria-current={selection?.id === item.id ? "true" : undefined}
+              tabIndex={-1}
+              aria-label={assistanceDisplayName(item)}
+              ref={(element) => {
+                if (element) recordRefs.current.set(item.id, element);
+                else recordRefs.current.delete(item.id);
+              }}
               key={item.id}
             >
               <header className="assistance-record-heading">
-                <h3>{item.display_name || "Name not provided"}</h3>
+                <h3>{assistanceDisplayName(item)}</h3>
                 <span className="assistance-mode">
                   {TRAVEL_MODES[item.travel_mode].label}
                 </span>
@@ -434,9 +509,7 @@ export function AssistanceRequests() {
                   {ASSISTANCE_LABELS[item.status]}
                 </strong>
                 <time dateTime={item.status_updated_at ?? item.created_at}>
-                  {new Date(
-                    item.status_updated_at ?? item.created_at,
-                  ).toLocaleString()}
+                  {assistanceTime(item.status_updated_at ?? item.created_at)}
                 </time>
               </div>
               <div className="assistance-location">
@@ -464,12 +537,19 @@ export function AssistanceRequests() {
                   <span className="assistance-field-label">
                     Reported GPS accuracy
                   </span>
-                  <strong>+/-{Math.round(item.accuracy_meters)} m</strong>
+                  <strong
+                    className={styles.accuracy}
+                    data-approximate={item.accuracy_meters > 100}
+                  >
+                    ±{Math.round(item.accuracy_meters)} m
+                    {item.accuracy_meters > 100 && (
+                      <small>Approximate location</small>
+                    )}
+                  </strong>
                 </div>
               </div>
               <p className="assistance-capture-time">
-                Location captured:{" "}
-                {new Date(item.location_recorded_at).toLocaleString()}
+                Location captured: {assistanceTime(item.location_recorded_at)}
               </p>
               <details className="assistance-record-details">
                 <summary>Request details</summary>
@@ -480,7 +560,7 @@ export function AssistanceRequests() {
                   </div>
                   <div>
                     <dt>Received</dt>
-                    <dd>{new Date(item.created_at).toLocaleString()}</dd>
+                    <dd>{assistanceTime(item.created_at)}</dd>
                   </div>
                 </dl>
               </details>
@@ -488,10 +568,7 @@ export function AssistanceRequests() {
                 <button
                   className="secondary-button"
                   onClick={() => {
-                    setSelection((previous) => ({
-                      id: item.id,
-                      version: (previous?.version ?? 0) + 1,
-                    }));
+                    selectRequest(item.id);
                     setMobileView("map");
                     requestAnimationFrame(() =>
                       mapSection.current?.focus({ preventScroll: true }),
@@ -506,7 +583,7 @@ export function AssistanceRequests() {
                     disabled={busy !== null}
                     onClick={() => void change(item, "ACKNOWLEDGED")}
                   >
-                    Acknowledge Request
+                    {busy === item.id ? "Updating..." : "Acknowledge"}
                   </button>
                 )}
                 {item.status === "ACKNOWLEDGED" && (
@@ -515,7 +592,7 @@ export function AssistanceRequests() {
                     disabled={busy !== null}
                     onClick={() => void change(item, "DISPATCHED")}
                   >
-                    Dispatch Assistance
+                    {busy === item.id ? "Updating..." : "Dispatch team"}
                   </button>
                 )}
                 {item.status === "DISPATCHED" && (
@@ -524,7 +601,7 @@ export function AssistanceRequests() {
                     disabled={busy !== null}
                     onClick={() => void change(item, "COMPLETED")}
                   >
-                    Mark Completed
+                    {busy === item.id ? "Updating..." : "Mark completed"}
                   </button>
                 )}
                 {assistanceActive(item.status) ? (
@@ -533,7 +610,7 @@ export function AssistanceRequests() {
                     disabled={busy !== null}
                     onClick={() => void change(item, "CANCELLED")}
                   >
-                    Cancel Request
+                    Cancel request
                   </button>
                 ) : (
                   <button
@@ -541,14 +618,21 @@ export function AssistanceRequests() {
                     disabled={busy !== null}
                     onClick={() => void remove(item)}
                   >
-                    Delete closed request
+                    Delete request
                   </button>
                 )}
                 <button
                   className="secondary-button"
+                  disabled={historyLoading !== null}
+                  aria-expanded={Boolean(histories[item.id])}
                   onClick={() => void history(item.id)}
                 >
-                  View status history
+                  <Clock3 size={14} aria-hidden="true" />
+                  {historyLoading === item.id
+                    ? "Loading history..."
+                    : histories[item.id]
+                      ? "Hide history"
+                      : "Status history"}
                 </button>
               </div>
               {histories[item.id] && (
@@ -556,8 +640,16 @@ export function AssistanceRequests() {
                   {histories[item.id].map((event) => (
                     <li key={event.version}>
                       <strong>{ASSISTANCE_LABELS[event.new_status]}</strong>
-                      <time>{new Date(event.changed_at).toLocaleString()}</time>
-                      <small>{event.actor_kind}</small>
+                      <time dateTime={event.changed_at}>
+                        {assistanceTime(event.changed_at)}
+                      </time>
+                      <small>
+                        {event.actor_kind === "CDRRMO"
+                          ? "CDRRMO"
+                          : event.actor_kind === "PUBLIC_USER"
+                            ? "Request owner"
+                            : "System"}
+                      </small>
                     </li>
                   ))}
                 </ol>

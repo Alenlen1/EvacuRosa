@@ -188,17 +188,25 @@
   flex: none;
   overflow: visible;
 }
+@media (max-height: 500px) {
+  .viewport[data-workspace-section="shared-locations"]
+    :global(.cdrrmo-content) {
+    padding: 8px;
+  }
+}
 @media (max-height: 700px) {
   @container cdrrmo-main (max-width: 700px) {
-    .viewport[data-workspace-scroll="false"] {
+    .viewport[data-workspace-scroll="false"][data-workspace-section="dashboard-overview"] {
       overflow-y: auto;
     }
-    .viewport[data-workspace-scroll="false"] .sectionPanel {
+    .viewport[data-workspace-scroll="false"][data-workspace-section="dashboard-overview"]
+      .sectionPanel {
       height: auto;
       min-height: 100%;
       overflow: visible;
     }
-    .viewport[data-workspace-scroll="false"] :global(.cdrrmo-content) {
+    .viewport[data-workspace-scroll="false"][data-workspace-section="dashboard-overview"]
+      :global(.cdrrmo-content) {
       height: auto;
       min-height: 100%;
       overflow: visible;
