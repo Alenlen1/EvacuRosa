@@ -21,9 +21,13 @@ import {
 } from "@/lib/assistance";
 import { TRAVEL_MODES } from "@/lib/travelTime";
 import styles from "./AssistanceRequests.module.css";
-import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
+import {
+  useConfirmation,
+  useDeleteConfirmation,
+} from "./DeleteConfirmationDialog";
 import { isVisibleAssistanceRequest } from "@/lib/assistanceVisibility";
 import {
+  ASSISTANCE_MAP_COLORS,
   assistanceDisplayName,
   assistanceTime,
 } from "@/lib/assistancePresentation";
@@ -32,11 +36,20 @@ const AssistanceLocationMap = dynamic(() => import("./AssistanceLocationMap"), {
   ssr: false,
   loading: () => <MapSkeleton label="Loading reported-location map..." />,
 });
+const legendStatuses = [
+  { status: "PENDING", label: "Submitted" },
+  { status: "ACKNOWLEDGED", label: "Acknowledged" },
+  { status: "DISPATCHED", label: "Dispatched" },
+  { status: "COMPLETED", label: "Completed" },
+] as const;
 export function AssistanceRequests() {
   const { confirmDelete, deleteDialog } = useDeleteConfirmation();
+  const { confirm: confirmAction, dialog: actionDialog } = useConfirmation();
   const [mobileView, setMobileView] = useState<"requests" | "map">("requests");
   const [requests, setRequests] = useState<AssistanceRequest[]>([]),
     [filter, setFilter] = useState<AssistanceStatus | "">("");
+  const requestsRef = useRef(requests);
+  requestsRef.current = requests;
   const [selection, setSelection] = useState<{
     id: string;
     version: number;
@@ -214,15 +227,61 @@ export function AssistanceRequests() {
   }
   async function change(item: AssistanceRequest, status: AssistanceStatus) {
     if (pending.current) return;
-    const text =
-      status === "DISPATCHED"
-        ? "Confirm that a response team has ACTUALLY been dispatched to this reported location. The user will be told Help Is on the Way."
-        : status === "COMPLETED"
-          ? "Confirm assistance has actually been completed for this request."
-          : status === "CANCELLED"
-            ? "Confirm cancellation. If a team was dispatched, coordinate the cancellation with responders."
-            : "";
-    if (text && !window.confirm(text)) return;
+    const prompts = {
+      DISPATCHED: {
+        variant: "dispatch",
+        title: "Dispatch team?",
+        confirmLabel: "Confirm dispatch",
+        cancelLabel: "Not yet",
+        description:
+          "Confirm only after a response team has been dispatched to this reported location. The user will see Help Is on the Way.",
+      },
+      COMPLETED: {
+        variant: "complete",
+        title: "Mark assistance completed?",
+        confirmLabel: "Mark completed",
+        cancelLabel: "Go back",
+        description:
+          "Confirm that assistance has been completed for this request. The user will see Assistance Completed.",
+      },
+      CANCELLED: {
+        variant: "cancel",
+        title: "Cancel this request?",
+        confirmLabel: "Cancel request",
+        cancelLabel: "Keep request",
+        description:
+          "This marks the request as cancelled and removes it from Shared locations. If a team was dispatched, coordinate with responders first.",
+      },
+    } as const;
+    const prompt =
+      status === "DISPATCHED" ||
+      status === "COMPLETED" ||
+      status === "CANCELLED"
+        ? prompts[status]
+        : null;
+    if (
+      prompt &&
+      !(await confirmAction({
+        ...prompt,
+        subject: assistanceDisplayName(item),
+      }))
+    )
+      return;
+    if (!mounted.current || pending.current) return;
+    const current = requestsRef.current.find(
+      (request) => request.id === item.id,
+    );
+    if (
+      !current ||
+      current.version !== item.version ||
+      current.status !== item.status
+    ) {
+      setError(
+        "This request changed while you were reviewing it. Review its latest status before continuing.",
+      );
+      setRefresh((value) => value + 1);
+      return;
+    }
     pending.current = true;
     mutationVersion.current++;
     setBusy(item.id);
@@ -234,7 +293,7 @@ export function AssistanceRequests() {
         item.id,
         status,
         item.version,
-        !!text,
+        Boolean(prompt),
       );
       if (!mounted.current) return;
       setRequests((rows) =>
@@ -389,6 +448,29 @@ export function AssistanceRequests() {
             {loading ? "Refreshing..." : "Refresh"}
           </span>
         </button>
+      </div>
+      <div
+        className={styles.legend}
+        role="group"
+        aria-label="Shared location legend"
+      >
+        <strong>Legend</strong>
+        <ul>
+          {legendStatuses.map(({ status, label }) => (
+            <li key={status}>
+              <span
+                className={styles.legendDot}
+                style={{ backgroundColor: ASSISTANCE_MAP_COLORS[status] }}
+                aria-hidden="true"
+              />
+              {label}
+            </li>
+          ))}
+          <li>
+            <span className={styles.legendAccuracy} aria-hidden="true" />
+            GPS accuracy area
+          </li>
+        </ul>
       </div>
       <div className="assistance-disclaimer">
         <Info size={16} aria-hidden="true" />
@@ -659,6 +741,7 @@ export function AssistanceRequests() {
         </div>
       </div>
       {deleteDialog}
+      {actionDialog}
     </section>
   );
 }

@@ -1,3 +1,11 @@
+export const ASSISTANCE_MAP_COLORS = {
+  PENDING: "#2563eb",
+  ACKNOWLEDGED: "#b7791f",
+  DISPATCHED: "#b03a2e",
+  COMPLETED: "#28764b",
+  CANCELLED: "#6b7280",
+} as const;
+
 const timeFormat = new Intl.DateTimeFormat("en-PH", {
   timeZone: "Asia/Manila",
   month: "short",

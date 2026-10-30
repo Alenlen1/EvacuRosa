@@ -15,16 +15,12 @@ import {
 import type { AssistanceRequest } from "@/services/api";
 import { SANTA_ROSA_CITY_CENTER } from "@/lib/mapBounds";
 import { isVisibleAssistanceRequest } from "@/lib/assistanceVisibility";
-import { assistanceDisplayName } from "@/lib/assistancePresentation";
+import {
+  ASSISTANCE_MAP_COLORS as colors,
+  assistanceDisplayName,
+} from "@/lib/assistancePresentation";
 import { ASSISTANCE_LABELS } from "@/lib/assistance";
 
-const colors = {
-  PENDING: "#2563eb",
-  ACKNOWLEDGED: "#b7791f",
-  DISPATCHED: "#b03a2e",
-  COMPLETED: "#28764b",
-  CANCELLED: "#6b7280",
-};
 type Selection = { id: string; version: number } | null;
 
 function Locations({

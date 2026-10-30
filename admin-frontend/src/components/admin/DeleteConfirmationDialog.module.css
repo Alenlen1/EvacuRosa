@@ -8,6 +8,7 @@
   background: #fffdf9;
   color: #302825;
   box-shadow: 0 24px 100px #30100c40;
+  overflow: hidden;
 }
 .dialog::backdrop {
   background: #27140f80;
@@ -15,14 +16,35 @@
 }
 .content {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  max-height: calc(100dvh - 34px);
   padding: 28px;
+}
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding-right: 24px;
+}
+.body {
+  min-height: 0;
+  margin-top: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.body > p:last-child {
+  margin-bottom: 0;
 }
 .icon {
   display: grid;
   place-items: center;
   width: 52px;
   height: 52px;
-  margin-bottom: 20px;
+  flex-shrink: 0;
   border-radius: 14px;
   background: #f9e7e3;
   color: #a22e25;
@@ -42,7 +64,7 @@
   background: #f5eee7;
 }
 .content h2 {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 22px;
   font-weight: 650;
   letter-spacing: -0.5px;
@@ -67,6 +89,7 @@
   gap: 10px;
   justify-content: flex-end;
   margin-top: 24px;
+  flex-shrink: 0;
 }
 .actions button {
   display: inline-flex;
@@ -92,6 +115,26 @@
 .actions .remove:hover {
   background: #7f1c17;
 }
+.dialog[data-variant="dispatch"] .icon {
+  background: #f3e7df;
+  color: #800000;
+}
+.dialog[data-variant="dispatch"] .remove {
+  border-color: #800000;
+  background: #800000;
+}
+.dialog[data-variant="complete"] .icon {
+  background: #e8f2eb;
+  color: #286240;
+}
+.dialog[data-variant="complete"] .remove {
+  border-color: #286240;
+  background: #286240;
+}
+.dialog[data-variant="dispatch"] .remove:hover,
+.dialog[data-variant="complete"] .remove:hover {
+  filter: brightness(0.9);
+}
 .dialog button:focus-visible {
   outline: 2px solid #94524f;
   outline-offset: 3px;
@@ -103,11 +146,9 @@
   .icon {
     width: 44px;
     height: 44px;
-    margin-bottom: 14px;
   }
   .content h2 {
     font-size: 20px;
-    margin-bottom: 10px;
   }
   .content p {
     font-size: 12px;
