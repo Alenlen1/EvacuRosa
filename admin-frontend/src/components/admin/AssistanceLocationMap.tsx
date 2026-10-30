@@ -1,7 +1,7 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 import {
   MapContainer,
@@ -9,11 +9,14 @@ import {
   CircleMarker,
   Circle,
   Popup,
+  ZoomControl,
   useMap,
 } from "react-leaflet";
 import type { AssistanceRequest } from "@/services/api";
 import { SANTA_ROSA_CITY_CENTER } from "@/lib/mapBounds";
 import { isVisibleAssistanceRequest } from "@/lib/assistanceVisibility";
+import { assistanceDisplayName } from "@/lib/assistancePresentation";
+import { ASSISTANCE_LABELS } from "@/lib/assistance";
 
 const colors = {
   PENDING: "#2563eb",
@@ -27,22 +30,62 @@ type Selection = { id: string; version: number } | null;
 function Locations({
   requests,
   selection,
+  onSelectRequest,
 }: {
   requests: AssistanceRequest[];
   selection: Selection;
+  onSelectRequest: (id: string) => void;
 }) {
   const map = useMap();
   const fitted = useRef(false);
-  const focusedVersion = useRef<number | null>(null);
+  const focusedSelection = useRef<string | null>(null);
   const markers = useRef(new Map<string, L.CircleMarker>());
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = requests.find((request) => request.id === selectedId);
+  const popupIntent = useRef<string | null>(null);
+  const lastSize = useRef<{ width: number; height: number } | null>(null);
+  const selected = requests.find((request) => request.id === selection?.id);
 
   useEffect(() => {
     const resize = () => {
       const container = map.getContainer();
       if (!container.clientWidth || !container.clientHeight) return;
+      const size = {
+        width: container.clientWidth,
+        height: container.clientHeight,
+      };
+      if (
+        lastSize.current &&
+        (lastSize.current.width !== size.width ||
+          lastSize.current.height !== size.height)
+      ) {
+        map.closePopup();
+      }
+      lastSize.current = size;
       map.invalidateSize({ animate: false });
+      const item = requests.find((request) => request.id === selection?.id);
+      const key = selection ? `${selection.id}:${selection.version}` : null;
+      if (item && key !== focusedSelection.current) {
+        focusedSelection.current = key;
+        fitted.current = true;
+        map.closePopup();
+        const center = L.latLng(item.latitude, item.longitude);
+        map.fitBounds(
+          center.toBounds(Math.max(100, item.accuracy_meters * 2)),
+          {
+            padding: [28, 28],
+            maxZoom: 17,
+            animate: false,
+          },
+        );
+        if (popupIntent.current === item.id)
+          markers.current.get(item.id)?.openPopup();
+        popupIntent.current = null;
+        return;
+      }
+      if (!selection && focusedSelection.current) {
+        focusedSelection.current = null;
+        fitted.current = false;
+        map.closePopup();
+      }
       if (!fitted.current && requests.length) {
         map.fitBounds(
           L.latLngBounds(
@@ -57,24 +100,7 @@ function Locations({
     observer.observe(map.getContainer());
     resize();
     return () => observer.disconnect();
-  }, [map, requests]);
-
-  useEffect(() => {
-    if (!selection || focusedVersion.current === selection.version) return;
-    const item = requests.find((request) => request.id === selection.id);
-    if (!item) return;
-    if (!map.getContainer().clientWidth || !map.getContainer().clientHeight)
-      return;
-    map.invalidateSize({ animate: false });
-    focusedVersion.current = selection.version;
-    setSelectedId(item.id);
-    const center = L.latLng(item.latitude, item.longitude);
-    map.fitBounds(center.toBounds(Math.max(100, item.accuracy_meters * 2)), {
-      padding: [40, 40],
-      maxZoom: 17,
-    });
-    markers.current.get(item.id)?.openPopup();
-  }, [map, selection, requests]);
+  }, [map, requests, selection]);
 
   return (
     <>
@@ -98,27 +124,29 @@ function Locations({
             else markers.current.delete(item.id);
           }}
           center={[item.latitude, item.longitude]}
-          radius={9}
+          radius={item.id === selection?.id ? 11 : 8}
           pathOptions={{
             color: "white",
-            weight: 2,
+            weight: item.id === selection?.id ? 3 : 2,
             fillColor: colors[item.status],
             fillOpacity: 1,
           }}
-          eventHandlers={{ click: () => setSelectedId(item.id) }}
+          eventHandlers={{
+            click: () => {
+              popupIntent.current = item.id;
+              onSelectRequest(item.id);
+            },
+          }}
         >
-          <Popup>
+          <Popup
+            minWidth={160}
+            maxWidth={240}
+            maxHeight={140}
+            autoPanPadding={[8, 8]}
+          >
             <div className="assistance-map-popup">
-              <strong>{item.display_name || "Name not provided"}</strong>
-              <span className="assistance-reference">
-                Request ID: {item.id}
-              </span>
-              <span>{item.status.replaceAll("_", " ")}</span>
-              <span>
-                {item.contact_number
-                  ? `Contact: ${item.contact_number}`
-                  : "Contact not provided"}
-              </span>
+              <strong>{assistanceDisplayName(item)}</strong>
+              <span>{ASSISTANCE_LABELS[item.status]}</span>
               <span>
                 {item.location_name
                   ? `Near ${item.location_name.roadName}`
@@ -130,13 +158,6 @@ function Locations({
               <span>
                 Reported accuracy: ±{Math.round(item.accuracy_meters)} m
               </span>
-              <span>
-                Recorded: {new Date(item.location_recorded_at).toLocaleString()}
-              </span>
-              <small>
-                Shared snapshot. The person may have moved since this was
-                recorded.
-              </small>
             </div>
           </Popup>
         </CircleMarker>
@@ -148,9 +169,11 @@ function Locations({
 export default function AssistanceLocationMap({
   requests,
   selection,
+  onSelectRequest,
 }: {
   requests: AssistanceRequest[];
   selection: Selection;
+  onSelectRequest: (id: string) => void;
 }) {
   const valid = requests.filter(
     (item) =>
@@ -168,12 +191,19 @@ export default function AssistanceLocationMap({
       zoom={13}
       className="assistance-location-map"
       scrollWheelZoom={false}
+      zoomAnimation={false}
+      zoomControl={false}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Locations requests={valid} selection={selection} />
+      <ZoomControl position="bottomright" />
+      <Locations
+        requests={valid}
+        selection={selection}
+        onSelectRequest={onSelectRequest}
+      />
     </MapContainer>
   );
 }

@@ -305,7 +305,10 @@ export function CdrrmoWorkspace({
           </header>
           <div
             id="cdrrmo-main"
-            data-workspace-scroll={active !== "dashboard-overview"}
+            data-workspace-section={active}
+            data-workspace-scroll={
+              active === "evacuation-centers" || active === "hazard-management"
+            }
             className={styles.viewport}
             ref={viewportRef}
             role="region"

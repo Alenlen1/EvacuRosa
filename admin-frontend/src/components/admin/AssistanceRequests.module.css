@@ -416,9 +416,14 @@
 }
 :global(.cdrrmo-workspace) .panel :global(.assistance-list) {
   display: flex;
+  position: relative;
   flex-direction: column;
+  align-items: stretch;
   min-height: 0;
+  max-height: none;
   overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   gap: 12px;
   margin: 0;
   padding: 3px;
@@ -426,6 +431,129 @@
 :global(.cdrrmo-workspace) .panel :global(.assistance-record) {
   flex-shrink: 0;
   padding: 16px;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms;
+}
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-record[data-selected="true"]) {
+  border-color: #a05848;
+  box-shadow: inset 3px 0 #800000;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-record:focus-visible) {
+  outline: 2px solid #800000;
+  outline-offset: -2px;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-section) {
+  padding: 12px;
+  border: 1px solid #e5ddd5;
+  border-radius: 12px;
+  background: #f8f4ee;
+  overflow: hidden;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-heading) {
+  flex: none;
+  align-items: flex-start;
+  gap: 5px 12px;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-heading h3) {
+  margin: 0;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-selection) {
+  max-width: 100%;
+  min-width: 0;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-selection > span) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-location-map) {
+  margin: 0;
+  container-type: size;
+}
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-location-map .leaflet-popup-content) {
+  width: min(210px, calc(100vw - 144px)) !important;
+  max-height: clamp(45px, calc(100cqh - 85px), 140px);
+  margin: 12px 16px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-popup) {
+  min-width: 0;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-map-popup strong) {
+  padding-right: 8px;
+  color: #302825;
+  font-size: 13px;
+}
+.mapFooter {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #746862;
+  font-size: 10px;
+  line-height: 1.5;
+}
+:global(.cdrrmo-workspace) .refreshButton {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  min-width: 36px;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+:global(.cdrrmo-workspace) .mapFooter button {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+.accuracy small {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 400;
+}
+.accuracy[data-approximate="true"] {
+  color: #8a600f;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-record-heading h3) {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-record-actions) {
+  flex-wrap: wrap;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-record-actions button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-record-actions .primary-button) {
+  order: -1;
+  flex: 1 0 100%;
+}
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-record-actions .secondary-button) {
+  flex: 1 1 auto;
 }
 :global(.cdrrmo-workspace) .panel :global(.assistance-view-tabs) {
   display: none;
@@ -435,8 +563,11 @@
     padding: 14px;
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading) {
-    align-items: center;
-    gap: 10px;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
     margin: 0;
@@ -444,13 +575,12 @@
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-eyebrow),
   :global(.cdrrmo-workspace) .panel :global(.assistance-caption),
-  :global(.cdrrmo-workspace)
-    .panel
-    :global(.assistance-toolbar > span:last-child) {
+  .updateHint {
     display: none;
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
     flex-direction: row;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 8px;
     margin-block: 12px 8px;
@@ -461,15 +591,34 @@
     width: auto;
     justify-content: flex-end;
     font-size: 0;
+    min-width: 0;
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar select) {
     width: 100%;
     max-width: 160px;
     font-size: 11px;
+    min-width: 0;
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-connection-status) {
     max-width: 110px;
     font-size: 10px;
+    min-width: 0;
+  }
+  .refreshLabel {
+    display: none;
+  }
+  :global(.cdrrmo-workspace) .refreshButton {
+    padding: 8px;
+  }
+  .mapFooter > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .mapFooter button {
+    width: 100%;
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-disclaimer) {
     font-size: 10px;
@@ -536,6 +685,74 @@
   }
 }
 @media (max-height: 500px) {
+  :global(.cdrrmo-workspace) .panel {
+    position: relative;
+    padding: 8px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading > div),
+  .mapFooter > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .refreshLabel {
+    display: none;
+  }
+  :global(.cdrrmo-workspace) .refreshButton {
+    width: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 6px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
+    margin: 0 0 6px;
+    padding: 4px 8px;
+    flex-wrap: nowrap;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar label) {
+    flex: 1;
+    min-width: 0;
+    justify-content: flex-end;
+    font-size: 0;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar select) {
+    min-height: 32px;
+    padding-block: 4px;
+    font-size: 11px;
+  }
+  .updateHint {
+    display: none;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-view-tabs) {
+    margin-top: 0;
+    padding: 3px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-view-tabs button) {
+    min-height: 32px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-workspace-body) {
+    margin-top: 8px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-map-section) {
+    padding: 6px;
+    gap: 6px;
+  }
+  :global(.cdrrmo-workspace) .panel :global(.assistance-map-heading) {
+    display: none;
+  }
+  :global(.cdrrmo-workspace) .mapFooter button {
+    min-height: 30px;
+    padding-block: 4px;
+  }
   :global(.cdrrmo-workspace) .panel :global(.assistance-disclaimer) {
     position: absolute;
     width: 1px;
@@ -543,36 +760,5 @@
     overflow: hidden;
     padding: 0;
     clip-path: inset(50%);
-  }
-}
-:global([data-workspace-scroll="true"]) .panel {
-  height: auto;
-  overflow: visible;
-}
-:global([data-workspace-scroll="true"])
-  .panel
-  :global(.assistance-workspace-body) {
-  flex: none;
-}
-:global([data-workspace-scroll="true"]) .panel :global(.assistance-list) {
-  overflow: visible;
-  max-height: none;
-  height: auto;
-}
-:global([data-workspace-scroll="true"])
-  .panel
-  :global(.assistance-map-section) {
-  position: sticky;
-  top: 12px;
-  align-self: start;
-  height: clamp(320px, 50dvh, 520px);
-}
-@container cdrrmo-main (max-width: 760px) {
-  :global([data-workspace-scroll="true"])
-    .panel
-    :global(.assistance-map-section) {
-    position: relative;
-    top: auto;
-    height: clamp(320px, 55dvh, 520px);
   }
 }
