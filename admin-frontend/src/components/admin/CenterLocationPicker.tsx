@@ -13,6 +13,7 @@ import {
   SANTA_ROSA_CITY_BOUNDS,
 } from "@/lib/mapBounds";
 import type { ManagedCenter } from "./CenterManager";
+import { SantaRosaBoundaryLayer } from "./SantaRosaBoundaryLayer";
 function SelectPoint({
   onPoint,
 }: {
@@ -58,6 +59,7 @@ export default function CenterLocationPicker({
         attribution="&copy; OpenStreetMap contributors"
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <SantaRosaBoundaryLayer />
       {centers
         .filter((c) => isInsideSantaRosa(c.latitude, c.longitude))
         .map((c) => (
