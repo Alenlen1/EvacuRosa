@@ -3,12 +3,12 @@
 import "leaflet/dist/leaflet.css";
 import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
 import { HazardRecordTime } from "./HazardRecordTime";
+import { SantaRosaBoundaryLayer } from "./SantaRosaBoundaryLayer";
 import { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
   TileLayer,
   Marker,
-  Polygon,
   Polyline,
   CircleMarker,
   Tooltip,
@@ -34,17 +34,9 @@ import {
 import {
   isInsideSantaRosa,
   santaRosaBounds,
-  santaRosaBoundary,
   HAZARD_CITY_ERROR,
 } from "../../../../backend/src/geography/santaRosa";
 
-const cityOutline = santaRosaBoundary.geometry.coordinates.map((polygon) =>
-  polygon.map((ring) =>
-    ring.map(
-      ([longitude, latitude]) => [latitude, longitude] as [number, number],
-    ),
-  ),
-);
 import { FloodLayer } from "@/components/map/FloodLayer";
 import { FireLayer } from "@/components/map/FireLayer";
 import {
@@ -563,16 +555,7 @@ export default function HazardPlacementMap({
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Polygon
-              positions={cityOutline}
-              attribution='Boundary: PSA/NAMRIA via <a href="https://github.com/faeldon/philippines-json-maps">Philippines JSON Maps</a>'
-              pathOptions={{
-                color: "#800000",
-                weight: 2,
-                fillOpacity: 0.04,
-                interactive: false,
-              }}
-            />
+            <SantaRosaBoundaryLayer />
             <FloodLayer reports={floodReports} />
             <FireLayer incidents={fireIncidents} />
             {earthquakeRoadImpacts.map((impact) => (
