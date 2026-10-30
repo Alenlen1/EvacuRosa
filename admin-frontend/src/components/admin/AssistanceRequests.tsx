@@ -91,6 +91,11 @@ export function AssistanceRequests() {
     };
   }, []);
   useEffect(() => {
+    if (!notice) return;
+    const timeout = setTimeout(() => setNotice(""), 3000);
+    return () => clearTimeout(timeout);
+  }, [notice]);
+  useEffect(() => {
     let stopped = false,
       inFlight = false,
       queued = false,
