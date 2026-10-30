@@ -50,7 +50,6 @@ const empty = {
   longitude: "",
   capacity: "",
   contactInformation: "",
-  notes: "",
 };
 
 function nonNegativeInteger(value: number): number | null {
@@ -116,7 +115,6 @@ export function CenterManager({
       longitude: String(center.longitude),
       capacity: String(center.capacity),
       contactInformation: center.contact_information ?? "",
-      notes: center.notes ?? "",
     });
     setError("");
     setMessage("");
@@ -373,17 +371,6 @@ export function CenterManager({
                             ...draft,
                             contactInformation: e.target.value,
                           })
-                        }
-                      />
-                    </label>
-                    <label className={styles.wide}>
-                      Notes
-                      <textarea
-                        maxLength={3000}
-                        rows={3}
-                        value={draft.notes}
-                        onChange={(e) =>
-                          setDraft({ ...draft, notes: e.target.value })
                         }
                       />
                     </label>
