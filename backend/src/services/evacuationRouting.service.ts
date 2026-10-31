@@ -48,6 +48,7 @@ export async function computeEvacuationRoute(
     path: LatLng[];
     riskLevel: RiskLevel;
     score: number;
+    warnings: string[];
   } | null = null;
 
   let hazardBlocked = false;
@@ -74,6 +75,7 @@ export async function computeEvacuationRoute(
         path: result.path,
         riskLevel: result.riskLevel,
         score,
+        warnings: result.warnings,
       };
     }
   }
@@ -98,6 +100,6 @@ export async function computeEvacuationRoute(
     route: best.path,
     distanceMeters: best.distanceMeters,
     riskLevel: best.riskLevel,
-    warnings: [],
+    warnings: best.warnings,
   };
 }

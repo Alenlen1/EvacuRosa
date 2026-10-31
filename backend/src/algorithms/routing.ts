@@ -8,6 +8,7 @@ import type { FloodReport } from "../types/flood";
 import type { FireIncident } from "../types/fire";
 import { effectiveEdgeStatus, indexFloodReports } from "../types/floodScope";
 import { prepareFloodRouting } from "./floodGraph";
+import { haversineMeters } from "./astar/heuristic";
 
 export interface LatLng {
   latitude: number;
@@ -88,12 +89,12 @@ export function createRouteCalculator(
     destination: LatLng,
     travelMode: TravelMode,
   ): RouteResult => {
-    const startNode = graph.nearestAccessibleNode(
+    let startNode = graph.nearestAccessibleNode(
       start.latitude,
       start.longitude,
       travelMode,
     );
-    const goalNode = graph.nearestAccessibleNode(
+    let goalNode = graph.nearestAccessibleNode(
       destination.latitude,
       destination.longitude,
       travelMode,
@@ -115,11 +116,70 @@ export function createRouteCalculator(
     // The hybrid step: A* selects a path by risk-weighted cost (flood, fire
     // proximity, verified earthquake impact, road condition), not raw
     // distance. BLOCKED status is still a hard exclusion regardless of cost.
-    const result = findPath(graph, startNode.id, goalNode.id, {
+    const options = {
       travelMode,
       statusOverrides: overrides,
-      edgeCost: (edge) => cachedEdgeRisk(edge).cost,
-    });
+      edgeCost: (edge: GraphEdge) => cachedEdgeRisk(edge).cost,
+    };
+    let result = findPath(graph, startNode.id, goalNode.id, options);
+    const warnings: string[] = [];
+
+    // OSM sometimes contains an isolated footpath beside the connected road.
+    // Only reconsider endpoint matching for a genuine gap in the source graph,
+    // never when a restriction or hazard prevents travel within that graph.
+    if (
+      !result.found &&
+      graph.componentId(startNode.id) !== graph.componentId(goalNode.id)
+    ) {
+      const starts = graph.nearbyAccessibleNodes(
+        start.latitude,
+        start.longitude,
+        travelMode,
+      );
+      const goals = graph.nearbyAccessibleNodes(
+        destination.latitude,
+        destination.longitude,
+        travelMode,
+      );
+      const goalsByComponent = new Map<number, (typeof goals)[number]>();
+      for (const candidate of goals) {
+        const component = graph.componentId(candidate.node.id)!;
+        if (!goalsByComponent.has(component))
+          goalsByComponent.set(component, candidate);
+      }
+      let best:
+        | { start: (typeof starts)[number]; goal: (typeof goals)[number] }
+        | undefined;
+      for (const candidate of starts) {
+        const goal = goalsByComponent.get(
+          graph.componentId(candidate.node.id)!,
+        );
+        if (
+          goal &&
+          (!best ||
+            candidate.distance + goal.distance <
+              best.start.distance + best.goal.distance)
+        )
+          best = { start: candidate, goal };
+      }
+      if (best) {
+        const approachWarning = (
+          point: LatLng,
+          node: LatLng,
+          endpoint: string,
+        ) =>
+          `The mapped route ${endpoint} approximately ${Math.round(haversineMeters(point.latitude, point.longitude, node.latitude, node.longitude))} m from your selected location. The approach between that point and the road is not mapped or verified; check local access and conditions.`;
+        if (best.start.node.id !== startNode.id)
+          warnings.push(approachWarning(start, best.start.node, "starts"));
+        if (best.goal.node.id !== goalNode.id)
+          warnings.push(approachWarning(destination, best.goal.node, "ends"));
+        startNode = best.start.node;
+        goalNode = best.goal.node;
+        // Choose endpoints before checking hazards. Do not keep moving them
+        // until a closed road or one-way rule can be avoided.
+        result = findPath(graph, startNode.id, goalNode.id, options);
+      }
+    }
 
     if (!result.found) {
       // Diagnostic only: keep access/one-way rules, remove hazard overrides.
@@ -164,7 +224,7 @@ export function createRouteCalculator(
       distanceMeters: Math.round(result.distanceMeters),
       affectedRoads,
       riskLevel,
-      warnings: [],
+      warnings,
     };
   };
 }

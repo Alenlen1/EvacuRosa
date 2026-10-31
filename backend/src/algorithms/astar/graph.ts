@@ -60,6 +60,7 @@ export class RoadGraph {
   private forwardEdges = new Map<string, GraphEdge>();
   private edgesByStreetName = new Map<string, GraphEdge[]>();
   private nodeAccess = new Map<string, number>();
+  private components?: Map<string, number>;
   // Access arrays are immutable within the graph. Thousands of segments share
   // the same few combinations, so retain one array per combination.
   private modeCombinations = new Map<number, TravelMode[]>();
@@ -179,8 +180,14 @@ export class RoadGraph {
     longitude: number,
     mode: TravelMode,
   ): GraphNode | null {
-    let best: GraphNode | null = null;
-    let bestDistance = 250; // Never silently snap across town to bypass access rules.
+    return (
+      this.nearbyAccessibleNodes(latitude, longitude, mode)[0]?.node ?? null
+    );
+  }
+
+  /** Bounded endpoint candidates, ordered by distance from the requested point. */
+  nearbyAccessibleNodes(latitude: number, longitude: number, mode: TravelMode) {
+    const matches: { node: GraphNode; distance: number }[] = [];
     // Conservative bounds around the 250 m search circle. Include incoming
     // endpoints via nodeAccess so one-way sinks remain valid destinations.
     const latDelta = 250 / 110_000;
@@ -208,12 +215,34 @@ export class RoadGraph {
         node.latitude,
         node.longitude,
       );
-      if (distance < bestDistance) {
-        best = node;
-        bestDistance = distance;
-      }
+      if (distance < 250) matches.push({ node, distance });
     }
-    return best;
+    return matches.sort((a, b) => a.distance - b.distance);
+  }
+
+  /** Structural connectivity only: include closed, private and one-way edges.
+   * A failed route within one component must never trigger endpoint relocation
+   * around an access rule or closure. Cache once per immutable road graph. */
+  componentId(nodeId: string): number | undefined {
+    if (!this.components) {
+      const components = new Map<string, number>();
+      let component = 0;
+      for (const id of this.nodes.keys()) {
+        if (components.has(id)) continue;
+        components.set(id, component);
+        const queue = [id];
+        for (let index = 0; index < queue.length; index++) {
+          for (const edge of this.neighbors(queue[index])) {
+            if (components.has(edge.toNodeId)) continue;
+            components.set(edge.toNodeId, component);
+            queue.push(edge.toNodeId);
+          }
+        }
+        component++;
+      }
+      this.components = components;
+    }
+    return this.components.get(nodeId);
   }
 
   private *nodesInBounds(
