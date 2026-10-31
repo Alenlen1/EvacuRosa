@@ -1,5 +1,7 @@
 export const filipino: Record<string, string> = {
   "Reported debris area": "Iniulat na lugar na may mga guho",
+  "The debris circle shows the reported area. Only highlighted road sections carry the reported impact.":
+    "Ipinapakita ng bilog ang iniulat na lugar na may mga guho. Ang mga naka-highlight na bahagi lamang ng kalsada ang may iniulat na epekto.",
   "Unmapped approach (~{distance} m)": "Hindi nakamapang daan (~{distance} m)",
   "Unmapped approach — access unverified":
     "Hindi nakamapang daan — hindi pa beripikado ang pagdaan",

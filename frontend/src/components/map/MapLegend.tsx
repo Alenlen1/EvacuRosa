@@ -136,12 +136,12 @@ export function MapLegend() {
                   {t("Evacuation center — see status")}
                 </li>
                 <li>
-                  <span className="legend-dot fire" />
+                  <span className="legend-area fire" aria-hidden="true" />
                   {t("Fire incident")}
                 </li>
                 <li>
-                  <span className="legend-dot earthquake" />
-                  {t("Earthquake — see verified impacts")}
+                  <span className="legend-area debris" aria-hidden="true" />
+                  {t("Reported debris area")}
                 </li>
                 <li>
                   <span className="legend-line earthquake-blocked" />
@@ -152,6 +152,11 @@ export function MapLegend() {
                   {t("Earthquake-affected road")}
                 </li>
               </ul>
+              <p className="map-legend-note">
+                {t(
+                  "The debris circle shows the reported area. Only highlighted road sections carry the reported impact.",
+                )}
+              </p>
             </div>
           </div>,
           document.body,
