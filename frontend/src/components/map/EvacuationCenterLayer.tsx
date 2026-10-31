@@ -14,7 +14,7 @@ const statusColor: Record<string, string> = {
   CLOSED: "#6B7280",
 };
 
-function centerIcon(status: string) {
+function centerIcon(status: string, selected = false) {
   const color = statusColor[status] ?? statusColor.CLOSED;
   const symbol =
     status === "AVAILABLE"
@@ -27,7 +27,8 @@ function centerIcon(status: string) {
             ? '<rect x="6" y="10" width="12" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'
             : '<path d="M9 8a3 3 0 0 1 6 0c0 3-3 2-3 5m0 4v.2"/>';
   return createDivIcon(
-    `<svg class="shelter-map-marker" width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    `<svg class="shelter-map-marker${selected ? " is-selected" : ""}" width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      ${selected ? '<circle cx="21" cy="21" r="20.5" stroke="#800000" stroke-width="2"/>' : ""}
       <circle cx="21" cy="23" r="18" fill="#17232f" fill-opacity=".15"/>
       <circle cx="21" cy="21" r="18" fill="white" stroke="${color}" stroke-width="2"/>
       <circle cx="21" cy="21" r="14.5" fill="${color}" fill-opacity=".10"/>
@@ -46,12 +47,14 @@ interface EvacuationCenterLayerProps {
   centers: EvacuationCenter[];
   onSelectCenter?: (center: EvacuationCenter) => void;
   renderPopup?: (center: EvacuationCenter) => ReactNode;
+  selectedCenterId?: string;
 }
 
 export function EvacuationCenterLayer({
   centers,
   onSelectCenter,
   renderPopup,
+  selectedCenterId,
 }: EvacuationCenterLayerProps) {
   const { t } = useLanguage();
   return (
@@ -59,10 +62,11 @@ export function EvacuationCenterLayer({
       {centers.map((center) => (
         <Marker
           key={center.id}
-          title={`${center.name}: ${t(center.status.replaceAll("_", " "))}`}
-          alt={`${center.name}: ${t(center.status.replaceAll("_", " "))}`}
+          title={`${center.name}: ${t(center.status.replaceAll("_", " "))}${center.id === selectedCenterId ? ` · ${t("SELECTED CENTER")}` : ""}`}
+          alt={`${center.name}: ${t(center.status.replaceAll("_", " "))}${center.id === selectedCenterId ? ` · ${t("SELECTED CENTER")}` : ""}`}
           position={[center.latitude, center.longitude]}
-          icon={centerIcon(center.status)}
+          icon={centerIcon(center.status, center.id === selectedCenterId)}
+          zIndexOffset={center.id === selectedCenterId ? 500 : 0}
           eventHandlers={{ click: () => onSelectCenter?.(center) }}
         >
           <Popup>
