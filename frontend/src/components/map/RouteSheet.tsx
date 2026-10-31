@@ -1,7 +1,15 @@
 "use client";
 import { useLanguage } from "@/components/LanguageProvider";
-import type { ReactNode } from "react";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import type { ReactNode, Ref } from "react";
+import {
+  Building2,
+  ChevronDown,
+  ChevronUp,
+  Map,
+  ShieldAlert,
+  X,
+} from "lucide-react";
+import styles from "./RouteSheet.module.css";
 
 export type SheetState = "collapsed" | "partial" | "expanded";
 
@@ -12,10 +20,15 @@ export function RouteSheet({
   summary,
   children,
   actions,
+  desktopActions,
   mobileActions,
   mobileTravelMode,
   onClearDestination,
   hideDetails = false,
+  activeView,
+  onViewChange,
+  onBackToMap,
+  detailsRef,
 }: {
   state: SheetState;
   onChange: (value: SheetState) => void;
@@ -23,18 +36,45 @@ export function RouteSheet({
   summary?: string;
   children: ReactNode;
   actions: ReactNode;
+  desktopActions?: ReactNode;
   mobileActions?: ReactNode;
   mobileTravelMode?: ReactNode;
   onClearDestination?: () => void;
   hideDetails?: boolean;
+  activeView: "map" | "centers" | "hazards";
+  onViewChange: (view: "map" | "centers" | "hazards") => void;
+  onBackToMap: () => void;
+  detailsRef?: Ref<HTMLDivElement>;
 }) {
   const { t } = useLanguage();
   return (
     <aside
-      className={`information-panel route-sheet sheet-${state}`}
+      className={`information-panel route-sheet sheet-${state} ${styles.sheet}`}
+      data-active-view={activeView}
       aria-label={t("Navigation information")}
     >
-      <div className="mobile-travel-mode">{mobileTravelMode}</div>
+      <nav className="sheet-view-tabs" aria-label={t("Map views")}>
+        {(
+          [
+            { id: "map", label: "Map", icon: Map },
+            { id: "centers", label: "Centers", icon: Building2 },
+            { id: "hazards", label: "Hazards", icon: ShieldAlert },
+          ] as const
+        ).map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            aria-current={activeView === id ? "page" : undefined}
+            onClick={() => onViewChange(id)}
+          >
+            <Icon size={17} aria-hidden="true" />
+            {t(label)}
+          </button>
+        ))}
+      </nav>
+      {mobileTravelMode && (
+        <div className="mobile-travel-mode">{mobileTravelMode}</div>
+      )}
       <div className="sheet-controls">
         <h2 className="sheet-desktop-title">{title}</h2>
         <button
@@ -61,34 +101,34 @@ export function RouteSheet({
           type="button"
           className="sheet-size-button"
           onClick={() =>
-            onChange(state === "expanded" ? "collapsed" : "expanded")
+            state === "expanded" ? onBackToMap() : onChange("expanded")
           }
           aria-controls="sheet-details"
           aria-expanded={state === "expanded"}
         >
-          {t(state === "expanded" ? "More map" : "View full details")}
+          {t(state === "expanded" ? "Back to map" : "View full details")}
         </button>
-        {onClearDestination && (
-          <button
-            type="button"
-            className="sheet-clear"
-            onClick={onClearDestination}
-            aria-label={t("Remove destination")}
-            title={t("Remove destination")}
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
-        )}
       </div>
       <div className="sheet-body" id="sheet-details">
-        <div
-          className={`panel-scroll${hideDetails ? " panel-details-hidden" : ""}`}
-          id="panel-details"
-        >
-          {children}
+        <div className="panel-scroll" id="panel-details" ref={detailsRef}>
+          {mobileTravelMode && (
+            <div className="sheet-inline-travel-mode">{mobileTravelMode}</div>
+          )}
+          {!hideDetails && children}
+          {actions}
+          {onClearDestination && (
+            <button
+              type="button"
+              className="sheet-clear"
+              onClick={onClearDestination}
+            >
+              <X size={16} aria-hidden="true" />
+              {t("Clear destination")}
+            </button>
+          )}
         </div>
-        {actions}
       </div>
+      <div className="sheet-desktop-actions">{desktopActions}</div>
       <div className="sheet-mobile-actions">{mobileActions}</div>
     </aside>
   );

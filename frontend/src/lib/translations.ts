@@ -1,4 +1,31 @@
 export const filipino: Record<string, string> = {
+  Centers: "Mga center",
+  Hazards: "Mga panganib",
+  "Back to map": "Bumalik sa mapa",
+  "Back to centers": "Bumalik sa mga center",
+  "Clear destination": "Burahin ang destinasyon",
+  "Browse centers": "Tingnan ang mga center",
+  "Choose a center or search the map to set your destination.":
+    "Pumili ng center o maghanap sa mapa upang itakda ang iyong destinasyon.",
+  "Evacuation center directory": "Direktoryo ng mga evacuation center",
+  "Search evacuation centers": "Maghanap ng evacuation center",
+  "Center name, barangay or address": "Pangalan ng center, barangay o address",
+  "Clear center search": "Burahin ang paghahanap ng center",
+  "Accepting evacuees": "Tumatanggap ng mga evacuee",
+  "Reset filters": "I-reset ang mga filter",
+  "Showing {count} of {total} centers":
+    "Ipinapakita ang {count} sa {total} center",
+  "No centers match your search or filters.":
+    "Walang center na tumutugma sa iyong paghahanap o mga filter.",
+  "Show all centers": "Ipakita ang lahat ng center",
+  Barangay: "Barangay",
+  Unavailable: "Hindi available",
+  "Capacity unavailable": "Hindi available ang kapasidad",
+  "{occupied} of {capacity} occupied":
+    "{occupied} sa {capacity} ang kasalukuyang nakatira",
+  "{count} spaces remaining": "{count} bakanteng puwesto",
+  "Contact details": "Mga detalye ng kontak",
+  "Route information": "Impormasyon sa ruta",
   "Reported debris area": "Iniulat na lugar na may mga guho",
   "The debris circle shows the reported area. Only highlighted road sections carry the reported impact.":
     "Ipinapakita ng bilog ang iniulat na lugar na may mga guho. Ang mga naka-highlight na bahagi lamang ng kalsada ang may iniulat na epekto.",

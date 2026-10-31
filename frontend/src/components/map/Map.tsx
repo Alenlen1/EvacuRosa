@@ -57,6 +57,7 @@ interface MapProps {
   destination: { latitude: number; longitude: number } | null;
   destinationLabel?: string;
   searchFocus?: { latitude: number; longitude: number } | null;
+  previewCenter?: EvacuationCenter | null;
   onClearDestination: () => void;
   route: { latitude: number; longitude: number }[] | null;
   destinationApproach?: DestinationApproach;
@@ -265,6 +266,7 @@ export default function Map({
   destination,
   destinationLabel,
   searchFocus,
+  previewCenter,
   onClearDestination,
   route,
   destinationApproach,
@@ -283,8 +285,8 @@ export default function Map({
     if (navigating) setFollowing(false);
   }, [navigating]);
   useEffect(() => {
-    if (searchFocus) setFollowing(false);
-  }, [searchFocus]);
+    if (searchFocus || previewCenter) setFollowing(false);
+  }, [searchFocus, previewCenter]);
   const [showFlood, setShowFlood] = useState(true);
   const [showFire, setShowFire] = useState(true);
   const [showEarthquakes, setShowEarthquakes] = useState(true);
@@ -320,6 +322,7 @@ export default function Map({
       <EvacuationCenterLayer
         centers={centers}
         onSelectCenter={onSelectCenter}
+        selectedCenterId={previewCenter?.id}
       />
       <EvacuationNavigation
         route={route}
@@ -360,6 +363,7 @@ export default function Map({
         onPause={() => setFollowing(false)}
       />
       {!navigating && <FocusSearchResult target={searchFocus} />}
+      {!navigating && <FocusSearchResult target={previewCenter} />}
       {!navigating && (
         <LayerToggle
           showFlood={showFlood}

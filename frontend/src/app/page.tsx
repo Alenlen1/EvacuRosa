@@ -18,8 +18,6 @@ import {
   Building2,
   ShieldAlert,
   ArrowRight,
-  Users,
-  X,
   Phone,
 } from "lucide-react";
 import {
@@ -31,11 +29,12 @@ import { Brand } from "@/components/ui/Brand";
 import { MobileNavigation } from "@/components/ui/MobileNavigation";
 import { EmergencyContact } from "@/components/ui/EmergencyContact";
 import { AssistancePrompt } from "@/components/map/AssistancePrompt";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MapLegend } from "@/components/map/MapLegend";
 import { PlaceSearch } from "@/components/map/PlaceSearch";
 import type { PlaceResult } from "@/lib/placeSearch";
 import { RouteDetails } from "@/components/map/RouteDetails";
+import { CenterDirectory } from "@/components/map/CenterDirectory";
+import { CenterDetails } from "@/components/map/CenterDetails";
 import { RouteSheet, type SheetState } from "@/components/map/RouteSheet";
 import {
   estimatedTravelTime,
@@ -143,6 +142,55 @@ function PublicHome({
   const [selectedCenter, setSelectedCenter] = useState<EvacuationCenter | null>(
     null,
   );
+  const [centerQuery, setCenterQuery] = useState("");
+  const [acceptingOnly, setAcceptingOnly] = useState(false);
+  const detailsRef = useRef<HTMLDivElement>(null);
+  const directoryReturn = useRef({ scrollTop: 0, centerId: "" });
+  const pendingPanelFocus = useRef<"center" | "directory" | "map" | null>(null);
+
+  useEffect(() => {
+    if (!pendingPanelFocus.current) return;
+    const frame = requestAnimationFrame(() => {
+      const target = pendingPanelFocus.current;
+      pendingPanelFocus.current = null;
+      const scroll = detailsRef.current;
+      if (target === "center") {
+        if (scroll) scroll.scrollTop = 0;
+        document
+          .getElementById("selected-center-title")
+          ?.focus({ preventScroll: true });
+      } else if (target === "directory") {
+        if (scroll) {
+          scroll.scrollTop = directoryReturn.current.scrollTop;
+          const row = [
+            ...scroll.querySelectorAll<HTMLButtonElement>("[data-center-id]"),
+          ].find(
+            (item) =>
+              item.dataset.centerId === directoryReturn.current.centerId,
+          );
+          (
+            row ??
+            scroll.querySelector<HTMLInputElement>('input[type="search"]')
+          )?.focus({ preventScroll: true });
+          if (row) {
+            const bounds = scroll.getBoundingClientRect();
+            const item = row.getBoundingClientRect();
+            if (item.top < bounds.top)
+              scroll.scrollTop += item.top - bounds.top;
+            else if (item.bottom > bounds.bottom)
+              scroll.scrollTop += item.bottom - bounds.bottom;
+          } else {
+            scroll.scrollTop = 0;
+          }
+        }
+      } else if (target === "map") {
+        document
+          .querySelector<HTMLElement>(".map-workspace")
+          ?.focus({ preventScroll: true });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [panel, selectedCenter?.id, sheetState]);
   const [searchSelection, setSearchSelection] = useState<PlaceResult | null>(
     null,
   );
@@ -562,21 +610,90 @@ function PublicHome({
   const travelTime = result
     ? estimatedTravelTime(result.data.distance, resultMode)
     : null;
-  const sheetSummary = loading
-    ? t("Calculating your route…")
-    : error
-      ? t("Unable to calculate a route.")
-      : panel === "map" && result
-        ? `${result.data.source === "offline" ? t("Offline route") + " · " : ""}${(result.data.distance / 1000).toFixed(1)} km${travelTime ? ` · ${travelTime}` : ""} · ${t("Route risk")}: ${t((result.data.riskLevel ?? "UNKNOWN").replaceAll("_", " "))}`
-        : panel === "map"
-          ? `${t(TRAVEL_MODES[travelMode].label)} · ${t("Tap for travel options")}`
-          : panel === "centers"
-            ? t("Capacity and contact details")
-            : t("Reported conditions and verified road impacts.");
+  const sheetSummary =
+    panel === "map" && loading
+      ? t("Calculating your route…")
+      : panel === "map" && error
+        ? t("Unable to calculate a route.")
+        : panel === "map" && result
+          ? `${result.data.source === "offline" ? t("Offline route") + " · " : ""}${(result.data.distance / 1000).toFixed(1)} km${travelTime ? ` · ${travelTime}` : ""} · ${t("Route risk")}: ${t((result.data.riskLevel ?? "UNKNOWN").replaceAll("_", " "))}`
+          : panel === "map"
+            ? `${t(TRAVEL_MODES[travelMode].label)} · ${t("Tap for travel options")}`
+            : panel === "centers"
+              ? t("Capacity and contact details")
+              : t("Reported conditions and verified road impacts.");
 
-  const displayedCenter =
-    selectedCenter ??
-    (result?.kind === "evacuation" ? result.data.recommendedCenter : null);
+  const displayedCenter = selectedCenter
+    ? (centers.find((center) => center.id === selectedCenter.id) ??
+      selectedCenter)
+    : null;
+  const selectedCenterRoute =
+    result && displayedCenter && routeCenter?.id === displayedCenter.id
+      ? { result, label: routeLabel, travelMode: resultMode }
+      : undefined;
+
+  function openCenterDetails(center: EvacuationCenter) {
+    if (panel === "centers" && !selectedCenter) {
+      directoryReturn.current.scrollTop = detailsRef.current?.scrollTop ?? 0;
+    }
+    directoryReturn.current.centerId = center.id;
+    pendingPanelFocus.current = "center";
+    setSelectedCenter(center);
+    setPanel("centers");
+    setSheetState("expanded");
+  }
+
+  function backToCenters() {
+    pendingPanelFocus.current = "directory";
+    setSelectedCenter(null);
+    setPanel("centers");
+    setSheetState("expanded");
+  }
+
+  function backToMap() {
+    if (panel === "centers" && !selectedCenter) {
+      directoryReturn.current.scrollTop = detailsRef.current?.scrollTop ?? 0;
+    }
+    pendingPanelFocus.current = "map";
+    setPanel("map");
+    setSheetState("collapsed");
+  }
+
+  function useCenterAsDestination() {
+    if (
+      !displayedCenter ||
+      displayedCenter.status === "FULL" ||
+      displayedCenter.status === "CLOSED"
+    )
+      return;
+    if (selectedCenterRoute) {
+      backToMap();
+      return;
+    }
+    cancelRestore();
+    const point = {
+      latitude: displayedCenter.latitude,
+      longitude: displayedCenter.longitude,
+    };
+    saveRouteSelection({ destination: point, travelMode, intent: null });
+    routeVersion.current += 1;
+    routeIntent.current = null;
+    setDestination(point);
+    setSearchSelection({
+      id: `center-${displayedCenter.id}`,
+      ...point,
+      label: {
+        title: displayedCenter.name,
+        subtitle: displayedCenter.address,
+        source: "center",
+      },
+    });
+    setResult(null);
+    setError(null);
+    setAssistanceContext(null);
+    setLoading(null);
+    backToMap();
+  }
   const emergencyContactProps = {
     travelMode,
     position: geolocation.position,
@@ -595,43 +712,93 @@ function PublicHome({
     },
   };
   const choosePanel = (value: "map" | "centers" | "hazards") => {
+    if (panel === "centers" && !selectedCenter) {
+      directoryReturn.current.scrollTop = detailsRef.current?.scrollTop ?? 0;
+    }
+    pendingPanelFocus.current =
+      value === "map"
+        ? "map"
+        : value === "centers"
+          ? selectedCenter
+            ? "center"
+            : "directory"
+          : null;
     setPanel(value);
-    setSheetState(value === "map" ? "collapsed" : "partial");
+    setSheetState(value === "map" ? "collapsed" : "expanded");
   };
+
+  const browsingCenter = panel === "centers" && !!displayedCenter;
+  const centerNotAccepting =
+    browsingCenter &&
+    (displayedCenter?.status === "FULL" ||
+      displayedCenter?.status === "CLOSED");
+  const actionHint = browsingCenter
+    ? centerNotAccepting
+      ? t("This center is not accepting arrivals. Choose another center.")
+      : null
+    : !geolocation.position
+      ? t("Enable location access to find a route")
+      : (routingDisabledReason ??
+        (destination
+          ? t(TRAVEL_MODES[travelMode].label)
+          : t("Choose a center or search the map to set your destination.")));
 
   const routeButtons = (
     <>
-      <button
-        type="button"
-        className="primary-button"
-        disabled={
-          !destination || !geolocation.position || loading !== null || !canRoute
-        }
-        onClick={() => {
-          setPanel("map");
-          setSheetState("collapsed");
-          handleFindRoute();
-        }}
-      >
-        {loading === "route" ? t("Calculating…") : t("Find safer route")}
-        <ArrowRight size={18} />
-      </button>
-      <button
-        type="button"
-        className="secondary-button"
-        disabled={!geolocation.position || loading !== null || !canRoute}
-        onClick={() => {
-          setSelectedCenter(null);
-          setPanel("map");
-          setSheetState("collapsed");
-          handleFindEvacuationCenter();
-        }}
-      >
-        <Building2 size={18} />
-        {loading === "evacuation"
-          ? t("Searching…")
-          : t("Find evacuation center")}
-      </button>
+      {browsingCenter ? (
+        <button
+          type="button"
+          className="primary-button center-route-button"
+          disabled={!!centerNotAccepting}
+          aria-describedby={actionHint ? "destination-action-hint" : undefined}
+          onClick={useCenterAsDestination}
+        >
+          <MapPin size={18} aria-hidden="true" />
+          {t("Use as destination")}
+        </button>
+      ) : (
+        <>
+          {panel === "map" && (
+            <button
+              type="button"
+              className="primary-button"
+              disabled={
+                !destination ||
+                !geolocation.position ||
+                loading !== null ||
+                !canRoute
+              }
+              aria-describedby={
+                actionHint ? "destination-action-hint" : undefined
+              }
+              onClick={() => {
+                setPanel("map");
+                setSheetState("collapsed");
+                handleFindRoute();
+              }}
+            >
+              {loading === "route" ? t("Calculating…") : t("Find safer route")}
+              <ArrowRight size={18} />
+            </button>
+          )}
+          <button
+            type="button"
+            className={panel === "map" ? "secondary-button" : "primary-button"}
+            disabled={!geolocation.position || loading !== null || !canRoute}
+            onClick={() => {
+              setSelectedCenter(null);
+              setPanel("map");
+              setSheetState("collapsed");
+              handleFindEvacuationCenter();
+            }}
+          >
+            <Building2 size={18} />
+            {loading === "evacuation"
+              ? t("Searching…")
+              : t("Find evacuation center")}
+          </button>
+        </>
+      )}
     </>
   );
   const hazardOverview = (
@@ -829,6 +996,7 @@ function PublicHome({
         <section
           className="map-workspace"
           aria-label={t("Santa Rosa evacuation map")}
+          tabIndex={-1}
         >
           <PlaceSearch
             centers={centers}
@@ -858,7 +1026,9 @@ function PublicHome({
               setSheetState("collapsed");
             }}
           />
-          <div className="desktop-hazard-overview">{hazardOverview}</div>
+          {panel === "hazards" && (
+            <div className="desktop-hazard-overview">{hazardOverview}</div>
+          )}
           <div className="map-canvas">
             <Map
               navigationCenter={routeCenter}
@@ -892,6 +1062,7 @@ function PublicHome({
               destination={destination}
               destinationLabel={destinationName.label?.title}
               searchFocus={searchSelection}
+              previewCenter={panel === "centers" ? displayedCenter : null}
               onClearDestination={clearDestination}
               route={activeRoutePoints}
               destinationApproach={
@@ -902,11 +1073,7 @@ function PublicHome({
               fireIncidents={fireIncidents}
               earthquakeEvents={earthquakeEvents}
               earthquakeRoadImpacts={earthquakeRoadImpacts}
-              onSelectCenter={(center) => {
-                setSelectedCenter(center);
-                setPanel("centers");
-                setSheetState("partial");
-              }}
+              onSelectCenter={openCenterDetails}
               onMapClick={(latitude, longitude) => {
                 cancelRestore();
                 saveRouteSelection({
@@ -943,7 +1110,15 @@ function PublicHome({
           </div>
         </section>
         <RouteSheet
-          mobileTravelMode={travelModeSelector}
+          activeView={panel}
+          onViewChange={choosePanel}
+          onBackToMap={backToMap}
+          detailsRef={detailsRef}
+          mobileTravelMode={
+            panel === "map" && (sheetState !== "collapsed" || navigationActive)
+              ? travelModeSelector
+              : undefined
+          }
           state={sheetState}
           onChange={setSheetState}
           title={sheetTitle}
@@ -955,95 +1130,105 @@ function PublicHome({
           mobileActions={
             <>
               {routeButtons}
-              <p className="mobile-routing-hint" role="status">
-                {routingDisabledReason ??
-                  (!geolocation.position
-                    ? locationLabel
-                    : !destination
-                      ? t("Tap the map to set your destination.")
-                      : t(TRAVEL_MODES[travelMode].label))}
-              </p>
+              {actionHint && (
+                <p
+                  className="mobile-routing-hint"
+                  id="destination-action-hint"
+                  role="status"
+                >
+                  {actionHint}
+                </p>
+              )}
+            </>
+          }
+          desktopActions={
+            <>
+              {panel === "map" && (
+                <div className="desktop-travel-mode">{travelModeSelector}</div>
+              )}
+              <div className="sheet-primary-actions">{routeButtons}</div>
+              {actionHint && (
+                <p className="desktop-routing-hint" role="status">
+                  {actionHint}
+                </p>
+              )}
             </>
           }
           actions={
             <>
-              <div
-                className={`route-actions${destination ? " has-destination" : ""}${error ? " has-route-error" : ""}`}
-              >
-                {restoring && (
-                  <p role="status">
-                    {!canRoute
-                      ? t(
-                          "Saved selection restored. Connect to the internet to recalculate.",
-                        )
-                      : pendingNavigationResume.current
-                        ? t(
-                            "Resuming navigation. Waiting for a fresh, accurate location.",
-                          )
-                        : t(
-                            "Saved selection restored. Waiting for location access to recalculate.",
-                          )}
-                  </p>
-                )}
-                {error && (
-                  <section
-                    className="route-emergency-help"
-                    aria-label={t("Emergency assistance")}
+              {panel === "map" &&
+                (restoring ||
+                  error ||
+                  (result && resultMode !== travelMode) ||
+                  (destinationName.loading && !recommendedCenter)) && (
+                  <div
+                    className={`route-actions${destination ? " has-destination" : ""}${error ? " has-route-error" : ""}`}
                   >
-                    <p className="error-message" role="alert">
-                      {error.startsWith("No ")
-                        ? t("No route found for {mode}.", {
-                            mode: t(TRAVEL_MODES[travelMode].label),
-                          })
-                        : t("Unable to calculate a route.")}
-                    </p>
-                    {assistanceContext && (
-                      <AssistancePrompt
-                        key={routeVersion.current}
-                        context={assistanceContext}
-                      />
+                    {restoring && (
+                      <p role="status">
+                        {!canRoute
+                          ? t(
+                              "Saved selection restored. Connect to the internet to recalculate.",
+                            )
+                          : pendingNavigationResume.current
+                            ? t(
+                                "Resuming navigation. Waiting for a fresh, accurate location.",
+                              )
+                            : t(
+                                "Saved selection restored. Waiting for location access to recalculate.",
+                              )}
+                      </p>
                     )}
-                    <button
-                      type="button"
-                      className="emergency-contact-button"
-                      disabled
-                      aria-describedby="emergency-contact-pending"
-                    >
-                      <Phone size={18} aria-hidden="true" />
-                      {t("Emergency contact")}
-                    </button>
-                    <p id="emergency-contact-pending">
-                      {t(
-                        "CDRRMO number pending verification. Calling unavailable.",
-                      )}
-                    </p>
-                    <details className="route-failure-details">
-                      <summary>{t("Details")}</summary>
-                      <p>{error}</p>
-                    </details>
-                  </section>
+                    {error && (
+                      <section
+                        className="route-emergency-help"
+                        aria-label={t("Emergency assistance")}
+                      >
+                        <p className="error-message" role="alert">
+                          {error.startsWith("No ")
+                            ? t("No route found for {mode}.", {
+                                mode: t(TRAVEL_MODES[travelMode].label),
+                              })
+                            : t("Unable to calculate a route.")}
+                        </p>
+                        {assistanceContext && (
+                          <AssistancePrompt
+                            key={routeVersion.current}
+                            context={assistanceContext}
+                          />
+                        )}
+                        <button
+                          type="button"
+                          className="emergency-contact-button"
+                          disabled
+                          aria-describedby="emergency-contact-pending"
+                        >
+                          <Phone size={18} aria-hidden="true" />
+                          {t("Emergency contact")}
+                        </button>
+                        <p id="emergency-contact-pending">
+                          {t(
+                            "CDRRMO number pending verification. Calling unavailable.",
+                          )}
+                        </p>
+                        <details className="route-failure-details">
+                          <summary>{t("Details")}</summary>
+                          <p>{error}</p>
+                        </details>
+                      </section>
+                    )}
+                    {destinationName.loading && !recommendedCenter && (
+                      <p role="status">{t("Finding place name…")}</p>
+                    )}
+                  </div>
                 )}
-                <div className="desktop-travel-mode">{travelModeSelector}</div>
-                {routingDisabledReason && <p>{routingDisabledReason}</p>}
-                {!destination && !result && (
-                  <p>{t("Tap the map to set your destination.")}</p>
-                )}
-                {destinationName.loading && !recommendedCenter && (
-                  <p role="status">{t("Finding place name…")}</p>
-                )}
-                <div className="desktop-route-buttons">{routeButtons}</div>
-                {!geolocation.position && (
-                  <p className="location-help">
-                    {locationLabel}.{" "}
-                    {t("Enable location access to calculate a route.")}
-                  </p>
-                )}
-              </div>
             </>
           }
         >
-          <div className="mobile-hazard-overview">{hazardOverview}</div>
-          {loading && (
+          {panel === "hazards" && (
+            <div className="mobile-hazard-overview">{hazardOverview}</div>
+          )}
+          {panel === "map" && loading && (
             <p role="status" className="route-update-status">
               {t("Updating route for {mode}…", {
                 mode: t(TRAVEL_MODES[travelMode].label),
@@ -1070,29 +1255,27 @@ function PublicHome({
               {routeLabel.subtitle && <p>{routeLabel.subtitle}</p>}
             </section>
           )}
-          <div
-            className={`panel-heading ${panel === "map" && (result || destination) ? "route-intro" : ""}`}
-          >
-            <span className="eyebrow">SANTA ROSA · LAGUNA</span>
-            <h2>
-              {panel === "hazards"
-                ? t("Hazard information")
-                : panel === "centers"
-                  ? t("Evacuation centers")
+          {panel !== "centers" && (
+            <div
+              className={`panel-heading ${panel === "map" && (result || destination) ? "route-intro" : ""}`}
+            >
+              <span className="eyebrow">SANTA ROSA · LAGUNA</span>
+              <h2>
+                {panel === "hazards"
+                  ? t("Hazard information")
                   : result
                     ? t("Your route")
                     : t("Find your way to safety")}
-            </h2>
-            <p>
-              {panel === "hazards"
-                ? t("Reported conditions and verified road impacts.")
-                : panel === "centers"
-                  ? t("Choose a center to review capacity and location.")
+              </h2>
+              <p>
+                {panel === "hazards"
+                  ? t("Reported conditions and verified road impacts.")
                   : t(
                       "Choose a point on the map or find a recommended evacuation center.",
                     )}
-            </p>
-          </div>
+              </p>
+            </div>
+          )}
           {panel === "map" && !destination && !result && !error && (
             <div className="route-onboarding">
               <span className="route-onboarding-icon">
@@ -1203,127 +1386,28 @@ function PublicHome({
             </section>
           )}
           {displayedCenter && panel === "centers" && (
-            <section className="selected-center">
-              <div className="section-title">
-                <span className="eyebrow">
-                  {!selectedCenter && result?.kind === "evacuation"
-                    ? t("RECOMMENDED CENTER")
-                    : t("SELECTED CENTER")}
-                </span>
-                {selectedCenter && (
-                  <button
-                    className="icon-button"
-                    aria-label={t("Close center details")}
-                    onClick={() => setSelectedCenter(null)}
-                  >
-                    <X size={18} />
-                  </button>
-                )}
-              </div>
-              <div className="shelter-symbol">
-                <Building2 size={30} />
-              </div>
-              <h3>{displayedCenter.name}</h3>
-              <p>{displayedCenter.address}</p>
-              <StatusBadge status={displayedCenter.status} />
-              <div className="center-occupancy">
-                <Users size={20} />
-                <span>
-                  <strong>
-                    {displayedCenter.currentOccupancy} /{" "}
-                    {displayedCenter.capacity}
-                  </strong>
-                  <small>{t("Current occupancy")}</small>
-                </span>
-              </div>
-              {displayedCenter.contactInformation && (
-                <p>{displayedCenter.contactInformation}</p>
-              )}
-              {displayedCenter.notes && <p>{displayedCenter.notes}</p>}
-              <button
-                type="button"
-                className="secondary-button center-route-button"
-                disabled={
-                  displayedCenter.status === "CLOSED" ||
-                  displayedCenter.status === "FULL"
-                }
-                onClick={() => {
-                  cancelRestore();
-                  const point = {
-                    latitude: displayedCenter.latitude,
-                    longitude: displayedCenter.longitude,
-                  };
-                  saveRouteSelection({
-                    destination: point,
-                    travelMode,
-                    intent: null,
-                  });
-                  routeVersion.current += 1;
-                  routeIntent.current = null;
-                  setDestination(point);
-                  setSearchSelection({
-                    id: `center-${displayedCenter.id}`,
-                    ...point,
-                    label: {
-                      title: displayedCenter.name,
-                      subtitle: displayedCenter.address,
-                      source: "center",
-                    },
-                  });
-                  setResult(null);
-                  setError(null);
-                  setAssistanceContext(null);
-                  setLoading(null);
-                  setPanel("map");
-                  setSheetState("partial");
-                }}
-              >
-                <MapPin size={18} aria-hidden="true" />
-                {t("Use as destination")}
-              </button>
-              {(displayedCenter.status === "CLOSED" ||
-                displayedCenter.status === "FULL") && (
-                <p>
-                  {t(
-                    "This center is not accepting arrivals. Choose another center.",
-                  )}
-                </p>
-              )}
-            </section>
+            <CenterDetails
+              key={displayedCenter.id}
+              center={displayedCenter}
+              recommended={recommendedCenter?.id === displayedCenter.id}
+              onBack={backToCenters}
+              route={selectedCenterRoute}
+            />
           )}
           {panel === "centers" && (
-            <section className="center-list">
-              <h3>
-                {t("Evacuation centers")}
-                <span>{centers.length}</span>
-              </h3>
-              {centers.length === 0 && (
-                <p className="empty-message">
-                  {t("No evacuation centers loaded.")}
-                </p>
-              )}
-              {centers.map((center) => (
-                <button
-                  className="center-list-item"
-                  key={center.id}
-                  onClick={() => setSelectedCenter(center)}
-                  aria-pressed={selectedCenter?.id === center.id}
-                >
-                  <Building2 size={23} />
-                  <span>
-                    <strong>{center.name}</strong>
-                    <small>
-                      {center.currentOccupancy} / {center.capacity}{" "}
-                      {t("occupied")}
-                    </small>
-                    <StatusBadge status={center.status} />
-                  </span>
-                  <ArrowRight size={16} />
-                </button>
-              ))}
-            </section>
+            <div hidden={!!displayedCenter}>
+              <CenterDirectory
+                centers={centers}
+                query={centerQuery}
+                onQueryChange={setCenterQuery}
+                acceptingOnly={acceptingOnly}
+                onAcceptingOnlyChange={setAcceptingOnly}
+                onSelect={openCenterDetails}
+                selectedId={directoryReturn.current.centerId || undefined}
+              />
+            </div>
           )}
-          {panel !== "map" && result && (
+          {panel === "hazards" && result && (
             <details className="other-route">
               <summary>{t("Active route")}</summary>
               <RouteDetails

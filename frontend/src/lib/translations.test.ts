@@ -9,9 +9,33 @@ describe("public language selection", () => {
       "Show less",
       "How this time is estimated",
       "This center is not accepting arrivals. Choose another center.",
+      "Centers",
+      "Hazards",
+      "Back to map",
+      "Back to centers",
+      "Clear destination",
+      "Browse centers",
+      "Search evacuation centers",
+      "Accepting evacuees",
+      "Reset filters",
+      "No centers match your search or filters.",
+      "Contact details",
+      "Route information",
+      "Capacity unavailable",
     ]) {
       expect(translate(text, "fil")).not.toBe(text);
     }
+  });
+  it("translates directory counts and remaining spaces with their values", () => {
+    expect(
+      translate("Showing {count} of {total} centers", "fil", {
+        count: 2,
+        total: 18,
+      }),
+    ).toBe("Ipinapakita ang 2 sa 18 center");
+    expect(translate("{count} spaces remaining", "fil", { count: 100 })).toBe(
+      "100 bakanteng puwesto",
+    );
   });
   it("translates controls while leaving recorded names unchanged", () => {
     expect(translate("Find safer route", "fil")).toBe(
