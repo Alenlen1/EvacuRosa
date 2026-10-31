@@ -54,6 +54,31 @@ function data(): OfflinePackage {
   };
 }
 describe("offline routing", () => {
+  it("retains unmapped approach warnings for direct and recommended routes", () => {
+    const saved = data();
+    saved.graph.data.nodes.push(
+      { id: "C", latitude: 14.3015, longitude: 121.1 },
+      { id: "D", latitude: 14.3016, longitude: 121.1 },
+    );
+    saved.graph.data.edges.push({
+      id: "CD",
+      roadId: "island",
+      fromNodeId: "C",
+      toNodeId: "D",
+      distanceMeters: 11,
+      status: "OPEN",
+    });
+    const target = { latitude: 14.3015, longitude: 121.1 };
+    saved.snapshot.centers[0] = { ...saved.snapshot.centers[0], ...target };
+    const engine = new OfflineRoutingEngine(saved);
+    for (const point of [target, null]) {
+      const result = engine.calculate(start, point, "walking");
+      expect(result.result?.warnings).toContainEqual(
+        expect.stringContaining("not mapped or verified"),
+      );
+      expect(result.result?.warnings[0]).toContain("may have changed");
+    }
+  });
   it("keeps dry portions of a partly flooded edge usable offline", () => {
     const saved = data();
     const fraction = (t: number) => ({

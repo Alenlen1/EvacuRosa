@@ -38,7 +38,7 @@ export class OfflineRoutingEngine {
           affectedRoads: result.affectedRoads,
           riskLevel: snapshot.hazardsAvailable ? result.riskLevel : null,
           updatedAt: snapshot.updatedAt,
-          warnings,
+          warnings: [...warnings, ...result.warnings],
           source: "offline" as const,
         },
       };
@@ -70,7 +70,7 @@ export class OfflineRoutingEngine {
         route: best.result.path,
         distance: best.result.distanceMeters,
         riskLevel: snapshot.hazardsAvailable ? best.result.riskLevel : null,
-        warnings,
+        warnings: [...warnings, ...best.result.warnings],
         lastUpdated: snapshot.updatedAt,
         source: "offline" as const,
       },

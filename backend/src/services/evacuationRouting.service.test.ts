@@ -90,6 +90,23 @@ describe("computeEvacuationRoute", () => {
     expect(result.riskLevel).toBe("LOW");
   });
 
+  it("retains the selected route's unmapped approach warning", async () => {
+    const warnings = [
+      "The approach to the destination is not mapped or verified.",
+    ];
+    mocks.computeRoute.mockReturnValue({
+      found: true,
+      path: [],
+      distanceMeters: 1200,
+      riskLevel: "LOW",
+      warnings,
+    });
+    expect(
+      (await computeEvacuationRoute({ latitude: 14.3, longitude: 121.1 }))
+        .warnings,
+    ).toEqual(warnings);
+  });
+
   it("returns a clear failure when no verified centers are available", async () => {
     mocks.getAvailableCenters.mockResolvedValue([]);
     const result = await computeEvacuationRoute({
