@@ -12,7 +12,6 @@ import {
   ArrowUpRight,
   House,
   LayoutDashboard,
-  LogOut,
   MapPin,
   Menu,
   ShieldCheck,
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import { SkeletonBlock } from "./Skeleton";
+import { SignOutButton } from "./SignOutButton";
 import styles from "./CdrrmoWorkspace.module.css";
 
 const sections = [
@@ -73,7 +73,7 @@ export function CdrrmoWorkspace({
 }: {
   children: ReactNode;
   loading?: boolean;
-  onSignOut?: () => void;
+  onSignOut?: () => void | Promise<void>;
 }) {
   const [active, setActive] = useState<SectionId>("dashboard-overview");
   const drawerRef = useRef<HTMLDialogElement>(null);
@@ -291,14 +291,10 @@ export function CdrrmoWorkspace({
                       <ArrowUpRight size={16} aria-hidden="true" />
                     </a>
                   )}
-                  <button
+                  <SignOutButton
                     className={styles.signOut}
-                    type="button"
-                    onClick={onSignOut}
-                  >
-                    <LogOut size={17} aria-hidden="true" />
-                    <span>Sign out</span>
-                  </button>
+                    onSignOut={onSignOut}
+                  />
                 </>
               )}
             </div>
