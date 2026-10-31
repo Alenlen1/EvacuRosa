@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Polyline, useMap } from "react-leaflet";
 import type { Polyline as LeafletPolyline } from "leaflet";
 import { traceRoutePaths } from "@/lib/routeTrace";
@@ -8,22 +8,28 @@ import { traceRoutePaths } from "@/lib/routeTrace";
 interface RoutePolylineProps {
   points: { latitude: number; longitude: number }[];
   navigating?: boolean;
+  children?: ReactNode;
 }
 
 export function RoutePolyline({
   points,
   navigating = false,
+  children,
 }: RoutePolylineProps) {
   const map = useMap();
   const outline = useRef<LeafletPolyline>(null);
   const line = useRef<LeafletPolyline>(null);
+  const [tracedPoints, setTracedPoints] = useState<
+    RoutePolylineProps["points"] | null
+  >(null);
   const positions = useMemo(
     () => points.map((p): [number, number] => [p.latitude, p.longitude]),
     [points],
   );
 
   useEffect(() => {
-    if (points.length < 2 || navigating) return;
+    if (points.length < 2 || navigating || tracedPoints === points) return;
+    let disposed = false;
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const stopTrace = traceRoutePaths(
       [
@@ -31,19 +37,23 @@ export function RoutePolyline({
         line.current?.getElement() as SVGPathElement | undefined,
       ],
       preference.matches,
+      () => {
+        if (!disposed) setTracedPoints(points);
+      },
     );
     // Leaflet reprojects/clips paths during interaction: reveal the full line
     // immediately rather than animate stale screen-space lengths.
     map.on("zoomstart movestart", stopTrace);
     preference.addEventListener("change", stopTrace);
     return () => {
+      disposed = true;
       stopTrace();
       map.off("zoomstart movestart", stopTrace);
       preference.removeEventListener("change", stopTrace);
     };
-  }, [points, map, navigating]);
+  }, [points, map, navigating, tracedPoints]);
 
-  if (points.length < 2) return null;
+  if (points.length < 2) return navigating ? <>{children}</> : null;
 
   // Preserve every road vertex at every zoom. Avoid viewport clipping while
   // the rotation plugin transforms the renderer during camera transitions.
@@ -73,6 +83,7 @@ export function RoutePolyline({
           interactive: false,
         }}
       />
+      {(navigating || tracedPoints === points) && children}
     </>
   );
 }

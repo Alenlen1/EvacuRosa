@@ -22,6 +22,7 @@ import { estimatedTravelTime, type TravelMode } from "@/lib/travelTime";
 import { NavigationCamera } from "./NavigationCamera";
 import { NavigationLocation } from "./NavigationLocation";
 import { RoutePolyline } from "./RoutePolyline";
+import { RouteApproach } from "./RouteApproach";
 import { UserLocationMarker } from "./UserLocationMarker";
 
 export function EvacuationNavigation({
@@ -136,7 +137,9 @@ export function EvacuationNavigation({
         geolocation.position && <UserLocationMarker {...geolocation.position} />
       )}
       {nav.remainingPoints && (
-        <RoutePolyline points={nav.remainingPoints} navigating={nav.active} />
+        <RoutePolyline points={nav.remainingPoints} navigating={nav.active}>
+          {!nav.arrived && <RouteApproach route={route} destination={center} />}
+        </RoutePolyline>
       )}
       <NavigationCamera
         active={nav.active}
