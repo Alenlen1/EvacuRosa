@@ -68,7 +68,7 @@ describe("offline routing", () => {
       distanceMeters: 11,
       status: "OPEN",
     });
-    const target = { latitude: 14.3015, longitude: 121.1 };
+    const target = { latitude: 14.3015, longitude: 121.1001 };
     saved.snapshot.centers[0] = { ...saved.snapshot.centers[0], ...target };
     const engine = new OfflineRoutingEngine(saved);
     for (const point of [target, null]) {
@@ -77,6 +77,7 @@ describe("offline routing", () => {
         expect.stringContaining("not mapped or verified"),
       );
       expect(result.result?.warnings[0]).toContain("may have changed");
+      expect(result.result?.destinationApproach?.to).toEqual(target);
     }
   });
   it("keeps dry portions of a partly flooded edge usable offline", () => {
@@ -170,6 +171,7 @@ describe("offline routing", () => {
       updatedAt: saved.snapshot.updatedAt,
     });
     expect(offline.result?.warnings[0]).toContain("may have changed");
+    expect(offline.result?.destinationApproach).toBeUndefined();
   });
   it("retains one-way and travel-mode access restrictions", () => {
     const saved = data();

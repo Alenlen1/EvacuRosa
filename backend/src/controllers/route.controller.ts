@@ -13,11 +13,9 @@ function isValidPoint(
 export async function postRoute(req: Request, res: Response) {
   const { start, destination, travelMode = "walking" } = req.body ?? {};
   if (!isTravelMode(travelMode)) {
-    res
-      .status(400)
-      .json({
-        error: "Invalid travelMode. Use walking, biking, motorcycle, or car.",
-      });
+    res.status(400).json({
+      error: "Invalid travelMode. Use walking, biking, motorcycle, or car.",
+    });
     return;
   }
 
@@ -32,13 +30,11 @@ export async function postRoute(req: Request, res: Response) {
   const result = await computeRoute(start, destination, travelMode);
 
   if (!result.found) {
-    res
-      .status(422)
-      .json({
-        route: [],
-        warnings: result.warnings,
-        failureReason: result.failureReason,
-      });
+    res.status(422).json({
+      route: [],
+      warnings: result.warnings,
+      failureReason: result.failureReason,
+    });
     return;
   }
 
@@ -46,6 +42,7 @@ export async function postRoute(req: Request, res: Response) {
   // reports and road condition — see routing.service.ts.
   res.json({
     route: result.path,
+    destinationApproach: result.destinationApproach,
     travelMode,
     distance: result.distanceMeters,
     affectedRoads: result.affectedRoads,

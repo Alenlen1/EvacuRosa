@@ -13,11 +13,9 @@ function isValidPoint(
 export async function postEvacuationRoute(req: Request, res: Response) {
   const { start, travelMode = "walking" } = req.body ?? {};
   if (!isTravelMode(travelMode)) {
-    res
-      .status(400)
-      .json({
-        error: "Invalid travelMode. Use walking, biking, motorcycle, or car.",
-      });
+    res.status(400).json({
+      error: "Invalid travelMode. Use walking, biking, motorcycle, or car.",
+    });
     return;
   }
   if (!isValidPoint(start)) {
@@ -42,6 +40,7 @@ export async function postEvacuationRoute(req: Request, res: Response) {
   res.json({
     recommendedCenter: result.recommendedCenter,
     route: result.route,
+    destinationApproach: result.destinationApproach,
     travelMode,
     distance: result.distanceMeters,
     riskLevel: result.riskLevel,

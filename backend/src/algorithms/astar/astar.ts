@@ -97,7 +97,7 @@ class MinHeap<T> {
  * lower bound on the true remaining cost.
  */
 export function findPath(
-  graph: RoadGraph,
+  graph: Pick<RoadGraph, "getNode" | "neighbors">,
   startNodeId: string,
   goalNodeId: string,
   options?: FindPathOptions,

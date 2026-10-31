@@ -22,6 +22,7 @@ import {
 import type { GeolocationState } from "@/hooks/useGeolocation";
 import type {
   EvacuationCenter,
+  DestinationApproach,
   FloodReport,
   FireIncident,
   EarthquakeEvent,
@@ -58,6 +59,7 @@ interface MapProps {
   searchFocus?: { latitude: number; longitude: number } | null;
   onClearDestination: () => void;
   route: { latitude: number; longitude: number }[] | null;
+  destinationApproach?: DestinationApproach;
   centers: EvacuationCenter[];
   floodReports: FloodReport[];
   fireIncidents: FireIncident[];
@@ -265,6 +267,7 @@ export default function Map({
   searchFocus,
   onClearDestination,
   route,
+  destinationApproach,
   centers,
   floodReports,
   fireIncidents,
@@ -320,6 +323,7 @@ export default function Map({
       />
       <EvacuationNavigation
         route={route}
+        destinationApproach={destinationApproach}
         center={
           navigationCenter ??
           (destination ? { ...destination, name: destinationLabel } : undefined)
