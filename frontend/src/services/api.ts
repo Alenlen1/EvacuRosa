@@ -471,6 +471,40 @@ export interface EarthquakeRoadImpact {
   notes?: string;
   verifiedAt?: string;
   affectedSegments?: LatLng[][];
+  affectedEdgeIds?: string[] | null;
+  edgeRanges?:
+    { edgeId: string; startFraction: number; endFraction: number }[] | null;
+  impactArea?: EarthquakeImpactArea | null;
+}
+
+export interface EarthquakeImpactArea extends LatLng {
+  radiusMeters: number;
+}
+
+export interface EarthquakeAreaRoad {
+  roadId: string;
+  roadName?: string;
+  distanceMeters: number;
+  affectedSegments: LatLng[][];
+}
+
+export async function fetchEarthquakeArea(
+  area: EarthquakeImpactArea,
+  signal?: AbortSignal,
+): Promise<EarthquakeAreaRoad[]> {
+  const query = new URLSearchParams({
+    lat: String(area.latitude),
+    lng: String(area.longitude),
+    radius: String(area.radiusMeters),
+  });
+  const res = await fetch(`${API_URL}/api/roads/earthquake-area?${query}`, {
+    signal,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? "Could not preview affected roads.");
+  }
+  return (await res.json()).roads;
 }
 
 export async function fetchEarthquakes(): Promise<{
@@ -584,7 +618,9 @@ export function createEarthquakeRoadImpact(
   token: string,
   data: {
     earthquakeEventId?: string | null;
-    roadId: string;
+    roadId?: string;
+    impactArea?: EarthquakeImpactArea;
+    selectedRoadIds?: string[];
     impactLevel: "LOW" | "MODERATE" | "HIGH";
     confirmedBlocked: boolean;
     notes?: string;

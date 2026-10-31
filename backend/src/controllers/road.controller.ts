@@ -3,6 +3,33 @@ import { loadRoadGraph } from "../services/road.service";
 import { isInsideSantaRosa, HAZARD_CITY_ERROR } from "../geography/santaRosa";
 import { isSantaRosaRoad } from "../services/hazardScope.service";
 import { selectFloodSection } from "../algorithms/floodSections";
+import {
+  isImpactArea,
+  selectEarthquakeArea,
+} from "../algorithms/earthquakeArea";
+
+export function getEarthquakeArea(req: Request, res: Response) {
+  const values = [req.query.lat, req.query.lng, req.query.radius];
+  if (values.some((value) => typeof value !== "string" || !value.trim())) {
+    res.status(400).json({ error: "Provide a location and affected radius." });
+    return;
+  }
+  const [latitude, longitude, radiusMeters] = values.map(Number);
+  const area = { latitude, longitude, radiusMeters };
+  if (!isImpactArea(area) || !isInsideSantaRosa(latitude, longitude)) {
+    res.status(400).json({
+      error:
+        "Select a location inside Santa Rosa and a radius between 5 and 250 metres.",
+    });
+    return;
+  }
+  const graph = loadRoadGraph();
+  res.json({
+    roads: selectEarthquakeArea(graph, area, (id) =>
+      isSantaRosaRoad(graph, id),
+    ),
+  });
+}
 
 export function getRoadSection(req: Request, res: Response) {
   const { roadId } = req.query;

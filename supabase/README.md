@@ -46,6 +46,20 @@ The location-sharing sections below describe the earlier 0011-0013 implementatio
 7. For CDRRMO to report earthquake road damage directly, apply
    `0019_standalone_earthquake_road_impacts.sql`. It makes the source event
    optional without deleting events, road impacts, or role policies.
+8. For earthquake debris-area reports, apply
+   `0020_earthquake_impact_areas.sql` in the Supabase SQL Editor.
+   Deploy/restart the backend and both frontends together.
+   CDRRMO clicks the observed debris location, drags the centre to move it,
+   and drags the edge handle or adjusts the radius (5-250 m) to resize it.
+   Road checkboxes confirm which intersecting roads actually have damage.
+   Grey sections are candidates; purple sections are selected. Only checked
+   road sections inside the circle are saved, in one atomic operation.
+   The backend recomputes the clipped geometry and validates the selection.
+   Public maps and online/offline routing use these same intervals. Verified
+   dates remain automatic and display in PHT. Existing whole-road reports
+   retain their saved scope.
+   Offline format 4 includes precise earthquake intervals. Reconnect to download
+   a fresh offline snapshot after updating.
 
 ## Without a Supabase project
 

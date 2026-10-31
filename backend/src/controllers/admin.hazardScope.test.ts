@@ -7,7 +7,7 @@ import {
   createEarthquakeRoadImpact,
   updateFireIncident,
 } from "./admin.controller";
-import { getNearestRoads } from "./road.controller";
+import { getNearestRoads, getEarthquakeArea } from "./road.controller";
 
 vi.mock("../services/road.service", async () => {
   const { RoadGraph } = await import("../algorithms/astar/graph.js");
@@ -59,6 +59,9 @@ async function call(
     eq: vi.fn(),
     select: vi.fn(),
     single: vi.fn().mockResolvedValue({ data: { id: "new" }, error: null }),
+    then: (
+      resolve: (result: { data: { id: string }[]; error: null }) => unknown,
+    ) => resolve({ data: [{ id: "new" }], error: null }),
   };
   for (const fn of [db.insert, db.update, db.eq, db.select])
     fn.mockReturnValue(db);
@@ -131,6 +134,69 @@ describe("CDRRMO hazard city enforcement", () => {
         confirmed_blocked: false,
       }),
     );
+  });
+  it("saves only selected intersecting sections and ignores forged client geometry", async () => {
+    const { db, res } = await call(createEarthquakeRoadImpact, {
+      impactArea: { latitude: 14.3005, longitude: 121.1, radiusMeters: 10 },
+      selectedRoadIds: ["inside"],
+      impactLevel: "HIGH",
+      confirmedBlocked: true,
+      edgeRanges: [{ edgeId: "CD", startFraction: 0, endFraction: 1 }],
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(db.insert).toHaveBeenCalledExactlyOnceWith([
+      expect.objectContaining({
+        road_id: "inside",
+        affected_edge_ids: ["AB"],
+        edge_ranges: [
+          expect.objectContaining({
+            edgeId: "AB",
+            startFraction: expect.any(Number),
+            endFraction: expect.any(Number),
+          }),
+        ],
+      }),
+    ]);
+    const saved = db.insert.mock.calls[0][0][0].edge_ranges[0];
+    expect(saved.startFraction).toBeGreaterThan(0.4);
+    expect(saved.endFraction).toBeLessThan(0.6);
+  });
+  it.each([
+    { selectedRoadIds: [] },
+    { selectedRoadIds: ["outside"] },
+    { selectedRoadIds: ["inside", "outside"] },
+    { selectedRoadIds: ["inside", "inside"] },
+    { selectedRoadIds: ["missing"] },
+    { selectedRoadIds: [12] },
+    { impactArea: { latitude: 14.338, longitude: 121.085, radiusMeters: 25 } },
+    { impactArea: { latitude: 14.3005, longitude: 121.1, radiusMeters: 0 } },
+    { impactArea: { latitude: 14.3005, longitude: 121.1, radiusMeters: 251 } },
+    { impactArea: { latitude: "14.3005", longitude: 121.1, radiusMeters: 25 } },
+  ])(
+    "rejects invalid area/road selections without any partial writes: %j",
+    async (fields) => {
+      const { from, res } = await call(createEarthquakeRoadImpact, {
+        impactArea: { latitude: 14.3005, longitude: 121.1, radiusMeters: 10 },
+        selectedRoadIds: ["inside"],
+        impactLevel: "HIGH",
+        confirmedBlocked: true,
+        ...fields,
+      });
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(from).not.toHaveBeenCalled();
+    },
+  );
+  it("previews clipped road geometry without writing a report", async () => {
+    const { from, res } = await call(
+      getEarthquakeArea,
+      {},
+      { lat: "14.3005", lng: "121.1", radius: "10" },
+    );
+    expect(from).not.toHaveBeenCalled();
+    const roads = res.json.mock.calls[0][0].roads;
+    expect(roads).toHaveLength(1);
+    expect(roads[0].distanceMeters).toBe(20);
+    expect(roads[0].edgeRanges[0].edgeId).toBe("AB");
   });
   it.each([
     { impactLevel: "SEVERE" },

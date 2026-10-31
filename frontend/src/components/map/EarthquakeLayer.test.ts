@@ -33,6 +33,22 @@ const impact: EarthquakeRoadImpact = {
 };
 
 describe("public earthquake map visibility", () => {
+  it("shows a verified debris footprint without requiring an earthquake event", () => {
+    const html = renderToStaticMarkup(
+      createElement(EarthquakeLayer, {
+        events: [],
+        roadImpacts: [
+          {
+            ...impact,
+            impactArea: { latitude: 14.31, longitude: 121.1, radiusMeters: 25 },
+          },
+        ],
+      }),
+    );
+    expect(html).toContain("Reported debris area");
+    expect(html).toContain("25");
+    expect(html).toContain('data-road="true"');
+  });
   it("renders a standalone blocked road even when no earthquake events exist", () => {
     const html = renderToStaticMarkup(
       createElement(EarthquakeLayer, { events: [], roadImpacts: [impact] }),

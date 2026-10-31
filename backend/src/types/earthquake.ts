@@ -1,3 +1,6 @@
+import type { FloodEdgeRange } from "./flood";
+import type { EarthquakeImpactArea } from "../algorithms/earthquakeArea";
+
 export type EarthquakeEventStatus = "UNREVIEWED" | "REVIEWED" | "ARCHIVED";
 export type EarthquakeImpactLevel = "LOW" | "MODERATE" | "HIGH";
 
@@ -23,6 +26,9 @@ export interface EarthquakeRoadImpact {
   id: string;
   earthquakeEventId: string | null;
   roadId: string;
+  affectedEdgeIds?: string[] | null;
+  edgeRanges?: FloodEdgeRange[] | null;
+  impactArea?: EarthquakeImpactArea | null;
   impactLevel: EarthquakeImpactLevel;
   confirmedBlocked: boolean;
   notes?: string;

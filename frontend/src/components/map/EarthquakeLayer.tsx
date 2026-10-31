@@ -29,6 +29,34 @@ export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
 
   return (
     <>
+      {roadImpacts
+        .filter(
+          (impact, index) =>
+            impact.impactArea &&
+            roadImpacts.findIndex(
+              (other) =>
+                JSON.stringify(other.impactArea) ===
+                JSON.stringify(impact.impactArea),
+            ) === index,
+        )
+        .map((impact) => (
+          <Circle
+            key={`debris-${impact.id}`}
+            center={[impact.impactArea!.latitude, impact.impactArea!.longitude]}
+            radius={impact.impactArea!.radiusMeters}
+            pathOptions={{
+              color: "#b45309",
+              weight: 1.5,
+              fillOpacity: 0.08,
+              dashArray: "4 4",
+            }}
+          >
+            <Tooltip sticky className="hazard-tooltip">
+              {t("Earthquake road impact")} · {impact.impactArea!.radiusMeters}{" "}
+              m {t("Reported debris area")}
+            </Tooltip>
+          </Circle>
+        ))}
       {roadImpacts.flatMap((impact) =>
         (impact.affectedSegments ?? [])
           .filter((segment) => segment.length >= 2)
