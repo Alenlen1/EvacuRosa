@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import type { WorkspaceRole } from "@/lib/workspaceLoading";
 import { SkeletonBlock } from "./Skeleton";
+import { SignOutButton } from "./SignOutButton";
 
 export function StaffHeader({
   role = null,
@@ -14,7 +16,7 @@ export function StaffHeader({
   directory?: boolean;
   loading?: boolean;
   busy?: boolean;
-  onSignOut?: () => void;
+  onSignOut?: () => void | Promise<void>;
 }) {
   const hasPublicMap = Boolean(process.env.NEXT_PUBLIC_PUBLIC_APP_URL);
   return (
@@ -64,28 +66,26 @@ export function StaffHeader({
                 Barangay home
               </Link>
             ))}
-          {!directory &&
-            hasPublicMap &&
+          {hasPublicMap &&
             (loading ? (
               <SkeletonBlock className="staff-skeleton-header-public" />
             ) : (
               <a
                 href={process.env.NEXT_PUBLIC_PUBLIC_APP_URL}
-                className="admin-link"
+                className="staff-header-public-map"
               >
                 Public map
+                <ArrowUpRight size={16} aria-hidden="true" />
               </a>
             ))}
           {loading ? (
             <SkeletonBlock className="staff-skeleton-header-action" />
           ) : (
-            <button
-              className="secondary-button"
+            <SignOutButton
+              className="staff-header-sign-out"
               disabled={busy}
-              onClick={onSignOut}
-            >
-              Sign out
-            </button>
+              onSignOut={onSignOut}
+            />
           )}
         </div>
       </div>

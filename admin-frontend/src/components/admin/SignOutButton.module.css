@@ -1,0 +1,36 @@
+button.pending:disabled {
+  cursor: wait;
+}
+.spinner {
+  animation: sign-out-spin 0.8s linear infinite;
+}
+.error {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: min(260px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border: 1px solid #ecc7bd;
+  border-radius: 8px;
+  background: #fff9f3;
+  color: #9a3026;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: right;
+}
+@keyframes sign-out-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+.control {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}

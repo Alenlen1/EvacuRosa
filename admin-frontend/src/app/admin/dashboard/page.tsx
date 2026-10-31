@@ -511,7 +511,8 @@ export default function AdminDashboardPage() {
     </div>
   );
   const signOut = async () => {
-    await supabase?.auth.signOut();
+    const result = await supabase?.auth.signOut();
+    if (result?.error) throw result.error;
     clearWorkspaceRole();
     router.replace("/admin/login");
   };
