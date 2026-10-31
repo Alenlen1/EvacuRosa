@@ -10,6 +10,10 @@ import { loadRoadGraph } from "../services/road.service";
 import { isSantaRosaRoad } from "../services/hazardScope.service";
 import type { FloodEdgeRange } from "../types/flood";
 import {
+  isImpactArea,
+  selectEarthquakeArea,
+} from "../algorithms/earthquakeArea";
+import {
   selectFloodSection,
   type SectionPoint,
 } from "../algorithms/floodSections";
@@ -386,15 +390,22 @@ export async function createEarthquakeRoadImpact(
   req: RoleAwareRequest,
   res: Response,
 ) {
-  const { earthquakeEventId, roadId, impactLevel, confirmedBlocked, notes } =
-    req.body ?? {};
+  const {
+    earthquakeEventId,
+    roadId,
+    impactLevel,
+    confirmedBlocked,
+    notes,
+    impactArea,
+    selectedRoadIds,
+  } = req.body ?? {};
 
   if (!req.userSupabase) {
     res.status(401).json({ error: "Not authenticated." });
     return;
   }
   if (
-    typeof roadId !== "string" ||
+    (impactArea === undefined && typeof roadId !== "string") ||
     !["LOW", "MODERATE", "HIGH"].includes(impactLevel) ||
     (earthquakeEventId != null &&
       (typeof earthquakeEventId !== "string" || !earthquakeEventId.trim())) ||
@@ -404,6 +415,65 @@ export async function createEarthquakeRoadImpact(
       error:
         "Provide a roadId and impactLevel (LOW, MODERATE, HIGH). confirmedBlocked must be a boolean when provided; the earthquake event link is optional.",
     });
+    return;
+  }
+
+  if (impactArea !== undefined) {
+    if (
+      !isImpactArea(impactArea) ||
+      !isInsideSantaRosa(impactArea.latitude, impactArea.longitude) ||
+      !Array.isArray(selectedRoadIds) ||
+      !selectedRoadIds.length ||
+      selectedRoadIds.length > 100 ||
+      selectedRoadIds.some((id: unknown) => typeof id !== "string") ||
+      new Set(selectedRoadIds).size !== selectedRoadIds.length
+    ) {
+      res.status(400).json({
+        error:
+          "Choose a valid debris area (5–250 m) inside Santa Rosa and confirm its affected roads.",
+      });
+      return;
+    }
+    const graph = loadRoadGraph();
+    const candidates = selectEarthquakeArea(graph, impactArea, (id) =>
+      isSantaRosaRoad(graph, id),
+    );
+    const selected = candidates.filter((road) =>
+      selectedRoadIds.includes(road.roadId),
+    );
+    if (selected.length !== selectedRoadIds.length) {
+      res.status(400).json({
+        error:
+          "Every selected road must intersect the affected area and stay inside Santa Rosa. Review the preview again.",
+      });
+      return;
+    }
+    // Compute all geometry on the server and insert in one atomic statement.
+    // Client-supplied edge IDs/ranges are never trusted.
+    const { data, error } = await req.userSupabase
+      .from("earthquake_road_impacts")
+      .insert(
+        selected.map((road) => ({
+          earthquake_event_id: earthquakeEventId ?? null,
+          road_id: road.roadId,
+          impact_level: impactLevel,
+          confirmed_blocked: Boolean(confirmedBlocked),
+          notes: typeof notes === "string" ? notes : null,
+          verified_by: req.profile?.id,
+          impact_area: impactArea,
+          affected_edge_ids: road.edgeRanges.map((range) => range.edgeId),
+          edge_ranges: road.edgeRanges,
+        })),
+      )
+      .select();
+    if (error) {
+      res.status(403).json({
+        error:
+          "Could not save the affected road sections. Check permissions and apply migration 0020_earthquake_impact_areas.sql.",
+      });
+      return;
+    }
+    res.status(201).json({ roadImpacts: data });
     return;
   }
 

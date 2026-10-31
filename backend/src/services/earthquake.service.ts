@@ -4,6 +4,14 @@ import type {
   EarthquakeRoadImpact,
 } from "../types/earthquake";
 import type { RoadStatus } from "../algorithms/astar/edge";
+import {
+  earthquakeStatusOverridesForImpacts,
+  earthquakeImpactByRoadId,
+} from "../types/earthquakeScope";
+export {
+  earthquakeStatusOverridesForImpacts,
+  earthquakeImpactByRoadId,
+} from "../types/earthquakeScope";
 
 export async function getRecentEarthquakes(): Promise<EarthquakeEvent[]> {
   const supabase = getSupabase();
@@ -50,7 +58,7 @@ export async function getVerifiedRoadImpacts(): Promise<
   const { data, error } = await supabase
     .from("earthquake_road_impacts")
     .select(
-      "id, earthquake_event_id, road_id, impact_level, confirmed_blocked, notes, verified_at",
+      "id, earthquake_event_id, road_id, impact_level, confirmed_blocked, notes, verified_at, affected_edge_ids, edge_ranges, impact_area",
     );
 
   if (error) {
@@ -61,6 +69,9 @@ export async function getVerifiedRoadImpacts(): Promise<
     id: row.id,
     earthquakeEventId: row.earthquake_event_id,
     roadId: row.road_id,
+    affectedEdgeIds: row.affected_edge_ids,
+    edgeRanges: row.edge_ranges,
+    impactArea: row.impact_area,
     impactLevel: row.impact_level,
     confirmedBlocked: row.confirmed_blocked,
     notes: row.notes,
@@ -79,24 +90,6 @@ export async function buildEarthquakeStatusOverrides(): Promise<
   return earthquakeStatusOverridesForImpacts(impacts);
 }
 
-export function earthquakeStatusOverridesForImpacts(
-  impacts: EarthquakeRoadImpact[],
-): Map<string, RoadStatus> {
-  const overrides = new Map<string, RoadStatus>();
-  for (const impact of impacts) {
-    if (impact.confirmedBlocked) {
-      overrides.set(impact.roadId, "BLOCKED");
-    }
-  }
-  return overrides;
-}
-
-const IMPACT_LEVEL_TO_NUMERIC: Record<string, number> = {
-  LOW: 1,
-  MODERATE: 2,
-  HIGH: 3,
-};
-
 /** Verified impact level per road, for the fuzzy engine's earthquake
  * input — 0 for any road with no verified impact record, by design. */
 export async function buildEarthquakeImpactByRoadId(): Promise<
@@ -104,17 +97,6 @@ export async function buildEarthquakeImpactByRoadId(): Promise<
 > {
   const impacts = await getVerifiedRoadImpacts();
   return earthquakeImpactByRoadId(impacts);
-}
-
-export function earthquakeImpactByRoadId(
-  impacts: EarthquakeRoadImpact[],
-): Map<string, number> {
-  const byRoad = new Map<string, number>();
-  for (const impact of impacts) {
-    const level = IMPACT_LEVEL_TO_NUMERIC[impact.impactLevel] ?? 0;
-    byRoad.set(impact.roadId, Math.max(byRoad.get(impact.roadId) ?? 0, level));
-  }
-  return byRoad;
 }
 
 /** Dedupes by externalEventId — the same USGS event can appear again on a

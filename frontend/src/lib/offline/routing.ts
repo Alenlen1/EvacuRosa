@@ -45,7 +45,8 @@ export function validPackage(data: OfflinePackage): boolean {
     Array.isArray(data.snapshot.statusOverrides) &&
     Array.isArray(data.snapshot.floodReports) &&
     Array.isArray(data.snapshot.fireIncidents) &&
-    Array.isArray(data.snapshot.earthquakeImpacts)
+    Array.isArray(data.snapshot.earthquakeImpacts) &&
+    Array.isArray(data.snapshot.earthquakeRoadImpacts)
   );
 }
 

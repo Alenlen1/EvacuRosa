@@ -3,6 +3,8 @@ import type { GraphEdge, RoadStatus } from "./astar/edge";
 import type { FloodReport } from "../types/flood";
 import { floodStatusOverrides } from "../types/floodScope";
 import { pointOnEdge } from "./floodSections";
+import type { EarthquakeRoadImpact } from "../types/earthquake";
+import { earthquakeStatusOverridesForImpacts } from "../types/earthquakeScope";
 
 interface Part {
   id: string;
@@ -14,17 +16,23 @@ const cached = new WeakMap<
   { key: string; graph: RoadGraph; parts: Map<string, Part[]> }
 >();
 
-/** Split at precise flood boundaries, preserving access rules and leaving
+/** Split at precise flood/debris boundaries, preserving access rules and leaving
  * the shared road graph untouched. Also used by the offline worker. */
 export function prepareFloodRouting(
   base: RoadGraph,
   reports: FloodReport[],
   sourceOverrides: [string, RoadStatus][],
+  impacts: EarthquakeRoadImpact[] = [],
 ) {
-  const ranges = reports.flatMap((report) => report.edgeRanges ?? []);
+  const ranges = [...reports, ...impacts].flatMap(
+    (report) => report.edgeRanges ?? [],
+  );
   if (!ranges.length) {
     cached.delete(base);
-    return { graph: base, reports, overrides: new Map(sourceOverrides) };
+    const overrides = new Map(sourceOverrides);
+    for (const [id, status] of earthquakeStatusOverridesForImpacts(impacts))
+      overrides.set(id, status);
+    return { graph: base, reports, impacts, overrides };
   }
   const key = JSON.stringify(ranges);
   let partition = cached.get(base);
@@ -42,7 +50,7 @@ export function prepareFloodRouting(
         range.endFraction > 1 ||
         range.startFraction >= range.endFraction
       )
-        throw new Error("Invalid saved flood section. Refresh hazard data.");
+        throw new Error("Invalid saved hazard section. Refresh hazard data.");
       const values = cuts.get(range.edgeId) ?? new Set([0, 1]);
       values.add(range.startFraction);
       values.add(range.endFraction);
@@ -83,13 +91,15 @@ export function prepareFloodRouting(
     }
     if ([...cuts.keys()].some((id) => !parts.has(id)))
       throw new Error(
-        "Saved flood section does not match this road network. Refresh offline data.",
+        "Saved hazard section does not match this road network. Refresh offline data.",
       );
     partition = { key, graph: new RoadGraph({ nodes, edges }), parts };
     cached.set(base, partition);
   }
   const parts = partition.parts;
-  const expanded = reports.map((report) => {
+  const expand = <T extends FloodReport | EarthquakeRoadImpact>(
+    report: T,
+  ): T => {
     if (report.edgeRanges != null)
       return {
         ...report,
@@ -112,7 +122,9 @@ export function prepareFloodRouting(
             (id) => parts.get(id)?.map((part) => part.id) ?? [id],
           ),
         };
-  });
+  };
+  const expanded = reports.map(expand);
+  const expandedImpacts = impacts.map(expand);
   const overrides = new Map<string, RoadStatus>();
   const merge = (id: string, status: RoadStatus) => {
     if (status === "BLOCKED" || overrides.get(id) !== "BLOCKED")
@@ -127,5 +139,14 @@ export function prepareFloodRouting(
     else merge(id, status);
   }
   for (const [id, status] of floodStatusOverrides(expanded)) merge(id, status);
-  return { graph: partition.graph, reports: expanded, overrides };
+  for (const [id, status] of earthquakeStatusOverridesForImpacts(
+    expandedImpacts,
+  ))
+    merge(id, status);
+  return {
+    graph: partition.graph,
+    reports: expanded,
+    impacts: expandedImpacts,
+    overrides,
+  };
 }

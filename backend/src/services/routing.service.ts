@@ -65,5 +65,6 @@ export async function createRoutePlanner() {
     floodReports,
     fireIncidents,
     earthquakeImpacts: [...earthquakeImpactByRoadId(impacts)],
+    earthquakeRoadImpacts: impacts,
   });
 }

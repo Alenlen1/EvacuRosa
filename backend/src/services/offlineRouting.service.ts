@@ -65,5 +65,6 @@ export async function getOfflineSnapshot(): Promise<OfflineSnapshot> {
     fireIncidents,
     statusOverrides: [...statusOverrides],
     earthquakeImpacts: [...earthquakeImpactByRoadId(impacts)],
+    earthquakeRoadImpacts: impacts,
   };
 }

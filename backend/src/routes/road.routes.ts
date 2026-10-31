@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getNearestRoads,
   getRoadSection,
+  getEarthquakeArea,
 } from "../controllers/road.controller";
 
 export const roadRouter = Router();
@@ -11,3 +12,4 @@ export const roadRouter = Router();
 // road is X" without anyone needing to know or type a raw roadId.
 roadRouter.get("/nearest", getNearestRoads);
 roadRouter.get("/section", getRoadSection);
+roadRouter.get("/earthquake-area", getEarthquakeArea);

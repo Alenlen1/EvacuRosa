@@ -153,6 +153,9 @@ html:has(.cdrrmo-workspace) {
   grid-template-columns: minmax(0, 1fr) 350px;
   border-color: var(--border);
   background: #fffdf9;
+  /* Clip the rounded corners without creating a scrolling ancestor that
+     prevents the map from sticking beside a long report form. */
+  overflow: clip;
 }
 .cdrrmo-workspace .hazard-tabs {
   padding: 7px;
@@ -187,6 +190,8 @@ html:has(.cdrrmo-workspace) {
 }
 .cdrrmo-workspace .hazard-editor .leaflet-container {
   font-family: inherit;
+  width: 100%;
+  height: 100%;
 }
 .cdrrmo-workspace .hazard-form {
   min-width: 0;
@@ -198,6 +203,24 @@ html:has(.cdrrmo-workspace) {
 .cdrrmo-workspace .hazard-form p {
   line-height: 1.65;
 }
+.cdrrmo-workspace .flood-reset-selection {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  margin-top: 14px;
+}
+.cdrrmo-workspace .flood-reset-selection button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+.cdrrmo-workspace .flood-reset-selection small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
 .cdrrmo-workspace .hazard-form :is(.text-slate-500, .text-slate-600),
 .cdrrmo-workspace .hazard-records > h3 {
   color: var(--muted);
@@ -205,6 +228,74 @@ html:has(.cdrrmo-workspace) {
 .cdrrmo-workspace .hazard-report-fields {
   border-color: var(--border);
   background: #fffdf9;
+}
+
+.cdrrmo-workspace .earthquake-area-instructions {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  padding: 12px 18px;
+  margin: 0;
+  color: var(--muted);
+  background: #fffdf9;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.cdrrmo-workspace .earthquake-area-fields {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: 0 0 14px;
+}
+.cdrrmo-workspace .earthquake-area-fields legend {
+  padding: 0 5px;
+  font-weight: 650;
+}
+.cdrrmo-workspace .earthquake-area-fields :is(p, small) {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.cdrrmo-workspace .earthquake-area-radius {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+.cdrrmo-workspace .earthquake-area-radius input[type="number"] {
+  width: 100%;
+}
+.cdrrmo-workspace .earthquake-area-radius input[type="range"] {
+  width: 100%;
+  accent-color: #7c3aed;
+}
+.cdrrmo-workspace .earthquake-area-roads {
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.cdrrmo-workspace .earthquake-area-roads label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f6f3fa;
+  cursor: pointer;
+}
+.cdrrmo-workspace .earthquake-area-roads input {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  accent-color: #7c3aed;
+}
+.cdrrmo-workspace .earthquake-area-roads small {
+  display: block;
 }
 .cdrrmo-workspace .hazard-form-empty {
   border-color: #d9c6b8;
@@ -536,7 +627,7 @@ html:has(.cdrrmo-workspace) {
   grid-template-rows: auto auto auto;
 }
 .cdrrmo-workspace [data-workspace-scroll="true"] .hazard-editor-map {
-  height: clamp(320px, 52dvh, 540px);
+  height: clamp(360px, calc(100dvh - 148px), 760px);
   align-self: start;
   position: sticky;
   top: 12px;

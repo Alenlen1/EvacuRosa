@@ -29,13 +29,14 @@ function data(): OfflinePackage {
       },
     },
     snapshot: {
-      formatVersion: 3,
+      formatVersion: 4,
       graphVersion: "test",
       updatedAt: "2026-10-08T00:00:00Z",
       hazardsAvailable: true,
       floodReports: [],
       fireIncidents: [],
       earthquakeImpacts: [],
+      earthquakeRoadImpacts: [],
       statusOverrides: [],
       centers: [
         {
@@ -54,6 +55,30 @@ function data(): OfflinePackage {
   };
 }
 describe("offline routing", () => {
+  it("preserves a verified earthquake section after serializing its offline snapshot", () => {
+    const saved = data();
+    saved.snapshot.earthquakeRoadImpacts = [
+      {
+        id: "debris",
+        earthquakeEventId: null,
+        roadId: "road",
+        impactLevel: "HIGH",
+        confirmedBlocked: true,
+        verifiedAt: "2026-10-31T00:00:00Z",
+        affectedEdgeIds: ["AB"],
+        edgeRanges: [{ edgeId: "AB", startFraction: 0.4, endFraction: 0.6 }],
+        impactArea: { latitude: 14.3005, longitude: 121.1, radiusMeters: 11 },
+      },
+    ];
+    const engine = new OfflineRoutingEngine(JSON.parse(JSON.stringify(saved)));
+    const blocked = engine.calculate(start, destination, "walking");
+    expect(blocked.result).toBeUndefined();
+    expect(blocked.failureReason).toBe("HAZARD_BLOCKED");
+    const dryEnd = { latitude: 14.3004, longitude: 121.1 };
+    expect(
+      engine.calculate(start, dryEnd, "walking").result?.route,
+    ).toBeTruthy();
+  });
   it("retains unmapped approach warnings for direct and recommended routes", () => {
     const saved = data();
     saved.graph.data.nodes.push(

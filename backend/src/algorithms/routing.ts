@@ -10,6 +10,8 @@ import { effectiveEdgeStatus, indexFloodReports } from "../types/floodScope";
 import { prepareFloodRouting } from "./floodGraph";
 import { haversineMeters } from "./astar/heuristic";
 import { destinationOnRoad } from "./routingEndpoint";
+import type { EarthquakeRoadImpact } from "../types/earthquake";
+import { earthquakeImpactByRoadId as indexEarthquakeImpacts } from "../types/earthquakeScope";
 
 export interface LatLng {
   latitude: number;
@@ -38,6 +40,7 @@ export interface RoutingSnapshot {
   floodReports: FloodReport[];
   fireIncidents: FireIncident[];
   earthquakeImpacts: [string, number][];
+  earthquakeRoadImpacts?: EarthquakeRoadImpact[];
 }
 
 export function calculateRoute(
@@ -60,12 +63,18 @@ export function createRouteCalculator(
     graph,
     snapshot.floodReports,
     snapshot.statusOverrides,
+    snapshot.earthquakeRoadImpacts,
   );
   graph = prepared.graph;
   const overrides = prepared.overrides;
   const floodReports = prepared.reports;
   const fireIncidents = snapshot.fireIncidents;
   const earthquakeImpactByRoadId = new Map(snapshot.earthquakeImpacts);
+  for (const [key, level] of indexEarthquakeImpacts(prepared.impacts))
+    earthquakeImpactByRoadId.set(
+      key,
+      Math.max(earthquakeImpactByRoadId.get(key) ?? 0, level),
+    );
   const floodByRoadId = indexFloodReports(floodReports);
 
   // A* evaluates edgeCost on every edge expansion, and each call runs the

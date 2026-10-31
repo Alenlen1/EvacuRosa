@@ -1389,11 +1389,27 @@ select:focus-visible {
 .legend-dot.shelter {
   background: #307644;
 }
-.legend-dot.fire {
-  background: #c43e2f;
+.legend-area {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 50%;
 }
-.legend-dot.earthquake {
-  background: #946014;
+.legend-area.fire {
+  border: 2px solid #d85a30;
+  background: #d85a3040;
+}
+.legend-area.debris {
+  border: 1.5px dashed #b45309;
+  background: #b4530914;
+}
+.map-legend-note {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 .legend-line {
   width: 17px;
@@ -1413,7 +1429,8 @@ select:focus-visible {
   background: #b3261e;
 }
 .legend-line.flood {
-  background: #2563eb;
+  height: 0;
+  border-top: 4px dashed #2563eb;
 }
 .legend-line.earthquake-blocked {
   border-top: 5px solid #b91c1c;

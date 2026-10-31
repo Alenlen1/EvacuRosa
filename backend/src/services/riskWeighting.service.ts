@@ -98,7 +98,10 @@ export function edgeRisk(
       ? fireSeverityForEdge(fromNode, toNode, fireIncidents)
       : 0;
 
-  const earthquakeImpactLevel = earthquakeImpactByRoadId.get(edge.roadId) ?? 0;
+  const earthquakeImpactLevel = Math.max(
+    earthquakeImpactByRoadId.get(edge.roadId) ?? 0,
+    earthquakeImpactByRoadId.get(`edge:${edge.id.replace(/-r$/, "")}`) ?? 0,
+  );
 
   const roadConditionLevel =
     edge.condition === "POOR" ? 2 : edge.condition === "FAIR" ? 1 : 0;
