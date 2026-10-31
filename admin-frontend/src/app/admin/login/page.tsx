@@ -2,7 +2,17 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import localFont from "next/font/local";
-import { ArrowRight, CircleAlert, LockKeyhole } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Building2,
+  CircleAlert,
+  LoaderCircle,
+  LockKeyhole,
+  Map as MapIcon,
+  MapPin,
+  ShieldCheck,
+} from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { Brand } from "@/components/ui/Brand";
 import { SecretInput } from "@/components/admin/SecretInput";
@@ -29,10 +39,18 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState<
+    "idle" | "signing-in" | "verifying-access" | "redirecting"
+  >("idle");
+  const busy = stage !== "idle";
+  const submissionInFlight = useRef(false);
   const [feedback, setFeedback] = useState<LoginFailure | null>(null);
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [touched, setTouched] = useState<Partial<Record<LoginField, boolean>>>(
+    {},
+  );
+  const [capsLock, setCapsLock] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const pageRef = useRef<HTMLElement>(null);
   useLoginViewport(pageRef);
@@ -63,16 +81,25 @@ export default function AdminLoginPage() {
   function updateField(field: LoginField, value: string) {
     if (field === "email") setEmail(value);
     else setPassword(value);
-    setFieldErrors((current) => ({ ...current, [field]: undefined }));
+    setFieldErrors((current) => ({
+      ...current,
+      [field]:
+        touched[field] || submitted
+          ? validateLogin(
+              field === "email" ? value : email,
+              field === "password" ? value : password,
+            )[field]
+          : undefined,
+    }));
     setFeedback(null);
   }
 
   function checkField(field: LoginField) {
-    if (submitted)
-      setFieldErrors((current) => ({
-        ...current,
-        [field]: validateLogin(email, password)[field],
-      }));
+    setTouched((current) => ({ ...current, [field]: true }));
+    setFieldErrors((current) => ({
+      ...current,
+      [field]: validateLogin(email, password)[field],
+    }));
   }
 
   function fieldDescription(field: LoginField) {
@@ -85,7 +112,7 @@ export default function AdminLoginPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || submissionInFlight.current) return;
     setSubmitted(true);
     setFeedback(null);
     const errors = validateLogin(email, password);
@@ -103,7 +130,9 @@ export default function AdminLoginPage() {
       });
       return;
     }
-    setBusy(true);
+    submissionInFlight.current = true;
+    setStage("signing-in");
+    let openingWorkspace = false;
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         {
@@ -119,6 +148,7 @@ export default function AdminLoginPage() {
         showFailure(signInFailure(null));
         return;
       }
+      setStage("verifying-access");
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role, barangay_id")
@@ -142,15 +172,20 @@ export default function AdminLoginPage() {
       }
       rememberWorkspaceRole(profile!.role, data.user.id);
       setPassword("");
+      setStage("redirecting");
       router.replace(
         profile?.role === "BARANGAY_ADMIN"
           ? "/admin/barangays"
           : "/admin/dashboard",
       );
+      openingWorkspace = true;
     } catch (e) {
       showFailure(signInFailure(e));
     } finally {
-      setBusy(false);
+      if (!openingWorkspace) {
+        submissionInFlight.current = false;
+        setStage("idle");
+      }
     }
   }
 
@@ -162,25 +197,55 @@ export default function AdminLoginPage() {
       <LoginSlideshow />
       <header className="login-masthead">
         <Brand />
-        <span className="login-portal-label">ADMINISTRATION PORTAL</span>
+        <div className="login-masthead-actions">
+          <span className="login-portal-label">ADMINISTRATION PORTAL</span>
+          {process.env.NEXT_PUBLIC_PUBLIC_APP_URL && (
+            <a
+              className="login-public-link"
+              href={process.env.NEXT_PUBLIC_PUBLIC_APP_URL}
+              aria-label="Open public evacuation map"
+            >
+              <MapIcon
+                className="login-public-icon"
+                size={16}
+                aria-hidden="true"
+              />
+              <span>Public map</span>
+              <ArrowUpRight
+                className="login-public-arrow"
+                size={15}
+                aria-hidden="true"
+              />
+            </a>
+          )}
+        </div>
       </header>
       <div className="login-layout">
         <section
           className="login-introduction"
           aria-labelledby="login-introduction-title"
         >
-          <p className="login-city">Santa Rosa City, Laguna</p>
+          <p className="login-city">
+            <MapPin size={14} aria-hidden="true" />
+            Santa Rosa City, Laguna
+          </p>
           <h1 id="login-introduction-title">
             Ready to <br />
             respond.
           </h1>
           <p className="login-introduction-copy">
-            Manage evacuation centers, monitor reported hazards, and coordinate
-            assistance for your community.
+            A shared space for city response and barangay evacuation updates.
           </p>
-          <p className="login-introduction-note">
-            One city. A coordinated response.
-          </p>
+          <div className="login-workspaces" aria-label="Staff workspaces">
+            <span>
+              <ShieldCheck size={16} aria-hidden="true" />
+              CDRRMO
+            </span>
+            <span>
+              <Building2 size={16} aria-hidden="true" />
+              Barangay
+            </span>
+          </div>
         </section>
         <section className="login-panel" aria-labelledby="staff-sign-in-title">
           <div className="login-panel-kicker">
@@ -189,7 +254,7 @@ export default function AdminLoginPage() {
           </div>
           <h2 id="staff-sign-in-title">Staff sign in</h2>
           <p className="login-panel-description">
-            Welcome back. Sign in to your CDRRMO or barangay workspace.
+            Enter your account details to open your workspace.
           </p>
           <form
             ref={formRef}
@@ -248,14 +313,36 @@ export default function AdminLoginPage() {
                 disabled={busy}
                 value={password}
                 onChange={(e) => updateField("password", e.target.value)}
-                onBlur={() => checkField("password")}
+                onKeyUp={(event) =>
+                  setCapsLock(event.getModifierState("CapsLock"))
+                }
+                onBlur={() => {
+                  setCapsLock(false);
+                  checkField("password");
+                }}
                 aria-invalid={Boolean(
                   fieldErrors.password ||
                   feedback?.invalidFields.includes("password"),
                 )}
-                aria-describedby={fieldDescription("password")}
+                aria-describedby={
+                  [
+                    fieldDescription("password"),
+                    capsLock ? "login-caps-lock" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || undefined
+                }
                 placeholder="Enter your password"
               />
+              {capsLock && (
+                <p
+                  id="login-caps-lock"
+                  className="login-field-hint"
+                  role="status"
+                >
+                  Caps Lock is on.
+                </p>
+              )}
               {fieldErrors.password && (
                 <p id="admin-password-error" className="login-field-error">
                   <CircleAlert size={13} aria-hidden="true" />
@@ -275,17 +362,26 @@ export default function AdminLoginPage() {
               </div>
             )}
             <button type="submit" className="login-submit" disabled={busy}>
-              <span>{busy ? "Signing in…" : "Sign in"}</span>
-              <ArrowRight size={18} aria-hidden="true" />
+              <span aria-live="polite" aria-atomic="true">
+                {stage === "signing-in"
+                  ? "Signing in…"
+                  : stage === "verifying-access"
+                    ? "Checking access…"
+                    : stage === "redirecting"
+                      ? "Opening workspace…"
+                      : "Sign in"}
+              </span>
+              {busy ? (
+                <LoaderCircle
+                  className="login-progress"
+                  size={18}
+                  aria-hidden="true"
+                />
+              ) : (
+                <ArrowRight size={18} aria-hidden="true" />
+              )}
             </button>
           </form>
-          <div className="login-access-note">
-            <p>Need access to your workspace?</p>
-            <span>Contact your CDRRMO administrator.</span>
-          </div>
-          <p className="login-panel-footnote">
-            For authorized CDRRMO and barangay personnel.
-          </p>
         </section>
       </div>
       <footer className="login-footer">

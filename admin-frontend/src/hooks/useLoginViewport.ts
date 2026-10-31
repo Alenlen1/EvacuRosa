@@ -18,13 +18,15 @@ export function useLoginViewport(rootRef: RefObject<HTMLElement | null>) {
       const active = document.activeElement;
       if (
         !panel ||
-        panel.scrollHeight <= panel.clientHeight + 1 ||
+        root!.scrollHeight <= root!.clientHeight + 1 ||
         !(active instanceof HTMLElement) ||
         !panel.contains(active) ||
         !active.matches("input, #login-error")
       )
         return;
-      const bounds = panel.getBoundingClientRect();
+      // The card never scrolls internally. If the keyboard leaves too little
+      // room, move the visible page instead so every control remains reachable.
+      const bounds = root!.getBoundingClientRect();
       const button = panel
         .querySelector<HTMLElement>(".login-submit")
         ?.getBoundingClientRect();
@@ -40,9 +42,9 @@ export function useLoginViewport(rootRef: RefObject<HTMLElement | null>) {
           ? field
           : active.getBoundingClientRect();
       if (target.top < top || target.height > bottom - top)
-        panel.scrollTop += target.top - top;
+        root!.scrollTop += target.top - top;
       else if (target.bottom > bottom)
-        panel.scrollTop += target.bottom - bottom;
+        root!.scrollTop += target.bottom - bottom;
     }
 
     function update() {
