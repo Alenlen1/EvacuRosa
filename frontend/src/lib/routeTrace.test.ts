@@ -3,15 +3,52 @@ import { traceRoutePaths } from "./routeTrace";
 
 function path(length = 300) {
   const cancel = vi.fn();
-  const animate = vi.fn(() => ({ cancel }));
+  let finish!: () => void;
+  const finished = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  const animate = vi.fn(() => ({ cancel, finished }));
   const element = {
     getTotalLength: vi.fn(() => length),
     animate,
   } as unknown as SVGPathElement;
-  return { element, animate, cancel };
+  return { element, animate, cancel, finish };
 }
 
 describe("route tracing", () => {
+  it("reveals the approach only after both route strokes finish", async () => {
+    const outline = path(),
+      line = path(),
+      complete = vi.fn();
+    const stop = traceRoutePaths(
+      [outline.element, line.element],
+      false,
+      complete,
+    );
+    expect(complete).not.toHaveBeenCalled();
+    outline.finish();
+    await Promise.resolve();
+    expect(complete).not.toHaveBeenCalled();
+    line.finish();
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    stop();
+    expect(complete).toHaveBeenCalledOnce();
+  });
+  it("reveals the approach immediately when interaction reveals the full route", () => {
+    const stroke = path(),
+      complete = vi.fn();
+    const stop = traceRoutePaths([stroke.element], false, complete);
+    stop();
+    expect(stroke.cancel).toHaveBeenCalledOnce();
+    expect(complete).toHaveBeenCalledOnce();
+  });
+  it("does not delay the approach for reduced motion or unsupported renderers", () => {
+    for (const reduced of [true, false]) {
+      const complete = vi.fn();
+      traceRoutePaths([], reduced, complete);
+      expect(complete).toHaveBeenCalledOnce();
+    }
+  });
   it("reveals both strokes from start to end and leaves the full stroke afterwards", () => {
     const outline = path(),
       line = path();

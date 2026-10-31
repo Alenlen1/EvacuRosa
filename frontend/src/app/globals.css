@@ -1404,6 +1404,11 @@ select:focus-visible {
   background: var(--accent);
   border: 1px solid #252b31;
 }
+.legend-line.approach {
+  height: 0;
+  border-top: 3px dashed #f4d84b;
+  filter: drop-shadow(0 1px 0 #252b31) drop-shadow(0 -1px 0 #252b31);
+}
 .legend-line.blocked {
   background: #b3261e;
 }
@@ -2195,6 +2200,21 @@ select:focus-visible {
   line-height: 1.6;
   border-radius: 7px !important;
   padding: 9px 12px !important;
+}
+.leaflet-tooltip.route-approach-tooltip {
+  width: max-content;
+  max-width: 180px;
+  padding: 5px 8px;
+  border: 1px solid #d9bc79;
+  border-radius: 6px;
+  background: #fff9e7;
+  color: #704b10;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  white-space: normal;
+  pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
   *,

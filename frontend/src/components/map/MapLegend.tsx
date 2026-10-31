@@ -120,6 +120,10 @@ export function MapLegend() {
                   {t("Recommended route")}
                 </li>
                 <li>
+                  <span className="legend-line approach" />
+                  {t("Unmapped approach — access unverified")}
+                </li>
+                <li>
                   <span className="legend-line blocked" />
                   {t("Blocked flood road")}
                 </li>

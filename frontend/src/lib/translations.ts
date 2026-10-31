@@ -1,4 +1,7 @@
 export const filipino: Record<string, string> = {
+  "Unmapped approach (~{distance} m)": "Hindi nakamapang daan (~{distance} m)",
+  "Unmapped approach — access unverified":
+    "Hindi nakamapang daan — hindi pa beripikado ang pagdaan",
   "Resuming navigation. Waiting for a fresh, accurate location.":
     "Ipinagpapatuloy ang nabigasyon. Hinihintay ang bago at tumpak na lokasyon.",
   "The previous evacuation center is unavailable. Choose another center before starting navigation.":
