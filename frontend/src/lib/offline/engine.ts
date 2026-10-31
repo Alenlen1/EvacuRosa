@@ -34,6 +34,7 @@ export class OfflineRoutingEngine {
       return {
         result: {
           route: result.path,
+          destinationApproach: result.destinationApproach,
           distance: result.distanceMeters,
           affectedRoads: result.affectedRoads,
           riskLevel: snapshot.hazardsAvailable ? result.riskLevel : null,
@@ -68,6 +69,7 @@ export class OfflineRoutingEngine {
       result: {
         recommendedCenter: best.center,
         route: best.result.path,
+        destinationApproach: best.result.destinationApproach,
         distance: best.result.distanceMeters,
         riskLevel: snapshot.hazardsAvailable ? best.result.riskLevel : null,
         warnings: [...warnings, ...best.result.warnings],

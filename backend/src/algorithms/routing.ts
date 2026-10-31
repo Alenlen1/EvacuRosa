@@ -9,6 +9,7 @@ import type { FireIncident } from "../types/fire";
 import { effectiveEdgeStatus, indexFloodReports } from "../types/floodScope";
 import { prepareFloodRouting } from "./floodGraph";
 import { haversineMeters } from "./astar/heuristic";
+import { destinationOnRoad } from "./routingEndpoint";
 
 export interface LatLng {
   latitude: number;
@@ -16,6 +17,7 @@ export interface LatLng {
 }
 
 export interface RouteResult {
+  destinationApproach?: DestinationApproach;
   failureReason?: "HAZARD_BLOCKED";
   found: boolean;
   path: LatLng[];
@@ -23,6 +25,12 @@ export interface RouteResult {
   affectedRoads: number;
   riskLevel: RiskLevel | null;
   warnings: string[];
+}
+
+export interface DestinationApproach {
+  from: LatLng;
+  to: LatLng;
+  distanceMeters: number;
 }
 
 export interface RoutingSnapshot {
@@ -116,12 +124,34 @@ export function createRouteCalculator(
     // The hybrid step: A* selects a path by risk-weighted cost (flood, fire
     // proximity, verified earthquake impact, road condition), not raw
     // distance. BLOCKED status is still a hard exclusion regardless of cost.
+    let endpoint = destinationOnRoad(graph, goalNode, destination, travelMode);
+    goalNode = endpoint.anchor;
+    const pinIsOnRoad =
+      haversineMeters(
+        endpoint.goal.latitude,
+        endpoint.goal.longitude,
+        destination.latitude,
+        destination.longitude,
+      ) <= 5;
     const options = {
       travelMode,
       statusOverrides: overrides,
-      edgeCost: (edge: GraphEdge) => cachedEdgeRisk(edge).cost,
+      edgeCost: (edge: GraphEdge) => {
+        const original = endpoint.originalEdge(edge);
+        return (
+          cachedEdgeRisk(original).cost *
+          (original.distanceMeters
+            ? edge.distanceMeters / original.distanceMeters
+            : 1)
+        );
+      },
     };
-    let result = findPath(graph, startNode.id, goalNode.id, options);
+    let result = findPath(
+      endpoint.graph,
+      startNode.id,
+      endpoint.goal.id,
+      options,
+    );
     const warnings: string[] = [];
 
     // OSM sometimes contains an isolated footpath beside the connected road.
@@ -131,6 +161,7 @@ export function createRouteCalculator(
       !result.found &&
       graph.componentId(startNode.id) !== graph.componentId(goalNode.id)
     ) {
+      const destinationComponent = graph.componentId(goalNode.id);
       const starts = graph.nearbyAccessibleNodes(
         start.latitude,
         start.longitude,
@@ -144,6 +175,9 @@ export function createRouteCalculator(
       const goalsByComponent = new Map<number, (typeof goals)[number]>();
       for (const candidate of goals) {
         const component = graph.componentId(candidate.node.id)!;
+        // A pin already on a mapped road must stay on that road's component.
+        // Missing road connections are not an off-road approach to the pin.
+        if (pinIsOnRoad && component !== destinationComponent) continue;
         if (!goalsByComponent.has(component))
           goalsByComponent.set(component, candidate);
       }
@@ -171,13 +205,23 @@ export function createRouteCalculator(
           `The mapped route ${endpoint} approximately ${Math.round(haversineMeters(point.latitude, point.longitude, node.latitude, node.longitude))} m from your selected location. The approach between that point and the road is not mapped or verified; check local access and conditions.`;
         if (best.start.node.id !== startNode.id)
           warnings.push(approachWarning(start, best.start.node, "starts"));
-        if (best.goal.node.id !== goalNode.id)
-          warnings.push(approachWarning(destination, best.goal.node, "ends"));
         startNode = best.start.node;
         goalNode = best.goal.node;
         // Choose endpoints before checking hazards. Do not keep moving them
         // until a closed road or one-way rule can be avoided.
-        result = findPath(graph, startNode.id, goalNode.id, options);
+        endpoint = destinationOnRoad(
+          graph,
+          goalNode,
+          destination,
+          travelMode,
+          graph.componentId(goalNode.id),
+        );
+        result = findPath(
+          endpoint.graph,
+          startNode.id,
+          endpoint.goal.id,
+          options,
+        );
       }
     }
 
@@ -186,7 +230,8 @@ export function createRouteCalculator(
       // Never return this potentially unsafe path to the caller.
       const hazardBlocked =
         [...overrides.values()].includes("BLOCKED") &&
-        findPath(graph, startNode.id, goalNode.id, { travelMode }).found;
+        findPath(endpoint.graph, startNode.id, endpoint.goal.id, { travelMode })
+          .found;
       return {
         failureReason: hazardBlocked ? "HAZARD_BLOCKED" : undefined,
         found: false,
@@ -201,7 +246,7 @@ export function createRouteCalculator(
     }
 
     const path = result.nodeIds
-      .map((id) => graph.getNode(id))
+      .map((id) => endpoint.graph.getNode(id))
       .filter((n): n is NonNullable<typeof n> => !!n)
       .map((n) => ({ latitude: n.latitude, longitude: n.longitude }));
 
@@ -214,11 +259,36 @@ export function createRouteCalculator(
       result.edges.length === 0
         ? "VERY_LOW"
         : result.edges.reduce<RiskLevel>((worst, e) => {
-            const level = cachedEdgeRisk(e).riskLevel;
+            const level = cachedEdgeRisk(endpoint.originalEdge(e)).riskLevel;
             return riskLevelRank(level) > riskLevelRank(worst) ? level : worst;
           }, "VERY_LOW");
 
+    const gap = haversineMeters(
+      endpoint.goal.latitude,
+      endpoint.goal.longitude,
+      destination.latitude,
+      destination.longitude,
+    );
+    const destinationApproach: DestinationApproach | undefined =
+      gap > 5 && gap <= 250
+        ? {
+            from: {
+              latitude: endpoint.goal.latitude,
+              longitude: endpoint.goal.longitude,
+            },
+            to: {
+              latitude: destination.latitude,
+              longitude: destination.longitude,
+            },
+            distanceMeters: Math.round(gap),
+          }
+        : undefined;
+    if (destinationApproach)
+      warnings.push(
+        `The selected location is approximately ${Math.round(gap)} m off the mapped road. The final approach is not mapped or verified; check local access and conditions.`,
+      );
     return {
+      destinationApproach,
       found: true,
       path,
       distanceMeters: Math.round(result.distanceMeters),

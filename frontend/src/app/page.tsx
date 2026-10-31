@@ -894,6 +894,9 @@ function PublicHome({
               searchFocus={searchSelection}
               onClearDestination={clearDestination}
               route={activeRoutePoints}
+              destinationApproach={
+                activeRoutePoints ? result?.data.destinationApproach : undefined
+              }
               centers={centers}
               floodReports={floodReports}
               fireIncidents={fireIncidents}

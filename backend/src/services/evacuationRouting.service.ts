@@ -4,8 +4,10 @@ import { RISK_WEIGHT, riskLevelRank } from "./riskWeighting.service";
 import type { RiskLevel } from "../algorithms/fuzzy/types";
 import type { EvacuationCenter } from "../types/evacuation";
 import type { TravelMode } from "../algorithms/astar/access";
+import type { DestinationApproach } from "../algorithms/routing";
 
 export interface EvacuationRouteResult {
+  destinationApproach?: DestinationApproach;
   failureReason?: "HAZARD_BLOCKED";
   found: boolean;
   recommendedCenter: EvacuationCenter | null;
@@ -49,6 +51,7 @@ export async function computeEvacuationRoute(
     riskLevel: RiskLevel;
     score: number;
     warnings: string[];
+    destinationApproach?: DestinationApproach;
   } | null = null;
 
   let hazardBlocked = false;
@@ -76,6 +79,7 @@ export async function computeEvacuationRoute(
         riskLevel: result.riskLevel,
         score,
         warnings: result.warnings,
+        destinationApproach: result.destinationApproach,
       };
     }
   }
@@ -101,5 +105,6 @@ export async function computeEvacuationRoute(
     distanceMeters: best.distanceMeters,
     riskLevel: best.riskLevel,
     warnings: best.warnings,
+    destinationApproach: best.destinationApproach,
   };
 }

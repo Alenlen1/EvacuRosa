@@ -5,16 +5,18 @@ import { Polyline, Tooltip, useMap } from "react-leaflet";
 import type { Polyline as LeafletPolyline } from "leaflet";
 import { useLanguage } from "@/components/LanguageProvider";
 import { meters } from "@/lib/navigation";
-import type { LatLng } from "@/services/api";
+import type { DestinationApproach, LatLng } from "@/services/api";
 import { traceDashedRoutePaths } from "@/lib/routeTrace";
 
 /** Visual reference only. Never add this unverified gap to the routed path. */
 export function RouteApproach({
   route,
   destination,
+  approach,
 }: {
   route: LatLng[] | null;
   destination?: LatLng;
+  approach?: DestinationApproach;
 }) {
   const { t } = useLanguage();
   const map = useMap();
@@ -40,7 +42,15 @@ export function RouteApproach({
   const distance = endpoint && destination ? meters(endpoint, destination) : 0;
   // Ignore rounding-sized gaps and stale/mismatched destinations beyond the
   // router's 250 m endpoint search radius.
-  const visible = Number.isFinite(distance) && distance > 5 && distance <= 250;
+  const visible =
+    !!approach &&
+    !!endpoint &&
+    !!destination &&
+    meters(approach.from, endpoint) < 1 &&
+    meters(approach.to, destination) < 1 &&
+    Number.isFinite(distance) &&
+    distance > 5 &&
+    distance <= 250;
   useEffect(() => {
     if (!visible) return;
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");

@@ -256,6 +256,7 @@ export interface LatLng {
 }
 
 export interface RouteResponse {
+  destinationApproach?: DestinationApproach;
   route: LatLng[];
   distance: number;
   affectedRoads: number;
@@ -263,6 +264,12 @@ export interface RouteResponse {
   riskLevel: string | null;
   updatedAt: string;
   source?: "online" | "offline";
+}
+
+export interface DestinationApproach {
+  from: LatLng;
+  to: LatLng;
+  distanceMeters: number;
 }
 
 export async function fetchRoute(
@@ -339,6 +346,7 @@ export async function fetchEvacuationCenters(): Promise<EvacuationCenter[]> {
 }
 
 export interface EvacuationRouteResponse {
+  destinationApproach?: DestinationApproach;
   recommendedCenter: EvacuationCenter;
   route: LatLng[];
   distance: number;

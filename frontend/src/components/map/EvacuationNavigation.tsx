@@ -17,7 +17,11 @@ import {
   type NavigationDestination,
 } from "@/hooks/useEvacuationNavigation";
 import type { GeolocationState } from "@/hooks/useGeolocation";
-import type { LatLng, RouteResponse } from "@/services/api";
+import type {
+  DestinationApproach,
+  LatLng,
+  RouteResponse,
+} from "@/services/api";
 import { estimatedTravelTime, type TravelMode } from "@/lib/travelTime";
 import { NavigationCamera } from "./NavigationCamera";
 import { NavigationLocation } from "./NavigationLocation";
@@ -27,6 +31,7 @@ import { UserLocationMarker } from "./UserLocationMarker";
 
 export function EvacuationNavigation({
   route,
+  destinationApproach,
   center,
   mode,
   geolocation,
@@ -40,6 +45,7 @@ export function EvacuationNavigation({
   onEnd,
 }: {
   route: LatLng[] | null;
+  destinationApproach?: DestinationApproach;
   center?: NavigationDestination;
   mode: TravelMode;
   geolocation: GeolocationState;
@@ -138,7 +144,13 @@ export function EvacuationNavigation({
       )}
       {nav.remainingPoints && (
         <RoutePolyline points={nav.remainingPoints} navigating={nav.active}>
-          {!nav.arrived && <RouteApproach route={route} destination={center} />}
+          {!nav.arrived && (
+            <RouteApproach
+              route={route}
+              destination={center}
+              approach={destinationApproach}
+            />
+          )}
         </RoutePolyline>
       )}
       <NavigationCamera
