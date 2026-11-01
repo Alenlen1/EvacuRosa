@@ -47,6 +47,28 @@ Next.js embeds this value during the build. Verify hazard creation, a route arou
 a blocked section, evacuation recommendations, and both staff roles before
 retiring the Render service. Never run both paid services longer than needed.
 
+## Public request protection
+
+Routing and evacuation recommendations share a 60-request/minute allowance per
+client IP. Nearest-road, flood-section and earthquake-area previews share a
+separate 120-request/minute allowance. Excess requests return JSON HTTP 429 with
+`Retry-After`; normal hazard refreshes, health checks and assistance endpoints
+do not consume these budgets. Nearest-road `limit` accepts integers 1–10
+(default 5), with valid latitude/longitude ranges checked before graph work.
+
+Set `TRUST_PROXY_HOPS=1` only when every request reaches the backend through
+exactly one trusted reverse proxy that appends or overwrites `X-Forwarded-For`.
+Keep `0` for direct localhost access. Verify the deployed proxy path before
+increasing this: too few hops groups users under the proxy IP, and too many can
+allow forged client identities. Never use unrestricted `trust proxy=true`.
+See the [Express proxy guide](https://expressjs.com/en/guide/behind-proxies/).
+
+Limits use the process-local memory store from `express-rate-limit`, including
+IPv6 subnet grouping. They reset on restart; multiple replicas would each have
+their own counters and need a shared store. People on the same public IP share
+an allowance, so monitor 429 responses during realistic traffic. This is abuse
+mitigation, not a guaranteed hosting spending cap or complete DDoS protection.
+
 ## Staying within the budget
 
 Hobby is a $5 minimum commitment with $5 of included resource usage, not a $5

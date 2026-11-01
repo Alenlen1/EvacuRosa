@@ -7,7 +7,14 @@ function isValidPoint(
 ): value is { latitude: number; longitude: number } {
   if (typeof value !== "object" || value === null) return false;
   const v = value as Record<string, unknown>;
-  return typeof v.latitude === "number" && typeof v.longitude === "number";
+  return (
+    typeof v.latitude === "number" &&
+    Number.isFinite(v.latitude) &&
+    Math.abs(v.latitude) <= 90 &&
+    typeof v.longitude === "number" &&
+    Number.isFinite(v.longitude) &&
+    Math.abs(v.longitude) <= 180
+  );
 }
 
 export async function postRoute(req: Request, res: Response) {

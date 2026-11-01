@@ -15,10 +15,12 @@ import { assistanceRouter } from "./routes/assistance.routes";
 import { offlineRouter } from "./routes/offline.routes";
 
 const app = express();
+app.set("trust proxy", env.trustProxyHops);
 
 app.use(
   cors({
     origin: env.allowedOrigins,
+    exposedHeaders: ["Retry-After", "RateLimit", "RateLimit-Policy"],
   }),
 );
 app.use(express.json());
