@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { Polyline, Tooltip, useMap } from "react-leaflet";
+import { Polyline, useMap } from "react-leaflet";
 import type { Polyline as LeafletPolyline } from "leaflet";
-import { useLanguage } from "@/components/LanguageProvider";
 import { meters } from "@/lib/navigation";
 import type { DestinationApproach, LatLng } from "@/services/api";
 import { traceDashedRoutePaths } from "@/lib/routeTrace";
@@ -18,7 +17,6 @@ export function RouteApproach({
   destination?: LatLng;
   approach?: DestinationApproach;
 }) {
-  const { t } = useLanguage();
   const map = useMap();
   const outline = useRef<LeafletPolyline>(null);
   const line = useRef<LeafletPolyline>(null);
@@ -94,19 +92,7 @@ export function RouteApproach({
           dashArray: "8 10",
           interactive: false,
         }}
-      >
-        <Tooltip
-          permanent
-          direction="left"
-          offset={[-8, 0]}
-          opacity={1}
-          className="route-approach-tooltip"
-        >
-          {t("Unmapped approach (~{distance} m)", {
-            distance: Math.round(distance),
-          })}
-        </Tooltip>
-      </Polyline>
+      />
     </>
   );
 }
