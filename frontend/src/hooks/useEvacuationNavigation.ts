@@ -130,6 +130,7 @@ export function useEvacuationNavigation({
     geolocation.status === "active" &&
     usableFix(fix, active ? now : Date.now());
   const canStart =
+    !routeUpdating &&
     !!center &&
     !!route &&
     route.length >= 2 &&

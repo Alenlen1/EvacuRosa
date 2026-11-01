@@ -209,7 +209,15 @@ export async function prepareOfflineRouting(
   force = false,
   progress?: (status: OfflineStatus) => void,
 ): Promise<OfflineStatus> {
-  if (preparing) return preparing;
+  if (preparing) {
+    const existing = preparing;
+    await existing;
+    // A hazard notification can arrive during the initial download. A forced
+    // refresh must take a new snapshot after that older preparation completes.
+    if (force && online && navigator.onLine)
+      return prepareOfflineRouting(online, true, progress);
+    return existing;
+  }
   preparing = (async () => {
     let saved: OfflinePackage | null = null;
     try {

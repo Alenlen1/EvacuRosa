@@ -285,6 +285,7 @@ export async function fetchRoute(
   try {
     res = await fetch(`${API_URL}/api/route`, {
       method: "POST",
+      cache: "no-store",
       signal: AbortSignal.timeout(12000),
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ start, destination, travelMode }),
@@ -339,7 +340,10 @@ export interface EvacuationCenter {
 }
 
 export async function fetchEvacuationCenters(): Promise<EvacuationCenter[]> {
-  const res = await fetch(`${API_URL}/api/evacuation-centers`);
+  const res = await fetch(`${API_URL}/api/evacuation-centers`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(12000),
+  });
   if (!res.ok) throw new Error("Could not load evacuation centers.");
   const body = await res.json();
   return body.centers;
@@ -368,6 +372,7 @@ export async function fetchEvacuationRoute(
   try {
     res = await fetch(`${API_URL}/api/evacuation-route`, {
       method: "POST",
+      cache: "no-store",
       signal: AbortSignal.timeout(12000),
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ start, travelMode }),
@@ -418,7 +423,10 @@ export interface FloodReport {
 }
 
 export async function fetchFloodReports(): Promise<FloodReport[]> {
-  const res = await fetch(`${API_URL}/api/floods`);
+  const res = await fetch(`${API_URL}/api/floods`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(12000),
+  });
   if (!res.ok) throw new Error("Could not load flood reports.");
   const body = await res.json();
   return body.reports;
@@ -442,7 +450,10 @@ export interface FireIncident {
 }
 
 export async function fetchFireIncidents(): Promise<FireIncident[]> {
-  const res = await fetch(`${API_URL}/api/fires`);
+  const res = await fetch(`${API_URL}/api/fires`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(12000),
+  });
   if (!res.ok) throw new Error("Could not load fire incidents.");
   const body = await res.json();
   return body.incidents;
@@ -511,7 +522,10 @@ export async function fetchEarthquakes(): Promise<{
   events: EarthquakeEvent[];
   roadImpacts: EarthquakeRoadImpact[];
 }> {
-  const res = await fetch(`${API_URL}/api/earthquakes`);
+  const res = await fetch(`${API_URL}/api/earthquakes`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(12000),
+  });
   if (!res.ok) throw new Error("Could not load earthquake data.");
   return res.json();
 }

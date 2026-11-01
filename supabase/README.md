@@ -61,6 +61,16 @@ The location-sharing sections below describe the earlier 0011-0013 implementatio
    Offline format 4 includes precise earthquake intervals. Reconnect to download
    a fresh offline snapshot after updating.
 
+9. Apply `0021_public_routing_realtime.sql` to publish public flood, fire,
+   earthquake and evacuation-center changes to Supabase Realtime. Existing
+   RLS policies and private assistance tables are unchanged. Deploy the public
+   frontend after applying the migration. The public app refreshes on changes,
+   reconnect/focus and every 15 seconds while visible/online as a fallback.
+   Existing routes are withheld while current hazards are rechecked. Failed
+   verification stops guidance; it never silently substitutes an old online
+   route. Offline routing still uses downloaded data and cannot receive changes
+   without a connection; known-stale offline data is disabled until refreshed.
+
 ## Without a Supabase project
 
 Public evacuation-center and hazard endpoints return empty collections.

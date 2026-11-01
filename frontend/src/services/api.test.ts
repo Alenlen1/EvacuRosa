@@ -4,6 +4,10 @@ import {
   fetchAssistanceRequests,
   fetchEvacuationRoute,
   fetchRoute,
+  fetchFloodReports,
+  fetchFireIncidents,
+  fetchEarthquakes,
+  fetchEvacuationCenters,
   RoutingError,
   shareAssistanceLocation,
 } from "./api";
@@ -21,6 +25,39 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 describe("location-sharing API", () => {
+  it("bypasses caches for current hazards, shelters and new routes", async () => {
+    const fetch = vi.fn().mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({
+            reports: [],
+            incidents: [],
+            events: [],
+            roadImpacts: [],
+            centers: [],
+          }),
+        ),
+    );
+    vi.stubGlobal("fetch", fetch);
+    vi.stubGlobal("navigator", { onLine: true });
+    await Promise.all([
+      fetchFloodReports(),
+      fetchFireIncidents(),
+      fetchEarthquakes(),
+      fetchEvacuationCenters(),
+      fetchRoute(start, destination),
+      fetchEvacuationRoute(start),
+    ]);
+    expect(fetch).toHaveBeenCalledTimes(6);
+    for (const [, options] of fetch.mock.calls as unknown as [
+      string,
+      RequestInit,
+    ][])
+      expect(options).toMatchObject({
+        cache: "no-store",
+        signal: expect.any(AbortSignal),
+      });
+  });
   it("calculates locally without any request when disconnected", async () => {
     vi.stubGlobal("navigator", { onLine: false });
     const fetch = vi.fn();
