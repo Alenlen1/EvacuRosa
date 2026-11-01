@@ -8,7 +8,8 @@ import {
   LanguageProvider,
   LanguageToggle,
 } from "@/components/LanguageProvider";
-import { LocationRecovery } from "@/components/LocationRecovery";
+import { PublicStatus } from "@/components/PublicStatus";
+import mobileStyles from "./PublicMobile.module.css";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -890,7 +891,7 @@ function PublicHome({
   );
 
   return (
-    <main className={`public-app public-view-${panel}`}>
+    <main className={`public-app public-view-${panel} ${mobileStyles.mobile}`}>
       <header className="app-header">
         <h1>
           <Brand />
@@ -917,53 +918,15 @@ function PublicHome({
           </span>
         </div>
       )}
-      <details
-        className="offline-readiness"
-        open={offlineStatus.state !== "ready"}
-      >
-        <summary>
-          <strong role="status">
-            {offlineStatus.state === "ready"
-              ? t(
-                  process.env.NODE_ENV !== "production"
-                    ? "Offline ready for this session"
-                    : offlineStatus.mapReady
-                      ? "Offline maps and routes ready"
-                      : "Offline routes ready",
-                )
-              : offlineStatus.state === "downloading" ||
-                  offlineStatus.state === "checking"
-                ? t("Preparing offline routing… Keep the app open.")
-                : t("Offline routing is not ready.")}
-          </strong>
-        </summary>
-        <div className="offline-readiness-details">
-          <span className="offline-readiness-copy">
-            {offlineStatus.updatedAt && (
-              <small title={new Date(offlineStatus.updatedAt).toLocaleString()}>
-                {t("Saved {time}", { time: timeAgo(offlineStatus.updatedAt) })}
-              </small>
-            )}
-            {offlineStatus.message && <span>{t(offlineStatus.message)}</span>}
-          </span>
-          {isOnline &&
-            offlineStatus.state !== "downloading" &&
-            offlineStatus.state !== "checking" && (
-              <button
-                type="button"
-                onClick={() => setOfflineRetry((value) => value + 1)}
-              >
-                {t(
-                  offlineStatus.state === "ready"
-                    ? "Update offline data"
-                    : "Retry download",
-                )}
-              </button>
-            )}
-        </div>
-      </details>
+      <PublicStatus
+        status={offlineStatus}
+        online={isOnline}
+        location={geolocation}
+        onRetryLocation={geolocation.retry}
+        onUpdateOffline={() => setOfflineRetry((value) => value + 1)}
+        formatTime={timeAgo}
+      />
       <AssistanceRequestShortcut />
-      <LocationRecovery location={geolocation} onRetry={geolocation.retry} />
       <div className="public-workspace">
         <nav className="navigation-rail" aria-label={t("Map views")}>
           <button

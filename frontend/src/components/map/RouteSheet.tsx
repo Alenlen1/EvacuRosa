@@ -106,7 +106,22 @@ export function RouteSheet({
           aria-controls="sheet-details"
           aria-expanded={state === "expanded"}
         >
-          {t(state === "expanded" ? "Back to map" : "View full details")}
+          <span>
+            {t(state === "expanded" ? "Back to map" : "View full details")}
+          </span>
+          {state === "expanded" ? (
+            <ChevronDown
+              className={styles.detailsChevron}
+              size={17}
+              aria-hidden="true"
+            />
+          ) : (
+            <ChevronUp
+              className={styles.detailsChevron}
+              size={17}
+              aria-hidden="true"
+            />
+          )}
         </button>
       </div>
       <div className="sheet-body" id="sheet-details">

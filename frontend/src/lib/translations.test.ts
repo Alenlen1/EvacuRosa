@@ -22,6 +22,13 @@ describe("public language selection", () => {
       "Contact details",
       "Route information",
       "Capacity unavailable",
+      "Offline ready",
+      "Preparing offline data",
+      "Offline not ready",
+      "Checking location",
+      "Offline information",
+      "Close status details",
+      "Your location is available for route planning.",
     ]) {
       expect(translate(text, "fil")).not.toBe(text);
     }
