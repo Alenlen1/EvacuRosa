@@ -1,4 +1,15 @@
 export const filipino: Record<string, string> = {
+  "Loading map…": "Nilo-load ang mapa…",
+  "Loading evacuation centers…": "Nilo-load ang mga evacuation center…",
+  "Loading hazard information…": "Nilo-load ang impormasyon sa panganib…",
+  "Offline ready": "Handa offline",
+  "Preparing offline data": "Inihahanda ang offline na datos",
+  "Offline not ready": "Hindi pa handa offline",
+  "Checking location": "Sinusuri ang lokasyon",
+  "Offline information": "Impormasyon sa offline",
+  "Close status details": "Isara ang detalye ng katayuan",
+  "Your location is available for route planning.":
+    "Magagamit ang iyong lokasyon sa pagpaplano ng ruta.",
   Centers: "Mga center",
   Hazards: "Mga panganib",
   "Back to map": "Bumalik sa mapa",
