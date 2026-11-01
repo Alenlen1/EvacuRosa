@@ -22,6 +22,22 @@ app.use(
   }),
 );
 app.use(express.json());
+// These responses describe changing operational conditions. Never allow an
+// intermediary/browser cache to reuse an earlier closure or route response.
+app.use(
+  [
+    "/api/route",
+    "/api/evacuation-route",
+    "/api/floods",
+    "/api/fires",
+    "/api/earthquakes",
+    "/api/evacuation-centers",
+  ],
+  (_req, res, next) => {
+    res.setHeader("Cache-Control", "no-store");
+    next();
+  },
+);
 
 app.use("/api/health", healthRouter);
 app.use("/api/route", routeRouter);

@@ -1,4 +1,8 @@
 export const filipino: Record<string, string> = {
+  "Checking route against updated hazards...":
+    "Sinusuri ang ruta batay sa bagong datos ng panganib...",
+  "Saved hazards need updating. Connect to verify road closures.":
+    "Kailangang i-update ang naka-save na panganib. Kumonekta upang masuri ang mga saradong kalsada.",
   "Loading map…": "Nilo-load ang mapa…",
   "Loading evacuation centers…": "Nilo-load ang mga evacuation center…",
   "Loading hazard information…": "Nilo-load ang impormasyon sa panganib…",

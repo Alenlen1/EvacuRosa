@@ -47,6 +47,11 @@ import { TravelModeSelector } from "@/components/map/TravelModeSelector";
 import { useDestinationLabel } from "@/hooks/useDestinationLabel";
 import type { DestinationLabel } from "@/lib/reverseGeocoding";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { supabase } from "@/lib/supabaseClient";
+import {
+  watchPublicRouting,
+  publicRoutingSignature,
+} from "@/lib/publicRoutingSync";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import {
   readRouteSelection,
@@ -197,11 +202,26 @@ function PublicHome({
     state: "checking",
   });
   const [offlineRetry, setOfflineRetry] = useState(0);
-  const canRoute = isOnline || offlineStatus.state === "ready";
+  const [recheckingHazards, setRecheckingHazards] = useState(false);
+  const recheckPending = useRef(false);
+  const [hazardRevision, setHazardRevision] = useState(0);
+  const offlineStaleSince = useRef(0);
+  const [offlineHazardsStale, setOfflineHazardsStale] = useState(false);
+  const canRoute =
+    isOnline || (offlineStatus.state === "ready" && !offlineHazardsStale);
   useEffect(() => {
     let cancelled = false;
     const update = (status: OfflineStatus) => {
-      if (!cancelled) setOfflineStatus(status);
+      if (!cancelled) {
+        setOfflineStatus(status);
+        if (
+          status.state === "ready" &&
+          status.updatedAt &&
+          Date.parse(status.updatedAt) >= offlineStaleSince.current &&
+          !status.message?.includes("Update failed")
+        )
+          setOfflineHazardsStale(false);
+      }
     };
     void prepareOfflineRouting(isOnline, offlineRetry > 0, update).then(update);
     return () => {
@@ -257,6 +277,8 @@ function PublicHome({
   );
 
   function cancelRestore() {
+    recheckPending.current = false;
+    setRecheckingHazards(false);
     pendingRestore.current = null;
     pendingNavigationResume.current = false;
     resumeCenterId.current = undefined;
@@ -300,29 +322,22 @@ function PublicHome({
   const [usingCachedData, setUsingCachedData] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    const timestamps: string[] = [];
-    let anyFromCache = false;
-
-    function record(result: {
-      source: "live" | "cache";
-      cachedAt: string | null;
-    }) {
-      if (result.source === "cache") anyFromCache = true;
-      if (result.cachedAt) timestamps.push(result.cachedAt);
+    let stopped = false;
+    function invalidateRoute() {
+      offlineStaleSince.current = Date.now();
+      setOfflineHazardsStale(true);
+      if (!routeIntent.current) return;
+      routeVersion.current++;
+      recheckPending.current = true;
+      setRecheckingHazards(true);
+      setResult(null);
+      setLoading(null);
+      setError(null);
+      setAssistanceContext(null);
     }
-
     async function loadAll() {
-      // Events and verified road impacts share one response, but each has its
-      // own offline snapshot and contributes to the data freshness banner.
-      const earthquakeSnapshot = fetchEarthquakes();
-      const [
-        centersResult,
-        floodResult,
-        fireResult,
-        earthquakeResult,
-        impactResult,
-      ] = await Promise.allSettled([
+      const earthquake = fetchEarthquakes();
+      const [centers, floods, fires, events, impacts] = await Promise.all([
         fetchWithCache(
           fetchEvacuationCenters,
           getCachedEvacuationCenters,
@@ -339,53 +354,105 @@ function PublicHome({
           cacheFireIncidents,
         ),
         fetchWithCache(
-          () => earthquakeSnapshot.then((r) => r.events),
+          () => earthquake.then((r) => r.events),
           getCachedEarthquakeEvents,
           cacheEarthquakeEvents,
         ),
         fetchWithCache(
-          () => earthquakeSnapshot.then((r) => r.roadImpacts),
+          () => earthquake.then((r) => r.roadImpacts),
           getCachedEarthquakeRoadImpacts,
           cacheEarthquakeRoadImpacts,
         ),
       ]);
-
-      if (cancelled) return;
-      setDataLoading(false);
-
-      if (centersResult.status === "fulfilled") {
-        setCenters(centersResult.value.data);
-        record(centersResult.value);
-      }
-      if (floodResult.status === "fulfilled") {
-        setFloodReports(floodResult.value.data);
-        record(floodResult.value);
-      }
-      if (fireResult.status === "fulfilled") {
-        setFireIncidents(fireResult.value.data);
-        record(fireResult.value);
-      }
-      if (earthquakeResult.status === "fulfilled") {
-        setEarthquakeEvents(earthquakeResult.value.data);
-        record(earthquakeResult.value);
-      }
-
-      if (impactResult.status === "fulfilled") {
-        setEarthquakeRoadImpacts(impactResult.value.data);
-        record(impactResult.value);
-      }
-
-      if (!cancelled) {
-        setUsingCachedData(anyFromCache);
-        if (timestamps.length > 0) {
-          setDataAsOf(timestamps.sort()[0]); // oldest — most conservative claim
-        }
-      }
+      const sources = [centers, floods, fires, events, impacts];
+      return {
+        fresh: sources.every((r) => r.source === "live"),
+        data: {
+          centers: centers.data,
+          floods: floods.data,
+          fires: fires.data,
+          events: events.data,
+          impacts: impacts.data,
+          cached: sources.some((r) => r.source === "cache"),
+          asOf:
+            sources
+              .flatMap((r) => (r.cachedAt ? [r.cachedAt] : []))
+              .sort()[0] ?? null,
+        },
+      };
     }
-
-    loadAll();
+    const sync = watchPublicRouting({
+      load: loadAll,
+      signature: (data) =>
+        publicRoutingSignature([
+          data.centers,
+          data.floods,
+          data.fires,
+          data.events,
+          data.impacts,
+        ]),
+      invalidate: invalidateRoute,
+      publish(data, changed) {
+        setCenters(data.centers);
+        setFloodReports(data.floods);
+        setFireIncidents(data.fires);
+        setEarthquakeEvents(data.events);
+        setEarthquakeRoadImpacts(data.impacts);
+        setUsingCachedData(data.cached);
+        setDataAsOf(data.asOf);
+        setDataLoading(false);
+        if (changed) {
+          setOfflineRetry((value) => value + 1);
+          setHazardRevision((value) => value + 1);
+        }
+      },
+      failed() {
+        setDataLoading(false);
+        setUsingCachedData(true);
+        if (recheckPending.current) {
+          setResult(null);
+          setLoading(null);
+          setSheetState("partial");
+          setError(
+            "Current road closures could not be verified. Please retry shortly.",
+          );
+          setRecheckingHazards(false);
+        }
+      },
+      available: () =>
+        navigator.onLine && document.visibilityState !== "hidden",
+      subscribe(changed, reconnect) {
+        const channel = supabase?.channel("public-routing-updates");
+        for (const table of [
+          "flood_reports",
+          "fire_incidents",
+          "earthquake_events",
+          "earthquake_road_impacts",
+          "evacuation_centers",
+        ])
+          channel?.on(
+            "postgres_changes",
+            { event: "*", schema: "public", table },
+            changed,
+          );
+        channel?.subscribe((status) => {
+          if (!stopped && status === "SUBSCRIBED") reconnect();
+        });
+        return () => {
+          if (channel) void supabase?.removeChannel(channel);
+        };
+      },
+    });
+    const reconnect = () => sync.reconnect();
+    window.addEventListener("online", reconnect);
+    window.addEventListener("focus", reconnect);
+    document.addEventListener("visibilitychange", reconnect);
     return () => {
-      cancelled = true;
+      stopped = true;
+      sync.stop();
+      window.removeEventListener("online", reconnect);
+      window.removeEventListener("focus", reconnect);
+      document.removeEventListener("visibilitychange", reconnect);
     };
   }, []);
 
@@ -567,13 +634,42 @@ function PublicHome({
     else void handleFindRoute();
   });
 
+  useEffect(() => {
+    if (!recheckPending.current) return;
+    recheckPending.current = false;
+    if (!isOnline || !geolocation.position || !routeIntent.current) {
+      setRecheckingHazards(false);
+      setResult(null);
+      setSheetState("partial");
+      setError(
+        "Current road closures could not be verified. Please retry shortly.",
+      );
+      return;
+    }
+    const task =
+      navigationActive && destination
+        ? handleFindRoute(travelMode, false, true)
+        : routeIntent.current === "evacuation"
+          ? handleFindEvacuationCenter(travelMode)
+          : handleFindRoute(travelMode);
+    const version = routeVersion.current;
+    setRecheckingHazards(true);
+    void task.finally(() => {
+      if (version === routeVersion.current) setRecheckingHazards(false);
+    });
+  }, [hazardRevision]);
+
   const activeRoutePoints =
     result && (resultMode === travelMode || navigationActive)
       ? result.data.route
       : null;
 
   const routingDisabledReason = !canRoute
-    ? t("Connect once to download offline routing data.")
+    ? t(
+        offlineHazardsStale
+          ? "Saved hazards need updating. Connect to verify road closures."
+          : "Connect once to download offline routing data.",
+      )
     : null;
 
   const recommendedCenter =
@@ -766,6 +862,7 @@ function PublicHome({
                 !destination ||
                 !geolocation.position ||
                 loading !== null ||
+                recheckingHazards ||
                 !canRoute
               }
               aria-describedby={
@@ -784,7 +881,12 @@ function PublicHome({
           <button
             type="button"
             className={panel === "map" ? "secondary-button" : "primary-button"}
-            disabled={!geolocation.position || loading !== null || !canRoute}
+            disabled={
+              !geolocation.position ||
+              loading !== null ||
+              recheckingHazards ||
+              !canRoute
+            }
             onClick={() => {
               setSelectedCenter(null);
               setPanel("map");
@@ -996,6 +1098,7 @@ function PublicHome({
               navigationCenter={routeCenter}
               travelMode={travelMode}
               onNavigationRoute={(data) => {
+                if (recheckPending.current || recheckingHazards) return;
                 setResult({ kind: "route", data });
                 setResultMode(travelMode);
               }}
@@ -1006,7 +1109,9 @@ function PublicHome({
                 setSheetState("collapsed");
               }}
               resumeNavigation={resumeNavigation}
-              navigationRouteUpdating={navigationActive && loading !== null}
+              navigationRouteUpdating={
+                recheckingHazards || (navigationActive && loading !== null)
+              }
               onNavigationResumeHandled={() => setResumeNavigation(false)}
               onNavigationEnd={() => {
                 setNavigationActive(false);
@@ -1091,6 +1196,11 @@ function PublicHome({
           }
           mobileActions={
             <>
+              {recheckingHazards && (
+                <p className="mobile-routing-hint" role="status">
+                  {t("Checking route against updated hazards...")}
+                </p>
+              )}
               {routeButtons}
               {actionHint && (
                 <p
@@ -1107,6 +1217,11 @@ function PublicHome({
             <>
               {panel === "map" && (
                 <div className="desktop-travel-mode">{travelModeSelector}</div>
+              )}
+              {recheckingHazards && (
+                <p className="desktop-routing-hint" role="status">
+                  {t("Checking route against updated hazards...")}
+                </p>
               )}
               <div className="sheet-primary-actions">{routeButtons}</div>
               {actionHint && (
