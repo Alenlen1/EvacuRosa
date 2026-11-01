@@ -96,7 +96,19 @@ export function RouteSheet({
         <div className="mobile-travel-mode">{mobileTravelMode}</div>
       )}
       <div className="sheet-controls">
-        <h2 className="sheet-desktop-title">{title}</h2>
+        <div className={styles.heading}>
+          <h2 className="sheet-desktop-title">{title}</h2>
+          {onClearDestination && (
+            <button
+              type="button"
+              className={`sheet-clear ${styles.quickClear}`}
+              onClick={onClearDestination}
+            >
+              <X size={16} aria-hidden="true" />
+              {t("Clear destination")}
+            </button>
+          )}
+        </div>
         <button
           type="button"
           className="sheet-toggle"
@@ -151,16 +163,6 @@ export function RouteSheet({
           )}
           {!hideDetails && children}
           {actions}
-          {onClearDestination && (
-            <button
-              type="button"
-              className="sheet-clear"
-              onClick={onClearDestination}
-            >
-              <X size={16} aria-hidden="true" />
-              {t("Clear destination")}
-            </button>
-          )}
         </div>
       </div>
       <div className="sheet-desktop-actions">{desktopActions}</div>
