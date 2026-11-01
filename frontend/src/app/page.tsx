@@ -36,6 +36,7 @@ import type { PlaceResult } from "@/lib/placeSearch";
 import { RouteDetails } from "@/components/map/RouteDetails";
 import { CenterDirectory } from "@/components/map/CenterDirectory";
 import { CenterDetails } from "@/components/map/CenterDetails";
+import { PublicSkeleton } from "@/components/map/PublicSkeleton";
 import { RouteSheet, type SheetState } from "@/components/map/RouteSheet";
 import {
   estimatedTravelTime,
@@ -98,11 +99,7 @@ const Map = dynamic(
   },
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-slate-100 text-sm text-slate-500">
-        Loading map…
-      </div>
-    ),
+    loading: () => <PublicSkeleton kind="map" />,
   },
 );
 
@@ -217,6 +214,7 @@ function PublicHome({
     longitude: number;
   } | null>(null);
   const [centers, setCenters] = useState<EvacuationCenter[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   useEffect(() => {
     if (isOnline || offlineStatus.state !== "ready") return;
     let cancelled = false;
@@ -353,6 +351,7 @@ function PublicHome({
       ]);
 
       if (cancelled) return;
+      setDataLoading(false);
 
       if (centersResult.status === "fulfilled") {
         setCenters(centersResult.value.data);
@@ -989,7 +988,7 @@ function PublicHome({
               setSheetState("collapsed");
             }}
           />
-          {panel === "hazards" && (
+          {panel === "hazards" && !dataLoading && (
             <div className="desktop-hazard-overview">{hazardOverview}</div>
           )}
           <div className="map-canvas">
@@ -1188,10 +1187,13 @@ function PublicHome({
             </>
           }
         >
-          {panel === "hazards" && (
+          {panel === "hazards" && !dataLoading && (
             <div className="mobile-hazard-overview">{hazardOverview}</div>
           )}
-          {panel === "map" && loading && (
+          {panel === "map" && loading && !result && (
+            <PublicSkeleton kind="route" />
+          )}
+          {panel === "map" && loading && result && (
             <p role="status" className="route-update-status">
               {t("Updating route for {mode}…", {
                 mode: t(TRAVEL_MODES[travelMode].label),
@@ -1254,7 +1256,10 @@ function PublicHome({
               </div>
             </div>
           )}
-          {panel === "hazards" && (
+          {panel === "hazards" && dataLoading && (
+            <PublicSkeleton kind="hazards" />
+          )}
+          {panel === "hazards" && !dataLoading && (
             <section className="hazard-details">
               <div className="info-notice">
                 {t(
@@ -1361,6 +1366,7 @@ function PublicHome({
             <div hidden={!!displayedCenter}>
               <CenterDirectory
                 centers={centers}
+                loading={dataLoading}
                 query={centerQuery}
                 onQueryChange={setCenterQuery}
                 acceptingOnly={acceptingOnly}

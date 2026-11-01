@@ -6,6 +6,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { EvacuationCenter } from "@/services/api";
 import styles from "./CenterDirectory.module.css";
+import { PublicSkeleton } from "./PublicSkeleton";
 
 function searchable(value: string) {
   return value
@@ -24,6 +25,7 @@ export function CenterDirectory({
   onAcceptingOnlyChange,
   onSelect,
   selectedId,
+  loading = false,
 }: {
   centers: EvacuationCenter[];
   query: string;
@@ -32,12 +34,14 @@ export function CenterDirectory({
   onAcceptingOnlyChange: (value: boolean) => void;
   onSelect: (center: EvacuationCenter) => void;
   selectedId?: string;
+  loading?: boolean;
 }) {
   const { t } = useLanguage();
   const searchId = useId();
   const resultsId = useId();
   const searchRef = useRef<HTMLInputElement>(null);
   const words = searchable(query).split(" ").filter(Boolean);
+  const showLoading = loading && centers.length === 0;
   const filteredCenters = centers.filter((center) => {
     if (
       acceptingOnly &&
@@ -61,10 +65,11 @@ export function CenterDirectory({
     <section
       className={`center-list ${styles.directory}`}
       aria-label={t("Evacuation center directory")}
+      aria-busy={loading}
     >
       <h3>
         {t("Evacuation centers")}
-        <span className={styles.count}>{centers.length}</span>
+        {!showLoading && <span className={styles.count}>{centers.length}</span>}
       </h3>
       <p className={styles.introduction}>
         {t("Choose a center to review capacity and location.")}
@@ -115,12 +120,15 @@ export function CenterDirectory({
         )}
       </div>
       <p id={resultsId} className={styles.results} role="status">
-        {t("Showing {count} of {total} centers", {
-          count: filteredCenters.length,
-          total: centers.length,
-        })}
+        {showLoading
+          ? t("Loading evacuation centers…")
+          : t("Showing {count} of {total} centers", {
+              count: filteredCenters.length,
+              total: centers.length,
+            })}
       </p>
-      {filteredCenters.length === 0 && (
+      {showLoading && <PublicSkeleton kind="centers" announce={false} />}
+      {!showLoading && filteredCenters.length === 0 && (
         <div className={styles.empty}>
           <Building2 size={25} aria-hidden="true" />
           <p>

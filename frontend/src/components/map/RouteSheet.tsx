@@ -1,6 +1,6 @@
 "use client";
 import { useLanguage } from "@/components/LanguageProvider";
-import type { ReactNode, Ref } from "react";
+import { useEffect, useRef, type ReactNode, type Ref } from "react";
 import {
   Building2,
   ChevronDown,
@@ -47,6 +47,26 @@ export function RouteSheet({
   detailsRef?: Ref<HTMLDivElement>;
 }) {
   const { t } = useLanguage();
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const previousView = useRef(activeView);
+
+  useEffect(() => {
+    const changed = previousView.current !== activeView;
+    previousView.current = activeView;
+    if (
+      !changed ||
+      !bodyRef.current?.animate ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+      return;
+
+    const animation = bodyRef.current.animate(
+      [{ opacity: 0.9 }, { opacity: 1 }],
+      { duration: 180, easing: "ease-out" },
+    );
+    return () => animation.cancel();
+  }, [activeView]);
+
   return (
     <aside
       className={`information-panel route-sheet sheet-${state} ${styles.sheet}`}
@@ -124,7 +144,7 @@ export function RouteSheet({
           )}
         </button>
       </div>
-      <div className="sheet-body" id="sheet-details">
+      <div className="sheet-body" id="sheet-details" ref={bodyRef}>
         <div className="panel-scroll" id="panel-details" ref={detailsRef}>
           {mobileTravelMode && (
             <div className="sheet-inline-travel-mode">{mobileTravelMode}</div>

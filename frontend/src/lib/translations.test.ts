@@ -29,6 +29,9 @@ describe("public language selection", () => {
       "Offline information",
       "Close status details",
       "Your location is available for route planning.",
+      "Loading map…",
+      "Loading evacuation centers…",
+      "Loading hazard information…",
     ]) {
       expect(translate(text, "fil")).not.toBe(text);
     }
