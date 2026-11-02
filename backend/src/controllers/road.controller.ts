@@ -41,6 +41,8 @@ export function getRoadSection(req: Request, res: Response) {
   ];
   if (
     typeof roadId !== "string" ||
+    !roadId.trim() ||
+    roadId.length > 128 ||
     coords.some(
       (value) =>
         typeof value !== "string" ||
@@ -84,14 +86,52 @@ export function getRoadSection(req: Request, res: Response) {
 }
 
 export function getNearestRoads(req: Request, res: Response) {
+  if (
+    [req.query.lat, req.query.lng].some(
+      (value) => typeof value !== "string" || !value.trim(),
+    )
+  ) {
+    res
+      .status(400)
+      .json({ error: "Provide numeric lat and lng query parameters." });
+    return;
+  }
   const lat = Number(req.query.lat);
   const lng = Number(req.query.lng);
-  const limit = req.query.limit ? Number(req.query.limit) : 5;
+  const rawLimit = req.query.limit;
+  const limit =
+    rawLimit === undefined
+      ? 5
+      : typeof rawLimit === "string"
+        ? Number(rawLimit)
+        : NaN;
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180
+  ) {
     res.status(400).json({
       error: "Query params lat and lng are required and must be numbers.",
     });
+    return;
+  }
+
+  if (
+    (rawLimit !== undefined &&
+      (typeof rawLimit !== "string" || !/^\d+$/.test(rawLimit))) ||
+    !Number.isSafeInteger(limit) ||
+    limit < 1 ||
+    limit > 10
+  ) {
+    res
+      .status(400)
+      .json({ error: "limit must be an integer between 1 and 10." });
+    return;
+  }
+  if (req.query.scope !== undefined && req.query.scope !== "santa-rosa") {
+    res.status(400).json({ error: "scope must be santa-rosa when provided." });
     return;
   }
 
@@ -104,7 +144,7 @@ export function getNearestRoads(req: Request, res: Response) {
   const roads = graph.nearestRoads(
     lat,
     lng,
-    Number.isFinite(limit) ? limit : 5,
+    limit,
     cityOnly ? (roadId) => isSantaRosaRoad(graph, roadId) : undefined,
   );
   res.json({
