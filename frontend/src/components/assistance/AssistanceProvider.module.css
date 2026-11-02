@@ -342,22 +342,27 @@ dialog.dialog {
 .statusCard {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 18px;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid #ead5a4;
   border-radius: 13px;
   background: #fff7de;
 }
 .dialog .statusCard h3 {
-  margin: 0 0 6px;
-  font-size: 19px;
+  margin: 0 0 4px;
+  font-size: 16px;
+  line-height: 1.4;
 }
 .dialog .statusCard p {
   margin: 0;
   color: #6f5d3b;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.55;
 }
 .statusIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: #f4e7bf;
   color: #8d6b24;
 }
@@ -374,6 +379,125 @@ dialog.dialog {
 .statusCard[data-status="CANCELLED"] {
   border-color: #ddd4ca;
   background: #f1ede7;
+}
+.progress {
+  margin-bottom: 14px;
+  padding: 14px 12px;
+  border: 1px solid #e5ddd3;
+  border-radius: 12px;
+  background: #fffdf9;
+}
+.progressHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 16px;
+}
+.dialog .progressHeading h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+}
+.progressHeading > span {
+  color: #75685e;
+  font-size: 11px;
+}
+.progressStages {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.progressStages > li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #75685e;
+  text-align: center;
+}
+.progressStages > li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: calc(50% + 19px);
+  width: calc(100% - 38px);
+  height: 2px;
+  background: #e5ddd3;
+}
+.progressStages
+  > li[data-complete="true"]:has(+ li[data-complete="true"])::after,
+.progressStages
+  > li[data-complete="true"]:has(+ li[aria-current="step"])::after {
+  background: #6b8b70;
+}
+.progressMarker {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #dacfbe;
+  border-radius: 50%;
+  background: #f7f3ee;
+  font-size: 12px;
+  font-weight: 700;
+}
+.progressLabel {
+  padding: 0 3px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.progressCompactLabel {
+  display: none;
+}
+.progressStages > li[data-complete="true"] {
+  color: #326441;
+}
+.progressStages > li[data-complete="true"] .progressMarker {
+  border-color: #b8d0bd;
+  background: #edf5ee;
+}
+.progressStages > li[aria-current="step"] {
+  color: #800000;
+}
+.progressStages > li[aria-current="step"] .progressMarker {
+  border-color: #800000;
+  background: #800000;
+  color: #fffdf9;
+  box-shadow: 0 0 0 4px #8000000d;
+}
+.progressStages > li[aria-current="step"][data-complete="true"] {
+  color: #326441;
+}
+.progressStages
+  > li[aria-current="step"][data-complete="true"]
+  .progressMarker {
+  border-color: #326441;
+  background: #326441;
+  box-shadow: 0 0 0 4px #3264410d;
+}
+.dialog .progressNote {
+  margin: 12px 0 0;
+  color: #75685e;
+  font-size: 11px;
+}
+.screenReaderOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 .dialog .connection {
   display: flex;
@@ -798,11 +922,22 @@ dialog.dialog {
   }
   .statusCard {
     gap: 10px;
-    padding: 14px;
+    padding: 12px;
+  }
+  .progressFullLabel {
+    display: none;
+  }
+  .progressCompactLabel {
+    display: inline;
+  }
+  .progressLabel {
+    padding: 0;
+    font-size: 10px;
+    overflow-wrap: normal;
   }
   .statusIcon {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     border-radius: 9px;
   }
   .cancelDialog {

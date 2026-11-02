@@ -18,7 +18,7 @@ export const ASSISTANCE_MESSAGES: Record<AssistanceStatus, string> = {
   PENDING:
     "Your emergency request has been submitted successfully. Waiting for CDRRMO acknowledgment.",
   ACKNOWLEDGED:
-    "CDRRMO has received and acknowledged your emergency request. Your request is being reviewed. Assistance has not yet been dispatched.",
+    "CDRRMO has received your request. A response team has not yet been dispatched.",
   DISPATCHED:
     "Help is on the way. CDRRMO has dispatched a response team to your reported location.",
   COMPLETED: "Your emergency assistance request has been marked as completed.",
