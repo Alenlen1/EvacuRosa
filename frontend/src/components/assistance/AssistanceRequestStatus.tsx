@@ -6,6 +6,7 @@ import {
   type TrackedAssistance,
 } from "@/lib/assistance";
 import type { AssistanceView } from "@/lib/assistanceView";
+import { AssistanceProgress } from "./AssistanceProgress";
 import styles from "./AssistanceProvider.module.css";
 
 const ReportedLocationMap = dynamic(() => import("./ReportedLocationMap"), {
@@ -62,13 +63,14 @@ export function AssistanceRequestStatus({
     >
       {view === "overview" && (
         <>
+          <AssistanceProgress tracking={tracking} outdated={outdated} />
           <section
             className={styles.statusCard}
             data-status={request.status}
             aria-live="polite"
           >
             <span className={styles.statusIcon}>
-              <StatusIcon size={25} aria-hidden="true" />
+              <StatusIcon size={20} aria-hidden="true" />
             </span>
             <div>
               <h3>{ASSISTANCE_LABELS[request.status]}</h3>
