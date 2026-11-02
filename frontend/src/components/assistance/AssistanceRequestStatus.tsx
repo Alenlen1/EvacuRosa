@@ -7,6 +7,11 @@ import {
 } from "@/lib/assistance";
 import type { AssistanceView } from "@/lib/assistanceView";
 import { AssistanceProgress } from "./AssistanceProgress";
+import { RequestReference } from "./RequestReference";
+import {
+  assistanceConnection,
+  formatAssistanceTime,
+} from "@/lib/assistancePresentation";
 import styles from "./AssistanceProvider.module.css";
 
 const ReportedLocationMap = dynamic(() => import("./ReportedLocationMap"), {
@@ -23,6 +28,7 @@ export function AssistanceRequestStatus({
   terminal,
   online,
   confirmed,
+  lastCheckedAt,
   connection,
   unavailable,
   view,
@@ -33,6 +39,7 @@ export function AssistanceRequestStatus({
   terminal: boolean;
   online: boolean;
   confirmed: boolean;
+  lastCheckedAt: string | null;
   connection: string;
   unavailable: boolean;
   view: AssistanceView;
@@ -49,7 +56,17 @@ export function AssistanceRequestStatus({
           ? Clock3
           : ShieldCheck;
   const outdated =
-    !online || !confirmed || connection === "Status May Be Outdated";
+    !online ||
+    !confirmed ||
+    unavailable ||
+    connection === "Status May Be Outdated";
+  const connectionState = assistanceConnection({
+    online,
+    confirmed,
+    terminal,
+    connection,
+    unavailable,
+  });
   const coordinates = `${request.latitude.toFixed(6)}, ${request.longitude.toFixed(6)}`;
 
   return (
@@ -77,35 +94,61 @@ export function AssistanceRequestStatus({
               <p>{ASSISTANCE_MESSAGES[request.status]}</p>
             </div>
           </section>
-          <p
-            className={styles.connection}
-            data-outdated={outdated}
-            role="status"
-          >
-            <span aria-hidden="true" />
-            {!online ? "Offline" : terminal ? "Status confirmed" : connection}
-            {outdated && " · Status may be outdated"}
-          </p>
+          <div className={styles.connectionDetails}>
+            <p
+              className={styles.connection}
+              data-state={connectionState.state}
+              role="status"
+            >
+              <span aria-hidden="true" />
+              {connectionState.label}
+            </p>
+            <p className={styles.lastChecked}>
+              {lastCheckedAt ? (
+                <>
+                  Last checked at{" "}
+                  <time
+                    dateTime={lastCheckedAt}
+                    title={formatAssistanceTime(lastCheckedAt)}
+                  >
+                    {formatAssistanceTime(lastCheckedAt, false)}
+                  </time>
+                </>
+              ) : (
+                "Not checked this session"
+              )}
+            </p>
+          </div>
+          {outdated && (
+            <p className={styles.staleNote}>
+              Showing last known status. Updates may be delayed.
+            </p>
+          )}
           {unavailable && (
             <button className="secondary-button" onClick={onRetry}>
               Check status again
             </button>
           )}
           <dl className={styles.trackingDetails}>
-            <div className={styles.requestReference}>
-              <dt>Request reference</dt>
-              <dd>{request.id}</dd>
-            </div>
+            <RequestReference key={request.id} id={request.id} />
             <div>
               <dt>Submitted</dt>
-              <dd>{new Date(request.created_at).toLocaleString()}</dd>
+              <dd>
+                <time dateTime={request.created_at}>
+                  {formatAssistanceTime(request.created_at)}
+                </time>
+              </dd>
             </div>
             <div>
-              <dt>Latest update</dt>
+              <dt>Status updated</dt>
               <dd>
-                {new Date(
-                  request.status_updated_at ?? request.created_at,
-                ).toLocaleString()}
+                <time
+                  dateTime={request.status_updated_at ?? request.created_at}
+                >
+                  {formatAssistanceTime(
+                    request.status_updated_at ?? request.created_at,
+                  )}
+                </time>
               </dd>
             </div>
           </dl>
@@ -115,19 +158,21 @@ export function AssistanceRequestStatus({
           >
             <div className={styles.sectionHeading}>
               <MapPin size={19} aria-hidden="true" />
-              <h3 id="reported-location-title">Reported location</h3>
+              <div>
+                <h3 id="reported-location-title">Reported location</h3>
+                <p>
+                  GPS snapshot · ±{Math.round(request.accuracy_meters)} m
+                  accuracy
+                </p>
+              </div>
             </div>
-            <p className={styles.coordinates}>{coordinates}</p>
-            <p className={styles.captureTime}>
-              Reported accuracy: ±{Math.round(request.accuracy_meters)} m
-            </p>
             <button
               type="button"
               className="secondary-button"
+              aria-label="View reported location"
               onClick={() => onViewChange("location")}
             >
-              <MapPin size={16} aria-hidden="true" />
-              View reported location
+              View location
             </button>
           </section>
         </>
@@ -145,7 +190,7 @@ export function AssistanceRequestStatus({
             <p className={styles.captureTime}>
               Captured{" "}
               <time dateTime={request.location_recorded_at}>
-                {new Date(request.location_recorded_at).toLocaleString()}
+                {formatAssistanceTime(request.location_recorded_at)}
               </time>
             </p>
           </div>
@@ -168,7 +213,7 @@ export function AssistanceRequestStatus({
               <li key={item.version}>
                 <strong>{ASSISTANCE_LABELS[item.new_status]}</strong>
                 <time dateTime={item.changed_at}>
-                  {new Date(item.changed_at).toLocaleString()}
+                  {formatAssistanceTime(item.changed_at)}
                 </time>
                 <small>
                   {item.actor_kind === "CDRRMO"
