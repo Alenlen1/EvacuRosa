@@ -107,6 +107,7 @@ export function AssistanceProvider({
   const credentialsRef = useRef(credentials);
   credentialsRef.current = credentials;
   const [tracking, setTracking] = useState<TrackedAssistance | null>(null);
+  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
   const trackingRef = useRef<TrackedAssistance | null>(null);
   const confirmed = useRef(false);
   const [open, setOpen] = useState(false),
@@ -184,6 +185,7 @@ export function AssistanceProvider({
         credentialsRef.current = saved;
         setUnavailable(false);
         confirmed.current = false;
+        setLastCheckedAt(null);
         trackingRef.current = null;
         setCredentials(saved);
         setTracking(saved.cached ?? null);
@@ -201,6 +203,9 @@ export function AssistanceProvider({
     const accepted = acceptAssistance(trackingRef.current, next);
     if (accepted !== next) return;
     confirmed.current = true;
+    // Only a successfully accepted server response verifies the status.
+    // Loading cached data or reconnecting must not advance this timestamp.
+    setLastCheckedAt(new Date().toISOString());
     trackingRef.current = next;
     setTracking(next);
     setError("");
@@ -234,9 +239,13 @@ export function AssistanceProvider({
     credentialsRef.current = null;
     trackingRef.current = null;
     confirmed.current = false;
+    setLastCheckedAt(null);
     setCredentials(null);
     setTracking(null);
-    setIntent((current) => ({ kind: "emergency", travelMode: current.travelMode }));
+    setIntent((current) => ({
+      kind: "emergency",
+      travelMode: current.travelMode,
+    }));
     setUnavailable(false);
     setFix(null);
     setFixSource(null);
@@ -339,7 +348,7 @@ export function AssistanceProvider({
           if (stopped) return;
           lastSuccess = Date.now();
           apply(next);
-          if (!live) setConnection("Reconnecting");
+          setConnection(live ? "Connected" : "Reconnecting");
         } while (queued && !stopped);
       } catch (cause) {
         if (!stopped) {
@@ -540,6 +549,7 @@ export function AssistanceProvider({
         saved = otherTab;
         credentialsRef.current = otherTab;
         confirmed.current = false;
+        setLastCheckedAt(null);
         trackingRef.current = null;
         setCredentials(otherTab);
         setTracking(otherTab.cached ?? null);
@@ -699,6 +709,7 @@ export function AssistanceProvider({
               terminal={terminal}
               online={online}
               confirmed={confirmed.current}
+              lastCheckedAt={lastCheckedAt}
               connection={connection}
               unavailable={unavailable}
               view={requestView}
