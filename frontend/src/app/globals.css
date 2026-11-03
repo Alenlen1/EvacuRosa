@@ -3931,6 +3931,8 @@ strip that so our own SVG/HTML markers render without an extra frame. */
     max-height: none;
   }
   .public-app:has(.navigation-card.is-active) .sheet-collapsed .sheet-body,
+  .public-app:has(.navigation-card.is-active) .route-sheet .sheet-view-tabs,
+  .public-app:has(.navigation-card.is-active) .route-sheet .sheet-controls,
   .public-app:has(.navigation-card.is-active) .sheet-mobile-actions,
   .public-app:has(.navigation-card.is-active) .sheet-clear {
     display: none;
