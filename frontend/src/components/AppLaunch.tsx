@@ -39,7 +39,7 @@ export function AppLaunch() {
       <div className="app-launch-content">
         <img
           className="app-launch-logo"
-          src="/icons/evacurosa-192.png"
+          src="/icons/evacurosa-shelter-clean-192.png"
           width={80}
           height={80}
           alt=""
