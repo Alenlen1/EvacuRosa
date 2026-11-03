@@ -1,4 +1,4 @@
-const CACHE_NAME = "evacurosa-shell-v7";
+const CACHE_NAME = "evacurosa-shell-v8";
 const APP_SHELL = [
   "/",
   "/manifest.json",
@@ -7,7 +7,8 @@ const APP_SHELL = [
   "/icons/evacurosa-shelter-clean-180.png",
   "/icons/evacurosa-shelter-clean-192.png",
   "/icons/evacurosa-shelter-clean-512.png",
-  "/icons/evacurosa-shelter-clean-512-maskable.png",
+  "/icons/evacurosa-android-192.png",
+  "/icons/evacurosa-android-512.png",
 ];
 
 self.addEventListener("install", (event) => {
