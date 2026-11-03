@@ -71,7 +71,9 @@ export function EvacuationNavigation({
     onRoute,
     routeUpdating,
   });
-  const [headingUp, setHeadingUp] = useState(true);
+  // Screen rotation lock and compass heading are separate. Keep the map north-up
+  // unless the user explicitly chooses to rotate it with their heading.
+  const [headingUp, setHeadingUp] = useState(false);
   const [following, setFollowing] = useState(true);
   const [recenter, setRecenter] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
