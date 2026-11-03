@@ -3712,6 +3712,41 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .navigation-card > .primary-button {
   width: 100%;
 }
+.navigation-start-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 8px;
+}
+.navigation-start-actions .primary-button {
+  width: 100%;
+  min-width: 0;
+}
+.navigation-card .navigation-start-hide,
+.navigation-card .navigation-start-restore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border: 1px solid #dfd1c5;
+  border-radius: 10px;
+  background: #fffdf9;
+  color: #75453f;
+}
+.navigation-card .navigation-start-restore {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.public-app
+  .leaflet-container
+  .navigation-controls
+  .navigation-card.is-start-hidden {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+}
 .navigation-card .navigation-refresh-location {
   display: flex;
   align-items: center;
@@ -3728,6 +3763,7 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   font-weight: 600;
 }
 .navigation-card > small,
+.navigation-start-prompt > small,
 .navigation-details > small {
   display: block;
   font-size: 11px;

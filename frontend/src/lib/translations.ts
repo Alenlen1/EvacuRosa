@@ -1,4 +1,7 @@
 export const filipino: Record<string, string> = {
+  "Hide navigation prompt": "Itago ang pagsisimula ng pag-navigate",
+  "Show navigation prompt": "Ipakita ang pagsisimula ng pag-navigate",
+  Navigation: "Pag-navigate",
   "This center is full or closed. Choose another evacuation center.":
     "Puno o sarado ang center na ito. Pumili ng ibang evacuation center.",
   "Getting a fresh GPS location...": "Kumukuha ng bagong lokasyon sa GPS...",
