@@ -123,18 +123,18 @@
     border-radius: 11px;
     box-shadow: 0 2px 10px #4c242217;
   }
-  .mobile:global(.public-app) :global(.navigation-card > .primary-button) {
+  .mobile:global(.public-app) :global(.navigation-start-actions > .primary-button) {
     border-color: #800000;
     border-radius: 10px;
     background: #800000;
     color: #fffdf9;
   }
   .mobile:global(.public-app)
-    :global(.navigation-card > .primary-button:hover:not(:disabled)) {
+    :global(.navigation-start-actions > .primary-button:hover:not(:disabled)) {
     background: #660c12;
   }
   .mobile:global(.public-app)
-    :global(.navigation-card > .primary-button:disabled) {
+    :global(.navigation-start-actions > .primary-button:disabled) {
     border-color: #e0e4e8;
     background: #eef0f2;
     color: #68717b;
