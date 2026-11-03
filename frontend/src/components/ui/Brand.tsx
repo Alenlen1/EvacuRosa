@@ -2,7 +2,12 @@ export function Brand() {
   return (
     <span className="brand">
       <span className="brand-mark" aria-hidden="true">
-        <img src="/icons/evacurosa.svg" alt="" width={48} height={48} />
+        <img
+          src="/icons/evacurosa-shelter-clean-128.png"
+          alt=""
+          width={48}
+          height={48}
+        />
       </span>
       <span>
         <span className="brand-name">
