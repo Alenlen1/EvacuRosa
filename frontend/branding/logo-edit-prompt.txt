@@ -1,0 +1,6 @@
+Tool: built-in imagegen
+Input: evacurosa-original.png
+Output: evacurosa-clean.png
+Transparent background: false
+
+Use case: precise-object-edit. Edit target: the supplied original EvacuRosa app logo. Replace ONLY the black border/canvas surrounding the rounded-square logo tile with perfectly uniform warm white #fffdf9. Every black background pixel outside the tile must become warm white. Preserve the logo artwork inside the rounded-square tile exactly: red pin, sheltered family, siren, mountains, road, original gradients and composition. Keep the original square canvas and exact scale. This is a background-color replacement, not a redesign. Output a fully OPAQUE image with a completely smooth warm-white outer background; no transparency, no black outline, no dark rim, no speckles, no extra shapes or texture outside the tile.

@@ -14,10 +14,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/icons/evacurosa.svg", type: "image/svg+xml" },
-      { url: "/icons/evacurosa-32.png", sizes: "32x32", type: "image/png" },
+      {
+        url: "/icons/evacurosa-shelter-clean-32.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
     ],
-    apple: "/icons/evacurosa-180.png",
+    apple: "/icons/evacurosa-shelter-clean-180.png",
   },
 };
 
