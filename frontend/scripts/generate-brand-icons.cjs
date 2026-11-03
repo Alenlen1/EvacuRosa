@@ -27,22 +27,22 @@ async function main() {
     for (const directory of directories)
       fs.writeFileSync(path.join(directory, name), icon);
   }
-  // Keep the entire mark inside the maskable icon's central safe circle.
-  const mark = await sharp(source)
-    .resize(280, 280, { fit: "contain", background })
-    .png()
-    .toBuffer();
-  const maskable = await sharp({
-    create: { width: 512, height: 512, channels: 4, background },
-  })
-    .composite([{ input: mark, gravity: "centre" }])
-    .png()
-    .toBuffer();
-  for (const directory of directories)
-    fs.writeFileSync(
-      path.join(directory, "evacurosa-shelter-clean-512-maskable.png"),
-      maskable,
-    );
+  // Android supplies the launcher mask. Fill its canvas rather than shrinking
+  // the complete rounded tile into another padded tile. The pin, family and
+  // siren fit within the central safe circle (radius: 40% of the canvas);
+  // the landscape outside that circle can be cropped by launcher shapes.
+  for (const size of [192, 512]) {
+    const maskable = await sharp(source)
+      .resize(size, size, { fit: "cover" })
+      .flatten({ background })
+      .png()
+      .toBuffer();
+    for (const directory of directories)
+      fs.writeFileSync(
+        path.join(directory, `evacurosa-android-${size}.png`),
+        maskable,
+      );
+  }
   console.log(
     "Generated matching brand, favicon, Apple touch and PWA icons for both apps.",
   );

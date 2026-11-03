@@ -19,7 +19,17 @@ node frontend/scripts/generate-brand-icons.cjs
 ```
 
 The header uses a 128-pixel asset instead of downloading the full original.
-The maskable icon keeps the full artwork within the central safe circle.
+Dedicated Android maskable icons use the full canvas, with an opaque background
+and no additional inset. The shelter pin, family and siren stay within the central
+safe circle (40% radius); decorative landscape can be cropped by the launcher.
+Both 192-pixel and 512-pixel Android icons are declared separately from regular
+icons in the public manifest. This follows the
+[maskable icon guidance](https://web.dev/articles/maskable-icon).
+
+Do not shrink the whole logo to fit the entire tile inside that safe circle:
+that adds padding around padding and makes the installed icon look too small.
+
 The old seal assets remain available separately; application branding uses the
-`evacurosa-shelter-clean-*.png` files. New filenames and the public app's versioned
-shell cache prevent the old black-bordered icons from being reused.
+`evacurosa-shelter-clean-*.png` files, with `evacurosa-android-*.png` for Android
+launchers. New Android filenames and the public app's versioned shell cache
+prevent the old padded Android icon from being reused.
