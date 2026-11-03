@@ -333,6 +333,7 @@ export default function Map({
         }
         mode={travelMode}
         geolocation={geolocation}
+        onRetryLocation={onRetryLocation}
         onRoute={onNavigationRoute}
         onStart={onNavigationStart}
         resumeNavigation={resumeNavigation}

@@ -23,6 +23,7 @@ import type {
   RouteResponse,
 } from "@/services/api";
 import { estimatedTravelTime, type TravelMode } from "@/lib/travelTime";
+import { NAVIGATION_FIX_MAX_ACCURACY_METERS } from "@/lib/navigation";
 import { NavigationCamera } from "./NavigationCamera";
 import { NavigationLocation } from "./NavigationLocation";
 import { RoutePolyline } from "./RoutePolyline";
@@ -43,6 +44,7 @@ export function EvacuationNavigation({
   routeUpdating = false,
   onResumeHandled,
   onEnd,
+  onRetryLocation,
 }: {
   route: LatLng[] | null;
   destinationApproach?: DestinationApproach;
@@ -57,6 +59,7 @@ export function EvacuationNavigation({
   routeUpdating?: boolean;
   onResumeHandled?: () => void;
   onEnd?: () => void;
+  onRetryLocation?: () => void;
 }) {
   const { t } = useLanguage();
   const map = useMap();
@@ -134,6 +137,32 @@ export function EvacuationNavigation({
     };
   }, [map, nav.active]);
   const validRoute = !!center && !!route && route.length >= 2;
+  const centerUnavailable =
+    center?.status === "CLOSED" || center?.status === "FULL";
+  const needsLocation = !nav.canStart && !routeUpdating && !centerUnavailable;
+  const startHelp = routeUpdating
+    ? t("Checking route against updated hazards...")
+    : centerUnavailable
+      ? t("This center is full or closed. Choose another evacuation center.")
+      : geolocation.status === "locating"
+        ? t("Getting a fresh GPS location...")
+        : geolocation.status === "denied"
+          ? t(
+              "Allow location access in your browser settings, then refresh your location.",
+            )
+          : nav.fixIssue === "inaccurate"
+            ? t(
+                "GPS accuracy is ±{accuracy} m. Navigation needs ±{limit} m or better. Try an open area.",
+                {
+                  accuracy: Math.ceil(geolocation.position!.accuracy),
+                  limit: NAVIGATION_FIX_MAX_ACCURACY_METERS,
+                },
+              )
+            : nav.fixIssue === "stale"
+              ? t(
+                  "Your GPS reading is outdated. Refresh your location to start.",
+                )
+              : t("Refresh your location to start navigation.");
   return (
     <>
       {nav.active && nav.position ? (
@@ -225,6 +254,9 @@ export function EvacuationNavigation({
                   type="button"
                   className="primary-button"
                   disabled={!nav.canStart}
+                  aria-describedby={
+                    !nav.canStart ? "navigation-start-help" : undefined
+                  }
                   onClick={() => {
                     startNavigation();
                   }}
@@ -233,13 +265,24 @@ export function EvacuationNavigation({
                   {t("Start Navigation")}
                 </button>
                 {!nav.canStart && (
-                  <small>
-                    {t(
-                      center?.id
-                        ? "A fresh, accurate location and an available center are needed to start."
-                        : "A fresh, accurate location is needed to start.",
-                    )}
+                  <small id="navigation-start-help" role="status">
+                    {startHelp}
                   </small>
+                )}
+                {needsLocation && onRetryLocation && (
+                  <button
+                    type="button"
+                    className="navigation-refresh-location"
+                    onClick={onRetryLocation}
+                    disabled={geolocation.status === "locating"}
+                  >
+                    <LocateFixed size={16} aria-hidden="true" />
+                    {t(
+                      geolocation.status === "locating"
+                        ? "Updating location..."
+                        : "Refresh location",
+                    )}
+                  </button>
                 )}
               </>
             ) : (
