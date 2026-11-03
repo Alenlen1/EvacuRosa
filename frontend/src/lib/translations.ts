@@ -1,4 +1,17 @@
 export const filipino: Record<string, string> = {
+  "This center is full or closed. Choose another evacuation center.":
+    "Puno o sarado ang center na ito. Pumili ng ibang evacuation center.",
+  "Getting a fresh GPS location...": "Kumukuha ng bagong lokasyon sa GPS...",
+  "Allow location access in your browser settings, then refresh your location.":
+    "Payagan ang lokasyon sa mga setting ng browser, saka i-refresh ang lokasyon.",
+  "GPS accuracy is ±{accuracy} m. Navigation needs ±{limit} m or better. Try an open area.":
+    "Ang katumpakan ng GPS ay ±{accuracy} m. Kailangan ng ±{limit} m o mas tumpak. Subukan sa bukas na lugar.",
+  "Your GPS reading is outdated. Refresh your location to start.":
+    "Luma na ang lokasyon sa GPS. I-refresh ang lokasyon upang magsimula.",
+  "Refresh your location to start navigation.":
+    "I-refresh ang lokasyon upang simulan ang pag-navigate.",
+  "Updating location...": "Ina-update ang lokasyon...",
+  "Refresh location": "I-refresh ang lokasyon",
   "Checking route against updated hazards...":
     "Sinusuri ang ruta batay sa bagong datos ng panganib...",
   "Saved hazards need updating. Connect to verify road closures.":

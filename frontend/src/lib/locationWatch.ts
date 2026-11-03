@@ -11,7 +11,8 @@ interface LocationEnvironment {
   lifecycle: Pick<Window, "addEventListener" | "removeEventListener">;
 }
 
-export const LOCATION_CHECK_INTERVAL_MS = 20_000;
+// Refresh stationary devices before navigation's 15-second freshness limit.
+export const LOCATION_CHECK_INTERVAL_MS = 10_000;
 export const LOCATION_CHECK_TIMEOUT_MS = 8_000;
 export const LOCATION_MAX_AGE_MS = 30_000;
 export const LOCATION_REQUEST_DEADLINE_MS = 16_000;

@@ -128,18 +128,32 @@ export interface NavigationFix extends LatLng {
   heading?: number | null;
   speed?: number | null;
 }
+export const NAVIGATION_FIX_MAX_AGE_MS = 15_000;
+export const NAVIGATION_FIX_MAX_ACCURACY_METERS = 40;
+
+export function navigationFixIssue(fix: NavigationFix | null, now: number) {
+  if (
+    !fix ||
+    !Number.isFinite(fix.latitude) ||
+    !Number.isFinite(fix.longitude) ||
+    !Number.isFinite(fix.accuracy) ||
+    fix.accuracy < 0 ||
+    !Number.isFinite(fix.timestamp) ||
+    !Number.isFinite(now)
+  )
+    return "unavailable" as const;
+  if (fix.accuracy > NAVIGATION_FIX_MAX_ACCURACY_METERS)
+    return "inaccurate" as const;
+  if (
+    now - fix.timestamp < -1000 ||
+    now - fix.timestamp > NAVIGATION_FIX_MAX_AGE_MS
+  )
+    return "stale" as const;
+  return null;
+}
+
 export function usableFix(fix: NavigationFix | null, now: number) {
-  return (
-    !!fix &&
-    Number.isFinite(fix.latitude) &&
-    Number.isFinite(fix.longitude) &&
-    Number.isFinite(fix.accuracy) &&
-    fix.accuracy >= 0 &&
-    fix.accuracy <= 40 &&
-    Number.isFinite(fix.timestamp) &&
-    now - fix.timestamp >= -1000 &&
-    now - fix.timestamp <= 15000
-  );
+  return navigationFixIssue(fix, now) === null;
 }
 export function plausibleFix(
   previous: NavigationFix | null,

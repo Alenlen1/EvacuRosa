@@ -11,6 +11,7 @@ import {
   routeLengths,
   upcomingBend,
   usableFix,
+  navigationFixIssue,
 } from "./navigation";
 
 const a = { latitude: 14.3, longitude: 121.1 };
@@ -68,6 +69,27 @@ describe("walking route progress", () => {
   });
 });
 describe("GPS and compass filtering", () => {
+  it("explains blocked GPS without accepting inaccurate, stale or invalid fixes", () => {
+    const fix = {
+      latitude: 14.3,
+      longitude: 121.1,
+      accuracy: 40,
+      timestamp: 100_000,
+    };
+    expect(navigationFixIssue(fix, 115_000)).toBeNull();
+    expect(navigationFixIssue(fix, 115_001)).toBe("stale");
+    expect(navigationFixIssue({ ...fix, accuracy: 40.1 }, 100_000)).toBe(
+      "inaccurate",
+    );
+    expect(navigationFixIssue({ ...fix, timestamp: 102_000 }, 100_000)).toBe(
+      "stale",
+    );
+    expect(navigationFixIssue({ ...fix, accuracy: NaN }, 100_000)).toBe(
+      "unavailable",
+    );
+    expect(navigationFixIssue(null, 100_000)).toBe("unavailable");
+    expect(usableFix(fix, NaN)).toBe(false);
+  });
   const fix = { ...a, accuracy: 8, timestamp: 100000 };
   it("rejects stale, missing, inaccurate and future fixes", () => {
     expect(usableFix(fix, 100100)).toBe(true);

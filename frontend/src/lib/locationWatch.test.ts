@@ -7,6 +7,7 @@ import {
   LOCATION_REQUEST_DEADLINE_MS,
 } from "./locationWatch";
 import type { GeolocationState } from "@/hooks/useGeolocation";
+import { usableFix } from "./navigation";
 
 function setup(permissionState?: PermissionState, withProbe = true) {
   const page = Object.assign(new EventTarget(), {
@@ -95,6 +96,18 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
 describe("mobile location recovery", () => {
+  it("keeps stationary navigation eligible through fresh probes without reloading", () => {
+    const s = setup();
+    s.success();
+    for (let i = 0; i < 3; i++) {
+      vi.advanceTimersByTime(LOCATION_CHECK_INTERVAL_MS + 1_000);
+      expect(usableFix(s.state().position, Date.now())).toBe(true);
+      s.probes.at(-1)!.success(s.position());
+      expect(usableFix(s.state().position, Date.now())).toBe(true);
+    }
+    expect(s.watches).toHaveLength(1);
+    s.watcher.dispose();
+  });
   it("handles No thanks followed by a second attempt timing out, with retry still available", () => {
     const s = setup();
     s.error(1);

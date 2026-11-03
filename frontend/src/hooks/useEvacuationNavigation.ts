@@ -18,6 +18,7 @@ import {
   routeLengths,
   upcomingBend,
   usableFix,
+  navigationFixIssue,
   type NavigationFix,
 } from "@/lib/navigation";
 import type { TravelMode } from "@/lib/travelTime";
@@ -67,6 +68,7 @@ export function useEvacuationNavigation({
   const compass = useNavigationHeading(active);
   const lengths = useMemo(() => (route ? routeLengths(route) : []), [route]);
   const total = lengths[lengths.length - 1] ?? 0;
+  const hasRoute = !!route && route.length >= 2;
   const stop = useCallback(() => {
     generation.current++;
     pending.current = false;
@@ -80,10 +82,20 @@ export function useEvacuationNavigation({
     [],
   );
   useEffect(() => {
-    if (!active) return;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [active]);
+    if (!active && !hasRoute) return;
+    // Eligibility must expire even before Start is pressed. Stationary phones
+    // do not necessarily deliver watch callbacks frequently enough to rerender.
+    const tick = () => {
+      if (document.visibilityState !== "hidden") setNow(Date.now());
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [active, hasRoute]);
   const identity = `${center?.id}:${center?.latitude}:${center?.longitude}:${mode}`;
   const sessionIdentity = useRef("");
   const updatingIdentity = useRef<string | null>(null);
@@ -126,9 +138,8 @@ export function useEvacuationNavigation({
     }
   }, [active, arrived, identity, route, routeUpdating, stop]);
   const fix = geolocation.position;
-  const fresh =
-    geolocation.status === "active" &&
-    usableFix(fix, active ? now : Date.now());
+  const fixIssue = navigationFixIssue(fix, Math.max(now, Date.now()));
+  const fresh = geolocation.status === "active" && fixIssue === null;
   const canStart =
     !routeUpdating &&
     !!center &&
@@ -138,7 +149,11 @@ export function useEvacuationNavigation({
     center.status !== "CLOSED" &&
     center.status !== "FULL";
   function start(allowPermissionPrompt = true) {
-    if (!canStart || !fix) return false;
+    // Recheck at the gesture itself in case the last render preceded expiry.
+    if (!canStart || !fix || !usableFix(fix, Date.now())) {
+      setNow(Date.now());
+      return false;
+    }
     void compass.request(allowPermissionPrompt);
     generation.current++;
     acceptedRoute.current = route;
@@ -302,6 +317,7 @@ export function useEvacuationNavigation({
     start,
     stop,
     canStart,
+    fixIssue,
     position,
     fresh: fresh && !rejected,
     remaining,
