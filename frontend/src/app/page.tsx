@@ -27,7 +27,6 @@ import {
   EarthquakeIcon as Activity,
 } from "@/components/ui/HazardIcons";
 import { Brand } from "@/components/ui/Brand";
-import { MobileNavigation } from "@/components/ui/MobileNavigation";
 import { EmergencyContact } from "@/components/ui/EmergencyContact";
 import { AssistancePrompt } from "@/components/map/AssistancePrompt";
 import { MapLegend } from "@/components/map/MapLegend";
@@ -1029,7 +1028,7 @@ function PublicHome({
           <MapPin size={16} /> Santa Rosa, Laguna
         </span>
         <LanguageToggle />
-        <MobileNavigation activeSection={panel} onSelect={choosePanel} />
+        <LanguageToggle compact />
         <EmergencyContact {...emergencyContactProps} />
       </header>
       {showOfflineBanner && (
