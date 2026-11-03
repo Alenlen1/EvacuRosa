@@ -9,7 +9,9 @@ import {
   Square,
   CheckCircle,
   ChevronDown,
+  ChevronUp,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import {
@@ -77,6 +79,9 @@ export function EvacuationNavigation({
   const [following, setFollowing] = useState(true);
   const [recenter, setRecenter] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
+  const [hiddenStartFor, setHiddenStartFor] = useState<string | null>(null);
+  const destinationKey = `${center?.id ?? ""}:${center?.latitude}:${center?.longitude}`;
+  const startHidden = hiddenStartFor === destinationKey;
   const wasActive = useRef(false);
   const resumeConsumed = useRef(false);
   useEffect(() => {
@@ -87,6 +92,7 @@ export function EvacuationNavigation({
 
   function startNavigation(allowPermissionPrompt = true) {
     if (!nav.start(allowPermissionPrompt)) return false;
+    setHiddenStartFor(null);
     setCollapsed(
       window.matchMedia(
         "(max-width: 800px), (max-width: 1100px) and (max-height: 500px)",
@@ -206,7 +212,7 @@ export function EvacuationNavigation({
           }}
         >
           <section
-            className={`leaflet-control navigation-card${nav.active ? " is-active" : ""}${collapsed ? " is-collapsed" : ""}`}
+            className={`leaflet-control navigation-card${nav.active ? " is-active" : ""}${collapsed ? " is-collapsed" : ""}${!nav.active && !nav.arrived && startHidden ? " is-start-hidden" : ""}`}
             aria-label={t("Evacuation navigation")}
           >
             {nav.arrived ? (
@@ -252,40 +258,88 @@ export function EvacuationNavigation({
               </div>
             ) : !nav.active ? (
               <>
-                <button
-                  type="button"
-                  className="primary-button"
-                  disabled={!nav.canStart}
-                  aria-describedby={
-                    !nav.canStart ? "navigation-start-help" : undefined
-                  }
-                  onClick={() => {
-                    startNavigation();
-                  }}
-                >
-                  <Navigation size={18} />
-                  {t("Start Navigation")}
-                </button>
-                {!nav.canStart && (
-                  <small id="navigation-start-help" role="status">
-                    {startHelp}
-                  </small>
-                )}
-                {needsLocation && onRetryLocation && (
+                {startHidden && (
                   <button
+                    id="navigation-prompt-restore"
                     type="button"
-                    className="navigation-refresh-location"
-                    onClick={onRetryLocation}
-                    disabled={geolocation.status === "locating"}
+                    className="navigation-start-restore"
+                    aria-label={t("Show navigation prompt")}
+                    aria-controls="navigation-start-prompt"
+                    aria-expanded={false}
+                    onClick={() => {
+                      setHiddenStartFor(null);
+                      requestAnimationFrame(() => {
+                        document
+                          .querySelector<HTMLButtonElement>(
+                            "#navigation-start-prompt button:not(:disabled)",
+                          )
+                          ?.focus({ preventScroll: true });
+                      });
+                    }}
                   >
-                    <LocateFixed size={16} aria-hidden="true" />
-                    {t(
-                      geolocation.status === "locating"
-                        ? "Updating location..."
-                        : "Refresh location",
-                    )}
+                    <Navigation size={16} aria-hidden="true" />
+                    {t("Navigation")}
+                    <ChevronUp size={16} aria-hidden="true" />
                   </button>
                 )}
+                <div
+                  id="navigation-start-prompt"
+                  className="navigation-start-prompt"
+                  hidden={startHidden}
+                >
+                  <div className="navigation-start-actions">
+                    <button
+                      type="button"
+                      className="primary-button"
+                      disabled={!nav.canStart}
+                      aria-describedby={
+                        !nav.canStart ? "navigation-start-help" : undefined
+                      }
+                      onClick={() => {
+                        startNavigation();
+                      }}
+                    >
+                      <Navigation size={18} />
+                      {t("Start Navigation")}
+                    </button>
+                    <button
+                      type="button"
+                      className="navigation-start-hide"
+                      aria-label={t("Hide navigation prompt")}
+                      title={t("Hide navigation prompt")}
+                      onClick={() => {
+                        setHiddenStartFor(destinationKey);
+                        requestAnimationFrame(() => {
+                          document
+                            .getElementById("navigation-prompt-restore")
+                            ?.focus({ preventScroll: true });
+                        });
+                      }}
+                    >
+                      <X size={18} aria-hidden="true" />
+                    </button>
+                  </div>
+                  {!nav.canStart && (
+                    <small id="navigation-start-help" role="status">
+                      {startHelp}
+                    </small>
+                  )}
+                  {needsLocation && onRetryLocation && (
+                    <button
+                      type="button"
+                      className="navigation-refresh-location"
+                      onClick={onRetryLocation}
+                      disabled={geolocation.status === "locating"}
+                    >
+                      <LocateFixed size={16} aria-hidden="true" />
+                      {t(
+                        geolocation.status === "locating"
+                          ? "Updating location..."
+                          : "Refresh location",
+                      )}
+                    </button>
+                  )}
+                </div>
               </>
             ) : (
               <>
