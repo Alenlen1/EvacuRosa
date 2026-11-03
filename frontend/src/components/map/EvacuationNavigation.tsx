@@ -164,7 +164,7 @@ export function EvacuationNavigation({
         recenter={recenter}
         onFollowing={setFollowing}
       />
-      {(validRoute || nav.arrived) && (
+      {(validRoute || nav.active || nav.arrived) && (
         <div
           className="leaflet-bottom leaflet-left navigation-controls"
           ref={(element) => {

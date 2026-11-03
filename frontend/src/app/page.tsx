@@ -204,6 +204,7 @@ function PublicHome({
   const [offlineRetry, setOfflineRetry] = useState(0);
   const [recheckingHazards, setRecheckingHazards] = useState(false);
   const recheckPending = useRef(false);
+  const recheckReady = useRef(false);
   const [hazardRevision, setHazardRevision] = useState(0);
   const offlineStaleSince = useRef(0);
   const [offlineHazardsStale, setOfflineHazardsStale] = useState(false);
@@ -278,6 +279,7 @@ function PublicHome({
 
   function cancelRestore() {
     recheckPending.current = false;
+    recheckReady.current = false;
     setRecheckingHazards(false);
     pendingRestore.current = null;
     pendingNavigationResume.current = false;
@@ -329,6 +331,7 @@ function PublicHome({
       if (!routeIntent.current) return;
       routeVersion.current++;
       recheckPending.current = true;
+      recheckReady.current = false;
       setRecheckingHazards(true);
       setResult(null);
       setLoading(null);
@@ -402,6 +405,7 @@ function PublicHome({
         setDataAsOf(data.asOf);
         setDataLoading(false);
         if (changed) {
+          recheckReady.current = true;
           setOfflineRetry((value) => value + 1);
           setHazardRevision((value) => value + 1);
         }
@@ -410,6 +414,7 @@ function PublicHome({
         setDataLoading(false);
         setUsingCachedData(true);
         if (recheckPending.current) {
+          recheckReady.current = false;
           setResult(null);
           setLoading(null);
           setSheetState("partial");
@@ -635,8 +640,20 @@ function PublicHome({
   });
 
   useEffect(() => {
-    if (!recheckPending.current) return;
+    if (!recheckPending.current || !recheckReady.current) return;
+    // Returning from Home restarts GPS acquisition. A verified hazard snapshot
+    // can arrive first: keep navigation paused until a fresh fix is available.
+    // A GPS update must not consume a recheck before hazards are verified either.
+    if (
+      isOnline &&
+      routeIntent.current &&
+      (geolocation.status !== "active" ||
+        !geolocation.position ||
+        (navigationActive && !usableFix(geolocation.position, Date.now())))
+    )
+      return;
     recheckPending.current = false;
+    recheckReady.current = false;
     if (!isOnline || !geolocation.position || !routeIntent.current) {
       setRecheckingHazards(false);
       setResult(null);
@@ -657,7 +674,13 @@ function PublicHome({
     void task.finally(() => {
       if (version === routeVersion.current) setRecheckingHazards(false);
     });
-  }, [hazardRevision]);
+  }, [
+    hazardRevision,
+    geolocation.position,
+    geolocation.status,
+    isOnline,
+    navigationActive,
+  ]);
 
   const activeRoutePoints =
     result && (resultMode === travelMode || navigationActive)
@@ -1104,6 +1127,7 @@ function PublicHome({
               }}
               onNavigationStart={() => {
                 setNavigationActive(true);
+                resumeCenterId.current = routeCenter?.id;
                 setRouteNavigation(true, routeCenter?.id);
                 setPanel("map");
                 setSheetState("collapsed");
