@@ -525,6 +525,7 @@
 }
 
 .mobile-navigation,
+.mobile-language-toggle,
 .mobile-staff-access {
   display: none;
 }

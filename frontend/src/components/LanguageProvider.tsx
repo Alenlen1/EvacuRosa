@@ -51,8 +51,41 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 }
 export const useLanguage = () => useContext(LanguageContext);
-export function LanguageToggle({ expanded = false }: { expanded?: boolean }) {
+export function LanguageToggle({
+  expanded = false,
+  compact = false,
+}: {
+  expanded?: boolean;
+  compact?: boolean;
+}) {
   const { language, setLanguage } = useLanguage();
+  if (compact)
+    return (
+      <button
+        type="button"
+        className="mobile-language-toggle"
+        role="switch"
+        aria-label="Filipino language / Wikang Filipino"
+        aria-checked={language === "fil"}
+        onClick={() => setLanguage(language === "en" ? "fil" : "en")}
+      >
+        <span className="mobile-language-thumb" aria-hidden="true" />
+        <span
+          className={`mobile-language-label${language === "en" ? " is-active" : ""}`}
+          lang="en"
+          aria-hidden="true"
+        >
+          EN
+        </span>
+        <span
+          className={`mobile-language-label${language === "fil" ? " is-active" : ""}`}
+          lang="fil"
+          aria-hidden="true"
+        >
+          FIL
+        </span>
+      </button>
+    );
   if (expanded)
     return (
       <fieldset className="language-options">
