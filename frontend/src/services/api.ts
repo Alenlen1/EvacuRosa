@@ -509,6 +509,7 @@ export async function fetchEarthquakeArea(
           shape: "rectangle",
           width: String(area.widthMeters),
           height: String(area.heightMeters),
+          rotation: String(area.rotationDegrees ?? 0),
         }
       : { radius: String(area.radiusMeters) }),
   });

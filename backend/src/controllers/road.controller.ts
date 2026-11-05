@@ -23,7 +23,13 @@ export function getEarthquakeArea(req: Request, res: Response) {
     req.query.lng,
     ...(rectangular ? [req.query.width, req.query.height] : [req.query.radius]),
   ];
-  if (values.some((value) => typeof value !== "string" || !value.trim())) {
+  const rotation = req.query.rotation;
+  if (
+    values.some((value) => typeof value !== "string" || !value.trim()) ||
+    (rectangular &&
+      rotation !== undefined &&
+      (typeof rotation !== "string" || !rotation.trim()))
+  ) {
     res
       .status(400)
       .json({ error: "Provide a location and valid debris area dimensions." });
@@ -37,6 +43,7 @@ export function getEarthquakeArea(req: Request, res: Response) {
         longitude,
         widthMeters: size,
         heightMeters,
+        rotationDegrees: Number(rotation ?? 0),
       }
     : { latitude, longitude, radiusMeters: size };
   if (!isImpactArea(area) || !isInsideSantaRosa(latitude, longitude)) {

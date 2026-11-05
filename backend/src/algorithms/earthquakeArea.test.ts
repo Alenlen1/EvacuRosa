@@ -4,7 +4,11 @@ import {
   selectEarthquakeArea,
   isImpactArea,
   rectangleBounds,
+  rectangleCorners,
   rectangleFromCorners,
+  rectangleLocalPoint,
+  rectanglePoint,
+  resizeRectangleFromCorner,
   type EarthquakeRectangleArea,
 } from "./earthquakeArea";
 import { calculateRoute } from "./routing";
@@ -96,6 +100,133 @@ describe("verified earthquake debris footprints", () => {
     expect(forward.heightMeters).toBeCloseTo(60, 6);
     expect(forward.latitude).toBeCloseTo(rectangle.latitude, 10);
   });
+  it("keeps legacy rectangles north-up and clips a quarter-turn using the rotated width", () => {
+    expect(
+      selectEarthquakeArea(base(), { ...rectangle, rotationDegrees: 0 }),
+    ).toEqual(selectEarthquakeArea(base(), rectangle));
+    const rotated = { ...rectangle, rotationDegrees: 90 };
+    const roads = selectEarthquakeArea(base(), rotated);
+    expect(roads.map((road) => road.roadId)).toEqual(["road"]);
+    expect(roads[0].distanceMeters).toBe(30);
+    const bounds = rectangleBounds(rotated);
+    const dimensions = rectangleFromCorners(
+      { latitude: bounds[0][0], longitude: bounds[0][1] },
+      { latitude: bounds[1][0], longitude: bounds[1][1] },
+    );
+    expect(dimensions.widthMeters).toBeCloseTo(60, 6);
+    expect(dimensions.heightMeters).toBeCloseTo(30, 6);
+  });
+  it("clips diagonal roads to the actual rotated footprint instead of its enclosing bounds", () => {
+    const metersPerDegree = (Math.PI * 6371000) / 180;
+    const position = (x: number, y: number) => ({
+      latitude: rectangle.latitude + y / metersPerDegree,
+      longitude:
+        rectangle.longitude +
+        x / (metersPerDegree * Math.cos((rectangle.latitude * Math.PI) / 180)),
+    });
+    const graph = new RoadGraph({
+      nodes: [
+        { id: "A", ...position(-100, -100) },
+        { id: "B", ...position(100, 100) },
+        { id: "C", ...position(28, -30) },
+        { id: "D", ...position(32, -30) },
+      ],
+      edges: [
+        {
+          id: "AB",
+          roadId: "diagonal",
+          fromNodeId: "A",
+          toNodeId: "B",
+          distanceMeters: Math.hypot(200, 200),
+          status: "OPEN",
+        },
+        {
+          id: "CD",
+          roadId: "outside",
+          fromNodeId: "C",
+          toNodeId: "D",
+          distanceMeters: 4,
+          status: "OPEN",
+        },
+      ],
+    });
+    const roads = selectEarthquakeArea(graph, {
+      ...rectangle,
+      widthMeters: 20,
+      heightMeters: 100,
+      rotationDegrees: 45,
+    });
+    expect(roads.map((road) => road.roadId)).toEqual(["diagonal"]);
+    expect(roads[0].distanceMeters).toBe(100);
+    expect(roads[0].edgeRanges[0].startFraction).toBeCloseTo(0.3232233, 6);
+    expect(roads[0].edgeRanges[0].endFraction).toBeCloseTo(0.6767767, 6);
+  });
+  it("projects clockwise corners and converts geographic points back into rotated axes", () => {
+    const rotated = { ...rectangle, rotationDegrees: 90 };
+    const north = rectanglePoint(rotated, 0, 20);
+    expect(north.latitude).toBeCloseTo(rectangle.latitude, 10);
+    expect(north.longitude).toBeGreaterThan(rectangle.longitude);
+    const corners = rectangleCorners(rotated);
+    expect(corners).toHaveLength(4);
+    for (const angle of [0, 37, 90, 180, 270, 359.9]) {
+      const area = { ...rectangle, rotationDegrees: angle };
+      const local = rectangleLocalPoint(area, rectanglePoint(area, -7, 21));
+      expect(local.x).toBeCloseTo(-7, 6);
+      expect(local.y).toBeCloseTo(21, 6);
+    }
+  });
+  it.each([0, 1, 2, 3])(
+    "resizes rotated corner %s while retaining its opposite corner and angle",
+    (index) => {
+      const rotated = { ...rectangle, rotationDegrees: 137.9 };
+      const [sx, sy] = [
+        [-1, -1],
+        [1, -1],
+        [1, 1],
+        [-1, 1],
+      ][index];
+      const anchor = rectangleCorners(rotated)[(index + 2) % 4];
+      const resized = resizeRectangleFromCorner(
+        rotated,
+        index,
+        rectanglePoint(
+          rotated,
+          sx * (rotated.widthMeters / 2 + 25),
+          sy * (rotated.heightMeters / 2 + 10),
+        ),
+      );
+      expect(resized.rotationDegrees).toBe(137.9);
+      expect(resized.widthMeters).toBeCloseTo(55, 2);
+      expect(resized.heightMeters).toBeCloseTo(70, 2);
+      const nextAnchor = rectangleCorners(resized)[(index + 2) % 4];
+      expect(nextAnchor[0]).toBeCloseTo(anchor[0], 10);
+      expect(nextAnchor[1]).toBeCloseTo(anchor[1], 10);
+      expect(isImpactArea(resized)).toBe(true);
+    },
+  );
+  it("keeps resized dimensions within supported bounds without moving the anchor", () => {
+    const rotated = { ...rectangle, rotationDegrees: 45 };
+    const anchor = rectangleCorners(rotated)[0];
+    const enlarged = resizeRectangleFromCorner(
+      rotated,
+      2,
+      rectanglePoint(rotated, 2000, 2000),
+    );
+    expect(enlarged.widthMeters).toBe(500);
+    expect(enlarged.heightMeters).toBe(500);
+    const collapsed = resizeRectangleFromCorner(
+      rotated,
+      2,
+      rectanglePoint(rotated, -100, -100),
+    );
+    expect(collapsed.widthMeters).toBe(5);
+    expect(collapsed.heightMeters).toBe(5);
+    for (const next of [enlarged, collapsed]) {
+      const nextAnchor = rectangleCorners(next)[0];
+      expect(nextAnchor[0]).toBeCloseTo(anchor[0], 10);
+      expect(nextAnchor[1]).toBeCloseTo(anchor[1], 10);
+    }
+  });
   it("clips diagonal edges and keeps entirely enclosed edges", () => {
     const graph = new RoadGraph({
       nodes: [
@@ -145,8 +276,29 @@ describe("verified earthquake debris footprints", () => {
     { shape: "polygon" },
     { shape: "rectangle", radiusMeters: 25, widthMeters: undefined },
     { latitude: NaN },
+    { rotationDegrees: -1 },
+    { rotationDegrees: 360 },
+    { rotationDegrees: Infinity },
+    { rotationDegrees: NaN },
+    { rotationDegrees: "45" },
+    { rotationDegrees: null },
   ])("rejects malformed rectangles: %j", (fields) => {
     expect(isImpactArea({ ...rectangle, ...fields })).toBe(false);
+  });
+  it("applies a rotated closure only to the newly clipped road interval", () => {
+    const rotated = { ...rectangle, rotationDegrees: 90 };
+    const road = selectEarthquakeArea(base(), rotated)[0];
+    const input = snapshot([
+      impact({ impactArea: rotated, edgeRanges: road.edgeRanges }),
+    ]);
+    expect(
+      calculateRoute(base(), point(0), point(1), "walking", input)
+        .failureReason,
+    ).toBe("HAZARD_BLOCKED");
+    expect(
+      calculateRoute(base(), point(0.475), point(0.48), "walking", input).found,
+    ).toBe(true);
+    expect(road.edgeRanges[0].startFraction).toBeGreaterThan(0.48);
   });
   it("blocks only the rectangle's confirmed interval in both directions", () => {
     const road = selectEarthquakeArea(base(), rectangle)[0];

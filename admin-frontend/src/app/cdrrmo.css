@@ -299,6 +299,28 @@ html:has(.cdrrmo-workspace) {
   border-color: white;
   color: white;
 }
+.earthquake-rectangle-rotate {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: grab;
+  font-size: 23px;
+}
+.earthquake-rectangle-rotate:active {
+  cursor: grabbing;
+}
+.cdrrmo-workspace .earthquake-rotation-control {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.cdrrmo-workspace .earthquake-rotation-control input {
+  width: 100%;
+  min-height: 28px;
+  accent-color: #7c3aed;
+  cursor: pointer;
+}
 .cdrrmo-workspace .earthquake-area-roads {
   display: grid;
   gap: 8px;

@@ -234,6 +234,67 @@ describe("CDRRMO hazard city enforcement", () => {
     );
     expect(saved.affected_edge_ids).toEqual(["AB"]);
   });
+  it("preserves a rotated footprint and saves its clipped interval instead of client geometry or enclosing bounds", async () => {
+    const area = {
+      shape: "rectangle",
+      latitude: 14.3005,
+      longitude: 121.1,
+      widthMeters: 15,
+      heightMeters: 60,
+      rotationDegrees: 45,
+    };
+    const query = {
+      shape: "rectangle",
+      lat: "14.3005",
+      lng: "121.1",
+      width: "15",
+      height: "60",
+    };
+    const preview = await call(
+      getEarthquakeArea,
+      {},
+      { ...query, rotation: "45" },
+    );
+    const unrotated = await call(getEarthquakeArea, {}, query);
+    const roads = preview.res.json.mock.calls[0][0].roads;
+    expect(roads.map((road: { roadId: string }) => road.roadId)).toEqual([
+      "inside",
+    ]);
+    expect(roads[0].distanceMeters).toBe(21);
+    expect(unrotated.res.json.mock.calls[0][0].roads[0].distanceMeters).toBe(
+      60,
+    );
+
+    const { db, res } = await call(createEarthquakeRoadImpact, {
+      impactArea: area,
+      selectedRoadIds: ["inside"],
+      impactLevel: "HIGH",
+      confirmedBlocked: true,
+      affectedEdgeIds: ["CD"],
+      edgeRanges: [{ edgeId: "CD", startFraction: 0, endFraction: 1 }],
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(db.insert).toHaveBeenCalledExactlyOnceWith([
+      expect.objectContaining({
+        road_id: "inside",
+        impact_area: area,
+        affected_edge_ids: ["AB"],
+        edge_ranges: roads[0].edgeRanges,
+      }),
+    ]);
+    const saved = db.insert.mock.calls[0][0][0];
+    const range = saved.edge_ranges[0];
+    // A vertical road crosses 15 * sqrt(2) metres at 45 degrees, rather
+    // than the unrotated 60 m height or the enclosing 75 / sqrt(2) m box.
+    const expectedFraction =
+      (15 * Math.SQRT2) / (((Math.PI * 6371000) / 180) * 0.001);
+    expect(range.endFraction - range.startFraction).toBeCloseTo(
+      expectedFraction,
+      6,
+    );
+    expect((range.startFraction + range.endFraction) / 2).toBeCloseTo(0.5, 6);
+    expect(saved.impact_area.rotationDegrees).toBe(45);
+  });
   it("rejects a rectangle with an unconfirmed/outside road without writing", async () => {
     const { from, res } = await call(createEarthquakeRoadImpact, {
       impactArea: {

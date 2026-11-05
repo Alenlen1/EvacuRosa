@@ -1,13 +1,23 @@
 "use client";
 
-import { Marker, Rectangle, Tooltip, useMap } from "react-leaflet";
+import {
+  Marker,
+  Polygon,
+  Polyline,
+  Tooltip,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import { useEffect, useRef, useState } from "react";
 import type { LatLng, Marker as LeafletMarker } from "leaflet";
 import { createDivIcon } from "@/components/map/icons";
 import type { EarthquakeRectangleArea } from "@/services/api";
 import {
-  rectangleBounds,
+  rectangleCorners,
   rectangleFromCorners,
+  rectangleLocalPoint,
+  rectanglePoint,
+  resizeRectangleFromCorner,
 } from "../../../../backend/src/algorithms/earthquakeArea";
 
 const centerIcon = createDivIcon(
@@ -18,6 +28,10 @@ const cornerIcon = createDivIcon(
   '<span class="earthquake-rectangle-handle">↔</span>',
   24,
 );
+const rotationIcon = createDivIcon(
+  '<span class="earthquake-rectangle-handle earthquake-rectangle-rotate">↻</span>',
+  32,
+);
 
 /** A desktop-style selection box. Normal map controls return after drawing. */
 export function EarthquakeAreaHandles({
@@ -26,19 +40,33 @@ export function EarthquakeAreaHandles({
   disabled,
   onChange,
   onCancel,
+  onEditingChange,
 }: {
   area: EarthquakeRectangleArea | null;
   drawing: boolean;
   disabled: boolean;
   onChange: (area: EarthquakeRectangleArea) => void;
   onCancel: () => void;
+  onEditingChange: (editing: boolean) => void;
 }) {
   const map = useMap();
   const [draft, setDraft] = useState<EarthquakeRectangleArea | null>(null);
-  const handlers = useRef({ onChange, onCancel });
+  const handlers = useRef({ onChange, onCancel, onEditingChange });
+  const dragStartArea = useRef<EarthquakeRectangleArea | null>(null);
+  const [, setZoomVersion] = useState(0);
+  useMapEvents({ zoomend: () => setZoomVersion((version) => version + 1) });
   useEffect(() => {
-    handlers.current = { onChange, onCancel };
-  }, [onChange, onCancel]);
+    handlers.current = { onChange, onCancel, onEditingChange };
+  }, [onChange, onCancel, onEditingChange]);
+
+  useEffect(() => {
+    if (!disabled && !drawing) return;
+    dragStartArea.current = null;
+    setDraft(null);
+    handlers.current.onEditingChange(false);
+  }, [disabled, drawing]);
+
+  useEffect(() => () => handlers.current.onEditingChange(false), []);
 
   useEffect(() => {
     if (!drawing || disabled) return;
@@ -127,14 +155,88 @@ export function EarthquakeAreaHandles({
     };
   }, [map, drawing, disabled]);
 
+  function beginDrag() {
+    dragStartArea.current = area;
+    handlers.current.onEditingChange(true);
+  }
+
+  function finishDrag(next: EarthquakeRectangleArea) {
+    dragStartArea.current = null;
+    setDraft(null);
+    handlers.current.onChange(next);
+    handlers.current.onEditingChange(false);
+  }
+
+  function draggedArea(
+    kind: "move" | "rotate" | number,
+    marker: LeafletMarker,
+  ): EarthquakeRectangleArea | null {
+    const start = dragStartArea.current;
+    if (!start) return null;
+    const position = marker.getLatLng();
+    const point = { latitude: position.lat, longitude: position.lng };
+    if (kind === "move") return { ...start, ...point };
+    if (kind === "rotate") {
+      const offset = rectangleLocalPoint(
+        { ...start, rotationDegrees: 0 },
+        point,
+      );
+      if (Math.hypot(offset.x, offset.y) < 1) return start;
+      const degrees =
+        Math.round((Math.atan2(offset.x, offset.y) * 1800) / Math.PI) / 10;
+      return { ...start, rotationDegrees: ((degrees % 360) + 360) % 360 };
+    }
+    return resizeRectangleFromCorner(start, kind, point);
+  }
+
+  function dragHandlers(kind: "move" | "rotate" | number) {
+    return {
+      dragstart: beginDrag,
+      drag: (event: { target: LeafletMarker }) => {
+        const next = draggedArea(kind, event.target);
+        if (next) setDraft(next);
+      },
+      dragend: (event: { target: LeafletMarker }) => {
+        const next = draggedArea(kind, event.target);
+        // Reset the native marker too if the parent rejects an out-of-city move.
+        const original =
+          kind === "move"
+            ? area && ([area.latitude, area.longitude] as [number, number])
+            : typeof kind === "number"
+              ? area && rectangleCorners(area)[kind]
+              : rotationPosition;
+        if (original) event.target.setLatLng(original);
+        if (next) finishDrag(next);
+      },
+    };
+  }
+
   const displayed = draft ?? area;
-  const bounds = displayed ? rectangleBounds(displayed) : null;
-  const corners = area ? rectangleBounds(area) : null;
+  const corners = displayed ? rectangleCorners(displayed) : null;
+  const top = displayed
+    ? rectanglePoint(displayed, 0, displayed.heightMeters / 2)
+    : null;
+  let rotationPosition: [number, number] | null = null;
+  if (displayed && top) {
+    const centerPixel = map.latLngToContainerPoint([
+      displayed.latitude,
+      displayed.longitude,
+    ]);
+    const topPixel = map.latLngToContainerPoint([top.latitude, top.longitude]);
+    const dx = topPixel.x - centerPixel.x;
+    const dy = topPixel.y - centerPixel.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const handle = map.containerPointToLatLng([
+      topPixel.x + (dx / length) * 44,
+      topPixel.y + (dy / length) * 44,
+    ]);
+    rotationPosition = [handle.lat, handle.lng];
+  }
   return (
     <>
-      {bounds && (
-        <Rectangle
-          bounds={bounds}
+      {corners && (
+        <Polygon
+          positions={corners}
           interactive={false}
           pathOptions={{
             color: "#7c3aed",
@@ -144,65 +246,47 @@ export function EarthquakeAreaHandles({
           }}
         />
       )}
-      {area && corners && !drawing && (
+      {displayed && corners && rotationPosition && top && !drawing && (
         <>
+          <Polyline
+            positions={[[top.latitude, top.longitude], rotationPosition]}
+            interactive={false}
+            pathOptions={{ color: "#7c3aed", weight: 2, dashArray: "3 4" }}
+          />
           <Marker
-            position={[area.latitude, area.longitude]}
+            position={rotationPosition}
+            icon={rotationIcon}
+            draggable={!disabled}
+            title="Rotate debris rectangle"
+            alt="Rotate debris rectangle"
+            zIndexOffset={1000}
+            eventHandlers={dragHandlers("rotate")}
+          >
+            <Tooltip>Drag to rotate the area</Tooltip>
+          </Marker>
+          <Marker
+            position={[displayed.latitude, displayed.longitude]}
             icon={centerIcon}
             draggable={!disabled}
             title="Move debris rectangle"
             alt="Move debris rectangle"
-            eventHandlers={{
-              dragend: (event) => {
-                const marker = event.target as LeafletMarker;
-                const next = marker.getLatLng();
-                marker.setLatLng([area.latitude, area.longitude]);
-                onChange({ ...area, latitude: next.lat, longitude: next.lng });
-              },
-            }}
+            eventHandlers={dragHandlers("move")}
           >
             <Tooltip>Drag to move the area</Tooltip>
           </Marker>
-          {[
-            corners[0],
-            [corners[0][0], corners[1][1]],
-            corners[1],
-            [corners[1][0], corners[0][1]],
-          ].map((corner, index) => {
-            const opposite =
-              index === 0
-                ? corners[1]
-                : index === 1
-                  ? [corners[1][0], corners[0][1]]
-                  : index === 2
-                    ? corners[0]
-                    : [corners[0][0], corners[1][1]];
-            return (
-              <Marker
-                key={index}
-                position={[corner[0], corner[1]]}
-                icon={cornerIcon}
-                draggable={!disabled}
-                title="Resize debris rectangle"
-                alt="Resize debris rectangle corner"
-                eventHandlers={{
-                  dragend: (event) => {
-                    const marker = event.target as LeafletMarker;
-                    const next = marker.getLatLng();
-                    marker.setLatLng([corner[0], corner[1]]);
-                    onChange(
-                      rectangleFromCorners(
-                        { latitude: opposite[0], longitude: opposite[1] },
-                        { latitude: next.lat, longitude: next.lng },
-                      ),
-                    );
-                  },
-                }}
-              >
-                <Tooltip>Drag this corner to resize</Tooltip>
-              </Marker>
-            );
-          })}
+          {corners.map((corner, index) => (
+            <Marker
+              key={index}
+              position={[corner[0], corner[1]]}
+              icon={cornerIcon}
+              draggable={!disabled}
+              title="Resize debris rectangle"
+              alt="Resize debris rectangle corner"
+              eventHandlers={dragHandlers(index)}
+            >
+              <Tooltip>Drag this corner to resize</Tooltip>
+            </Marker>
+          ))}
         </>
       )}
     </>
