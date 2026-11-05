@@ -47,6 +47,7 @@ export function useEvacuationNavigation({
   routeUpdating?: boolean;
 }) {
   const [active, setActive] = useState(false);
+  const [allowApproximate, setAllowApproximate] = useState(false);
   const [arrived, setArrived] = useState(false);
   const [now, setNow] = useState(Date.now);
   const [along, setAlong] = useState(0);
@@ -140,17 +141,24 @@ export function useEvacuationNavigation({
   const fix = geolocation.position;
   const fixIssue = navigationFixIssue(fix, Math.max(now, Date.now()));
   const fresh = geolocation.status === "active" && fixIssue === null;
-  const canStart =
+  const approximateFix =
+    geolocation.status === "active" && fixIssue === "inaccurate";
+  const routeReady =
     !routeUpdating &&
     !!center &&
     !!route &&
     route.length >= 2 &&
-    fresh &&
     center.status !== "CLOSED" &&
     center.status !== "FULL";
-  function start(allowPermissionPrompt = true) {
+  const canStart = routeReady && fresh;
+  const canStartApproximate = routeReady && approximateFix;
+  function start(allowPermissionPrompt = true, acceptApproximate = false) {
     // Recheck at the gesture itself in case the last render preceded expiry.
-    if (!canStart || !fix || !usableFix(fix, Date.now())) {
+    if (
+      !(canStart || (acceptApproximate && canStartApproximate)) ||
+      !fix ||
+      !usableFix(fix, Date.now(), acceptApproximate)
+    ) {
       setNow(Date.now());
       return false;
     }
@@ -174,6 +182,7 @@ export function useEvacuationNavigation({
     setRerouting(false);
     setArrived(false);
     setNow(Date.now());
+    setAllowApproximate(acceptApproximate);
     setActive(true);
     return true;
   }
@@ -184,12 +193,24 @@ export function useEvacuationNavigation({
       !route ||
       !center ||
       !fix ||
-      !fresh ||
+      !(fresh || (allowApproximate && approximateFix)) ||
       pending.current ||
       seen.current === fix.timestamp
     )
       return;
     seen.current = fix.timestamp;
+    if (!fresh) {
+      // A confirmed coarse fix may move the marker, but must not consume the
+      // route, declare arrival, infer movement heading, or trigger a reroute.
+      setPosition(fix);
+      setCourse(null);
+      setRejected(false);
+      setOffRoute(false);
+      lastFix.current = null;
+      away.current = 0;
+      arrivalSince.current = null;
+      return;
+    }
     if (!plausibleFix(lastFix.current, fix, maxSpeed[mode])) {
       setRejected(true);
       return;
@@ -281,6 +302,8 @@ export function useEvacuationNavigation({
     mode,
     fix,
     fresh,
+    allowApproximate,
+    approximateFix,
     lengths,
     total,
     onRoute,
@@ -317,9 +340,11 @@ export function useEvacuationNavigation({
     start,
     stop,
     canStart,
+    canStartApproximate,
+    approximate: active && approximateFix,
     fixIssue,
     position,
-    fresh: fresh && !rejected,
+    fresh: (fresh || (allowApproximate && approximateFix)) && !rejected,
     remaining,
     remainingPoints: routeUpdating ? null : remainingPoints,
     heading,
@@ -327,7 +352,11 @@ export function useEvacuationNavigation({
     lookAhead: routeUpdating ? null : lookAhead,
     bend,
     near:
-      remaining < 70 && !!position && !!center && meters(position, center) < 85,
+      fresh &&
+      remaining < 70 &&
+      !!position &&
+      !!center &&
+      meters(position, center) < 85,
     offRoute,
     rerouting: rerouting || routeUpdating,
     routeError,

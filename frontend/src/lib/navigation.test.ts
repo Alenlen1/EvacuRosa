@@ -73,12 +73,12 @@ describe("GPS and compass filtering", () => {
     const fix = {
       latitude: 14.3,
       longitude: 121.1,
-      accuracy: 40,
+      accuracy: 100,
       timestamp: 100_000,
     };
     expect(navigationFixIssue(fix, 115_000)).toBeNull();
     expect(navigationFixIssue(fix, 115_001)).toBe("stale");
-    expect(navigationFixIssue({ ...fix, accuracy: 40.1 }, 100_000)).toBe(
+    expect(navigationFixIssue({ ...fix, accuracy: 100.1 }, 100_000)).toBe(
       "inaccurate",
     );
     expect(navigationFixIssue({ ...fix, timestamp: 102_000 }, 100_000)).toBe(
@@ -91,10 +91,32 @@ describe("GPS and compass filtering", () => {
     expect(usableFix(fix, NaN)).toBe(false);
   });
   const fix = { ...a, accuracy: 8, timestamp: 100000 };
+  it("accepts a fresh coarse location only with explicit approximate consent", () => {
+    const coarse = { ...fix, accuracy: 292 };
+    expect(usableFix(coarse, 100_100)).toBe(false);
+    expect(usableFix(coarse, 100_100, true)).toBe(true);
+    expect(usableFix(fix, 100_100, true)).toBe(true);
+    for (const accuracy of [40, 80, 100]) {
+      expect(usableFix({ ...fix, accuracy }, 100_100)).toBe(true);
+    }
+    expect(usableFix({ ...fix, accuracy: 100.1 }, 100_100)).toBe(false);
+    expect(usableFix({ ...fix, accuracy: 100.1 }, 100_100, true)).toBe(true);
+  });
+  it("never lets approximate consent bypass freshness or validity", () => {
+    const coarse = { ...fix, accuracy: 292 };
+    expect(navigationFixIssue(coarse, 115_001)).toBe("stale");
+    expect(usableFix(coarse, 115_001, true)).toBe(false);
+    expect(usableFix(coarse, 98_999, true)).toBe(false);
+    expect(usableFix(null, 100_100, true)).toBe(false);
+    expect(usableFix({ ...coarse, accuracy: NaN }, 100_100, true)).toBe(false);
+    expect(usableFix({ ...coarse, accuracy: -1 }, 100_100, true)).toBe(false);
+    expect(usableFix({ ...coarse, latitude: NaN }, 100_100, true)).toBe(false);
+    expect(usableFix({ ...coarse, timestamp: NaN }, 100_100, true)).toBe(false);
+  });
   it("rejects stale, missing, inaccurate and future fixes", () => {
     expect(usableFix(fix, 100100)).toBe(true);
     expect(usableFix(fix, 116000)).toBe(false);
-    expect(usableFix({ ...fix, accuracy: 80 }, 100100)).toBe(false);
+    expect(usableFix({ ...fix, accuracy: 101 }, 100100)).toBe(false);
     expect(usableFix({ ...fix, timestamp: 120000 }, 100100)).toBe(false);
     expect(usableFix(null, 100100)).toBe(false);
   });
