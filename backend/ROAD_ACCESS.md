@@ -44,6 +44,11 @@ The loader rejects old snapshots that lack access tags. Source:
 
 ## Limits
 
+For a repeatable, offline citywide routing audit, run
+`npm run audit:roads --workspace backend` from the repository root. See
+[ROAD_NETWORK_AUDIT.md](ROAD_NETWORK_AUDIT.md) for coverage, reproduced failures,
+and the distinction between endpoint matching problems and access restrictions.
+
 Local project-owner corrections live in `src/data/localRoadAccess.ts` and are
 applied at load time, leaving downloaded OSM tags unchanged. The school/market
 service lane `W319098748` is walking-only based on the owner's two supplied pins;
