@@ -142,15 +142,6 @@
   max-width: 550px;
   padding-bottom: 12px;
 }
-.login-city {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #f0d6cf;
-}
 .login-introduction h1 {
   margin: 27px 0 26px;
   font-family: var(--font-login-display), serif;
@@ -559,10 +550,6 @@
     letter-spacing: -2px;
     margin: 16px 0 12px;
   }
-  .login-city {
-    font-size: 9px;
-    letter-spacing: 1.5px;
-  }
   .login-introduction-copy {
     max-width: 360px;
     line-height: 1.65;
@@ -694,9 +681,6 @@
   .login-introduction-copy {
     display: none;
   }
-  .login-city {
-    font-size: 9px;
-  }
   .login-field input {
     font-size: 16px;
   }
@@ -785,10 +769,6 @@
   }
   .login-introduction-note {
     display: none;
-  }
-  .login-city {
-    font-size: 8px;
-    letter-spacing: 1px;
   }
   .login-panel {
     padding: 16px 20px;

@@ -10,7 +10,6 @@ import {
   LoaderCircle,
   LockKeyhole,
   Map as MapIcon,
-  MapPin,
   ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
@@ -225,10 +224,6 @@ export default function AdminLoginPage() {
           className="login-introduction"
           aria-labelledby="login-introduction-title"
         >
-          <p className="login-city">
-            <MapPin size={14} aria-hidden="true" />
-            Santa Rosa City, Laguna
-          </p>
           <h1 id="login-introduction-title">
             Ready to <br />
             respond.
@@ -385,7 +380,7 @@ export default function AdminLoginPage() {
         </section>
       </div>
       <footer className="login-footer">
-        <span>EvacuRosa &middot; Santa Rosa, Laguna</span>
+        <span>EvacuRosa</span>
         <span>Community preparedness. Coordinated action.</span>
       </footer>
     </main>
