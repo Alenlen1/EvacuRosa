@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ShelterSuppliesForm } from "./ShelterSuppliesForm";
 import styles from "./CenterManager.module.css";
 import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
 import { getCdrrmoShelterStatusCounts } from "@/lib/cdrrmoShelterStatus";
@@ -454,20 +453,6 @@ export function CenterManager({
               </div>
             </fieldset>
           </form>
-        )}
-        {editingCenter && (
-          <details key={editingCenter.id} className={styles.supplies}>
-            <summary>
-              <span>
-                Shelter supplies <small>{editingCenter.name}</small>
-              </span>
-              <ChevronDown size={18} aria-hidden="true" />
-            </summary>
-            <ShelterSuppliesForm
-              key={editingCenter.id}
-              center={editingCenter}
-            />
-          </details>
         )}
       </div>
       <div className={styles.directoryToolbar}>

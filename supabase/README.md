@@ -81,6 +81,18 @@ roads to the rectangle and recomputes all routing intervals before saving.
 Existing circular and whole-road reports remain supported. This migration
 changes the footprint constraint; it does not delete reports or change RLS.
 
+## Retiring shelter supplies
+
+Shelter-supply tracking is no longer used. Deploy the updated backend and admin
+frontend first, then apply `0023_remove_shelter_supplies.sql` to remove the four
+supply columns, their timestamp trigger and its function. Applying this migration
+permanently removes any stored supply values. Center records, occupancy,
+availability and emergency assistance tracking remain intact.
+
+Keep `0013_supplies_and_assistance_status.sql` in the migration history: it also
+creates assistance status fields and a trigger required by migration 0018.
+Fresh databases apply 0013 and later remove only its supplies portion via 0023.
+
 ## Without a Supabase project
 
 Public evacuation-center and hazard endpoints return empty collections.

@@ -65,8 +65,8 @@ it is blocked, and saves notes. Only confirmed blockages close roads for routing
 The map highlights reported roads, and records show verification times in PHT.
 
 - CDRRMO registers centers, edits record details/capacity/assignment, deletes
-  centers, and retains the hazard and shared-location tools. Existing supply
-  controls are available during CDRRMO center editing.
+  centers, and retains the hazard and shared-location tools. Shelter-supply
+  tracking has been retired; barangays manage occupancy and availability.
 - The barangay home/selection page shows a read-only citywide evacuation map
   using the public center endpoint and the public map's shelter markers/status
   symbols. Popups show address, occupancy and availability; Refresh map reloads

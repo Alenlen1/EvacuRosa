@@ -3024,32 +3024,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
     display: none;
   }
 }
-.shelter-supplies-form {
-  margin-top: 16px;
-  border-top: 1px solid #e2e8f0;
-  padding-top: 12px;
-}
-.shelter-supplies-form legend {
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.shelter-supplies-form label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-.shelter-supplies-form select {
-  min-height: 44px;
-  border: 1px solid #cbd5e1;
-  padding: 6px;
-  border-radius: 6px;
-}
-.shelter-supplies-form p {
-  margin-top: 8px;
-  font-size: 13px;
-}
 .assistance-record-actions {
   flex-wrap: wrap;
   gap: 8px;

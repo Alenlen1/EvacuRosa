@@ -28,7 +28,7 @@ export async function getAllCenters(): Promise<EvacuationCenter[]> {
   const { data, error } = await supabase
     .from("evacuation_centers")
     .select(
-      "id, barangay_id, name, address, latitude, longitude, capacity, current_occupancy, status, contact_information, notes, updated_at, water_status, food_status, medical_status, supplies_updated_at, barangays(name)",
+      "id, barangay_id, name, address, latitude, longitude, capacity, current_occupancy, status, contact_information, notes, updated_at, barangays(name)",
     );
 
   if (error) {
@@ -48,10 +48,6 @@ export async function getAllCenters(): Promise<EvacuationCenter[]> {
     status: deriveStatus(row.current_occupancy, row.capacity, row.status),
     contactInformation: row.contact_information,
     notes: row.notes,
-    waterStatus: row.water_status ?? "unknown",
-    foodStatus: row.food_status ?? "unknown",
-    medicalStatus: row.medical_status ?? "unknown",
-    suppliesUpdatedAt: row.supplies_updated_at,
     updatedAt: row.updated_at,
   }));
 }
