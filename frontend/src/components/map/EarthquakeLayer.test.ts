@@ -10,6 +10,8 @@ vi.mock("@/components/LanguageProvider", () => ({
 vi.mock("react-leaflet", () => ({
   Circle: ({ children }: { children: ReactNode }) =>
     createElement("div", { "data-event": true }, children),
+  Rectangle: ({ children }: { children: ReactNode }) =>
+    createElement("div", { "data-rectangle": true }, children),
   Polyline: ({ children }: { children: ReactNode }) =>
     createElement("div", { "data-road": true }, children),
   Tooltip: ({ children }: { children: ReactNode }) =>
@@ -33,6 +35,29 @@ const impact: EarthquakeRoadImpact = {
 };
 
 describe("public earthquake map visibility", () => {
+  it("shows a saved rectangular debris footprint and its blocked road", () => {
+    const html = renderToStaticMarkup(
+      createElement(EarthquakeLayer, {
+        events: [],
+        roadImpacts: [
+          {
+            ...impact,
+            impactArea: {
+              shape: "rectangle",
+              latitude: 14.31,
+              longitude: 121.1,
+              widthMeters: 30,
+              heightMeters: 50,
+            },
+          },
+        ],
+      }),
+    );
+    expect(html).toContain('data-rectangle="true"');
+    expect(html).toContain('data-road="true"');
+    expect(html).toContain("Road blocked");
+    expect(html).not.toContain('data-event="true"');
+  });
   it("shows a verified debris footprint without requiring an earthquake event", () => {
     const html = renderToStaticMarkup(
       createElement(EarthquakeLayer, {

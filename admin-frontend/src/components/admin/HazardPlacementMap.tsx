@@ -5,6 +5,7 @@ import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
 import { HazardRecordTime } from "./HazardRecordTime";
 import { SantaRosaBoundaryLayer } from "./SantaRosaBoundaryLayer";
 import { EarthquakeAreaHandles } from "./EarthquakeAreaHandles";
+import { isImpactArea } from "../../../../backend/src/algorithms/earthquakeArea";
 import { EarthquakeLayer } from "@/components/map/EarthquakeLayer";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -48,6 +49,7 @@ import {
   fetchFloodSection,
   fetchEarthquakeArea,
   type EarthquakeAreaRoad,
+  type EarthquakeRectangleArea,
   type FloodSectionPreview,
   createFloodReport,
   createFireIncident,
@@ -170,19 +172,23 @@ export default function HazardPlacementMap({
   const [selectedRoadId, setSelectedRoadId] = useState<string>("");
   const [severity, setSeverity] = useState("MODERATE");
   const [radiusMeters, setRadiusMeters] = useState(200);
-  const [debrisRadius, setDebrisRadius] = useState(25);
+  const [debrisArea, setDebrisArea] = useState<EarthquakeRectangleArea | null>(
+    null,
+  );
+  const [drawingArea, setDrawingArea] = useState(true);
   const [areaPreview, setAreaPreview] = useState<{
     key: string;
     roads: EarthquakeAreaRoad[];
   } | null>(null);
   const [areaLoading, setAreaLoading] = useState(false);
   const [selectedAreaRoadIds, setSelectedAreaRoadIds] = useState<string[]>([]);
-  const areaKey = pendingPoint
-    ? `${pendingPoint.lat}:${pendingPoint.lng}:${debrisRadius}`
-    : "";
+  const areaKey = debrisArea ? JSON.stringify(debrisArea) : "";
   const areaRoads = areaPreview?.key === areaKey ? areaPreview.roads : [];
   const areaReady =
-    mode === "earthquake" && areaPreview?.key === areaKey && !areaLoading;
+    mode === "earthquake" &&
+    !drawingArea &&
+    areaPreview?.key === areaKey &&
+    !areaLoading;
   const [waterLevelMeters, setWaterLevelMeters] = useState<string>("");
   const impassable = severity === "HIGH" || severity === "SEVERE";
   const [confirmedBlocked, setConfirmedBlocked] = useState(false);
@@ -197,30 +203,19 @@ export default function HazardPlacementMap({
   const submitPending = useRef(false);
 
   useEffect(() => {
-    if (mode !== "earthquake" || !pendingPoint) return;
+    if (mode !== "earthquake" || !debrisArea) return;
     setAreaPreview(null);
     setSelectedAreaRoadIds([]);
-    if (
-      !Number.isFinite(debrisRadius) ||
-      debrisRadius < 5 ||
-      debrisRadius > 250
-    ) {
+    if (!isImpactArea(debrisArea)) {
       setAreaLoading(false);
-      setError("Choose an affected radius between 5 and 250 metres.");
+      setError("Draw a rectangle between 5 and 500 metres on each side.");
       return;
     }
     let cancelled = false;
     const controller = new AbortController();
     setAreaLoading(true);
     const timer = setTimeout(() => {
-      void fetchEarthquakeArea(
-        {
-          latitude: pendingPoint.lat,
-          longitude: pendingPoint.lng,
-          radiusMeters: debrisRadius,
-        },
-        controller.signal,
-      )
+      void fetchEarthquakeArea(debrisArea, controller.signal)
         .then((roads) => {
           if (!cancelled) {
             setAreaPreview({ key: areaKey, roads });
@@ -244,7 +239,7 @@ export default function HazardPlacementMap({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [mode, pendingPoint, debrisRadius, areaKey]);
+  }, [mode, debrisArea, areaKey]);
 
   useEffect(() => {
     if (
@@ -314,14 +309,6 @@ export default function HazardPlacementMap({
   async function handleMapClick(lat: number, lng: number, reportStart = false) {
     if (loading || submitPending.current || removalPending.current) return;
     if (mode === "earthquake") {
-      if (!isInsideSantaRosa(lat, lng)) {
-        setError(HAZARD_CITY_ERROR);
-        return;
-      }
-      setError(null);
-      setAreaPreview(null);
-      setSelectedAreaRoadIds([]);
-      setPendingPoint({ lat, lng });
       return;
     }
     if (inspectStreet && !reportStart) {
@@ -391,6 +378,28 @@ export default function HazardPlacementMap({
     setAreaPreview(null);
     setSelectedAreaRoadIds([]);
     setAreaLoading(false);
+    setDebrisArea(null);
+    setDrawingArea(true);
+  }
+
+  function changeDebrisArea(area: EarthquakeRectangleArea) {
+    if (loading || submitPending.current || removalPending.current) return;
+    if (!isImpactArea(area)) {
+      setError(
+        "Draw a rectangle between 5 and 500 metres on each side. Zoom in for a smaller area.",
+      );
+      return;
+    }
+    if (!isInsideSantaRosa(area.latitude, area.longitude)) {
+      setError(HAZARD_CITY_ERROR);
+      return;
+    }
+    setError(null);
+    setAreaPreview(null);
+    setSelectedAreaRoadIds([]);
+    setDebrisArea(area);
+    setPendingPoint({ lat: area.latitude, lng: area.longitude });
+    setDrawingArea(false);
   }
 
   function resetForm() {
@@ -457,6 +466,7 @@ export default function HazardPlacementMap({
         });
       } else {
         if (
+          !debrisArea ||
           !areaReady ||
           !selectedAreaRoadIds.length ||
           selectedAreaRoadIds.some(
@@ -467,11 +477,7 @@ export default function HazardPlacementMap({
             "Review the affected area and select the roads with verified damage before saving.",
           );
         await createEarthquakeRoadImpact(authToken, {
-          impactArea: {
-            latitude: pendingPoint.lat,
-            longitude: pendingPoint.lng,
-            radiusMeters: debrisRadius,
-          },
+          impactArea: debrisArea,
           selectedRoadIds: selectedAreaRoadIds,
           impactLevel: severity as "LOW" | "MODERATE" | "HIGH",
           confirmedBlocked,
@@ -663,9 +669,9 @@ export default function HazardPlacementMap({
 
         {mode === "earthquake" && (
           <p className="earthquake-area-instructions">
-            Click where debris has fallen. Drag the centre to move it and the
-            edge handle to resize the affected area. Then confirm the affected
-            roads.
+            Click and drag across the map to draw a rectangle around observed
+            debris. Release to review it, then confirm only roads with verified
+            damage.
           </p>
         )}
 
@@ -709,16 +715,13 @@ export default function HazardPlacementMap({
                     }}
                   />
                 ))}
-            {mode === "earthquake" && pendingPoint && (
+            {mode === "earthquake" && (
               <EarthquakeAreaHandles
-                area={{
-                  latitude: pendingPoint.lat,
-                  longitude: pendingPoint.lng,
-                  radiusMeters: debrisRadius,
-                }}
+                area={debrisArea}
+                drawing={drawingArea}
                 disabled={loading || removingId !== null}
-                onMove={(lat, lng) => void handleMapClick(lat, lng)}
-                onResize={setDebrisRadius}
+                onChange={changeDebrisArea}
+                onCancel={() => setDrawingArea(false)}
               />
             )}
             {mode === "flood" && inspectStreet && streetViewPoint && (
@@ -788,8 +791,27 @@ export default function HazardPlacementMap({
                 </Tooltip>
               </Marker>
             )}
-            <ClickCapture onClick={handleMapClick} />
+            {mode !== "earthquake" && <ClickCapture onClick={handleMapClick} />}
           </MapContainer>
+          {mode === "earthquake" && (
+            <button
+              type="button"
+              className="earthquake-draw-toggle secondary-button"
+              aria-pressed={drawingArea}
+              disabled={loading || removingId !== null}
+              onClick={() => {
+                setDrawingArea((value) => !value);
+                setError(null);
+              }}
+            >
+              <RotateCcw size={16} aria-hidden="true" />
+              {drawingArea
+                ? "Cancel drawing"
+                : debrisArea
+                  ? "Redraw area"
+                  : "Draw area"}
+            </button>
+          )}
           {mode === "flood" && (
             <>
               <button
@@ -886,7 +908,9 @@ export default function HazardPlacementMap({
             {mode === "fire"
               ? "Tap the map where the fire is."
               : mode === "earthquake"
-                ? "Place the debris pin, adjust the radius and select the affected road sections below."
+                ? drawingArea
+                  ? "Drag from one corner of the debris area to the opposite corner. Press Escape to cancel drawing."
+                  : "Move the rectangle using its centre handle or resize a corner. Confirm the affected road sections below."
                 : mode === "flood" && floodCoverage === "section"
                   ? pendingPoint
                     ? "Select the end of the affected section on the same connected street. Use Reset selection to choose a different start."
@@ -945,7 +969,7 @@ export default function HazardPlacementMap({
                 {mode === "fire"
                   ? "Choose the incident location, then enter the radius and severity."
                   : mode === "earthquake"
-                    ? "Click the observed debris location. Drag the pin or resize the area, then confirm the roads with verified damage."
+                    ? "Choose Draw area, then click and drag to cover the observed debris. Use a small rectangle to avoid unrelated roads."
                     : "Choose a point near the affected road, then review the suggested road and report details."}
               </p>
               <small>
@@ -963,33 +987,20 @@ export default function HazardPlacementMap({
                   disabled={loading || removingId !== null}
                 >
                   <legend>Verified debris area</legend>
-                  <label htmlFor="earthquake-area-radius">
-                    Affected radius (metres)
-                  </label>
-                  <div className="earthquake-area-radius">
-                    <input
-                      id="earthquake-area-radius"
-                      type="number"
-                      min={5}
-                      max={250}
-                      step={1}
-                      value={Number.isFinite(debrisRadius) ? debrisRadius : ""}
-                      onChange={(event) =>
-                        setDebrisRadius(event.target.valueAsNumber)
-                      }
-                    />
-                    <input
-                      aria-label="Adjust affected radius"
-                      type="range"
-                      min={5}
-                      max={250}
-                      step={1}
-                      value={Number.isFinite(debrisRadius) ? debrisRadius : 25}
-                      onChange={(event) =>
-                        setDebrisRadius(Number(event.target.value))
-                      }
-                    />
-                  </div>
+                  <p className="earthquake-area-size" role="status">
+                    Rectangle: {Math.round(debrisArea?.widthMeters ?? 0)} m wide
+                    × {Math.round(debrisArea?.heightMeters ?? 0)} m long
+                  </p>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => {
+                      resetPlacement();
+                      setError(null);
+                    }}
+                  >
+                    <RotateCcw size={16} aria-hidden="true" /> Reset selection
+                  </button>
                   <p>
                     This marks observed debris, not the earthquake's reach. Only
                     confirmed road sections inside it are saved.
@@ -998,13 +1009,11 @@ export default function HazardPlacementMap({
                   {areaLoading ? (
                     <p role="status">Previewing road sections…</p>
                   ) : !areaReady ? (
-                    <p>
-                      Adjust the area or click the map to retry the preview.
-                    </p>
+                    <p>Redraw or resize the rectangle to retry the preview.</p>
                   ) : areaRoads.length === 0 ? (
                     <p role="status">
-                      No mapped city road intersects this area. Move the pin or
-                      adjust the radius.
+                      No mapped city road intersects this rectangle. Move or
+                      resize it.
                     </p>
                   ) : (
                     <>
@@ -1362,7 +1371,9 @@ export default function HazardPlacementMap({
                   <span>
                     {impact.impactLevel} impact ·{" "}
                     {impact.impactArea
-                      ? `Debris area (${impact.impactArea.radiusMeters} m radius) · Selected section`
+                      ? impact.impactArea.shape === "rectangle"
+                        ? `Debris rectangle (${Math.round(impact.impactArea.widthMeters)} × ${Math.round(impact.impactArea.heightMeters)} m) · Selected section`
+                        : `Debris area (${impact.impactArea.radiusMeters} m radius) · Selected section`
                       : "Entire mapped road"}{" "}
                     · Road location: {roadCoordinates(impact.affectedSegments)}
                     {impact.confirmedBlocked

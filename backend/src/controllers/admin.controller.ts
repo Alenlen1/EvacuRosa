@@ -430,7 +430,7 @@ export async function createEarthquakeRoadImpact(
     ) {
       res.status(400).json({
         error:
-          "Choose a valid debris area (5–250 m) inside Santa Rosa and confirm its affected roads.",
+          "Choose a valid debris rectangle (5–500 m per side) inside Santa Rosa and confirm its affected roads.",
       });
       return;
     }
@@ -469,7 +469,7 @@ export async function createEarthquakeRoadImpact(
     if (error) {
       res.status(403).json({
         error:
-          "Could not save the affected road sections. Check permissions and apply migration 0020_earthquake_impact_areas.sql.",
+          "Could not save the affected road sections. Check permissions and apply migration 0022_earthquake_rectangular_areas.sql.",
       });
       return;
     }

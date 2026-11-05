@@ -488,9 +488,11 @@ export interface EarthquakeRoadImpact {
   impactArea?: EarthquakeImpactArea | null;
 }
 
-export interface EarthquakeImpactArea extends LatLng {
-  radiusMeters: number;
-}
+export type {
+  EarthquakeImpactArea,
+  EarthquakeRectangleArea,
+} from "../../../backend/src/algorithms/earthquakeArea";
+import type { EarthquakeImpactArea } from "../../../backend/src/algorithms/earthquakeArea";
 
 export interface EarthquakeAreaRoad {
   roadId: string;
@@ -506,7 +508,13 @@ export async function fetchEarthquakeArea(
   const query = new URLSearchParams({
     lat: String(area.latitude),
     lng: String(area.longitude),
-    radius: String(area.radiusMeters),
+    ...(area.shape === "rectangle"
+      ? {
+          shape: "rectangle",
+          width: String(area.widthMeters),
+          height: String(area.heightMeters),
+        }
+      : { radius: String(area.radiusMeters) }),
   });
   const res = await fetch(`${API_URL}/api/roads/earthquake-area?${query}`, {
     signal,

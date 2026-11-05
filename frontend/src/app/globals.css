@@ -1401,6 +1401,7 @@ select:focus-visible {
   background: #d85a3040;
 }
 .legend-area.debris {
+  border-radius: 3px;
   border: 1.5px dashed #b45309;
   background: #b4530914;
 }
