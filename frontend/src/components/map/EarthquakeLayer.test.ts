@@ -1,7 +1,10 @@
 import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import type { EarthquakeRoadImpact } from "@/services/api";
+import type {
+  EarthquakeRectangleArea,
+  EarthquakeRoadImpact,
+} from "@/services/api";
 
 vi.mock("@/components/LanguageProvider", () => ({
   useLanguage: () => ({ t: (text: string) => text }),
@@ -10,8 +13,18 @@ vi.mock("@/components/LanguageProvider", () => ({
 vi.mock("react-leaflet", () => ({
   Circle: ({ children }: { children: ReactNode }) =>
     createElement("div", { "data-event": true }, children),
-  Rectangle: ({ children }: { children: ReactNode }) =>
-    createElement("div", { "data-rectangle": true }, children),
+  Polygon: ({
+    children,
+    positions,
+  }: {
+    children: ReactNode;
+    positions: [number, number][];
+  }) =>
+    createElement(
+      "div",
+      { "data-polygon": true, "data-positions": JSON.stringify(positions) },
+      children,
+    ),
   Polyline: ({ children }: { children: ReactNode }) =>
     createElement("div", { "data-road": true }, children),
   Tooltip: ({ children }: { children: ReactNode }) =>
@@ -53,10 +66,49 @@ describe("public earthquake map visibility", () => {
         ],
       }),
     );
-    expect(html).toContain('data-rectangle="true"');
+    expect(html).toContain('data-polygon="true"');
     expect(html).toContain('data-road="true"');
     expect(html).toContain("Road blocked");
     expect(html).not.toContain('data-event="true"');
+  });
+  it("keeps the saved rotation when displaying a debris rectangle", () => {
+    const area: EarthquakeRectangleArea = {
+      shape: "rectangle",
+      latitude: 14.31,
+      longitude: 121.1,
+      widthMeters: 30,
+      heightMeters: 50,
+    };
+    const displayedCorners = (rotationDegrees?: number): [number, number][] => {
+      const html = renderToStaticMarkup(
+        createElement(EarthquakeLayer, {
+          events: [],
+          roadImpacts: [
+            {
+              ...impact,
+              impactArea: {
+                ...area,
+                ...(rotationDegrees === undefined ? {} : { rotationDegrees }),
+              },
+            },
+          ],
+        }),
+      );
+      return JSON.parse(html.match(/data-positions="([^"]+)"/)![1]);
+    };
+    const legacy = displayedCorners();
+    expect(legacy).toEqual(displayedCorners(0));
+    expect(legacy).toHaveLength(4);
+    const rotated = displayedCorners(90);
+    const span = (corners: [number, number][], axis: number) =>
+      Math.max(...corners.map((corner) => corner[axis])) -
+      Math.min(...corners.map((corner) => corner[axis]));
+    // A quarter-turn swaps the north/south and east/west side lengths.
+    expect(span(rotated, 0) / span(legacy, 0)).toBeCloseTo(30 / 50, 5);
+    expect(span(rotated, 1) / span(legacy, 1)).toBeCloseTo(50 / 30, 5);
+    const diagonal = displayedCorners(45);
+    expect(diagonal[0][0]).not.toBeCloseTo(diagonal[1][0], 6);
+    expect(diagonal[0][1]).not.toBeCloseTo(diagonal[1][1], 6);
   });
   it("shows a verified debris footprint without requiring an earthquake event", () => {
     const html = renderToStaticMarkup(

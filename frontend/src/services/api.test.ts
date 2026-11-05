@@ -7,6 +7,7 @@ import {
   fetchFloodReports,
   fetchFireIncidents,
   fetchEarthquakes,
+  fetchEarthquakeArea,
   fetchEvacuationCenters,
   RoutingError,
   shareAssistanceLocation,
@@ -24,6 +25,33 @@ beforeEach(() => {
   offline.getOfflinePackage.mockResolvedValue(null);
 });
 afterEach(() => vi.unstubAllGlobals());
+describe("earthquake rectangle preview", () => {
+  it.each([undefined, 37.5])(
+    "sends the rectangle's rotation (%s) to the road preview",
+    async (rotationDegrees) => {
+      const fetch = vi
+        .fn()
+        .mockResolvedValue(new Response(JSON.stringify({ roads: [] })));
+      vi.stubGlobal("fetch", fetch);
+      await expect(
+        fetchEarthquakeArea({
+          shape: "rectangle",
+          ...start,
+          widthMeters: 30,
+          heightMeters: 80,
+          ...(rotationDegrees === undefined ? {} : { rotationDegrees }),
+        }),
+      ).resolves.toEqual([]);
+      const url = new URL(fetch.mock.calls[0][0]);
+      expect(url.pathname).toBe("/api/roads/earthquake-area");
+      expect(url.searchParams.get("rotation")).toBe(
+        String(rotationDegrees ?? 0),
+      );
+      expect(url.searchParams.get("width")).toBe("30");
+      expect(url.searchParams.get("height")).toBe("80");
+    },
+  );
+});
 describe("location-sharing API", () => {
   it("bypasses caches for current hazards, shelters and new routes", async () => {
     const fetch = vi.fn().mockImplementation(

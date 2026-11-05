@@ -12,6 +12,8 @@ export interface EarthquakeRectangleArea extends SectionPoint {
   shape: "rectangle";
   widthMeters: number;
   heightMeters: number;
+  /** Clockwise from the north-up rectangle; omitted on legacy records. */
+  rotationDegrees?: number;
 }
 
 export type EarthquakeImpactArea =
@@ -26,7 +28,10 @@ export function isImpactArea(value: unknown): value is EarthquakeImpactArea {
     return false;
   if (area.shape === "rectangle")
     return (
-      bounded(area.widthMeters, 5, 500) && bounded(area.heightMeters, 5, 500)
+      bounded(area.widthMeters, 5, 500) &&
+      bounded(area.heightMeters, 5, 500) &&
+      (area.rotationDegrees === undefined ||
+        (bounded(area.rotationDegrees, 0, 360) && area.rotationDegrees < 360))
     );
   return (
     (area.shape === undefined || area.shape === "circle") &&
@@ -36,18 +41,120 @@ export function isImpactArea(value: unknown): value is EarthquakeImpactArea {
 
 const METERS_PER_DEGREE = (Math.PI * 6371000) / 180;
 
-/** Axis-aligned footprint in geographic coordinates; shared by map rendering. */
+function rotateRectanglePoint(
+  area: EarthquakeRectangleArea,
+  x: number,
+  y: number,
+  inverse = false,
+) {
+  const angle = ((area.rotationDegrees ?? 0) * Math.PI) / 180;
+  const cos = Math.cos(angle),
+    sin = Math.sin(angle) * (inverse ? -1 : 1);
+  return { x: x * cos + y * sin, y: -x * sin + y * cos };
+}
+
+/** Project rectangle-local metres (right/up) into geographic coordinates. */
+export function rectanglePoint(
+  area: EarthquakeRectangleArea,
+  x: number,
+  y: number,
+): SectionPoint {
+  const world = rotateRectanglePoint(area, x, y);
+  return {
+    latitude: area.latitude + world.y / METERS_PER_DEGREE,
+    longitude:
+      area.longitude +
+      world.x / (METERS_PER_DEGREE * Math.cos((area.latitude * Math.PI) / 180)),
+  };
+}
+
+/** Convert a geographic point into the rotated rectangle's local axes. */
+export function rectangleLocalPoint(
+  area: EarthquakeRectangleArea,
+  point: SectionPoint,
+) {
+  const local = toLocalMeters(
+    point.latitude,
+    point.longitude,
+    area.latitude,
+    area.longitude,
+  );
+  return rotateRectanglePoint(area, local.x, local.y, true);
+}
+
+/** SW, SE, NE, NW in rectangle-local axes, before clockwise rotation. */
+export function rectangleCorners(
+  area: EarthquakeRectangleArea,
+): [number, number][] {
+  return [
+    [-1, -1],
+    [1, -1],
+    [1, 1],
+    [-1, 1],
+  ].map(([x, y]) => {
+    const point = rectanglePoint(
+      area,
+      (x * area.widthMeters) / 2,
+      (y * area.heightMeters) / 2,
+    );
+    return [point.latitude, point.longitude];
+  });
+}
+
+/** Geographic enclosing bounds; use rectangleCorners to draw the footprint. */
 export function rectangleBounds(
   area: EarthquakeRectangleArea,
 ): [[number, number], [number, number]] {
-  const dy = area.heightMeters / (2 * METERS_PER_DEGREE);
-  const dx =
-    area.widthMeters /
-    (2 * METERS_PER_DEGREE * Math.cos((area.latitude * Math.PI) / 180));
+  const corners = rectangleCorners(area);
   return [
-    [area.latitude - dy, area.longitude - dx],
-    [area.latitude + dy, area.longitude + dx],
+    [
+      Math.min(...corners.map(([lat]) => lat)),
+      Math.min(...corners.map(([, lng]) => lng)),
+    ],
+    [
+      Math.max(...corners.map(([lat]) => lat)),
+      Math.max(...corners.map(([, lng]) => lng)),
+    ],
   ];
+}
+
+/** Resize along the rotated axes while keeping the opposite corner fixed. */
+export function resizeRectangleFromCorner(
+  area: EarthquakeRectangleArea,
+  cornerIndex: number,
+  point: SectionPoint,
+): EarthquakeRectangleArea {
+  const signs = [
+    [-1, -1],
+    [1, -1],
+    [1, 1],
+    [-1, 1],
+  ][cornerIndex];
+  if (!signs) return area;
+  const [sx, sy] = signs;
+  const anchor = rectanglePoint(
+    area,
+    (-sx * area.widthMeters) / 2,
+    (-sy * area.heightMeters) / 2,
+  );
+  const delta = rectangleLocalPoint({ ...area, ...anchor }, point);
+  const widthMeters = Math.max(5, Math.min(500, sx * delta.x));
+  const heightMeters = Math.max(5, Math.min(500, sy * delta.y));
+  const offset = rotateRectanglePoint(
+    area,
+    (sx * widthMeters) / 2,
+    (sy * heightMeters) / 2,
+  );
+  const latitude = anchor.latitude + offset.y / METERS_PER_DEGREE;
+  return {
+    ...area,
+    latitude,
+    longitude:
+      anchor.longitude +
+      offset.x / (METERS_PER_DEGREE * Math.cos((latitude * Math.PI) / 180)),
+    widthMeters,
+    heightMeters,
+  };
 }
 
 export function rectangleFromCorners(
@@ -73,6 +180,8 @@ function rectangleInterval(
   b: { x: number; y: number },
   area: EarthquakeRectangleArea,
 ): [number, number] | null {
+  a = rotateRectanglePoint(area, a.x, a.y, true);
+  b = rotateRectanglePoint(area, b.x, b.y, true);
   let start = 0,
     end = 1;
   for (const [origin, delta, half] of [

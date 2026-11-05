@@ -176,6 +176,7 @@ export default function HazardPlacementMap({
     null,
   );
   const [drawingArea, setDrawingArea] = useState(true);
+  const [areaEditing, setAreaEditing] = useState(false);
   const [areaPreview, setAreaPreview] = useState<{
     key: string;
     roads: EarthquakeAreaRoad[];
@@ -183,10 +184,12 @@ export default function HazardPlacementMap({
   const [areaLoading, setAreaLoading] = useState(false);
   const [selectedAreaRoadIds, setSelectedAreaRoadIds] = useState<string[]>([]);
   const areaKey = debrisArea ? JSON.stringify(debrisArea) : "";
-  const areaRoads = areaPreview?.key === areaKey ? areaPreview.roads : [];
+  const areaRoads =
+    !areaEditing && areaPreview?.key === areaKey ? areaPreview.roads : [];
   const areaReady =
     mode === "earthquake" &&
     !drawingArea &&
+    !areaEditing &&
     areaPreview?.key === areaKey &&
     !areaLoading;
   const [waterLevelMeters, setWaterLevelMeters] = useState<string>("");
@@ -206,6 +209,10 @@ export default function HazardPlacementMap({
     if (mode !== "earthquake" || !debrisArea) return;
     setAreaPreview(null);
     setSelectedAreaRoadIds([]);
+    if (areaEditing) {
+      setAreaLoading(false);
+      return;
+    }
     if (!isImpactArea(debrisArea)) {
       setAreaLoading(false);
       setError("Draw a rectangle between 5 and 500 metres on each side.");
@@ -239,7 +246,7 @@ export default function HazardPlacementMap({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [mode, debrisArea, areaKey]);
+  }, [mode, debrisArea, areaKey, areaEditing]);
 
   useEffect(() => {
     if (
@@ -379,6 +386,7 @@ export default function HazardPlacementMap({
     setSelectedAreaRoadIds([]);
     setAreaLoading(false);
     setDebrisArea(null);
+    setAreaEditing(false);
     setDrawingArea(true);
   }
 
@@ -670,7 +678,8 @@ export default function HazardPlacementMap({
         {mode === "earthquake" && (
           <p className="earthquake-area-instructions">
             Click and drag across the map to draw a rectangle around observed
-            debris. Release to review it, then confirm only roads with verified
+            debris. Drag its centre to move, a corner to resize, or the round
+            arrow handle to rotate. Then confirm only roads with verified
             damage.
           </p>
         )}
@@ -722,6 +731,7 @@ export default function HazardPlacementMap({
                 disabled={loading || removingId !== null}
                 onChange={changeDebrisArea}
                 onCancel={() => setDrawingArea(false)}
+                onEditingChange={setAreaEditing}
               />
             )}
             {mode === "flood" && inspectStreet && streetViewPoint && (
@@ -910,7 +920,7 @@ export default function HazardPlacementMap({
               : mode === "earthquake"
                 ? drawingArea
                   ? "Drag from one corner of the debris area to the opposite corner. Press Escape to cancel drawing."
-                  : "Move the rectangle using its centre handle or resize a corner. Confirm the affected road sections below."
+                  : "Drag the centre to move, a corner to resize, or the round arrow to rotate. You can also use the Rotation slider. Confirm the affected road sections below."
                 : mode === "flood" && floodCoverage === "section"
                   ? pendingPoint
                     ? "Select the end of the affected section on the same connected street. Use Reset selection to choose a different start."
@@ -984,13 +994,36 @@ export default function HazardPlacementMap({
               {mode === "earthquake" && (
                 <fieldset
                   className="earthquake-area-fields"
-                  disabled={loading || removingId !== null}
+                  disabled={
+                    loading || removingId !== null || areaEditing || drawingArea
+                  }
                 >
                   <legend>Verified debris area</legend>
                   <p className="earthquake-area-size" role="status">
                     Rectangle: {Math.round(debrisArea?.widthMeters ?? 0)} m wide
                     × {Math.round(debrisArea?.heightMeters ?? 0)} m long
+                    {" · "}
+                    {Math.round(debrisArea?.rotationDegrees ?? 0)}° rotation
                   </p>
+                  <div className="earthquake-rotation-control">
+                    <label htmlFor="earthquake-rotation">Rotation</label>
+                    <input
+                      id="earthquake-rotation"
+                      type="range"
+                      min={0}
+                      max={359}
+                      step={1}
+                      value={debrisArea?.rotationDegrees ?? 0}
+                      aria-valuetext={`${Math.round(debrisArea?.rotationDegrees ?? 0)} degrees clockwise`}
+                      onChange={(event) => {
+                        if (debrisArea)
+                          changeDebrisArea({
+                            ...debrisArea,
+                            rotationDegrees: Number(event.target.value),
+                          });
+                      }}
+                    />
+                  </div>
                   <button
                     type="button"
                     className="secondary-button"
@@ -1006,14 +1039,20 @@ export default function HazardPlacementMap({
                     confirmed road sections inside it are saved.
                   </p>
                   <strong>Confirm affected roads</strong>
-                  {areaLoading ? (
+                  {areaEditing ? (
+                    <p role="status">
+                      Release the handle to preview affected roads.
+                    </p>
+                  ) : areaLoading ? (
                     <p role="status">Previewing road sections…</p>
                   ) : !areaReady ? (
-                    <p>Redraw or resize the rectangle to retry the preview.</p>
+                    <p>
+                      Move, resize or rotate the rectangle to retry the preview.
+                    </p>
                   ) : areaRoads.length === 0 ? (
                     <p role="status">
                       No mapped city road intersects this rectangle. Move or
-                      resize it.
+                      resize or rotate it.
                     </p>
                   ) : (
                     <>
@@ -1372,7 +1411,7 @@ export default function HazardPlacementMap({
                     {impact.impactLevel} impact ·{" "}
                     {impact.impactArea
                       ? impact.impactArea.shape === "rectangle"
-                        ? `Debris rectangle (${Math.round(impact.impactArea.widthMeters)} × ${Math.round(impact.impactArea.heightMeters)} m) · Selected section`
+                        ? `Debris rectangle (${Math.round(impact.impactArea.widthMeters)} × ${Math.round(impact.impactArea.heightMeters)} m, ${Math.round(impact.impactArea.rotationDegrees ?? 0)}°) · Selected section`
                         : `Debris area (${impact.impactArea.radiusMeters} m radius) · Selected section`
                       : "Entire mapped road"}{" "}
                     · Road location: {roadCoordinates(impact.affectedSegments)}

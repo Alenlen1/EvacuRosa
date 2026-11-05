@@ -1,7 +1,7 @@
 "use client";
 
-import { Circle, Rectangle, Polyline, Tooltip } from "react-leaflet";
-import { rectangleBounds } from "../../../../backend/src/algorithms/earthquakeArea";
+import { Circle, Polygon, Polyline, Tooltip } from "react-leaflet";
+import { rectangleCorners } from "../../../../backend/src/algorithms/earthquakeArea";
 import { useLanguage } from "@/components/LanguageProvider";
 import type { EarthquakeEvent, EarthquakeRoadImpact } from "@/services/api";
 
@@ -42,9 +42,9 @@ export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
         )
         .map((impact) =>
           impact.impactArea!.shape === "rectangle" ? (
-            <Rectangle
+            <Polygon
               key={`debris-${impact.id}`}
-              bounds={rectangleBounds(impact.impactArea!)}
+              positions={rectangleCorners(impact.impactArea!)}
               pathOptions={{
                 color: "#b45309",
                 weight: 1.5,
@@ -55,7 +55,7 @@ export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
               <Tooltip sticky className="hazard-tooltip">
                 {t("Earthquake road impact")} · {t("Reported debris area")}
               </Tooltip>
-            </Rectangle>
+            </Polygon>
           ) : (
             <Circle
               key={`debris-${impact.id}`}
