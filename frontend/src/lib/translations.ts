@@ -2,6 +2,20 @@ export const filipino: Record<string, string> = {
   "Hide navigation prompt": "Itago ang pagsisimula ng pag-navigate",
   "Show navigation prompt": "Ipakita ang pagsisimula ng pag-navigate",
   Navigation: "Pag-navigate",
+  "Start with approximate location?":
+    "Magsimula gamit ang tinatayang lokasyon?",
+  "Start anyway": "Magpatuloy pa rin",
+  "Your location may be inaccurate by approximately {accuracy} metres. Navigation may show you on the wrong road.":
+    "Maaaring may diperensiya na humigit-kumulang {accuracy} metro ang iyong lokasyon. Maaaring ipakita ng nabigasyon na nasa ibang kalsada ka.",
+  "Route progress, automatic rerouting and arrival detection pause until location accuracy improves. Follow local signs and conditions.":
+    "Pansamantalang ihihinto ang pagsubaybay sa progreso, awtomatikong pagbabago ng ruta at pagtukoy ng pagdating hanggang mas tumumpak ang lokasyon. Sundin ang mga lokal na karatula at kondisyon.",
+  "Approximate location · ±{accuracy} m": "Tinatayang lokasyon · ±{accuracy} m",
+  "Route progress, automatic rerouting and arrival detection paused.":
+    "Pansamantalang nakahinto ang pagsubaybay sa progreso, awtomatikong pagbabago ng ruta at pagtukoy ng pagdating.",
+  "Waiting for better location accuracy.":
+    "Hinihintay ang mas tumpak na lokasyon.",
+  "GPS accuracy is ±{accuracy} m. Refresh for a better reading or review approximate navigation.":
+    "Ang katumpakan ng GPS ay ±{accuracy} m. I-refresh para sa mas tumpak na lokasyon o suriin ang pag-navigate gamit ang tinatayang lokasyon.",
   "This center is full or closed. Choose another evacuation center.":
     "Puno o sarado ang center na ito. Pumili ng ibang evacuation center.",
   "Getting a fresh GPS location...": "Kumukuha ng bagong lokasyon sa GPS...",

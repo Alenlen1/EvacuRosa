@@ -3769,6 +3769,25 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .navigation-status {
   margin: 5px 0;
 }
+.navigation-card > .navigation-approximate-warning {
+  align-items: flex-start;
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border: 1px solid #e4d398;
+  border-radius: 9px;
+  background: #fcf7e1;
+  color: #765619;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.navigation-approximate-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.navigation-approximate-warning strong {
+  display: block;
+  margin-bottom: 2px;
+}
 .navigation-buttons {
   display: grid;
   grid-template-columns: 1.3fr 1fr 1fr;

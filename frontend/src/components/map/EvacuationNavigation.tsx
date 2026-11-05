@@ -12,6 +12,7 @@ import {
   ChevronUp,
   SlidersHorizontal,
   X,
+  CircleAlert,
 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import {
@@ -25,12 +26,12 @@ import type {
   RouteResponse,
 } from "@/services/api";
 import { estimatedTravelTime, type TravelMode } from "@/lib/travelTime";
-import { NAVIGATION_FIX_MAX_ACCURACY_METERS } from "@/lib/navigation";
 import { NavigationCamera } from "./NavigationCamera";
 import { NavigationLocation } from "./NavigationLocation";
 import { RoutePolyline } from "./RoutePolyline";
 import { RouteApproach } from "./RouteApproach";
 import { UserLocationMarker } from "./UserLocationMarker";
+import { ApproximateNavigationDialog } from "./ApproximateNavigationDialog";
 
 export function EvacuationNavigation({
   route,
@@ -80,7 +81,11 @@ export function EvacuationNavigation({
   const [recenter, setRecenter] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const [hiddenStartFor, setHiddenStartFor] = useState<string | null>(null);
+  const [approximateConfirmation, setApproximateConfirmation] = useState<
+    string | null
+  >(null);
   const destinationKey = `${center?.id ?? ""}:${center?.latitude}:${center?.longitude}`;
+  const confirmationKey = `${destinationKey}:${mode}`;
   const startHidden = hiddenStartFor === destinationKey;
   const wasActive = useRef(false);
   const resumeConsumed = useRef(false);
@@ -90,8 +95,12 @@ export function EvacuationNavigation({
     wasActive.current = nav.active;
   }, [nav.active, onActiveChange, onEnd]);
 
-  function startNavigation(allowPermissionPrompt = true) {
-    if (!nav.start(allowPermissionPrompt)) return false;
+  function startNavigation(
+    allowPermissionPrompt = true,
+    allowApproximate = false,
+  ) {
+    if (!nav.start(allowPermissionPrompt, allowApproximate)) return false;
+    setApproximateConfirmation(null);
     setHiddenStartFor(null);
     setCollapsed(
       window.matchMedia(
@@ -160,10 +169,9 @@ export function EvacuationNavigation({
             )
           : nav.fixIssue === "inaccurate"
             ? t(
-                "GPS accuracy is ±{accuracy} m. Navigation needs ±{limit} m or better. Try an open area.",
+                "GPS accuracy is ±{accuracy} m. Refresh for a better reading or review approximate navigation.",
                 {
                   accuracy: Math.ceil(geolocation.position!.accuracy),
-                  limit: NAVIGATION_FIX_MAX_ACCURACY_METERS,
                 },
               )
             : nav.fixIssue === "stale"
@@ -173,6 +181,23 @@ export function EvacuationNavigation({
               : t("Refresh your location to start navigation.");
   return (
     <>
+      {approximateConfirmation === confirmationKey && !nav.active && (
+        <ApproximateNavigationDialog
+          accuracy={geolocation.position?.accuracy ?? null}
+          canConfirm={nav.canStart || nav.canStartApproximate}
+          blockedReason={startHelp}
+          onDismiss={() => setApproximateConfirmation(null)}
+          onConfirm={() => startNavigation(true, true)}
+          onRefresh={
+            onRetryLocation
+              ? () => {
+                  setApproximateConfirmation(null);
+                  onRetryLocation();
+                }
+              : undefined
+          }
+        />
+      )}
       {nav.active && nav.position ? (
         <NavigationLocation position={nav.position} heading={nav.heading} />
       ) : (
@@ -291,12 +316,17 @@ export function EvacuationNavigation({
                     <button
                       type="button"
                       className="primary-button"
-                      disabled={!nav.canStart}
+                      disabled={!nav.canStart && !nav.canStartApproximate}
+                      aria-haspopup={
+                        nav.canStartApproximate ? "dialog" : undefined
+                      }
                       aria-describedby={
                         !nav.canStart ? "navigation-start-help" : undefined
                       }
                       onClick={() => {
-                        startNavigation();
+                        if (nav.canStartApproximate)
+                          setApproximateConfirmation(confirmationKey);
+                        else startNavigation();
                       }}
                     >
                       <Navigation size={18} />
@@ -343,6 +373,21 @@ export function EvacuationNavigation({
               </>
             ) : (
               <>
+                {nav.approximate && (
+                  <p className="navigation-approximate-warning" role="status">
+                    <CircleAlert size={17} aria-hidden="true" />
+                    <span>
+                      <strong>
+                        {t("Approximate location · ±{accuracy} m", {
+                          accuracy: Math.ceil(geolocation.position!.accuracy),
+                        })}
+                      </strong>
+                      {t(
+                        "Route progress, automatic rerouting and arrival detection paused.",
+                      )}
+                    </span>
+                  </p>
+                )}
                 <div className="navigation-quick-actions">
                   <button
                     type="button"
@@ -394,15 +439,17 @@ export function EvacuationNavigation({
                     <span>{estimatedTravelTime(nav.remaining, mode)}</span>
                   </div>
                 )}
-                {collapsed && (!nav.fresh || nav.offRoute) && (
-                  <p className="navigation-compact-warning" role="status">
-                    {t(
-                      !nav.fresh
-                        ? "Waiting for a fresh, accurate GPS location."
-                        : "You are away from the planned route.",
-                    )}
-                  </p>
-                )}
+                {collapsed &&
+                  !nav.approximate &&
+                  (!nav.fresh || nav.offRoute) && (
+                    <p className="navigation-compact-warning" role="status">
+                      {t(
+                        !nav.fresh
+                          ? "Waiting for a fresh, accurate GPS location."
+                          : "You are away from the planned route.",
+                      )}
+                    </p>
+                  )}
                 <div
                   className="navigation-details"
                   id="navigation-details"
@@ -422,23 +469,25 @@ export function EvacuationNavigation({
                   <small>{center?.name}</small>
                   <p className="navigation-status" role="status">
                     {t(
-                      !nav.fresh
-                        ? "Waiting for a fresh, accurate GPS location."
-                        : nav.rerouting
-                          ? "Updating your route…"
-                          : nav.routeError
-                            ? "Could not update the route. Follow local guidance; retrying when location updates."
-                            : nav.offRoute
-                              ? "You are away from the planned route."
-                              : !following
-                                ? "Map moved manually. Recenter to follow again."
-                                : nav.near
-                                  ? center?.id
-                                    ? "Approaching the evacuation center."
-                                    : "Approaching your destination."
-                                  : nav.bend !== null
-                                    ? "Bend ahead — follow the highlighted path."
-                                    : "Following your location",
+                      nav.approximate
+                        ? "Waiting for better location accuracy."
+                        : !nav.fresh
+                          ? "Waiting for a fresh, accurate GPS location."
+                          : nav.rerouting
+                            ? "Updating your route…"
+                            : nav.routeError
+                              ? "Could not update the route. Follow local guidance; retrying when location updates."
+                              : nav.offRoute
+                                ? "You are away from the planned route."
+                                : !following
+                                  ? "Map moved manually. Recenter to follow again."
+                                  : nav.near
+                                    ? center?.id
+                                      ? "Approaching the evacuation center."
+                                      : "Approaching your destination."
+                                    : nav.bend !== null
+                                      ? "Bend ahead — follow the highlighted path."
+                                      : "Following your location",
                     )}
                   </p>
                   {nav.heading === null && (

@@ -129,7 +129,7 @@ export interface NavigationFix extends LatLng {
   speed?: number | null;
 }
 export const NAVIGATION_FIX_MAX_AGE_MS = 15_000;
-export const NAVIGATION_FIX_MAX_ACCURACY_METERS = 40;
+export const NAVIGATION_FIX_MAX_ACCURACY_METERS = 100;
 
 export function navigationFixIssue(fix: NavigationFix | null, now: number) {
   if (
@@ -142,18 +142,23 @@ export function navigationFixIssue(fix: NavigationFix | null, now: number) {
     !Number.isFinite(now)
   )
     return "unavailable" as const;
-  if (fix.accuracy > NAVIGATION_FIX_MAX_ACCURACY_METERS)
-    return "inaccurate" as const;
   if (
     now - fix.timestamp < -1000 ||
     now - fix.timestamp > NAVIGATION_FIX_MAX_AGE_MS
   )
     return "stale" as const;
+  if (fix.accuracy > NAVIGATION_FIX_MAX_ACCURACY_METERS)
+    return "inaccurate" as const;
   return null;
 }
 
-export function usableFix(fix: NavigationFix | null, now: number) {
-  return navigationFixIssue(fix, now) === null;
+export function usableFix(
+  fix: NavigationFix | null,
+  now: number,
+  allowApproximate = false,
+) {
+  const issue = navigationFixIssue(fix, now);
+  return issue === null || (allowApproximate && issue === "inaccurate");
 }
 export function plausibleFix(
   previous: NavigationFix | null,

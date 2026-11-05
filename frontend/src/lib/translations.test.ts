@@ -26,6 +26,10 @@ describe("public language selection", () => {
       "Preparing offline data",
       "Offline not ready",
       "Checking location",
+      "Start with approximate location?",
+      "Start anyway",
+      "Waiting for better location accuracy.",
+      "Route progress, automatic rerouting and arrival detection paused.",
       "Offline information",
       "Close status details",
       "Your location is available for route planning.",
@@ -37,6 +41,11 @@ describe("public language selection", () => {
     }
   });
   it("translates directory counts and remaining spaces with their values", () => {
+    expect(
+      translate("Approximate location · ±{accuracy} m", "fil", {
+        accuracy: 292,
+      }),
+    ).toBe("Tinatayang lokasyon · ±292 m");
     expect(
       translate("Showing {count} of {total} centers", "fil", {
         count: 2,
