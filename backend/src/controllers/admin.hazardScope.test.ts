@@ -135,6 +135,36 @@ describe("CDRRMO hazard city enforcement", () => {
       }),
     );
   });
+  it.each(["LOW", "MODERATE", "HIGH"])(
+    "saves a %s rectangular impact without marking its selected roads blocked",
+    async (impactLevel) => {
+      const area = {
+        shape: "rectangle",
+        latitude: 14.3005,
+        longitude: 121.1,
+        widthMeters: 15,
+        heightMeters: 30,
+      };
+      const { db, res } = await call(createEarthquakeRoadImpact, {
+        impactArea: area,
+        selectedRoadIds: ["inside"],
+        impactLevel,
+        confirmedBlocked: false,
+      });
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(db.insert).toHaveBeenCalledExactlyOnceWith([
+        expect.objectContaining({
+          earthquake_event_id: null,
+          impact_area: area,
+          road_id: "inside",
+          impact_level: impactLevel,
+          confirmed_blocked: false,
+          affected_edge_ids: ["AB"],
+          edge_ranges: [expect.objectContaining({ edgeId: "AB" })],
+        }),
+      ]);
+    },
+  );
   it("saves only selected intersecting sections and ignores forged client geometry", async () => {
     const { db, res } = await call(createEarthquakeRoadImpact, {
       impactArea: { latitude: 14.3005, longitude: 121.1, radiusMeters: 10 },
@@ -186,6 +216,51 @@ describe("CDRRMO hazard city enforcement", () => {
       expect(from).not.toHaveBeenCalled();
     },
   );
+  it.each(["LOW", "MODERATE", "HIGH"])(
+    "saves a %s area-only report without trusting supplied road geometry",
+    async (impactLevel) => {
+      // No graph road intersects this footprint; that must not prevent saving.
+      const impactArea = {
+        shape: "rectangle",
+        latitude: 14.3,
+        longitude: 121.101,
+        widthMeters: 10,
+        heightMeters: 10,
+        rotationDegrees: 45,
+      };
+      const { db, res } = await call(createEarthquakeRoadImpact, {
+        impactArea,
+        selectedRoadIds: [],
+        impactLevel,
+        confirmedBlocked: false,
+        roadId: "inside",
+        affectedEdgeIds: ["AB"],
+        edgeRanges: [{ edgeId: "AB", startFraction: 0, endFraction: 1 }],
+        notes: "Observed debris away from the road",
+      });
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(db.insert).toHaveBeenCalledExactlyOnceWith([
+        expect.objectContaining({
+          road_id: null,
+          impact_area: impactArea,
+          impact_level: impactLevel,
+          confirmed_blocked: false,
+          affected_edge_ids: [],
+          edge_ranges: [],
+          notes: "Observed debris away from the road",
+        }),
+      ]);
+    },
+  );
+  it("allows an area-only report when optional blockage is omitted", async () => {
+    const { db, res } = await call(createEarthquakeRoadImpact, {
+      impactArea: { latitude: 14.3005, longitude: 121.1, radiusMeters: 25 },
+      selectedRoadIds: [],
+      impactLevel: "LOW",
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(db.insert.mock.calls[0][0][0].confirmed_blocked).toBe(false);
+  });
   it("previews clipped road geometry without writing a report", async () => {
     const { from, res } = await call(
       getEarthquakeArea,

@@ -20,6 +20,18 @@ function impact(
 }
 
 describe("earthquake impact routing", () => {
+  it("ignores area-only rows in both risk and blockage indexes", () => {
+    for (const fields of [
+      {},
+      { affectedEdgeIds: ["edge"], confirmedBlocked: true },
+    ]) {
+      const reports = [
+        impact({ roadId: null, impactLevel: "HIGH", ...fields }),
+      ];
+      expect(earthquakeImpactByRoadId(reports).size).toBe(0);
+      expect(earthquakeStatusOverridesForImpacts(reports).size).toBe(0);
+    }
+  });
   it("applies standalone road impacts to routing and fuzzy risk without an event", () => {
     const impacts = [
       impact({

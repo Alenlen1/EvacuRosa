@@ -183,3 +183,17 @@ writes: LOW/MODERATE remain routable with flood-risk penalties; HIGH/SEVERE
 hard-block the road. NONE adds no flood restriction. Passability is derived
 from severity, not an independently editable checkbox. Other hazards and road
 access rules can still block a road. Routable does not mean guaranteed safe.
+
+### Earthquake area-only reports
+
+Apply `0024_earthquake_area_only_reports.sql` after the existing migrations
+before saving an earthquake area with no roads selected. Deploy the updated
+backend and public frontend before creating these reports, then the admin app.
+The migration preserves existing records and RLS permissions.
+
+CDRRMO can draw and save a debris area without selecting roads. Such a record
+has `road_id = NULL`, `confirmed_blocked = false` and empty road intervals.
+It appears on both maps but does not alter road risk, route costs or closures,
+including offline routing. Selecting roads still requires verified damage;
+only those sections receive risk, and only confirmed blockages exclude them.
+An area-only report does not certify that surrounding roads are safe.

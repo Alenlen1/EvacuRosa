@@ -472,7 +472,7 @@ export interface EarthquakeEvent {
 export interface EarthquakeRoadImpact {
   id: string;
   earthquakeEventId: string | null;
-  roadId: string;
+  roadId: string | null;
   impactLevel: string;
   confirmedBlocked: boolean;
   notes?: string;

@@ -953,10 +953,10 @@ function PublicHome({
         <span>
           <strong>{t("Earthquake")}</strong>
           <small>
-            {t("{count} road impacts · {blocked} blocked", {
+            {t("{count} reports · {blocked} blocked", {
               count: earthquakeRoadImpacts.length,
               blocked: earthquakeRoadImpacts.filter(
-                (impact) => impact.confirmedBlocked,
+                (impact) => impact.roadId != null && impact.confirmedBlocked,
               ).length,
             })}
           </small>
@@ -1447,10 +1447,10 @@ function PublicHome({
                 </article>
               ))}
               <h3>
-                <Activity size={18} /> {t("Earthquake road impacts")}
+                <Activity size={18} /> {t("Earthquake reports")}
               </h3>
               {earthquakeRoadImpacts.length === 0 && (
-                <p>{t("No earthquake road impacts loaded.")}</p>
+                <p>{t("No earthquake reports loaded.")}</p>
               )}
               {earthquakeRoadImpacts.map((impact) => (
                 <article
@@ -1458,12 +1458,19 @@ function PublicHome({
                   key={impact.id}
                 >
                   <strong>
-                    {t(impact.impactLevel)} {t("Earthquake road impact")}
+                    {t(impact.impactLevel)}{" "}
+                    {t(
+                      impact.roadId == null
+                        ? "Earthquake area report"
+                        : "Earthquake road impact",
+                    )}
                   </strong>
                   <span>
-                    {impact.confirmedBlocked
-                      ? t("Road blocked")
-                      : t("No confirmed road blockage")}
+                    {impact.roadId == null
+                      ? t("No road routing change")
+                      : impact.confirmedBlocked
+                        ? t("Road blocked")
+                        : t("No confirmed road blockage")}
                   </span>
                   {impact.notes && <p>{impact.notes}</p>}
                 </article>

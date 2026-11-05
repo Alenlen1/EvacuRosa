@@ -19,13 +19,13 @@ export interface EarthquakeEvent {
   updatedAt: string;
 }
 
-/** The ONLY thing that ever feeds earthquake data into routing. No row for
- * a road means that road is unaffected — raw magnitude/depth never imply
- * damage on their own (section 31's explicit rule). */
+/** Only records associated with a road feed verified damage into routing.
+ * Area-only records and raw magnitude/depth never imply road damage. */
 export interface EarthquakeRoadImpact {
   id: string;
   earthquakeEventId: string | null;
-  roadId: string;
+  /** Null identifies an informational footprint with no road routing effect. */
+  roadId: string | null;
   affectedEdgeIds?: string[] | null;
   edgeRanges?: FloodEdgeRange[] | null;
   impactArea?: EarthquakeImpactArea | null;

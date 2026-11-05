@@ -48,6 +48,34 @@ const impact: EarthquakeRoadImpact = {
 };
 
 describe("public earthquake map visibility", () => {
+  it("shows an area-only footprint and notes without drawing road restrictions", () => {
+    const html = renderToStaticMarkup(
+      createElement(EarthquakeLayer, {
+        events: [],
+        roadImpacts: [
+          {
+            ...impact,
+            roadId: null,
+            confirmedBlocked: false,
+            impactArea: {
+              shape: "rectangle",
+              latitude: 14.31,
+              longitude: 121.1,
+              widthMeters: 30,
+              heightMeters: 50,
+              rotationDegrees: 45,
+            },
+          },
+        ],
+      }),
+    );
+    expect(html).toContain('data-polygon="true"');
+    expect(html).toContain("Earthquake area report");
+    expect(html).toContain("No road routing change");
+    expect(html).toContain("Fallen debris");
+    expect(html).not.toContain('data-road="true"');
+    expect(html).not.toContain("Road blocked");
+  });
   it("shows a saved rectangular debris footprint and its blocked road", () => {
     const html = renderToStaticMarkup(
       createElement(EarthquakeLayer, {

@@ -130,3 +130,86 @@ describe("A* and fuzzy flood safety together", () => {
     expect(onlyWet.riskLevel).not.toBe("VERY_LOW");
   });
 });
+
+describe("verified earthquake impact passability", () => {
+  it.each(TRAVEL_MODES)(
+    "does not change %s routing or risk for area-only reports",
+    (mode) => {
+      const baseline: RoutingSnapshot = {
+        statusOverrides: [],
+        floodReports: [],
+        fireIncidents: [],
+        earthquakeImpacts: [],
+      };
+      const areaOnly = {
+        id: "area-only",
+        roadId: null,
+        impactLevel: "HIGH" as const,
+        confirmedBlocked: false,
+        verifiedAt: "2026-11-05T00:00:00Z",
+        impactArea: { latitude: 14.3005, longitude: 121.1, radiusMeters: 100 },
+      };
+      for (const impact of [
+        areaOnly,
+        {
+          ...areaOnly,
+          confirmedBlocked: true,
+          affectedEdgeIds: ["direct"],
+          edgeRanges: [{ edgeId: "missing", startFraction: 0, endFraction: 1 }],
+        },
+      ]) {
+        for (const [from, to] of [
+          [start, end],
+          [end, start],
+        ]) {
+          expect(
+            calculateRoute(graph(false), from, to, mode, {
+              ...baseline,
+              earthquakeRoadImpacts: [impact],
+            }),
+          ).toEqual(calculateRoute(graph(false), from, to, mode, baseline));
+        }
+      }
+    },
+  );
+  it.each(TRAVEL_MODES)(
+    "keeps an impact passable unless explicitly blocked for %s",
+    (mode) => {
+      for (const impactLevel of ["LOW", "MODERATE", "HIGH"] as const) {
+        for (const [from, to] of [
+          [start, end],
+          [end, start],
+        ]) {
+          const baseline: RoutingSnapshot = {
+            statusOverrides: [],
+            floodReports: [],
+            fireIncidents: [],
+            earthquakeImpacts: [],
+          };
+          const impact = {
+            id: "verified-impact",
+            roadId: "wet",
+            impactLevel,
+            confirmedBlocked: false,
+            verifiedAt: "2026-11-05T00:00:00Z",
+            edgeRanges: [
+              { edgeId: "direct", startFraction: 0.3, endFraction: 0.7 },
+            ],
+          };
+          const passable = calculateRoute(graph(false), from, to, mode, {
+            ...baseline,
+            earthquakeRoadImpacts: [impact],
+          });
+          expect(passable.found).toBe(true);
+          expect(passable.riskLevel).not.toBe("VERY_LOW");
+          const blocked = calculateRoute(graph(false), from, to, mode, {
+            ...baseline,
+            earthquakeRoadImpacts: [{ ...impact, confirmedBlocked: true }],
+          });
+          expect(blocked.found).toBe(false);
+          expect(blocked.failureReason).toBe("HAZARD_BLOCKED");
+        }
+      }
+    },
+  );
+});

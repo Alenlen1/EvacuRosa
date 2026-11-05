@@ -5,7 +5,7 @@ import { edgeOverrideKey } from "./floodScope";
 // Precise ranges must first be expanded to routing subedges. Null means a
 // legacy whole-road report; an empty section must never become a whole road.
 export const earthquakeImpactKeys = (impact: EarthquakeRoadImpact) =>
-  impact.edgeRanges != null
+  impact.roadId == null || impact.edgeRanges != null
     ? []
     : impact.affectedEdgeIds == null
       ? [impact.roadId]
