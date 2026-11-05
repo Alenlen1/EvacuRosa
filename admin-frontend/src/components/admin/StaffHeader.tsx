@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import type { WorkspaceRole } from "@/lib/workspaceLoading";
 import { SkeletonBlock } from "./Skeleton";
@@ -49,6 +49,7 @@ export function StaffHeader({
         )}
         <div className="staff-header-actions">
           {!directory &&
+            role === "SUPER_ADMIN" &&
             (loading ? (
               <SkeletonBlock className="staff-skeleton-header-city" />
             ) : (
@@ -60,10 +61,12 @@ export function StaffHeader({
               <SkeletonBlock className="staff-skeleton-header-home" />
             ) : (
               <Link
-                className="secondary-button staff-header-home"
+                className="staff-header-home"
                 href="/admin/barangays"
+                aria-label="Back to barangay home"
               >
-                Barangay home
+                <ArrowLeft size={16} aria-hidden="true" />
+                <span>Barangay home</span>
               </Link>
             ))}
           {hasPublicMap &&
