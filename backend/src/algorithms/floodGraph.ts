@@ -24,6 +24,9 @@ export function prepareFloodRouting(
   sourceOverrides: [string, RoadStatus][],
   impacts: EarthquakeRoadImpact[] = [],
 ) {
+  // Area-only reports are map information, including in offline routing.
+  // Never partition or penalize roads using their footprint or supplied ranges.
+  impacts = impacts.filter((impact) => impact.roadId != null);
   const ranges = [...reports, ...impacts].flatMap(
     (report) => report.edgeRanges ?? [],
   );

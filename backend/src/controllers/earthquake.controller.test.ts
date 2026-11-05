@@ -54,6 +54,16 @@ async function read(fields: Partial<EarthquakeRoadImpact>) {
   return json.mock.calls[0][0].roadImpacts[0];
 }
 describe("earthquake public map geometry", () => {
+  it("returns an area-only footprint without expanding any roads", async () => {
+    const area = { latitude: 14.31, longitude: 121.1, radiusMeters: 25 };
+    const result = await read({
+      roadId: null,
+      impactArea: area,
+      edgeRanges: [{ edgeId: "missing", startFraction: 0, endFraction: 1 }],
+    });
+    expect(result.impactArea).toEqual(area);
+    expect(result.affectedSegments).toEqual([]);
+  });
   it("returns the clipped footprint rather than the full mapped road", async () => {
     const result = await read({
       edgeRanges: [{ edgeId: "AB", startFraction: 0.4, endFraction: 0.6 }],

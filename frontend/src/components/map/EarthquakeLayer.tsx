@@ -53,7 +53,16 @@ export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
               }}
             >
               <Tooltip sticky className="hazard-tooltip">
-                {t("Earthquake road impact")} · {t("Reported debris area")}
+                {t(
+                  impact.roadId == null
+                    ? "Earthquake area report"
+                    : "Earthquake road impact",
+                )}{" "}
+                · {t("Reported debris area")}
+                {impact.roadId == null && (
+                  <div>{t("No road routing change")}</div>
+                )}
+                {impact.notes && <div>{impact.notes}</div>}
               </Tooltip>
             </Polygon>
           ) : (
@@ -72,14 +81,23 @@ export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
               }}
             >
               <Tooltip sticky className="hazard-tooltip">
-                {t("Earthquake road impact")} ·{" "}
-                {impact.impactArea!.radiusMeters} m {t("Reported debris area")}
+                {t(
+                  impact.roadId == null
+                    ? "Earthquake area report"
+                    : "Earthquake road impact",
+                )}{" "}
+                · {impact.impactArea!.radiusMeters} m{" "}
+                {t("Reported debris area")}
+                {impact.roadId == null && (
+                  <div>{t("No road routing change")}</div>
+                )}
+                {impact.notes && <div>{impact.notes}</div>}
               </Tooltip>
             </Circle>
           ),
         )}
       {roadImpacts.flatMap((impact) =>
-        (impact.affectedSegments ?? [])
+        (impact.roadId == null ? [] : (impact.affectedSegments ?? []))
           .filter((segment) => segment.length >= 2)
           .map((segment, index) => (
             <Polyline

@@ -1,4 +1,8 @@
 export const filipino: Record<string, string> = {
+  "Earthquake reports": "Mga ulat ng lindol",
+  "No earthquake reports loaded.": "Walang na-load na ulat ng lindol.",
+  "Earthquake area report": "Ulat ng lugar na apektado ng lindol",
+  "No road routing change": "Walang pagbabago sa ruta ng mga kalsada",
   "Hide navigation prompt": "Itago ang pagsisimula ng pag-navigate",
   "Show navigation prompt": "Ipakita ang pagsisimula ng pag-navigate",
   Navigation: "Pag-navigate",

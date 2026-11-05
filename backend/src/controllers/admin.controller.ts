@@ -423,15 +423,44 @@ export async function createEarthquakeRoadImpact(
       !isImpactArea(impactArea) ||
       !isInsideSantaRosa(impactArea.latitude, impactArea.longitude) ||
       !Array.isArray(selectedRoadIds) ||
-      !selectedRoadIds.length ||
+      (selectedRoadIds.length === 0 && confirmedBlocked === true) ||
       selectedRoadIds.length > 100 ||
       selectedRoadIds.some((id: unknown) => typeof id !== "string") ||
       new Set(selectedRoadIds).size !== selectedRoadIds.length
     ) {
       res.status(400).json({
         error:
-          "Choose a valid debris rectangle (5–500 m per side) inside Santa Rosa and confirm its affected roads.",
+          "Choose a valid debris area inside Santa Rosa. Select roads to mark a blockage, or leave roads unselected to save an area-only report.",
       });
+      return;
+    }
+    if (selectedRoadIds.length === 0) {
+      const { data, error } = await req.userSupabase
+        .from("earthquake_road_impacts")
+        .insert([
+          {
+            earthquake_event_id: earthquakeEventId ?? null,
+            road_id: null,
+            impact_level: impactLevel,
+            confirmed_blocked: false,
+            notes: typeof notes === "string" ? notes : null,
+            verified_by: req.profile?.id,
+            impact_area: impactArea,
+            affected_edge_ids: [],
+            edge_ranges: [],
+          },
+        ])
+        .select();
+      if (error) {
+        res
+          .status(403)
+          .json({
+            error:
+              "Could not save the area-only report. Check permissions and apply migration 0024_earthquake_area_only_reports.sql.",
+          });
+        return;
+      }
+      res.status(201).json({ roadImpacts: data });
       return;
     }
     const graph = loadRoadGraph();

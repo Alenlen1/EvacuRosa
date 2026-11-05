@@ -83,7 +83,7 @@ export function CdrrmoDashboard({
       tone: "fire",
     },
     {
-      label: "Earthquake road impacts",
+      label: "Earthquake reports",
       value: hazards.earthquakes,
       icon: TriangleAlert,
       tone: "earthquake",
@@ -170,7 +170,7 @@ export function CdrrmoDashboard({
               </a>
             </div>
           </div>
-          <p>Active flood/fire reports and verified earthquake road impacts.</p>
+          <p>Active flood/fire reports and verified earthquake reports.</p>
           <dl className={styles.hazardTotal} aria-busy={hazardsLoading}>
             <dt>Active hazard records</dt>
             <dd data-unavailable={hazardTotal === null || undefined}>

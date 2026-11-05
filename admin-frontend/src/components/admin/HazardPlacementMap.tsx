@@ -476,19 +476,18 @@ export default function HazardPlacementMap({
         if (
           !debrisArea ||
           !areaReady ||
-          !selectedAreaRoadIds.length ||
           selectedAreaRoadIds.some(
             (id) => !areaRoads.some((road) => road.roadId === id),
           )
         )
           throw new Error(
-            "Review the affected area and select the roads with verified damage before saving.",
+            "Review the affected area before saving. Select only roads with verified damage.",
           );
         await createEarthquakeRoadImpact(authToken, {
           impactArea: debrisArea,
           selectedRoadIds: selectedAreaRoadIds,
           impactLevel: severity as "LOW" | "MODERATE" | "HIGH",
-          confirmedBlocked,
+          confirmedBlocked: selectedAreaRoadIds.length > 0 && confirmedBlocked,
           notes: notes || undefined,
         });
       }
@@ -507,7 +506,7 @@ export default function HazardPlacementMap({
   async function removeHazard(kind: "flood" | "fire" | "impact", id: string) {
     if (removalPending.current || loading) return;
     const label =
-      kind === "impact" ? "earthquake road impact" : `${kind} record`;
+      kind === "impact" ? "earthquake report" : `${kind} record`;
     if (
       !(await confirmDelete({
         title: "Remove hazard record?",
@@ -547,7 +546,7 @@ export default function HazardPlacementMap({
         title: "Remove all hazard records?",
         subject: `${count} loaded records`,
         description:
-          "This removes loaded flood reports, fire incidents and earthquake road impacts. Routing changes immediately. This action cannot be undone.",
+          "This removes loaded flood reports, fire incidents and earthquake reports. Road restrictions from those reports are removed. This action cannot be undone.",
         confirmLabel: "Remove all records",
       }))
     )
@@ -909,7 +908,7 @@ export default function HazardPlacementMap({
           </p>
           <h3 className="mb-3 text-sm font-semibold">
             Report{" "}
-            {mode === "earthquake" ? "a verified road impact" : `a ${mode}`}
+            {mode === "earthquake" ? "an earthquake/debris area" : `a ${mode}`}
           </h3>
           <p className="hazard-timestamp-note">
             Date and time are recorded automatically when you save.
@@ -1035,10 +1034,11 @@ export default function HazardPlacementMap({
                     <RotateCcw size={16} aria-hidden="true" /> Reset selection
                   </button>
                   <p>
-                    This marks observed debris, not the earthquake's reach. Only
-                    confirmed road sections inside it are saved.
+                    This marks observed debris, not the earthquake's reach.
+                    Leave roads unselected to save the area without changing
+                    routing.
                   </p>
-                  <strong>Confirm affected roads</strong>
+                  <strong>Affected roads (optional)</strong>
                   {areaEditing ? (
                     <p role="status">
                       Release the handle to preview affected roads.
@@ -1051,8 +1051,8 @@ export default function HazardPlacementMap({
                     </p>
                   ) : areaRoads.length === 0 ? (
                     <p role="status">
-                      No mapped city road intersects this rectangle. Move or
-                      resize or rotate it.
+                      No mapped city road intersects this rectangle. You can
+                      save it as an area-only report.
                     </p>
                   ) : (
                     <>
@@ -1243,14 +1243,58 @@ export default function HazardPlacementMap({
               )}
 
               {mode === "earthquake" && (
-                <label className="flex items-center gap-2 text-xs text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={confirmedBlocked}
-                    onChange={(e) => setConfirmedBlocked(e.target.checked)}
-                  />
-                  Confirmed blocked — exclude highlighted sections from routes
-                </label>
+                <div>
+                  <label
+                    htmlFor="earthquake-passability"
+                    className="mb-1 block text-xs text-slate-600"
+                  >
+                    Road passability
+                  </label>
+                  <select
+                    id="earthquake-passability"
+                    value={
+                      selectedAreaRoadIds.length === 0
+                        ? "area-only"
+                        : confirmedBlocked
+                          ? "blocked"
+                          : "passable"
+                    }
+                    onChange={(event) =>
+                      setConfirmedBlocked(event.target.value === "blocked")
+                    }
+                    aria-describedby="earthquake-passability-help"
+                    disabled={
+                      loading ||
+                      removingId !== null ||
+                      selectedAreaRoadIds.length === 0
+                    }
+                    className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                  >
+                    {selectedAreaRoadIds.length === 0 && (
+                      <option value="area-only">
+                        Area only — no routing change
+                      </option>
+                    )}
+                    <option value="passable">Passable — impact only</option>
+                    <option value="blocked">Confirmed blocked</option>
+                  </select>
+                  <p
+                    id="earthquake-passability-help"
+                    className="mt-1 text-xs text-slate-600"
+                    role="status"
+                  >
+                    {selectedAreaRoadIds.length === 0
+                      ? "The drawn area will appear on the map. No roads will be blocked or assigned earthquake risk."
+                      : confirmedBlocked
+                        ? "Selected road sections will be excluded from routes."
+                        : "Blockage is optional. Selected roads remain passable; earthquake risk still applies."}
+                  </p>
+                  {selectedAreaRoadIds.length > 0 && (
+                    <p className="mt-1 text-xs text-slate-600">
+                      Passable does not guarantee safety.
+                    </p>
+                  )}
+                </div>
               )}
 
               <div>
@@ -1278,8 +1322,7 @@ export default function HazardPlacementMap({
                     removingId !== null ||
                     lookingUpRoads ||
                     previewLoading ||
-                    (mode === "earthquake" &&
-                      (!areaReady || selectedAreaRoadIds.length === 0)) ||
+                    (mode === "earthquake" && !areaReady) ||
                     (mode === "flood" &&
                       floodCoverage === "section" &&
                       !sectionPreview) ||
@@ -1400,7 +1443,7 @@ export default function HazardPlacementMap({
           {earthquakeRoadImpacts.length > 0 && (
             <section className="space-y-1">
               <h4 className="text-xs font-medium text-amber-900">
-                Earthquake road impacts
+                Earthquake reports
               </h4>
               {earthquakeRoadImpacts.map((impact) => (
                 <div
@@ -1409,15 +1452,21 @@ export default function HazardPlacementMap({
                 >
                   <span>
                     {impact.impactLevel} impact ·{" "}
-                    {impact.impactArea
-                      ? impact.impactArea.shape === "rectangle"
-                        ? `Debris rectangle (${Math.round(impact.impactArea.widthMeters)} × ${Math.round(impact.impactArea.heightMeters)} m, ${Math.round(impact.impactArea.rotationDegrees ?? 0)}°) · Selected section`
-                        : `Debris area (${impact.impactArea.radiusMeters} m radius) · Selected section`
-                      : "Entire mapped road"}{" "}
-                    · Road location: {roadCoordinates(impact.affectedSegments)}
-                    {impact.confirmedBlocked
-                      ? " · blocked"
-                      : " · not marked blocked"}
+                    {impact.roadId == null
+                      ? "Area only · No road routing change"
+                      : impact.impactArea
+                        ? impact.impactArea.shape === "rectangle"
+                          ? `Debris rectangle (${Math.round(impact.impactArea.widthMeters)} × ${Math.round(impact.impactArea.heightMeters)} m, ${Math.round(impact.impactArea.rotationDegrees ?? 0)}°) · Selected section`
+                          : `Debris area (${impact.impactArea.radiusMeters} m radius) · Selected section`
+                        : "Entire mapped road"}{" "}
+                    {impact.roadId == null && impact.impactArea
+                      ? ` · Area center: ${impact.impactArea.latitude.toFixed(6)}, ${impact.impactArea.longitude.toFixed(6)}`
+                      : ` · Road location: ${roadCoordinates(impact.affectedSegments)}`}
+                    {impact.roadId == null
+                      ? ""
+                      : impact.confirmedBlocked
+                        ? " · blocked"
+                        : " · not marked blocked"}
                     {impact.notes && (
                       <span className="block">{impact.notes}</span>
                     )}
