@@ -198,6 +198,57 @@ describe("CDRRMO hazard city enforcement", () => {
     expect(roads[0].distanceMeters).toBe(20);
     expect(roads[0].edgeRanges[0].edgeId).toBe("AB");
   });
+  it("previews and saves a drag-drawn rectangle using server-clipped road intervals", async () => {
+    const area = {
+      shape: "rectangle",
+      latitude: 14.3005,
+      longitude: 121.1,
+      widthMeters: 15,
+      heightMeters: 30,
+    };
+    const preview = await call(
+      getEarthquakeArea,
+      {},
+      {
+        shape: "rectangle",
+        lat: "14.3005",
+        lng: "121.1",
+        width: "15",
+        height: "30",
+      },
+    );
+    expect(preview.from).not.toHaveBeenCalled();
+    expect(preview.res.json.mock.calls[0][0].roads[0].distanceMeters).toBe(30);
+    const { db, res } = await call(createEarthquakeRoadImpact, {
+      impactArea: area,
+      selectedRoadIds: ["inside"],
+      impactLevel: "HIGH",
+      confirmedBlocked: true,
+      edgeRanges: [{ edgeId: "CD", startFraction: 0, endFraction: 1 }],
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+    const saved = db.insert.mock.calls[0][0][0];
+    expect(saved.impact_area).toEqual(area);
+    expect(saved.edge_ranges).toEqual(
+      preview.res.json.mock.calls[0][0].roads[0].edgeRanges,
+    );
+    expect(saved.affected_edge_ids).toEqual(["AB"]);
+  });
+  it("rejects a rectangle with an unconfirmed/outside road without writing", async () => {
+    const { from, res } = await call(createEarthquakeRoadImpact, {
+      impactArea: {
+        shape: "rectangle",
+        latitude: 14.3005,
+        longitude: 121.1,
+        widthMeters: 15,
+        heightMeters: 30,
+      },
+      selectedRoadIds: ["inside", "outside"],
+      impactLevel: "HIGH",
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(from).not.toHaveBeenCalled();
+  });
   it.each([
     { impactLevel: "SEVERE" },
     { impactLevel: "HIGH", confirmedBlocked: "false" },

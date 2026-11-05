@@ -154,7 +154,7 @@ export function MapLegend() {
               </ul>
               <p className="map-legend-note">
                 {t(
-                  "The debris circle shows the reported area. Only highlighted road sections carry the reported impact.",
+                  "The debris outline shows the reported area. Only highlighted road sections carry the reported impact.",
                 )}
               </p>
             </div>

@@ -90,6 +90,28 @@ describe("road-preview bounds before graph work", () => {
     expect(res.status).toHaveBeenCalledWith(400);
     expect(mocks.load).not.toHaveBeenCalled();
   });
+  it.each([
+    { width: "501", height: "20" },
+    { width: "20", height: "0" },
+    { width: "20", height: "" },
+    { width: ["10", "20"], height: "20" },
+    { width: "NaN", height: "20" },
+    { width: "20" },
+    { shape: "polygon", width: "20", height: "20" },
+  ])(
+    "rejects invalid rectangle parameters before loading the graph: %j",
+    (fields) => {
+      const res = response();
+      getEarthquakeArea(
+        {
+          query: { shape: "rectangle", lat: "14.3", lng: "121.1", ...fields },
+        } as unknown as Request,
+        res as unknown as Response,
+      );
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(mocks.load).not.toHaveBeenCalled();
+    },
+  );
   it("rejects an oversized road ID before graph work", () => {
     const res = response();
     getRoadSection(

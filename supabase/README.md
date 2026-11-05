@@ -71,6 +71,16 @@ The location-sharing sections below describe the earlier 0011-0013 implementatio
    route. Offline routing still uses downloaded data and cannot receive changes
    without a connection; known-stale offline data is disabled until refreshed.
 
+## Rectangular earthquake debris selection
+
+Apply `0022_earthquake_rectangular_areas.sql` after migration 0020, then deploy
+the backend and both frontends. CDRRMO can click and drag a rectangle around
+observed debris, move its centre or resize a corner, then confirm affected
+roads. Each side is bounded to 5–500 metres. The backend clips only the selected
+roads to the rectangle and recomputes all routing intervals before saving.
+Existing circular and whole-road reports remain supported. This migration
+changes the footprint constraint; it does not delete reports or change RLS.
+
 ## Without a Supabase project
 
 Public evacuation-center and hazard endpoints return empty collections.

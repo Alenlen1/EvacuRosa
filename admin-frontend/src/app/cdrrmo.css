@@ -260,18 +260,44 @@ html:has(.cdrrmo-workspace) {
   font-size: 12px;
   line-height: 1.6;
 }
-.cdrrmo-workspace .earthquake-area-radius {
-  display: grid;
-  grid-template-columns: 100px minmax(0, 1fr);
+.cdrrmo-workspace .earthquake-draw-toggle {
+  position: absolute;
+  z-index: 500;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  background: #fffdf9;
+  box-shadow: 0 2px 10px #0002;
 }
-.cdrrmo-workspace .earthquake-area-radius input[type="number"] {
-  width: 100%;
+.cdrrmo-workspace .earthquake-draw-toggle[aria-pressed="true"] {
+  border-color: #7c3aed;
+  color: #5b21b6;
 }
-.cdrrmo-workspace .earthquake-area-radius input[type="range"] {
-  width: 100%;
-  accent-color: #7c3aed;
+.cdrrmo-workspace .is-drawing-earthquake,
+.cdrrmo-workspace .is-drawing-earthquake .leaflet-interactive {
+  cursor: crosshair;
+}
+.earthquake-rectangle-handle {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #7c3aed;
+  border-radius: 5px;
+  background: white;
+  color: #5b21b6;
+  box-shadow: 0 1px 5px #0004;
+  font-size: 16px;
+  font-weight: bold;
+}
+.earthquake-rectangle-move {
+  width: 28px;
+  height: 28px;
+  background: #7c3aed;
+  border-color: white;
+  color: white;
 }
 .cdrrmo-workspace .earthquake-area-roads {
   display: grid;

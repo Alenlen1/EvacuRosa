@@ -9,17 +9,40 @@ import {
 } from "../algorithms/earthquakeArea";
 
 export function getEarthquakeArea(req: Request, res: Response) {
-  const values = [req.query.lat, req.query.lng, req.query.radius];
-  if (values.some((value) => typeof value !== "string" || !value.trim())) {
-    res.status(400).json({ error: "Provide a location and affected radius." });
+  const rectangular = req.query.shape === "rectangle";
+  if (
+    req.query.shape !== undefined &&
+    req.query.shape !== "circle" &&
+    !rectangular
+  ) {
+    res.status(400).json({ error: "Choose a supported debris area shape." });
     return;
   }
-  const [latitude, longitude, radiusMeters] = values.map(Number);
-  const area = { latitude, longitude, radiusMeters };
+  const values = [
+    req.query.lat,
+    req.query.lng,
+    ...(rectangular ? [req.query.width, req.query.height] : [req.query.radius]),
+  ];
+  if (values.some((value) => typeof value !== "string" || !value.trim())) {
+    res
+      .status(400)
+      .json({ error: "Provide a location and valid debris area dimensions." });
+    return;
+  }
+  const [latitude, longitude, size, heightMeters] = values.map(Number);
+  const area = rectangular
+    ? {
+        shape: "rectangle" as const,
+        latitude,
+        longitude,
+        widthMeters: size,
+        heightMeters,
+      }
+    : { latitude, longitude, radiusMeters: size };
   if (!isImpactArea(area) || !isInsideSantaRosa(latitude, longitude)) {
     res.status(400).json({
       error:
-        "Select a location inside Santa Rosa and a radius between 5 and 250 metres.",
+        "Select a location inside Santa Rosa. Rectangle sides must be 5–500 metres; legacy circle radii must be 5–250 metres.",
     });
     return;
   }

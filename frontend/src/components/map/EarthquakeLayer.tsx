@@ -1,6 +1,7 @@
 "use client";
 
-import { Circle, Polyline, Tooltip } from "react-leaflet";
+import { Circle, Rectangle, Polyline, Tooltip } from "react-leaflet";
+import { rectangleBounds } from "../../../../backend/src/algorithms/earthquakeArea";
 import { useLanguage } from "@/components/LanguageProvider";
 import type { EarthquakeEvent, EarthquakeRoadImpact } from "@/services/api";
 
@@ -39,24 +40,44 @@ export function EarthquakeLayer({ events, roadImpacts }: EarthquakeLayerProps) {
                 JSON.stringify(impact.impactArea),
             ) === index,
         )
-        .map((impact) => (
-          <Circle
-            key={`debris-${impact.id}`}
-            center={[impact.impactArea!.latitude, impact.impactArea!.longitude]}
-            radius={impact.impactArea!.radiusMeters}
-            pathOptions={{
-              color: "#b45309",
-              weight: 1.5,
-              fillOpacity: 0.08,
-              dashArray: "4 4",
-            }}
-          >
-            <Tooltip sticky className="hazard-tooltip">
-              {t("Earthquake road impact")} · {impact.impactArea!.radiusMeters}{" "}
-              m {t("Reported debris area")}
-            </Tooltip>
-          </Circle>
-        ))}
+        .map((impact) =>
+          impact.impactArea!.shape === "rectangle" ? (
+            <Rectangle
+              key={`debris-${impact.id}`}
+              bounds={rectangleBounds(impact.impactArea!)}
+              pathOptions={{
+                color: "#b45309",
+                weight: 1.5,
+                fillOpacity: 0.08,
+                dashArray: "4 4",
+              }}
+            >
+              <Tooltip sticky className="hazard-tooltip">
+                {t("Earthquake road impact")} · {t("Reported debris area")}
+              </Tooltip>
+            </Rectangle>
+          ) : (
+            <Circle
+              key={`debris-${impact.id}`}
+              center={[
+                impact.impactArea!.latitude,
+                impact.impactArea!.longitude,
+              ]}
+              radius={impact.impactArea!.radiusMeters}
+              pathOptions={{
+                color: "#b45309",
+                weight: 1.5,
+                fillOpacity: 0.08,
+                dashArray: "4 4",
+              }}
+            >
+              <Tooltip sticky className="hazard-tooltip">
+                {t("Earthquake road impact")} ·{" "}
+                {impact.impactArea!.radiusMeters} m {t("Reported debris area")}
+              </Tooltip>
+            </Circle>
+          ),
+        )}
       {roadImpacts.flatMap((impact) =>
         (impact.affectedSegments ?? [])
           .filter((segment) => segment.length >= 2)

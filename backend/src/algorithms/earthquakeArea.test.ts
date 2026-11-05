@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { RoadGraph } from "./astar/graph";
-import { selectEarthquakeArea, isImpactArea } from "./earthquakeArea";
+import {
+  selectEarthquakeArea,
+  isImpactArea,
+  rectangleBounds,
+  rectangleFromCorners,
+  type EarthquakeRectangleArea,
+} from "./earthquakeArea";
 import { calculateRoute } from "./routing";
 import { prepareFloodRouting } from "./floodGraph";
 import { earthquakeImpactByRoadId } from "../types/earthquakeScope";
@@ -67,6 +73,106 @@ const snapshot = (
 });
 
 describe("verified earthquake debris footprints", () => {
+  const rectangle: EarthquakeRectangleArea = {
+    ...point(0.5),
+    shape: "rectangle",
+    widthMeters: 30,
+    heightMeters: 60,
+  };
+  it("clips a rectangle to the affected interval and leaves a parallel nearby road alone", () => {
+    const roads = selectEarthquakeArea(base(), rectangle);
+    expect(roads.map((r) => r.roadId)).toEqual(["road"]);
+    expect(roads[0].distanceMeters).toBe(60);
+    expect(roads[0].edgeRanges[0].startFraction).toBeCloseTo(0.473, 3);
+    expect(roads[0].edgeRanges[0].endFraction).toBeCloseTo(0.527, 3);
+  });
+  it("supports dragging in either direction and round trips geographic corners", () => {
+    const bounds = rectangleBounds(rectangle);
+    const a = { latitude: bounds[0][0], longitude: bounds[0][1] };
+    const b = { latitude: bounds[1][0], longitude: bounds[1][1] };
+    const forward = rectangleFromCorners(a, b);
+    expect(rectangleFromCorners(b, a)).toEqual(forward);
+    expect(forward.widthMeters).toBeCloseTo(30, 6);
+    expect(forward.heightMeters).toBeCloseTo(60, 6);
+    expect(forward.latitude).toBeCloseTo(rectangle.latitude, 10);
+  });
+  it("clips diagonal edges and keeps entirely enclosed edges", () => {
+    const graph = new RoadGraph({
+      nodes: [
+        { id: "A", latitude: 14.304, longitude: 121.099 },
+        { id: "B", latitude: 14.306, longitude: 121.101 },
+        { id: "C", latitude: 14.305, longitude: 121.1 },
+        { id: "D", latitude: 14.30505, longitude: 121.1 },
+      ],
+      edges: [
+        {
+          id: "AB",
+          roadId: "diagonal",
+          fromNodeId: "A",
+          toNodeId: "B",
+          distanceMeters: 310,
+          status: "OPEN",
+        },
+        {
+          id: "CD",
+          roadId: "inside",
+          fromNodeId: "C",
+          toNodeId: "D",
+          distanceMeters: 5.56,
+          status: "OPEN",
+        },
+      ],
+    });
+    const roads = selectEarthquakeArea(graph, rectangle);
+    const diagonal = roads.find((r) => r.roadId === "diagonal")!;
+    expect(diagonal.edgeRanges[0].startFraction).toBeGreaterThan(0.4);
+    expect(diagonal.edgeRanges[0].endFraction).toBeLessThan(0.6);
+    expect(roads.find((r) => r.roadId === "inside")!.edgeRanges[0]).toEqual({
+      edgeId: "CD",
+      startFraction: 0,
+      endFraction: 1,
+    });
+    expect(
+      selectEarthquakeArea(graph, { ...rectangle, longitude: 121.11 }),
+    ).toEqual([]);
+  });
+  it.each([
+    { widthMeters: 0 },
+    { heightMeters: 4 },
+    { widthMeters: 501 },
+    { heightMeters: Infinity },
+    { widthMeters: "30" },
+    { shape: "polygon" },
+    { shape: "rectangle", radiusMeters: 25, widthMeters: undefined },
+    { latitude: NaN },
+  ])("rejects malformed rectangles: %j", (fields) => {
+    expect(isImpactArea({ ...rectangle, ...fields })).toBe(false);
+  });
+  it("blocks only the rectangle's confirmed interval in both directions", () => {
+    const road = selectEarthquakeArea(base(), rectangle)[0];
+    const input = snapshot([
+      impact({ impactArea: rectangle, edgeRanges: road.edgeRanges }),
+    ]);
+    for (const [start, end] of [
+      [point(0), point(1)],
+      [point(1), point(0)],
+    ])
+      expect(
+        calculateRoute(base(), start, end, "walking", input).failureReason,
+      ).toBe("HAZARD_BLOCKED");
+    expect(
+      calculateRoute(base(), point(0), point(0.4), "walking", input).found,
+    ).toBe(true);
+    expect(
+      calculateRoute(
+        base(),
+        { latitude: 14.3, longitude: 121.102 },
+        { latitude: 14.31, longitude: 121.102 },
+        "walking",
+        input,
+      ).found,
+    ).toBe(true);
+  });
   it("clips a long road to the circle and excludes nearby roads outside it", () => {
     const roads = selectEarthquakeArea(base(), area);
     expect(roads).toHaveLength(1);
