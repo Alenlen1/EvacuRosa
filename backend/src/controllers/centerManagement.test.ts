@@ -167,6 +167,34 @@ describe("assigned center workspace identity", () => {
 });
 describe("center role boundaries", () => {
   it.each([
+    "waterStatus",
+    "foodStatus",
+    "medicalStatus",
+    "suppliesUpdatedAt",
+    "water_status",
+    "food_status",
+    "medical_status",
+    "supplies_updated_at",
+  ])(
+    "rejects retired supply field %s for both roles, including mixed updates",
+    (key) => {
+      for (const superAdmin of [false, true]) {
+        expect(() => centerUpdates({ [key]: "low" }, superAdmin)).toThrow();
+        expect(() =>
+          centerUpdates(
+            {
+              [superAdmin ? "name" : "currentOccupancy"]: superAdmin
+                ? "Center"
+                : 5,
+              [key]: "low",
+            },
+            superAdmin,
+          ),
+        ).toThrow();
+      }
+    },
+  );
+  it.each([
     "capacity",
     "name",
     "barangayId",

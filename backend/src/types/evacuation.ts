@@ -12,10 +12,6 @@ export interface EvacuationCenter {
   capacity: number;
   currentOccupancy: number;
   status: EvacuationCenterStatus;
-  waterStatus?: "unknown" | "adequate" | "low" | "unavailable";
-  foodStatus?: "unknown" | "adequate" | "low" | "unavailable";
-  medicalStatus?: "unknown" | "adequate" | "low" | "unavailable";
-  suppliesUpdatedAt?: string | null;
   contactInformation?: string;
   notes?: string;
   updatedAt: string;

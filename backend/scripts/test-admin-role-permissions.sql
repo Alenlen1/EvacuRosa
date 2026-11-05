@@ -27,7 +27,7 @@ update public.evacuation_centers set current_occupancy=80 where id='20000000-000
 do $$ begin if (select status from public.evacuation_centers where id='20000000-0000-4000-8000-000000000001') <> 'NEARLY_FULL' then raise exception 'Wrong threshold'; end if; end $$;
 select pg_temp.denied($q$update public.evacuation_centers set capacity=200 where id='20000000-0000-4000-8000-000000000001'$q$);
 select pg_temp.denied($q$update public.evacuation_centers set name='Forged' where id='20000000-0000-4000-8000-000000000001'$q$);
-select pg_temp.denied($q$update public.evacuation_centers set water_status='adequate' where id='20000000-0000-4000-8000-000000000001'$q$);
+select pg_temp.denied($q$update public.evacuation_centers set contact_information='Forged' where id='20000000-0000-4000-8000-000000000001'$q$);
 select pg_temp.denied($q$update public.evacuation_centers set barangay_id=(select id from public.barangays where name='Aplaya') where id='20000000-0000-4000-8000-000000000001'$q$);
 select pg_temp.denied($q$update public.evacuation_centers set current_occupancy=101 where id='20000000-0000-4000-8000-000000000001'$q$);
 select pg_temp.denied($q$select * from public.barangay_access_accounts$q$);

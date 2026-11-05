@@ -13,10 +13,9 @@ const metadataFields = [
   "capacity",
   "contactInformation",
   "notes",
-  "waterStatus",
-  "foodStatus",
-  "medicalStatus",
 ];
+const centerRecordFields =
+  "id,barangay_id,name,address,latitude,longitude,capacity,current_occupancy,status,contact_information,notes,created_at,updated_at,updated_by";
 export function centerUpdates(
   body: unknown,
   superAdmin: boolean,
@@ -53,19 +52,6 @@ export function centerUpdates(
       if (typeof value !== "number" || !Number.isFinite(value))
         throw new Error("Provide valid coordinates.");
       updates[key] = value;
-    } else if (["waterStatus", "foodStatus", "medicalStatus"].includes(key)) {
-      if (
-        typeof value !== "string" ||
-        !["unknown", "adequate", "low", "unavailable"].includes(value)
-      )
-        throw new Error("Invalid supply status.");
-      updates[
-        key === "waterStatus"
-          ? "water_status"
-          : key === "foodStatus"
-            ? "food_status"
-            : "medical_status"
-      ] = value;
     } else {
       if (
         typeof value !== "string" ||
@@ -91,7 +77,7 @@ export async function listAdminCenters(req: RoleAwareRequest, res: Response) {
   }
   let query = req.userSupabase
     .from("evacuation_centers")
-    .select("*,barangays(name)")
+    .select(`${centerRecordFields},barangays(name)`)
     .order("name");
   if (req.profile.role === "BARANGAY_ADMIN")
     query = query.eq("barangay_id", req.profile.barangay_id);
@@ -173,7 +159,7 @@ export async function createCenter(req: RoleAwareRequest, res: Response) {
       status: "AVAILABLE",
       updated_by: req.profile.id,
     })
-    .select()
+    .select(centerRecordFields)
     .single();
   if (error) {
     res.status(error.code === "23505" ? 409 : 400).json({
@@ -247,7 +233,7 @@ export async function updateCenter(req: RoleAwareRequest, res: Response) {
     .eq("id", req.params.id);
   if (profile.role === "BARANGAY_ADMIN")
     query = query.eq("barangay_id", profile.barangay_id);
-  const { data, error } = await query.select().single();
+  const { data, error } = await query.select(centerRecordFields).single();
   if (error) {
     res.status(error.code === "23505" ? 409 : 403).json({
       error:
