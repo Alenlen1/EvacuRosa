@@ -1,6 +1,6 @@
 import type { Response } from "express";
 import type { RoleAwareRequest } from "../middleware/role.middleware";
-import { SANTA_ROSA_BARANGAYS } from "../geography/barangays";
+import { barangayForEntrance } from "../geography/barangayBoundary";
 import { isInsideSantaRosa } from "../geography/santaRosa";
 import { deriveStatus } from "../services/evacuation.service";
 
@@ -108,14 +108,30 @@ export async function listAdminCenters(req: RoleAwareRequest, res: Response) {
     },
   });
 }
-async function validBarangay(req: RoleAwareRequest, id: unknown) {
+async function assignEntranceBarangay(
+  req: RoleAwareRequest,
+  updates: Record<string, unknown>,
+  latitude: number,
+  longitude: number,
+) {
+  const name = barangayForEntrance(latitude, longitude);
   const { data, error } = await req
     .userSupabase!.from("barangays")
     .select("id")
-    .eq("id", id)
-    .in("name", [...SANTA_ROSA_BARANGAYS])
+    .eq("name", name)
     .maybeSingle();
-  return !error && !!data;
+  if (error || !data)
+    throw new Error(
+      "Could not verify the entrance barangay. Reload and try again.",
+    );
+  if (
+    typeof updates.barangay_id === "string" &&
+    updates.barangay_id.toLowerCase() !== data.id.toLowerCase()
+  )
+    throw new Error(
+      `This entrance is in ${name}. It cannot be assigned to another barangay.`,
+    );
+  updates.barangay_id = data.id;
 }
 export async function createCenter(req: RoleAwareRequest, res: Response) {
   if (!req.userSupabase || req.profile?.role !== "SUPER_ADMIN") {
@@ -126,18 +142,11 @@ export async function createCenter(req: RoleAwareRequest, res: Response) {
   try {
     updates = centerUpdates(req.body, true);
     if (
-      [
-        "barangay_id",
-        "name",
-        "address",
-        "latitude",
-        "longitude",
-        "capacity",
-      ].some((key) => updates[key] === undefined)
+      ["name", "address", "latitude", "longitude", "capacity"].some(
+        (key) => updates[key] === undefined,
+      )
     )
-      throw new Error(
-        "Barangay, name, address, coordinates and capacity are required.",
-      );
+      throw new Error("Name, address, coordinates and capacity are required.");
     if (
       !isInsideSantaRosa(
         updates.latitude as number,
@@ -145,8 +154,12 @@ export async function createCenter(req: RoleAwareRequest, res: Response) {
       )
     )
       throw new Error("Select a location inside Santa Rosa City.");
-    if (!(await validBarangay(req, updates.barangay_id)))
-      throw new Error("The barangay does not exist.");
+    await assignEntranceBarangay(
+      req,
+      updates,
+      updates.latitude as number,
+      updates.longitude as number,
+    );
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
     return;
@@ -223,9 +236,18 @@ export async function updateCenter(req: RoleAwareRequest, res: Response) {
       .json({ error: "Select a location inside Santa Rosa City." });
     return;
   }
-  if (updates.barangay_id && !(await validBarangay(req, updates.barangay_id))) {
-    res.status(400).json({ error: "The barangay does not exist." });
-    return;
+  if (profile.role === "SUPER_ADMIN") {
+    try {
+      await assignEntranceBarangay(
+        req,
+        updates,
+        (updates.latitude ?? center.latitude) as number,
+        (updates.longitude ?? center.longitude) as number,
+      );
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+      return;
+    }
   }
   let query = client
     .from("evacuation_centers")

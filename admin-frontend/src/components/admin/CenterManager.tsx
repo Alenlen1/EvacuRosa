@@ -21,6 +21,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import styles from "./CenterManager.module.css";
 import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
 import { getCdrrmoShelterStatusCounts } from "@/lib/cdrrmoShelterStatus";
+import { entranceBarangay } from "@/lib/entranceBarangay";
 
 const LocationPicker = dynamic(() => import("./CenterLocationPicker"), {
   ssr: false,
@@ -42,7 +43,6 @@ export interface ManagedCenter {
 }
 
 const empty = {
-  barangayId: "",
   name: "",
   address: "",
   latitude: "",
@@ -67,6 +67,11 @@ export function CenterManager({
     [],
   );
   const [draft, setDraft] = useState(empty);
+  const assignment = entranceBarangay(
+    draft.latitude,
+    draft.longitude,
+    barangays,
+  );
   const [editing, setEditing] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [focusRequest, setFocusRequest] = useState(0);
@@ -93,7 +98,7 @@ export function CenterManager({
       block: "start",
     });
     editorRef.current
-      ?.querySelector<HTMLSelectElement>("select")
+      ?.querySelector<HTMLInputElement>("#center-name")
       ?.focus({ preventScroll: true });
   }, [editorOpen, focusRequest]);
 
@@ -107,7 +112,6 @@ export function CenterManager({
   function edit(center: ManagedCenter) {
     setEditing(center.id);
     setDraft({
-      barangayId: center.barangay_id,
       name: center.name,
       address: center.address,
       latitude: String(center.latitude),
@@ -135,11 +139,13 @@ export function CenterManager({
     setError("");
     setMessage("");
     try {
+      if (!assignment.barangay) throw new Error(assignment.message);
       await adminApi(
         editing ? `/evacuation-centers/${editing}` : "/evacuation-centers",
         editing ? "PUT" : "POST",
         {
           ...draft,
+          barangayId: assignment.barangay.id,
           capacity: Number(draft.capacity),
           latitude: Number(draft.latitude),
           longitude: Number(draft.longitude),
@@ -298,7 +304,7 @@ export function CenterManager({
               <p>
                 {editing
                   ? "Update the verified details for this center."
-                  : "Add a verified shelter and assign its barangay."}
+                  : "Add a verified shelter. Its entrance determines the assigned barangay."}
               </p>
             </div>
             <fieldset disabled={busy} className={styles.fields}>
@@ -349,6 +355,7 @@ export function CenterManager({
                     <label className={styles.wide}>
                       Center name
                       <input
+                        id="center-name"
                         required
                         maxLength={500}
                         value={draft.name}
@@ -359,20 +366,15 @@ export function CenterManager({
                     </label>
                     <label>
                       Assigned barangay
-                      <select
-                        required
-                        value={draft.barangayId}
-                        onChange={(e) =>
-                          setDraft({ ...draft, barangayId: e.target.value })
-                        }
-                      >
-                        <option value="">Select barangay</option>
-                        {barangays.map((barangay) => (
-                          <option key={barangay.id} value={barangay.id}>
-                            {barangay.name}
-                          </option>
-                        ))}
-                      </select>
+                      <input
+                        readOnly
+                        value={assignment.barangay?.name ?? ""}
+                        placeholder="Select an entrance first"
+                        aria-describedby="center-barangay-help"
+                      />
+                      <small id="center-barangay-help" role="status">
+                        {assignment.message}
+                      </small>
                     </label>
                     <label>
                       Verified evacuation capacity
@@ -436,7 +438,11 @@ export function CenterManager({
                 </div>
               </div>
               <div className={styles.formActions}>
-                <button className="primary-button" type="submit">
+                <button
+                  className="primary-button"
+                  type="submit"
+                  disabled={!assignment.barangay}
+                >
                   {busy
                     ? "Saving..."
                     : editing

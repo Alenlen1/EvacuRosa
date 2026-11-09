@@ -2,6 +2,12 @@ Boundary data extracted from Philippines JSON Maps (faeldon).
 Source: https://raw.githubusercontent.com/faeldon/philippines-json-maps/master/2023/geojson/municities/hires/bgysubmuns-municity-403428000.0.1.json
 Administrative data attribution: Philippine Statistics Authority and NAMRIA.
 
+santaRosaBarangays.json retains the individual barangay polygons from the same
+2023 dataset. Pinned source (before the publisher moved older datasets):
+https://raw.githubusercontent.com/faeldon/philippines-json-maps/be2ab87b468623889f7cf6d5bc6c3991f0ffb596/2023/geojson/municities/hires/bgysubmuns-municity-403428000.0.1.json
+Retrieved: 2026-11-09. Market Area is labelled Market Area (Poblacion) to match
+the existing application and database names. Coordinates are unchanged.
+
 The MIT License (MIT)
 
 Copyright (c) James Faeldon
