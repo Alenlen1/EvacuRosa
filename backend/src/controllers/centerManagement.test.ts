@@ -267,3 +267,176 @@ describe("center role boundaries", () => {
     },
   );
 });
+
+describe("entrance-based center assignment", () => {
+  const aplayaId = "11111111-1111-4111-8111-111111111111";
+  const sinalhanId = "22222222-2222-4222-8222-222222222222";
+  const entrance = {
+    latitude: 14.321186738188034,
+    longitude: 121.11866693614958,
+  };
+  const center = {
+    id: "center-a",
+    barangay_id: aplayaId,
+    ...entrance,
+    capacity: 100,
+    current_occupancy: 10,
+  };
+  const details = {
+    name: "Verified shelter",
+    address: "Entrance address",
+    capacity: 100,
+    ...entrance,
+  };
+  function client(
+    barangayId: string | null = aplayaId,
+    lookupError: unknown = null,
+  ) {
+    const read = {
+      eq: vi.fn(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: center, error: null }),
+    };
+    read.eq.mockReturnValue(read);
+    const write = {
+      eq: vi.fn(),
+      select: vi.fn(),
+      single: vi.fn().mockResolvedValue({ data: center, error: null }),
+    };
+    write.eq.mockReturnValue(write);
+    write.select.mockReturnValue(write);
+    const records = {
+      select: vi.fn(() => read),
+      insert: vi.fn(() => write),
+      update: vi.fn(() => write),
+    };
+    const barangays = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      maybeSingle: vi
+        .fn()
+        .mockResolvedValue({
+          data: barangayId ? { id: barangayId } : null,
+          error: lookupError,
+        }),
+    };
+    barangays.select.mockReturnValue(barangays);
+    barangays.eq.mockReturnValue(barangays);
+    return {
+      records,
+      barangays,
+      from: vi.fn((table) => (table === "barangays" ? barangays : records)),
+    };
+  }
+  async function call(
+    handler: typeof createCenter,
+    body: unknown,
+    db = client(),
+    role = "SUPER_ADMIN",
+  ) {
+    const res = response();
+    await handler(
+      {
+        profile: { ...profile, role },
+        params: { id: center.id },
+        body,
+        userSupabase: db,
+      } as unknown as RoleAwareRequest,
+      res as unknown as Response,
+    );
+    return { res, db };
+  }
+
+  it("creates a center with its derived barangay when the client omits the assignment", async () => {
+    const { res, db } = await call(createCenter, details);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(db.barangays.eq).toHaveBeenCalledWith("name", "Aplaya");
+    expect(db.records.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ barangay_id: aplayaId }),
+    );
+  });
+  it("accepts a matching assignment", async () => {
+    const { res } = await call(createCenter, {
+      ...details,
+      barangayId: aplayaId,
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+  it("rejects a forged Sinalhan assignment for an Aplaya entrance on creation", async () => {
+    const { res, db } = await call(createCenter, {
+      ...details,
+      barangayId: sinalhanId,
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      error: expect.stringContaining("This entrance is in Aplaya"),
+    });
+    expect(db.records.insert).not.toHaveBeenCalled();
+  });
+  it("reassigns a moved entrance using its new barangay", async () => {
+    const { res, db } = await call(
+      updateCenter,
+      { latitude: 14.330227, longitude: 121.110327 },
+      client(sinalhanId),
+    );
+    expect(res.json).toHaveBeenCalledWith({ center });
+    expect(db.barangays.eq).toHaveBeenCalledWith("name", "Sinalhan");
+    expect(db.records.update).toHaveBeenCalledWith(
+      expect.objectContaining({ barangay_id: sinalhanId }),
+    );
+  });
+  it("validates assignment-only edits against the existing entrance", async () => {
+    const { res, db } = await call(updateCenter, { barangayId: sinalhanId });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(db.records.update).not.toHaveBeenCalled();
+  });
+  it("rejects mismatched assignments even when coordinates are included", async () => {
+    const { res, db } = await call(updateCenter, {
+      ...entrance,
+      barangayId: sinalhanId,
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(db.records.update).not.toHaveBeenCalled();
+  });
+  it("checks partial coordinate updates using the unchanged coordinate", async () => {
+    const { res, db } = await call(updateCenter, {
+      latitude: entrance.latitude,
+    });
+    expect(res.json).toHaveBeenCalledWith({ center });
+    expect(db.barangays.eq).toHaveBeenCalledWith("name", "Aplaya");
+  });
+  it.each([null, { message: "database unavailable" }])(
+    "does not save if the geographic barangay lookup fails: %j",
+    async (error) => {
+      const { res, db } = await call(
+        createCenter,
+        details,
+        client(null, error),
+      );
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(db.records.insert).not.toHaveBeenCalled();
+    },
+  );
+  it("rejects an outside-city entrance before querying barangays or saving", async () => {
+    const { res, db } = await call(createCenter, {
+      ...details,
+      latitude: 0,
+      longitude: 0,
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(db.barangays.eq).not.toHaveBeenCalled();
+    expect(db.records.insert).not.toHaveBeenCalled();
+  });
+  it("keeps barangay occupancy updates scoped without changing assignment", async () => {
+    const { db } = await call(
+      updateCenter,
+      { currentOccupancy: 12 },
+      client(),
+      "BARANGAY_ADMIN",
+    );
+    expect(db.barangays.eq).not.toHaveBeenCalled();
+    expect(db.records.update).toHaveBeenCalledWith({
+      current_occupancy: 12,
+      updated_by: profile.id,
+    });
+  });
+});

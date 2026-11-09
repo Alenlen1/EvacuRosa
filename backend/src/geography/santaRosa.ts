@@ -37,7 +37,7 @@ export function isInsideSantaRosa(
   );
 }
 
-function isInsideRing(
+export function isInsideRing(
   latitude: number,
   longitude: number,
   ring: number[][],
