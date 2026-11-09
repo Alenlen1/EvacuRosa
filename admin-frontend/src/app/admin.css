@@ -185,20 +185,21 @@
   padding: 30px;
   min-height: 0;
   overflow: visible;
-  background: #fffdf9;
+  background: linear-gradient(145deg, #fffdf9, #fbf6ef);
   color: #302825;
   border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 18px;
+  border-radius: 28px;
   box-shadow: 0 20px 70px rgba(33, 3, 10, 0.22);
 }
 .login-panel-kicker {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 8px;
   width: fit-content;
-  padding: 6px 8px;
-  border-radius: 6px;
+  margin-inline: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
   background: #f3eae3;
   font-size: 9px;
   letter-spacing: 1.2px;
@@ -206,7 +207,7 @@
   color: #7f352c;
 }
 .login-panel h2 {
-  text-align: left;
+  text-align: center;
   margin: 16px 0 8px;
   font-size: 30px;
   font-weight: 700;
@@ -215,7 +216,7 @@
 }
 .login-panel-description {
   margin-inline: auto;
-  text-align: left;
+  text-align: center;
   font-size: 14px;
   line-height: 1.55;
   color: #746862;
@@ -237,10 +238,10 @@
 .login-field input {
   width: 100%;
   height: 50px;
-  border: 1px solid #ded7cf;
-  border-radius: 6px;
-  background: #fff;
-  padding: 0 14px;
+  border: 1px solid #e5dcd2;
+  border-radius: 16px;
+  background: #f3eee8;
+  padding: 0 16px;
   color: #332b26;
   font-size: 16px;
   transition:
@@ -252,6 +253,7 @@
   opacity: 1;
 }
 .login-field input:focus-visible {
+  background: #fffdf9;
   border-color: #94524f;
   outline: 0;
   box-shadow: 0 0 0 3px #8b292514;
@@ -295,7 +297,7 @@
 }
 .login-field .secret-visibility-toggle {
   position: absolute;
-  right: 3px;
+  right: 5px;
   top: 50%;
   transform: translateY(-50%);
   display: grid;
@@ -312,7 +314,7 @@
   color: #8c7d72;
   border: 0;
   background: transparent;
-  border-radius: 5px;
+  border-radius: 12px;
 }
 .login-field .secret-visibility-toggle:focus-visible {
   outline: 2px solid #800000;
@@ -334,11 +336,12 @@
   min-height: 50px;
   background: #800000;
   color: #fffaf6;
-  border-radius: 6px;
+  border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
   border: 1px solid #800000;
-  transition: background 0.15s;
+  box-shadow: 0 5px 14px #80000015;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 .login-submit > svg {
   position: absolute;
@@ -347,6 +350,7 @@
 .login-submit:hover:not(:disabled) {
   background: #640000;
   border-color: #640000;
+  box-shadow: 0 6px 18px #80000026;
 }
 .login-submit:disabled {
   opacity: 0.65;
@@ -368,7 +372,7 @@
   border: 1px solid #ecc5bd;
   background: #fff0eb;
   color: #8b201a;
-  border-radius: 5px;
+  border-radius: 12px;
   font-size: 13px;
   line-height: 1.6;
   overflow-wrap: anywhere;
