@@ -19,7 +19,7 @@ import { AssistanceRequestStatus } from "./AssistanceRequestStatus";
 import { AssistanceRequestTabs } from "./AssistanceRequestTabs";
 import {
   clearAssistanceView,
-  readAssistanceView,
+  restoreAssistanceView,
   writeAssistanceView,
   type AssistanceView,
 } from "@/lib/assistanceView";
@@ -149,9 +149,9 @@ export function AssistanceProvider({
       setCredentials(saved);
       setTracking(saved.cached ?? null);
       trackingRef.current = null;
-      const view = readAssistanceView(saved.id);
-      setRequestView(view?.view ?? "overview");
-      setOpen(view?.open ?? !saved.trackingToken);
+      const view = restoreAssistanceView(saved);
+      setRequestView(view.view);
+      setOpen(view.open);
     }
     setViewReady(true);
     setOnline(navigator.onLine);

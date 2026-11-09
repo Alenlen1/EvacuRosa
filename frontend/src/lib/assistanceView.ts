@@ -1,3 +1,5 @@
+import type { AssistanceCredentials } from "./assistance";
+
 export type AssistanceView = "overview" | "location" | "history";
 export const ASSISTANCE_VIEW_KEY = "evacurosa-assistance-view-v1";
 
@@ -18,6 +20,20 @@ export function readAssistanceView(
   } catch {
     return null;
   }
+}
+
+export function restoreAssistanceView(
+  credentials: AssistanceCredentials,
+): { open: boolean; view: AssistanceView } {
+  // Recover unfinished submissions in the background without reopening a form.
+  // A saved cancellation must not reopen the new form after its request resets.
+  if (
+    !credentials.trackingToken ||
+    credentials.cached?.request.status === "CANCELLED"
+  )
+    return { open: false, view: "overview" };
+
+  return readAssistanceView(credentials.id) ?? { open: false, view: "overview" };
 }
 
 // Presentation only; request credentials remain in the existing tracking store.
