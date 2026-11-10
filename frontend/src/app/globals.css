@@ -3676,13 +3676,13 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   float: none;
   margin: 0;
   width: min(100%, 390px);
-  border: 1px solid #dbe3ec;
+  border: 1px solid #e2d7ce;
   border-radius: 14px;
   padding: 10px;
-  background: #fffffff5;
-  box-shadow: 0 3px 16px #17232f20;
+  background: #fffdf9;
+  box-shadow: 0 3px 16px #4c242220;
   pointer-events: auto;
-  color: #243345;
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 .navigation-card > .primary-button {
@@ -3799,10 +3799,10 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .navigation-toggle {
   width: 100%;
   margin-bottom: 4px;
-  border: 1px solid #c4a51c;
+  border: 1px solid #e2d7ce;
   border-radius: 8px;
-  background: #f4d84b;
-  color: #3b250a;
+  background: #fffdf9;
+  color: #6e5146;
 }
 .navigation-card [hidden] {
   display: none;
@@ -3812,21 +3812,17 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   justify-content: center;
   align-items: center;
   gap: 5px;
-  border: 1px solid #d8e0e9;
+  border: 1px solid #e2d7ce;
   border-radius: 8px;
-  background: #f7f9fc;
+  background: #fffdf9;
+  color: #6e5146;
   font-size: 11px;
   padding: 6px;
 }
 .navigation-buttons button[aria-pressed="true"] {
-  background: #eaf2ff;
-  border-color: #98b9e9;
-  color: #174b9f;
-}
-.navigation-buttons button:first-child {
-  background: #f4d84b;
-  color: #3b250a;
-  border-color: #c4a51c;
+  background: #f5e9e3;
+  border-color: #d6b2a6;
+  color: var(--brand-maroon);
 }
 .navigation-direction {
   position: relative;
@@ -4040,10 +4036,10 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   height: 44px;
   flex: 0 0 44px;
   padding: 0;
-  border: 1px solid #c4a51c;
+  border: 1px solid #d6b2a6;
   border-radius: 8px;
-  background: #f4d84b;
-  color: #3b250a;
+  background: #f5e9e3;
+  color: var(--brand-maroon);
 }
 .leaflet-container
   .navigation-card.is-active
@@ -4054,8 +4050,44 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .navigation-card.is-collapsed .navigation-quick-actions {
   margin-bottom: 0;
 }
+.navigation-card .navigation-stop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 100%;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--brand-maroon);
+  border-radius: 10px;
+  background: var(--brand-maroon);
+  color: #fffdf9;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.navigation-card .navigation-stop:hover {
+  background: var(--brand-maroon-dark);
+  border-color: var(--brand-maroon-dark);
+}
+.navigation-card .navigation-recenter:hover,
+.navigation-card .navigation-toggle:hover,
+.navigation-card .navigation-buttons button:hover {
+  background: #f6eee7;
+  border-color: #d6b2a6;
+  color: var(--brand-maroon);
+}
+.navigation-card button:focus-visible {
+  outline: 2px solid var(--brand-maroon);
+  outline-offset: 3px;
+}
+.navigation-card.is-collapsed .navigation-stop {
+  margin-top: 0;
+}
 .navigation-buttons {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
 }
 /* Quieter mobile controls, with secondary map options available on demand. */
 .hazard-layer-toggle,
@@ -4136,18 +4168,19 @@ strip that so our own SVG/HTML markers render without an extra frame. */
     box-shadow: 0 2px 8px #17232f12;
   }
   .public-app .navigation-toggle {
-    background: #f4f6f8;
-    border-color: #dce1e6;
-    color: #43505e;
+    background: #fffdf9;
+    border-color: #e2d7ce;
+    color: #6e5146;
   }
   .public-app .navigation-buttons button {
-    background: #f4f6f8;
-    border-color: #dce1e6;
-    color: #43505e;
+    background: #fffdf9;
+    border-color: #e2d7ce;
+    color: #6e5146;
   }
   .public-app .navigation-buttons button[aria-pressed="true"] {
-    background: #fff4cf;
-    border-color: #d6bd40;
+    background: #f5e9e3;
+    border-color: #d6b2a6;
+    color: var(--brand-maroon);
   }
   .public-app .navigation-card.is-collapsed .navigation-compact-summary {
     margin-left: auto;
@@ -4202,8 +4235,8 @@ strip that so our own SVG/HTML markers render without an extra frame. */
     padding: 10px 12px;
     border: 0;
     border-radius: 16px 16px 0 0;
-    background: white;
-    box-shadow: 0 -4px 14px #17232f10;
+    background: #fffdf9;
+    box-shadow: 0 -4px 14px #4c242210;
   }
   .public-app .navigation-card.is-active.is-collapsed {
     column-gap: 12px;
@@ -4242,7 +4275,7 @@ strip that so our own SVG/HTML markers render without an extra frame. */
     border: 0;
     border-radius: 0;
     box-shadow: none;
-    background: white;
+    background: #fffdf9;
   }
   .public-app:has(.navigation-card.is-active) .mobile-travel-mode {
     padding: 0 12px;

@@ -516,12 +516,25 @@ export function EvacuationNavigation({
                       <Compass size={17} />
                       {t(headingUp ? "Heading up" : "North up")}
                     </button>
-                    <button type="button" onClick={nav.stop}>
-                      <Square size={16} />
-                      {t("Stop Navigation")}
-                    </button>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  className="navigation-stop"
+                  onClick={() => {
+                    nav.stop();
+                    requestAnimationFrame(() => {
+                      document
+                        .querySelector<HTMLButtonElement>(
+                          "#navigation-start-prompt button:not(:disabled)",
+                        )
+                        ?.focus({ preventScroll: true });
+                    });
+                  }}
+                >
+                  <Square size={14} fill="currentColor" aria-hidden="true" />
+                  {t("Stop Navigation")}
+                </button>
               </>
             )}
           </section>
