@@ -4,8 +4,6 @@ import {
   LocateFixed,
   LoaderCircle,
   MapPin,
-  Phone,
-  UserRound,
 } from "lucide-react";
 import type { AssistanceLocation } from "@/lib/assistanceLocation";
 import styles from "./AssistanceProvider.module.css";
@@ -18,8 +16,7 @@ export function AssistanceRequestForm({
   locating,
   submitting,
   online,
-  onNameChange,
-  onContactChange,
+  onEditContact,
   onLocate,
   onStopLocating,
   onSubmit,
@@ -31,8 +28,7 @@ export function AssistanceRequestForm({
   locating: boolean;
   submitting: boolean;
   online: boolean;
-  onNameChange: (value: string) => void;
-  onContactChange: (value: string) => void;
+  onEditContact: () => void;
   onLocate: (forceFresh: boolean) => void;
   onStopLocating: () => void;
   onSubmit: () => void;
@@ -156,36 +152,25 @@ export function AssistanceRequestForm({
           Contact details <span>{name || contact ? "Added" : "Optional"}</span>
           <ChevronDown size={17} aria-hidden="true" />
         </summary>
-        <div className={styles.contactGrid}>
-          <label>
-            <span>
-              <UserRound size={15} aria-hidden="true" />
-              Name
-            </span>
-            <input
-              value={name}
-              maxLength={100}
-              autoComplete="name"
-              placeholder="Your name"
-              disabled={submitting}
-              onChange={(event) => onNameChange(event.target.value)}
-            />
-          </label>
-          <label>
-            <span>
-              <Phone size={15} aria-hidden="true" />
-              Contact number
-            </span>
-            <input
-              type="tel"
-              value={contact}
-              maxLength={40}
-              autoComplete="tel"
-              placeholder="e.g. 09XX XXX XXXX"
-              disabled={submitting}
-              onChange={(event) => onContactChange(event.target.value)}
-            />
-          </label>
+        <div className={styles.savedContactSummary}>
+          <dl>
+            <div>
+              <dt>Name</dt>
+              <dd>{name || "Not added"}</dd>
+            </div>
+            <div>
+              <dt>Contact number</dt>
+              <dd>{contact || "Not added"}</dd>
+            </div>
+          </dl>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={submitting}
+            onClick={onEditContact}
+          >
+            Edit saved contact details
+          </button>
         </div>
       </details>
       {!online && (

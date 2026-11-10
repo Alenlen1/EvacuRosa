@@ -313,6 +313,75 @@ dialog.dialog {
 .contactGrid input::placeholder {
   color: #a29488;
 }
+.dialog[data-view="contact"] {
+  width: min(500px, calc(100vw - 24px));
+}
+.savedContactFields {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 6px 0;
+}
+.savedContactFields small {
+  margin-left: auto;
+  color: #807368;
+  font-weight: 400;
+}
+.dialog .savedContactFields input {
+  width: 100%;
+  font-size: 16px;
+}
+.dialog .contactFieldError {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #9b2d20;
+}
+.dialog .contactPrivacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f5f0e8;
+  color: #746456;
+  font-size: 12px;
+}
+.contactPrivacy svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #800000;
+}
+.contactActions {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+}
+.contactActions button,
+.editContactButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.dialog .editContactButton {
+  margin-top: 16px;
+}
+.savedContactSummary {
+  padding: 0 0 12px;
+}
+.savedContactSummary dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 12px;
+}
+.savedContactSummary dt {
+  color: #807368;
+  font-size: 11px;
+}
+.savedContactSummary dd {
+  margin: 4px 0 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
 .dialog .submitButton {
   display: flex;
   align-items: center;
