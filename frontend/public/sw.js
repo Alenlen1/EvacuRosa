@@ -1,4 +1,4 @@
-const CACHE_NAME = "evacurosa-shell-v8";
+const CACHE_NAME = "evacurosa-shell-v9";
 const APP_SHELL = [
   "/",
   "/manifest.json",
@@ -106,6 +106,21 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/_next/static/") ||
     APP_SHELL.slice(1).includes(url.pathname);
   if (!navigation && !asset) return;
+  // Worker bootstraps can carry their entry chunks in a URL fragment.
+  // A cached response has a final URL without that fragment; forwarding it
+  // changes worker.location and loses the bootstrap config. A new response
+  // preserves the worker's original request URL, online and offline alike.
+  const workerEntry =
+    event.request.destination === "worker" ||
+    event.request.destination === "sharedworker";
+  const forClient = (response) =>
+    workerEntry
+      ? new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        })
+      : response;
 
   event.respondWith(
     (async () => {
@@ -114,7 +129,7 @@ self.addEventListener("fetch", (event) => {
       const cached = await cache.match(key);
       // Use fresh HTML online to match the current build. Only versioned assets
       // are cache-first. HTML must never be a fallback for JavaScript or images.
-      if (asset && !appManifest && cached) return cached;
+      if (asset && !appManifest && cached) return forClient(cached);
       try {
         // Installed-app settings (including orientation) must not remain pinned
         // to the manifest saved at first installation.
@@ -123,9 +138,9 @@ self.addEventListener("fetch", (event) => {
           : await fetch(event.request);
         if (appManifest && !response.ok && cached) return cached;
         if (response.ok) await cache.put(key, response.clone()).catch(() => {});
-        return response;
+        return forClient(response);
       } catch (error) {
-        if (cached) return cached;
+        if (cached) return forClient(cached);
         throw error;
       }
     })(),

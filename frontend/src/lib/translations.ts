@@ -167,6 +167,10 @@ export const filipino: Record<string, string> = {
   "Preparing offline routing… Keep the app open.":
     "Inihahanda ang ruta para sa offline… Panatilihing bukas ang app.",
   "Offline routing is not ready.": "Hindi pa handa ang ruta para sa offline.",
+  "Saving roads and evacuation information automatically…":
+    "Awtomatikong sine-save ang mga kalsada at impormasyon ng evacuation center…",
+  "Saving app files for offline use… Keep the app open.":
+    "Sine-save ang mga file para sa offline… Panatilihing bukas ang app.",
   "Saved data": "Naka-save na datos",
   "Update offline data": "I-update ang offline na datos",
   "Retry download": "Subukang i-download muli",

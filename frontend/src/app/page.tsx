@@ -211,6 +211,9 @@ function PublicHome({
     isOnline || (offlineStatus.state === "ready" && !offlineHazardsStale);
   useEffect(() => {
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let retries = 0;
+    let waitingForVisible = false;
     const update = (status: OfflineStatus) => {
       if (!cancelled) {
         setOfflineStatus(status);
@@ -223,9 +226,35 @@ function PublicHome({
           setOfflineHazardsStale(false);
       }
     };
-    void prepareOfflineRouting(isOnline, offlineRetry > 0, update).then(update);
+    const retry = () => {
+      if (cancelled || !isOnline || !navigator.onLine) return;
+      if (document.visibilityState !== "visible") {
+        waitingForVisible = true;
+        return;
+      }
+      waitingForVisible = false;
+      retries++;
+      // Reuse a verified road package; a transient startup failure must not
+      // force the user to download the full graph again.
+      void prepare(false);
+    };
+    async function prepare(force: boolean) {
+      const status = await prepareOfflineRouting(isOnline, force, update);
+      if (cancelled) return;
+      update(status);
+      if (status.state === "unavailable" && isOnline && retries < 2) {
+        retryTimer = setTimeout(retry, retries === 0 ? 5000 : 15000);
+      }
+    }
+    const visible = () => {
+      if (waitingForVisible && document.visibilityState === "visible") retry();
+    };
+    document.addEventListener("visibilitychange", visible);
+    void prepare(offlineRetry > 0);
     return () => {
       cancelled = true;
+      clearTimeout(retryTimer);
+      document.removeEventListener("visibilitychange", visible);
     };
   }, [isOnline, offlineRetry]);
 
