@@ -1195,6 +1195,8 @@ function PublicHome({
                 placement="floating"
                 {...emergencyContactProps}
               />
+            </div>
+            <div className="map-legend-control">
               <MapLegend />
             </div>
           </div>
