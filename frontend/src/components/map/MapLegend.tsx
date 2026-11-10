@@ -15,24 +15,44 @@ export function MapLegend() {
       const button = trigger.current;
       if (!button) return;
       const anchor = button.getBoundingClientRect();
-      const map = button.closest(".map-canvas")?.getBoundingClientRect();
-      const top = Math.max(8, map?.top ?? 8);
-      const bottom = Math.min(
+      const canvas = button.closest(".map-canvas");
+      const map = canvas?.getBoundingClientRect();
+      const width = Math.min(264, window.innerWidth - 24);
+      const left = Math.max(
+        12,
+        Math.min(anchor.right - width, window.innerWidth - width - 12),
+      );
+      let top = Math.max(8, map?.top ?? 8);
+      let bottom = Math.min(
         window.innerHeight - 8,
         map?.bottom ?? window.innerHeight - 8,
       );
+      const emergency = canvas
+        ?.querySelector(
+          ".emergency-contact-floating .emergency-contact-trigger",
+        )
+        ?.getBoundingClientRect();
+      // Reserve space for the Emergency button rather than covering it with
+      // the legend. On a short screen the legend can open upward instead.
+      if (
+        emergency &&
+        emergency.height > 0 &&
+        emergency.left < left + width &&
+        emergency.right > left
+      ) {
+        if (emergency.top >= anchor.bottom)
+          bottom = Math.min(bottom, emergency.top - 8);
+        else if (emergency.bottom <= anchor.top)
+          top = Math.max(top, emergency.bottom + 8);
+      }
       const above = anchor.top - top - 8;
       const below = bottom - anchor.bottom - 8;
       const upward = above > below;
       const height = Math.max(44, Math.min(300, upward ? above : below));
-      const width = Math.min(264, window.innerWidth - 24);
       setPosition({
         width,
         maxHeight: height,
-        left: Math.max(
-          12,
-          Math.min(anchor.right - width, window.innerWidth - width - 12),
-        ),
+        left,
         top: upward ? undefined : anchor.bottom + 8,
         bottom: upward ? window.innerHeight - anchor.top + 8 : undefined,
       });
@@ -55,6 +75,10 @@ export function MapLegend() {
     if (trigger.current) observer.observe(trigger.current);
     const map = trigger.current?.closest(".map-canvas");
     if (map) observer.observe(map);
+    const emergency = map?.querySelector(
+      ".emergency-contact-floating .emergency-contact-trigger",
+    );
+    if (emergency) observer.observe(emergency);
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, true);
     document.addEventListener("pointerdown", dismiss);

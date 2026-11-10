@@ -108,6 +108,24 @@
   .mobile:global(.public-app) :global(.public-location-control) {
     margin-right: 12px;
   }
+  .mobile:global(.public-app) :global(.map-canvas) {
+    --mobile-map-controls-top: 64px;
+  }
+  .mobile:global(.public-app) :global(.map-canvas .leaflet-top) {
+    top: var(--mobile-map-controls-top);
+  }
+  .mobile:global(.public-app)
+    :global(.map-canvas:has(.navigation-card.is-active)) {
+    --mobile-map-controls-top: 0px;
+  }
+  .mobile:global(.public-app) :global(.map-legend-control .map-legend) {
+    position: absolute;
+    /* Leaflet's top margin, the location button and an 8px gap. */
+    top: calc(var(--mobile-map-controls-top) + 10px + 46px + 8px);
+    right: 12px;
+    bottom: auto;
+    z-index: 1000;
+  }
   .mobile:global(.public-app) :global(.hazard-layer-controls) {
     left: 0;
     bottom: 24px;
@@ -118,7 +136,7 @@
     margin-bottom: 0;
   }
   .mobile:global(.public-app) :global(.hazard-layer-toggle),
-  .mobile:global(.public-app) :global(.map-secondary-controls .map-legend) {
+  .mobile:global(.public-app) :global(.map-legend-control .map-legend) {
     border: 1px solid #e2d7ce;
     border-radius: 11px;
     background: #fffdf9;
