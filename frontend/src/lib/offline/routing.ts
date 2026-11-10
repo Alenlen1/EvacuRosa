@@ -226,6 +226,7 @@ export async function prepareOfflineRouting(
         progress?.({
           state: "downloading",
           updatedAt: saved?.snapshot.updatedAt,
+          message: "Saving roads and evacuation information automatically…",
         });
         if (
           !saved ||
@@ -241,6 +242,12 @@ export async function prepareOfflineRouting(
           message: "Connect once to download offline routing data.",
         };
       await loadWorker(saved);
+      if (online)
+        progress?.({
+          state: "downloading",
+          updatedAt: saved.snapshot.updatedAt,
+          message: "Saving app files for offline use… Keep the app open.",
+        });
       await prepareAppAssets();
       const mapStatus = await prepareMap(
         online,
