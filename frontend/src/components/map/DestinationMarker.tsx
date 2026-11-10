@@ -2,6 +2,7 @@
 
 import { Marker, Popup, Tooltip } from "react-leaflet";
 import { createDivIcon } from "./icons";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const destinationIcon = createDivIcon(
   `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -24,9 +25,13 @@ export function DestinationMarker({
   label,
   onRemove,
 }: DestinationMarkerProps) {
-  const title = `Destination: ${label ?? `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`}`;
+  const { t } = useLanguage();
+  const title = t("Destination: {place}", {
+    place: label || t("Selected location"),
+  });
   return (
     <Marker
+      key={title}
       position={[latitude, longitude]}
       icon={destinationIcon}
       title={title}
@@ -37,7 +42,7 @@ export function DestinationMarker({
         <div className="center-popup">
           <strong>{title}</strong>
           <button type="button" className="secondary-button" onClick={onRemove}>
-            Remove destination
+            {t("Remove destination")}
           </button>
         </div>
       </Popup>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/components/LanguageProvider";
 import type { EvacuationCenter, LatLng } from "@/services/api";
 import {
-  coordinateLabel,
+  selectedLocationLabel,
   destinationKey,
   reverseGeocode,
   type DestinationLabel,
@@ -14,6 +15,7 @@ export function useDestinationLabel(
   centers: EvacuationCenter[],
   online: boolean,
 ) {
+  const { t } = useLanguage();
   const latitude = destination?.latitude;
   const longitude = destination?.longitude;
   const key = destination
@@ -63,7 +65,7 @@ export function useDestinationLabel(
   return {
     label:
       (resolved?.key === key ? resolved.label : null) ??
-      coordinateLabel(destination.latitude, destination.longitude),
+      selectedLocationLabel(t("Selected location")),
     loading: online && resolved?.key !== key,
   };
 }

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  coordinateLabel,
+  selectedLocationLabel,
   createReverseGeocoder,
   formatPhotonLabel,
 } from "./reverseGeocoding";
@@ -32,7 +32,7 @@ describe("destination labels", () => {
     });
   });
 
-  it("rejects missing and malformed names and formats the coordinate fallback", () => {
+  it("uses a friendly label when a place name is unavailable", () => {
     for (const value of [
       null,
       {},
@@ -41,9 +41,10 @@ describe("destination labels", () => {
     ]) {
       expect(formatPhotonLabel(value)).toBeNull();
     }
-    expect(coordinateLabel(14.312412, 121.112312).title).toBe(
-      "14.3124, 121.1123",
-    );
+    expect(selectedLocationLabel()).toEqual({
+      title: "Selected location",
+      source: "selected",
+    });
   });
 
   it("reuses cached names and sends only destination coordinates", async () => {
@@ -117,7 +118,7 @@ describe("destination labels", () => {
     expect(await promise).toBeNull();
   });
 
-  it("aborts a timed-out request and resolves to the coordinate fallback", async () => {
+  it("aborts a timed-out request without blocking destination selection", async () => {
     vi.useFakeTimers();
     const request = vi.fn<typeof fetch>().mockImplementation(
       (_url, options) =>

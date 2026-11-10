@@ -1,16 +1,15 @@
 export interface DestinationLabel {
   title: string;
   subtitle?: string;
-  source: "coordinates" | "center" | "photon";
+  source: "selected" | "center" | "photon";
 }
 
-export function coordinateLabel(
-  latitude: number,
-  longitude: number,
+export function selectedLocationLabel(
+  title = "Selected location",
 ): DestinationLabel {
   return {
-    title: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-    source: "coordinates",
+    title,
+    source: "selected",
   };
 }
 
