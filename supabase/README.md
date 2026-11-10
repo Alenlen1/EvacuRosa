@@ -150,7 +150,7 @@ This change does not seed personal data or automatically contact emergency servi
    without prompting. A disconnected road, forbidden travel mode, full centers,
    or network error alone must not be labeled a hazard-blocked route.
 
-### Removing a request after rescue
+### Archived assistance requests
 
 The shared-location dashboard shows compact cards with optional names/contact,
 travel mode, GPS accuracy and coordinates. Nearby street names are resolved
@@ -161,20 +161,30 @@ card keeps the coordinates and displays **Street name unavailable**. This also
 works for existing submissions, without a database migration. Timestamps,
 destination and the reference ID are under **Request details**.
 
-Apply migration `0012_cdrrmo_delete_assistance_requests.sql` with
-`npx supabase db push`. Each CDRRMO request card has a **Delete after rescue**
-button. Staff must confirm that the person has been rescued and confirm the
-permanent deletion of the selected snapshot/contact details. There is no undo
-or rescue-history record in this feature; deletion does not notify the person.
-Only SUPER_ADMIN can delete, enforced by both the API and the database RLS
-policy. The backend uses the staff member's JWT, not the service-role key.
+Cancelled and completed requests automatically move from **Active requests**
+to the read-only **Archive** tab. Locations and status history remain available
+until existing scheduled retention cleanup removes them. Archiving does not
+reopen requests or change public request tracking. The legacy permanent-delete
+API is no longer offered by the shared-location interface.
 
-Test cancel (row stays), confirm (only selected row disappears), and failed
-deletion (error shown, no success message). Ensure subsequent refreshes do not
-restore a deleted row. A barangay account must receive HTTP 403, and direct
-Supabase deletion by that account must not remove any rows. Anonymous clients
-must have no delete access. Use test records; no live requests are deleted by
-the migration.
+### Archived hazards
+
+Apply `0025_cdrrmo_hazard_archives.sql` after `0024` before deploying the
+updated backend and admin frontend. Removed hazard records are preserved in
+a private CDRRMO archive. Confirming **Restore hazard** republishes the original
+record and its saved road restrictions. Failed removal or restoration rolls
+back without discarding the record. Previously deleted hazards cannot be
+recovered by this migration. See [archive deployment and behavior](../backend/ARCHIVES.md).
+
+Apply `0026_delete_hazard_archives.sql` after `0025` to enable **Delete permanently**
+in the hazard archive. This confirmed CDRRMO-only action deletes the saved
+archive permanently; it does not delete active hazard reports. Do not rerun
+`0025` if it is already installed.
+
+Apply `0027_delete_active_hazards.sql` to enable the separate confirmed **Delete**
+action beside **Archive** in active hazard records. Shared location Archive also
+offers confirmed permanent deletion of completed/cancelled requests, using the
+existing closed-request deletion policy and cascading status-history cleanup.
 
 # Flood severity and routing
 

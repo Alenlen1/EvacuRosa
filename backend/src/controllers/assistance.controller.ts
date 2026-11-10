@@ -276,12 +276,30 @@ export async function listAssistance(req: RoleAwareRequest, res: Response) {
     res.status(403).json({ error: "CDRRMO access required." });
     return;
   }
+  const archived = req.query.scope === "archive";
+  const offset = Number(req.query.offset ?? 0);
+  if (
+    (req.query.scope !== undefined &&
+      !["active", "archive"].includes(String(req.query.scope))) ||
+    !Number.isSafeInteger(offset) ||
+    offset < 0 ||
+    offset > 100000
+  ) {
+    res.status(400).json({ error: "Invalid request archive filter." });
+    return;
+  }
   let query = req.userSupabase
     .from("assistance_requests")
     .select(requestColumns)
-    .neq("status", "CANCELLED")
-    .order("created_at", { ascending: false })
-    .limit(100);
+    .in(
+      "status",
+      archived
+        ? ["COMPLETED", "CANCELLED"]
+        : ["PENDING", "ACKNOWLEDGED", "DISPATCHED"],
+    )
+    .order(archived ? "status_updated_at" : "created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(offset, offset + 100);
   if (req.query.status) {
     if (!assistanceStatuses.includes(req.query.status as never)) {
       res.status(400).json({ error: "Invalid status filter." });
@@ -296,7 +314,8 @@ export async function listAssistance(req: RoleAwareRequest, res: Response) {
   }
   const locationName = createAssistanceLocationLookup();
   res.json({
-    requests: (data ?? []).map((row) => ({
+    hasMore: (data?.length ?? 0) > 100,
+    requests: (data ?? []).slice(0, 100).map((row) => ({
       ...row,
       location_name: locationName(row.latitude, row.longitude),
       destination_name: locationName(
@@ -406,8 +425,13 @@ export async function deleteAssistance(req: RoleAwareRequest, res: Response) {
     res.status(403).json({ error: "CDRRMO access required." });
     return;
   }
-  if (!validRequestId(req.params.id)) {
-    res.status(400).json({ error: "Invalid assistance request ID." });
+  if (!validRequestId(req.params.id) || req.body?.confirmed !== true) {
+    res
+      .status(400)
+      .json({
+        error:
+          "A valid assistance request ID and explicit deletion confirmation are required.",
+      });
     return;
   }
   const { data, error } = await req.userSupabase

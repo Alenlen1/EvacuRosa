@@ -14,7 +14,10 @@ import {
 } from "react-leaflet";
 import type { AssistanceRequest } from "@/services/api";
 import { SANTA_ROSA_CITY_CENTER } from "@/lib/mapBounds";
-import { isVisibleAssistanceRequest } from "@/lib/assistanceVisibility";
+import {
+  isArchivedAssistanceRequest,
+  isVisibleAssistanceRequest,
+} from "@/lib/assistanceVisibility";
 import {
   ASSISTANCE_MAP_COLORS as colors,
   assistanceDisplayName,
@@ -166,14 +169,18 @@ export default function AssistanceLocationMap({
   requests,
   selection,
   onSelectRequest,
+  archived = false,
 }: {
   requests: AssistanceRequest[];
   selection: Selection;
   onSelectRequest: (id: string) => void;
+  archived?: boolean;
 }) {
   const valid = requests.filter(
     (item) =>
-      isVisibleAssistanceRequest(item) &&
+      (archived
+        ? isArchivedAssistanceRequest(item)
+        : isVisibleAssistanceRequest(item)) &&
       Number.isFinite(item.latitude) &&
       Number.isFinite(item.longitude) &&
       Math.abs(item.latitude) <= 90 &&

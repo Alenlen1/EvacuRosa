@@ -1,0 +1,115 @@
+.archive {
+  padding: 22px;
+  color: #302825;
+}
+.heading,
+.recordHeading,
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.heading {
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.heading h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 20px;
+}
+.archive p {
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #746457;
+  overflow-wrap: anywhere;
+}
+.archive button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.records {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+}
+.record {
+  padding: 18px;
+  border: 1px solid #e5ddd5;
+  border-radius: 14px;
+  background: #fffdf9;
+}
+.recordHeading h4 {
+  margin: 0;
+  font-size: 16px;
+}
+.recordHeading span {
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: #f4ebe3;
+  color: #800000;
+  font-size: 11px;
+}
+.record > strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+}
+.record details {
+  margin: 12px 0;
+  font-size: 12px;
+  color: #746457;
+}
+.record summary {
+  cursor: pointer;
+}
+.record .warning {
+  color: #9b4824;
+}
+.notes {
+  white-space: pre-wrap;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.archive .deleteButton {
+  color: #9c3025;
+  border-color: #dfb8ae;
+}
+.archive .deleteButton:not(:disabled):hover {
+  background: #f9ece9;
+}
+.archive .error {
+  padding: 12px;
+  background: #f9ece9;
+  color: #922b20;
+  border-radius: 8px;
+}
+.archive .notice {
+  padding: 12px;
+  background: #edf5ed;
+  color: #356046;
+  border-radius: 8px;
+}
+.pagination {
+  justify-content: center;
+  margin-top: 18px;
+  font-size: 13px;
+}
+@media (max-width: 540px) {
+  .archive {
+    padding: 14px;
+  }
+  .heading {
+    flex-direction: column;
+  }
+}

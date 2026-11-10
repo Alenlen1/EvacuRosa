@@ -62,6 +62,7 @@ function query(
     "in",
     "order",
     "limit",
+    "range",
     "delete",
     "update",
     "lte",
@@ -303,13 +304,17 @@ describe("CDRRMO assistance access", () => {
     );
     expect(from).toHaveBeenCalledWith("assistance_requests");
     expect(q.select.mock.calls[0][0]).not.toContain("tracking_token_hash");
-    expect(q.neq).toHaveBeenCalledWith("status", "CANCELLED");
-    expect(q.neq.mock.invocationCallOrder[0]).toBeLessThan(
-      q.limit.mock.invocationCallOrder[0],
+    expect(q.in).toHaveBeenCalledWith("status", [
+      "PENDING",
+      "ACKNOWLEDGED",
+      "DISPATCHED",
+    ]);
+    expect(q.in.mock.invocationCallOrder[0]).toBeLessThan(
+      q.range.mock.invocationCallOrder[0],
     );
     expect(mocks.from).not.toHaveBeenCalled();
   });
-  it("excludes cancellations without removing other staff status filters", async () => {
+  it("keeps status filters within the active request scope", async () => {
     const q = query({ data: [], error: null }),
       r = response();
     await listAssistance(
@@ -320,9 +325,48 @@ describe("CDRRMO assistance access", () => {
       } as unknown as RoleAwareRequest,
       r as unknown as Response,
     );
-    expect(q.neq).toHaveBeenCalledWith("status", "CANCELLED");
+    expect(q.in).toHaveBeenCalledWith("status", [
+      "PENDING",
+      "ACKNOWLEDGED",
+      "DISPATCHED",
+    ]);
     expect(q.eq).toHaveBeenCalledWith("status", "PENDING");
     expect(q.delete).not.toHaveBeenCalled();
+  });
+  it("retrieves completed and cancelled requests in the archive without changing them", async () => {
+    const q = query({ data: [], error: null }),
+      r = response();
+    await listAssistance(
+      {
+        query: { scope: "archive", offset: "100" },
+        profile: { role: "SUPER_ADMIN" },
+        userSupabase: { from: () => q },
+      } as unknown as RoleAwareRequest,
+      r as unknown as Response,
+    );
+    expect(q.in).toHaveBeenCalledWith("status", ["COMPLETED", "CANCELLED"]);
+    expect(q.range).toHaveBeenCalledWith(100, 200);
+    expect(q.update).not.toHaveBeenCalled();
+    expect(q.delete).not.toHaveBeenCalled();
+  });
+  it.each([
+    { scope: "everything" },
+    { offset: "-1" },
+    { offset: "Infinity" },
+    { offset: "1.5" },
+  ])("rejects malformed archive filters: %j", async (filters) => {
+    const from = vi.fn(),
+      r = response();
+    await listAssistance(
+      {
+        query: filters,
+        profile: { role: "SUPER_ADMIN" },
+        userSupabase: { from },
+      } as unknown as RoleAwareRequest,
+      r as unknown as Response,
+    );
+    expect(r.status).toHaveBeenCalledWith(400);
+    expect(from).not.toHaveBeenCalled();
   });
   it("deletes only closed records", async () => {
     const q = query({ data: [{ id }], error: null }),
@@ -330,6 +374,7 @@ describe("CDRRMO assistance access", () => {
     await deleteAssistance(
       {
         params: { id },
+        body: { confirmed: true },
         profile: { role: "SUPER_ADMIN" },
         userSupabase: { from: () => q },
       } as unknown as RoleAwareRequest,
@@ -338,5 +383,20 @@ describe("CDRRMO assistance access", () => {
     expect(q.eq).toHaveBeenCalledWith("id", id);
     expect(q.in).toHaveBeenCalledWith("status", ["COMPLETED", "CANCELLED"]);
     expect(r.status).toHaveBeenCalledWith(204);
+  });
+  it("rejects deletion without explicit confirmation", async () => {
+    const r = response();
+    const from = vi.fn();
+    await deleteAssistance(
+      {
+        params: { id },
+        body: {},
+        profile: { role: "SUPER_ADMIN" },
+        userSupabase: { from },
+      } as unknown as RoleAwareRequest,
+      r as unknown as Response,
+    );
+    expect(r.status).toHaveBeenCalledWith(400);
+    expect(from).not.toHaveBeenCalled();
   });
 });

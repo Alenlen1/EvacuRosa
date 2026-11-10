@@ -1,14 +1,14 @@
 ﻿"use client";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Clock3, Info, MapPin, RefreshCw } from "lucide-react";
+import { Clock3, Info, MapPin, RefreshCw, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import {
   assistanceEventsUrl,
-  deleteAssistanceRequest,
-  fetchAssistanceRequests,
+  fetchAssistanceRequestPage,
   fetchAssistanceDetails,
   updateAssistanceStatus,
+  deleteAssistanceRequest,
   type AssistanceRequest,
   type AssistanceStatus,
 } from "@/services/api";
@@ -21,11 +21,11 @@ import {
 } from "@/lib/assistance";
 import { TRAVEL_MODES } from "@/lib/travelTime";
 import styles from "./AssistanceRequests.module.css";
+import { useConfirmation } from "./DeleteConfirmationDialog";
 import {
-  useConfirmation,
-  useDeleteConfirmation,
-} from "./DeleteConfirmationDialog";
-import { isVisibleAssistanceRequest } from "@/lib/assistanceVisibility";
+  isArchivedAssistanceRequest,
+  isVisibleAssistanceRequest,
+} from "@/lib/assistanceVisibility";
 import {
   ASSISTANCE_MAP_COLORS,
   assistanceDisplayName,
@@ -41,9 +41,30 @@ const legendStatuses = [
   { status: "ACKNOWLEDGED", label: "Acknowledged" },
   { status: "DISPATCHED", label: "Dispatched" },
   { status: "COMPLETED", label: "Completed" },
+  { status: "CANCELLED", label: "Cancelled" },
 ] as const;
 export function AssistanceRequests() {
-  const { confirmDelete, deleteDialog } = useDeleteConfirmation();
+  const [archived, setArchived] = useState(false);
+  return (
+    <AssistanceRequestsList
+      key={archived ? "archive" : "active"}
+      archived={archived}
+      onArchiveChange={setArchived}
+    />
+  );
+}
+function AssistanceRequestsList({
+  archived,
+  onArchiveChange,
+}: {
+  archived: boolean;
+  onArchiveChange: (value: boolean) => void;
+}) {
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const visibleRequest = archived
+    ? isArchivedAssistanceRequest
+    : isVisibleAssistanceRequest;
   const { confirm: confirmAction, dialog: actionDialog } = useConfirmation();
   const [mobileView, setMobileView] = useState<"requests" | "map">("requests");
   const [requests, setRequests] = useState<AssistanceRequest[]>([]),
@@ -119,14 +140,17 @@ export function AssistanceRequests() {
           const session = await supabase?.auth.getSession();
           const token = session?.data.session?.access_token;
           if (!token) throw Error("Sign in again to view assistance requests.");
-          const rows = await fetchAssistanceRequests(
+          const result = await fetchAssistanceRequestPage(
             token,
             abort.signal,
             filter || undefined,
+            archived ? "archive" : "active",
+            page * 100,
           );
           if (stopped) return;
           if (version === mutationVersion.current && !pending.current) {
-            const visible = rows.filter(isVisibleAssistanceRequest);
+            const visible = result.requests.filter(visibleRequest);
+            setHasMore(result.hasMore);
             setRequests(visible);
             setSelection((current) =>
               current && visible.some((row) => row.id === current.id)
@@ -223,7 +247,7 @@ export function AssistanceRequests() {
       window.removeEventListener("offline", offline);
       document.removeEventListener("visibilitychange", visible);
     };
-  }, [filter, refresh]);
+  }, [filter, refresh, archived, page]);
   async function token() {
     const session = await supabase?.auth.getSession();
     const access = session?.data.session?.access_token;
@@ -247,7 +271,7 @@ export function AssistanceRequests() {
         confirmLabel: "Mark completed",
         cancelLabel: "Go back",
         description:
-          "Confirm that assistance has been completed for this request. The user will see Assistance Completed.",
+          "Confirm that assistance has been completed for this request. The user will see Assistance Completed. The request will move to the archive.",
       },
       CANCELLED: {
         variant: "cancel",
@@ -255,7 +279,7 @@ export function AssistanceRequests() {
         confirmLabel: "Cancel request",
         cancelLabel: "Keep request",
         description:
-          "This marks the request as cancelled and removes it from Shared locations. If a team was dispatched, coordinate with responders first.",
+          "This marks the request as cancelled and moves it to the archive. If a team was dispatched, coordinate with responders first.",
       },
     } as const;
     const prompt =
@@ -304,9 +328,9 @@ export function AssistanceRequests() {
       setRequests((rows) =>
         rows
           .map((row) => (row.id === item.id ? { ...row, ...updated } : row))
-          .filter(isVisibleAssistanceRequest),
+          .filter(visibleRequest),
       );
-      if (!isVisibleAssistanceRequest(updated)) {
+      if (!visibleRequest(updated)) {
         setSelection((current) => (current?.id === item.id ? null : current));
       }
       setHistories((previous) => {
@@ -317,7 +341,7 @@ export function AssistanceRequests() {
       setNotice(
         status === "ACKNOWLEDGED"
           ? "Request acknowledged. Assistance has not yet been dispatched."
-          : `${ASSISTANCE_LABELS[status]} confirmed.`,
+          : `${ASSISTANCE_LABELS[status]} confirmed.${["COMPLETED", "CANCELLED"].includes(status) ? " Moved to archive." : ""}`,
       );
     } catch (cause) {
       if (mounted.current)
@@ -335,40 +359,58 @@ export function AssistanceRequests() {
       }
     }
   }
-  async function remove(item: AssistanceRequest) {
+  async function removeArchived(item: AssistanceRequest) {
+    if (!archived || !isArchivedAssistanceRequest(item) || pending.current)
+      return;
     if (
-      pending.current ||
-      !(await confirmDelete({
-        title: "Delete closed request?",
-        subject: item.display_name || "Assistance request",
+      !(await confirmAction({
+        variant: "delete",
+        title: "Permanently delete this archived request?",
+        subject: assistanceDisplayName(item),
+        confirmLabel: "Delete permanently",
+        cancelLabel: "Keep in archive",
         description:
-          "This permanently removes the request, its reported location, contact details and status history. This action cannot be undone.",
-        confirmLabel: "Delete request",
+          "This permanently removes the saved location, contact details and status history for this closed request. This cannot be undone. The user's tracking link will no longer be available.",
       }))
     )
       return;
+    if (!mounted.current || pending.current) return;
+    const current = requestsRef.current.find((row) => row.id === item.id);
+    if (!current || !isArchivedAssistanceRequest(current)) {
+      setError(
+        "This request is no longer available in the archive. Refresh before continuing.",
+      );
+      return;
+    }
     pending.current = true;
     mutationVersion.current++;
     setBusy(item.id);
+    setError("");
+    setNotice("");
     try {
       await deleteAssistanceRequest(await token(), item.id);
-      if (mounted.current) {
-        setRequests((rows) => rows.filter((row) => row.id !== item.id));
-        setNotice("Closed request permanently deleted.");
-      }
+      if (!mounted.current) return;
+      setRequests((rows) => rows.filter((row) => row.id !== item.id));
+      setSelection((current) => (current?.id === item.id ? null : current));
+      setHistories((previous) => {
+        const next = { ...previous };
+        delete next[item.id];
+        return next;
+      });
+      setNotice("Archived request permanently deleted.");
+      setRefresh((n) => n + 1);
     } catch (cause) {
       if (mounted.current)
         setError(
           cause instanceof Error
             ? cause.message
-            : "Could not confirm deletion.",
+            : "Could not confirm deletion. Refresh before retrying.",
         );
     } finally {
       pending.current = false;
       mutationVersion.current++;
       if (mounted.current) {
         setBusy(null);
-        setRefresh((n) => n + 1);
       }
     }
   }
@@ -406,13 +448,33 @@ export function AssistanceRequests() {
         <div>
           <span className="assistance-eyebrow">CDRRMO</span>
           <h2 id="assistance-requests-title">
-            Shared locations{" "}
+            {archived ? "Shared location archive" : "Shared locations"}{" "}
             <span className="assistance-count">{requests.length}</span>
           </h2>
           <p className="assistance-caption">
-            Review reported locations and update assistance requests.
+            {archived
+              ? "Completed and cancelled requests, with status history. Records remain subject to scheduled retention cleanup."
+              : "Review reported locations and update assistance requests."}
           </p>
         </div>
+      </div>
+      <div className="hazard-view-tabs" aria-label="Assistance records">
+        <button
+          type="button"
+          aria-pressed={!archived}
+          disabled={busy !== null}
+          onClick={() => onArchiveChange(false)}
+        >
+          Active requests
+        </button>
+        <button
+          type="button"
+          aria-pressed={archived}
+          disabled={busy !== null}
+          onClick={() => onArchiveChange(true)}
+        >
+          Archive
+        </button>
       </div>
       <div className="assistance-toolbar">
         <span
@@ -427,20 +489,26 @@ export function AssistanceRequests() {
           Request status{" "}
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as AssistanceStatus | "")}
+            onChange={(e) => {
+              setPage(0);
+              setSelection(null);
+              setRequests([]);
+              setLoading(true);
+              setFilter(e.target.value as AssistanceStatus | "");
+            }}
           >
             <option value="">All statuses</option>
-            {ASSISTANCE_STATUSES.filter((status) => status !== "CANCELLED").map(
-              (status) => (
-                <option key={status} value={status}>
-                  {ASSISTANCE_LABELS[status]}
-                </option>
-              ),
-            )}
+            {ASSISTANCE_STATUSES.filter((status) =>
+              visibleRequest({ status }),
+            ).map((status) => (
+              <option key={status} value={status}>
+                {ASSISTANCE_LABELS[status]}
+              </option>
+            ))}
           </select>
         </label>
         <span className={styles.updateHint}>
-          Automatic updates - Latest 100
+          Automatic updates · Page {page + 1}
         </span>
         <button
           className={`secondary-button ${styles.refreshButton}`}
@@ -461,16 +529,18 @@ export function AssistanceRequests() {
       >
         <strong>Legend</strong>
         <ul>
-          {legendStatuses.map(({ status, label }) => (
-            <li key={status}>
-              <span
-                className={styles.legendDot}
-                style={{ backgroundColor: ASSISTANCE_MAP_COLORS[status] }}
-                aria-hidden="true"
-              />
-              {label}
-            </li>
-          ))}
+          {legendStatuses
+            .filter(({ status }) => visibleRequest({ status }))
+            .map(({ status, label }) => (
+              <li key={status}>
+                <span
+                  className={styles.legendDot}
+                  style={{ backgroundColor: ASSISTANCE_MAP_COLORS[status] }}
+                  aria-hidden="true"
+                />
+                {label}
+              </li>
+            ))}
           <li>
             <span className={styles.legendAccuracy} aria-hidden="true" />
             GPS accuracy area
@@ -546,6 +616,7 @@ export function AssistanceRequests() {
             </div>
             <AssistanceLocationMap
               requests={requests}
+              archived={archived}
               selection={selection}
               onSelectRequest={(id) => selectRequest(id, true)}
             />
@@ -664,7 +735,7 @@ export function AssistanceRequests() {
                 >
                   View on map
                 </button>
-                {item.status === "PENDING" && (
+                {!archived && item.status === "PENDING" && (
                   <button
                     className="primary-button"
                     disabled={busy !== null}
@@ -673,7 +744,7 @@ export function AssistanceRequests() {
                     {busy === item.id ? "Updating..." : "Acknowledge"}
                   </button>
                 )}
-                {item.status === "ACKNOWLEDGED" && (
+                {!archived && item.status === "ACKNOWLEDGED" && (
                   <button
                     className="primary-button"
                     disabled={busy !== null}
@@ -682,7 +753,7 @@ export function AssistanceRequests() {
                     {busy === item.id ? "Updating..." : "Dispatch team"}
                   </button>
                 )}
-                {item.status === "DISPATCHED" && (
+                {!archived && item.status === "DISPATCHED" && (
                   <button
                     className="primary-button"
                     disabled={busy !== null}
@@ -691,7 +762,7 @@ export function AssistanceRequests() {
                     {busy === item.id ? "Updating..." : "Mark completed"}
                   </button>
                 )}
-                {assistanceActive(item.status) ? (
+                {!archived && assistanceActive(item.status) && (
                   <button
                     className="secondary-button"
                     disabled={busy !== null}
@@ -699,13 +770,16 @@ export function AssistanceRequests() {
                   >
                     Cancel request
                   </button>
-                ) : (
+                )}
+                {archived && isArchivedAssistanceRequest(item) && (
                   <button
+                    type="button"
                     className="secondary-button assistance-delete-button"
                     disabled={busy !== null}
-                    onClick={() => void remove(item)}
+                    onClick={() => void removeArchived(item)}
                   >
-                    Delete request
+                    <Trash2 size={14} aria-hidden="true" />
+                    {busy === item.id ? "Deleting..." : "Delete permanently"}
                   </button>
                 )}
                 <button
@@ -745,7 +819,34 @@ export function AssistanceRequests() {
           ))}
         </div>
       </div>
-      {deleteDialog}
+      {(hasMore || page > 0) && (
+        <div className="hazard-view-tabs" aria-label="Request pages">
+          <button
+            type="button"
+            disabled={loading || busy !== null || page === 0}
+            onClick={() => {
+              setRequests([]);
+              setSelection(null);
+              setLoading(true);
+              setPage((p) => p - 1);
+            }}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            disabled={loading || busy !== null || !hasMore}
+            onClick={() => {
+              setRequests([]);
+              setSelection(null);
+              setLoading(true);
+              setPage((p) => p + 1);
+            }}
+          >
+            Next
+          </button>
+        </div>
+      )}
       {actionDialog}
     </section>
   );
