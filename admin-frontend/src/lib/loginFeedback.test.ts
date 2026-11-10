@@ -8,7 +8,20 @@ describe("login input feedback", () => {
       password: "Enter your password.",
     });
   });
-  it.each(["name", "name@", "@example.com", "name @example.com"])(
+  it.each([
+    "name",
+    "name@",
+    "@example.com",
+    "name @example.com",
+    "cdrrm0@gmail-com",
+    "staff@example",
+    "staff@example.",
+    "staff@example..com",
+    "staff@-example.com",
+    "staff@example-.com",
+    "staff@example.c",
+    "staff@example.com/path",
+  ])(
     "flags malformed email %s without blaming a populated password",
     (email) => {
       expect(validateLogin(email, "existing-password")).toEqual({
@@ -24,6 +37,15 @@ describe("login input feedback", () => {
     expect(validateLogin("staff@example.com", "")).toEqual({
       password: "Enter your password.",
     });
+  });
+  it.each([
+    "cdrrmo@gmail.com",
+    "staff@santarosa.gov.ph",
+    "staff@example.org",
+    "staff@city-office.example.net",
+    "Staff@Example.COM",
+  ])("accepts a complete email domain without requiring .com: %s", (email) => {
+    expect(validateLogin(email, "existing-password")).toEqual({});
   });
 });
 

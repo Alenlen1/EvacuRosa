@@ -13,8 +13,12 @@ export function validateLogin(
 ): LoginFieldErrors {
   const errors: LoginFieldErrors = {};
   if (!email.trim()) errors.email = "Enter your email address.";
-  else if (!/^[^\s@]+@[^\s@]+$/.test(email.trim()))
-    errors.email = "Enter a valid email address, such as name@example.com";
+  else if (
+    !/^[^\s@]+@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(
+      email.trim(),
+    )
+  )
+    errors.email = "Enter a valid email address, such as name@example.com.";
   if (!password) errors.password = "Enter your password.";
   return errors;
 }
