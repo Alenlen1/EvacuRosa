@@ -112,6 +112,36 @@ describe("private tracked assistance intake", () => {
     ).toHaveBeenCalledWith(400);
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
+  it.each([
+    "0912345678",
+    "091234567890",
+    "+639123456789",
+    "0912 3456789",
+    "0912345678a",
+    "0912345678-",
+    "21312313213",
+    "08123456789",
+    9123456789,
+  ])(
+    "rejects a mobile number unless it has 11 digits starting with 09: %s",
+    async (contact) => {
+      expect((await post({ ...data(), contact })).status).toHaveBeenCalledWith(
+        400,
+      );
+      expect(mocks.rpc).not.toHaveBeenCalled();
+    },
+  );
+  it.each([undefined, "", "09123456789"])(
+    "allows an omitted, blank or 11-digit contact number: %s",
+    async (contact) => {
+      expect((await post({ ...data(), contact })).status).toHaveBeenCalledWith(
+        201,
+      );
+      expect(mocks.rpc.mock.calls[0][1].p_request.contact_number).toBe(
+        contact || null,
+      );
+    },
+  );
   it("accepts direct emergency requests without requiring a blocked route and sends only approved fields", async () => {
     const r = await post({ ...data(), name: " Alex ", role: "SUPER_ADMIN" });
     expect(r.status).toHaveBeenCalledWith(201);

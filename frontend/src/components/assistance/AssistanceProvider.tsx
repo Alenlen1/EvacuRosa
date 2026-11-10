@@ -8,13 +8,28 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ArrowRight, HandHeart, LoaderCircle, Send, X } from "lucide-react";
+import {
+  ArrowRight,
+  HandHeart,
+  LoaderCircle,
+  Save,
+  Send,
+  UserRound,
+  X,
+} from "lucide-react";
 import type { GeolocationState } from "@/hooks/useGeolocation";
 import {
   captureAssistanceLocation,
   type AssistanceLocation,
 } from "@/lib/assistanceLocation";
 import { AssistanceRequestForm } from "./AssistanceRequestForm";
+import { AssistanceContactForm } from "./AssistanceContactForm";
+import {
+  readAssistanceContact,
+  validateAssistanceContact,
+  writeAssistanceContact,
+  type AssistanceContact,
+} from "@/lib/assistanceContact";
 import { AssistanceRequestStatus } from "./AssistanceRequestStatus";
 import { AssistanceRequestTabs } from "./AssistanceRequestTabs";
 import {
@@ -124,6 +139,18 @@ export function AssistanceProvider({
   const [fix, setFix] = useState<AssistanceLocation | null>(null),
     [name, setName] = useState(""),
     [contact, setContact] = useState("");
+  const savedContact = useRef<AssistanceContact>({ name: "", contact: "" });
+  const [contactMode, setContactMode] = useState<"first" | "edit" | null>(null);
+  const [contactDraft, setContactDraft] = useState<AssistanceContact>({
+    name: "",
+    contact: "",
+  });
+  const [contactErrors, setContactErrors] = useState<{
+    name?: string;
+    contact?: string;
+  }>({});
+  const [contactStorageError, setContactStorageError] = useState("");
+  const dialogOpen = open || contactMode !== null;
   const [connection, setConnection] = useState("Reconnecting"),
     [requestView, setRequestView] = useState<AssistanceView>("overview");
   const [viewReady, setViewReady] = useState(false);
@@ -144,6 +171,12 @@ export function AssistanceProvider({
   useEffect(() => {
     if (initial.current) return;
     initial.current = true;
+    const savedDetails = readAssistanceContact();
+    if (savedDetails) {
+      savedContact.current = savedDetails;
+      setName(savedDetails.name);
+      setContact(savedDetails.contact);
+    } else setContactMode("first");
     const saved = readAssistance();
     if (saved) {
       setCredentials(saved);
@@ -249,8 +282,8 @@ export function AssistanceProvider({
     setUnavailable(false);
     setFix(null);
     setFixSource(null);
-    setName("");
-    setContact("");
+    setName(savedContact.current.name);
+    setContact(savedContact.current.contact);
     setCancelTarget(null);
     setCancelError("");
     setConnection("Reconnecting");
@@ -450,22 +483,22 @@ export function AssistanceProvider({
     apply,
   ]);
   useEffect(() => {
-    if (open && !dialog.current?.open) {
+    if (dialogOpen && !dialog.current?.open) {
       previousFocus.current = document.activeElement as HTMLElement;
       dialog.current?.showModal();
     }
-    if (!open && dialog.current?.open) dialog.current.close();
-  }, [open]);
+    if (!dialogOpen && dialog.current?.open) dialog.current.close();
+  }, [dialogOpen]);
   useEffect(() => {
-    if (!open) return;
+    if (!dialogOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [open]);
+  }, [dialogOpen]);
   useEffect(() => {
-    if (!open) return;
+    if (!dialogOpen) return;
     const viewport = window.visualViewport;
     const resize = () => {
       dialog.current?.style.setProperty(
@@ -486,7 +519,48 @@ export function AssistanceProvider({
       viewport?.removeEventListener("scroll", resize);
       window.removeEventListener("resize", resize);
     };
-  }, [open]);
+  }, [dialogOpen]);
+  function editContact() {
+    setContactDraft({ name, contact });
+    setContactErrors({});
+    setContactStorageError("");
+    setContactMode("edit");
+  }
+  function dismissContact() {
+    if (contactMode === "first") {
+      try {
+        writeAssistanceContact(savedContact.current);
+      } catch {
+        /* The map remains usable when browser storage is blocked. */
+      }
+    }
+    setContactMode(null);
+    setContactStorageError("");
+  }
+  function saveContact() {
+    const errors = validateAssistanceContact(contactDraft);
+    setContactErrors(errors);
+    if (errors.name || errors.contact) {
+      document
+        .getElementById(
+          errors.name ? "assistance-contact-name" : "assistance-contact-phone",
+        )
+        ?.focus();
+      return;
+    }
+    try {
+      const saved = writeAssistanceContact(contactDraft);
+      savedContact.current = saved;
+      setName(saved.name);
+      setContact(saved.contact);
+      setContactMode(null);
+      setContactStorageError("");
+    } catch {
+      setContactStorageError(
+        "Could not save on this device. Allow browser storage and try again, or close this prompt to continue.",
+      );
+    }
+  }
   function openRequest(context?: RequestIntent) {
     setIntent(context ?? { kind: "emergency", travelMode: "walking" });
     setOpen(true);
@@ -539,10 +613,8 @@ export function AssistanceProvider({
         throw Error(
           "This GPS reading is over two minutes old. Get a fresh location before submitting.",
         );
-      if (!/^[0-9+() .-]{0,40}$/.test(contact.trim()))
-        throw Error(
-          "Enter a valid contact number using digits and phone punctuation, or leave it blank.",
-        );
+      const contactError = validateAssistanceContact({ name, contact }).contact;
+      if (contactError) throw Error(contactError);
       let saved = credentialsRef.current;
       const otherTab = readAssistance();
       if (otherTab && otherTab.id !== saved?.id) {
@@ -582,8 +654,6 @@ export function AssistanceProvider({
         contact: contact.trim(),
       });
       apply(result, result.trackingToken);
-      setName("");
-      setContact("");
       setFix(null);
       setConnection("Reconnecting");
     } catch (cause) {
@@ -638,7 +708,7 @@ export function AssistanceProvider({
       value={{
         openRequest,
         hasRequest: hasExistingRequest,
-        requestOpen: open,
+        requestOpen: dialogOpen,
         status: tracking?.request.status ?? null,
       }}
     >
@@ -648,12 +718,18 @@ export function AssistanceProvider({
         ref={dialog}
         className={`assistance-tracking-dialog ${styles.dialog}`}
         aria-labelledby="assistance-dialog-title"
-        data-view={hasExistingRequest ? requestView : "form"}
+        data-view={
+          contactMode ? "contact" : hasExistingRequest ? requestView : "form"
+        }
         onCancel={(e) => {
-          if (busy && operation !== "locating") e.preventDefault();
+          if (contactMode) {
+            e.preventDefault();
+            dismissContact();
+          } else if (busy && operation !== "locating") e.preventDefault();
           else locationCapture.current?.abort();
         }}
         onClose={() => {
+          if (contactMode) dismissContact();
           locationCapture.current?.abort();
           setOpen(false);
           requestAnimationFrame(() => {
@@ -671,14 +747,20 @@ export function AssistanceProvider({
         <header>
           <div className={styles.dialogIdentity}>
             <span className={styles.headerIcon}>
-              <HandHeart size={24} aria-hidden="true" />
+              {contactMode ? (
+                <UserRound size={24} aria-hidden="true" />
+              ) : (
+                <HandHeart size={24} aria-hidden="true" />
+              )}
             </span>
             <div>
               <small>EVACUROSA · CDRRMO</small>
               <h2 id="assistance-dialog-title">
-                {hasExistingRequest
-                  ? "View request"
-                  : t("Emergency Assistance")}
+                {contactMode
+                  ? "Your contact details"
+                  : hasExistingRequest
+                    ? "View request"
+                    : t("Emergency Assistance")}
               </h2>
             </div>
           </div>
@@ -687,9 +769,17 @@ export function AssistanceProvider({
             className={styles.closeButton}
             disabled={busy && operation !== "locating"}
             aria-label={
-              hasExistingRequest ? "Close request" : "Close assistance"
+              contactMode
+                ? "Close contact details"
+                : hasExistingRequest
+                  ? "Close request"
+                  : "Close assistance"
             }
             onClick={() => {
+              if (contactMode) {
+                dismissContact();
+                return;
+              }
               locationCapture.current?.abort();
               setOpen(false);
             }}
@@ -697,13 +787,34 @@ export function AssistanceProvider({
             <X size={20} aria-hidden="true" />
           </button>
         </header>
-        {hasExistingRequest && (
+        {!contactMode && hasExistingRequest && (
           <AssistanceRequestTabs view={requestView} onChange={setRequestView} />
         )}
         <div
-          className={`${styles.body} ${hasExistingRequest && requestView === "location" ? styles.mapBody : ""}`}
+          className={`${styles.body} ${!contactMode && hasExistingRequest && requestView === "location" ? styles.mapBody : ""}`}
         >
-          {tracking ? (
+          {contactMode ? (
+            <AssistanceContactForm
+              firstVisit={contactMode === "first"}
+              {...contactDraft}
+              errors={contactErrors}
+              onNameChange={(value) => {
+                setContactDraft((current) => ({ ...current, name: value }));
+                setContactErrors((current) => ({
+                  ...current,
+                  name: undefined,
+                }));
+              }}
+              onContactChange={(value) => {
+                setContactDraft((current) => ({ ...current, contact: value }));
+                setContactErrors((current) => ({
+                  ...current,
+                  contact: undefined,
+                }));
+              }}
+              onSave={saveContact}
+            />
+          ) : tracking ? (
             <AssistanceRequestStatus
               tracking={tracking}
               terminal={terminal}
@@ -741,21 +852,49 @@ export function AssistanceProvider({
               locating={operation === "locating"}
               submitting={operation === "submitting"}
               online={online}
-              onNameChange={setName}
-              onContactChange={setContact}
+              onEditContact={editContact}
               onLocate={(forceFresh) => void locate(forceFresh)}
               onStopLocating={() => locationCapture.current?.abort()}
               onSubmit={() => void submit()}
             />
           )}
-          {error && (
+          {!contactMode && hasExistingRequest && requestView === "overview" && (
+            <button
+              type="button"
+              className={`secondary-button ${styles.editContactButton}`}
+              disabled={busy}
+              onClick={editContact}
+            >
+              <UserRound size={17} aria-hidden="true" />
+              Edit saved contact details
+            </button>
+          )}
+          {(contactMode ? contactStorageError : error) && (
             <p className={styles.feedback} role="alert">
-              {error}
+              {contactMode ? contactStorageError : error}
             </p>
           )}
         </div>
         <footer className={styles.footer}>
-          {hasExistingRequest ? (
+          {contactMode ? (
+            <div className={styles.contactActions}>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={dismissContact}
+              >
+                {contactMode === "first" ? "Not now" : "Back"}
+              </button>
+              <button
+                type="submit"
+                form="assistance-contact-form"
+                className="primary-button"
+              >
+                <Save size={17} aria-hidden="true" />
+                Save details
+              </button>
+            </div>
+          ) : hasExistingRequest ? (
             <>
               <div className={styles.pinnedActions}>
                 {requestView !== "overview" && (

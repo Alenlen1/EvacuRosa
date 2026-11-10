@@ -64,7 +64,7 @@ export function validSubmission(
       (typeof v.name === "string" && v.name.length <= 100)) &&
     (v.contact === undefined ||
       (typeof v.contact === "string" &&
-        /^[0-9+() .-]{0,40}$/.test(v.contact))) &&
+        /^(?:09[0-9]{9})?$/.test(v.contact.trim()))) &&
     ((v.kind === "route" && point(v.destination)) ||
       (["evacuation", "emergency"].includes(v.kind) &&
         v.destination === undefined))
