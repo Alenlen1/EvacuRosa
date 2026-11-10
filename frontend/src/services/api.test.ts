@@ -165,7 +165,11 @@ describe("location-sharing API", () => {
       expect.objectContaining({
         method: "DELETE",
         cache: "no-store",
-        headers: { Authorization: "Bearer admin-token" },
+        headers: {
+          Authorization: "Bearer admin-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ confirmed: true }),
       }),
     );
   });

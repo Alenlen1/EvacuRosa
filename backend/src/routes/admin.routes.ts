@@ -7,6 +7,12 @@ import {
   getAdminAssistance,
 } from "../controllers/assistance.controller";
 import { requireAuth } from "../middleware/auth.middleware";
+import {
+  deleteActiveHazard,
+  deleteHazardArchive,
+  listHazardArchives,
+  restoreHazard,
+} from "../controllers/hazardArchive.controller";
 import { attachProfile, requireRole } from "../middleware/role.middleware";
 import {
   createFloodReport,
@@ -33,6 +39,34 @@ import {
 } from "../controllers/centerManagement.controller";
 
 export const adminRouter = Router();
+adminRouter.delete(
+  "/hazards/:kind/:id",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  deleteActiveHazard,
+);
+adminRouter.get(
+  "/hazard-archives",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  listHazardArchives,
+);
+adminRouter.post(
+  "/hazard-archives/:id/restore",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  restoreHazard,
+);
+adminRouter.delete(
+  "/hazard-archives/:id",
+  requireAuth,
+  attachProfile,
+  requireRole("SUPER_ADMIN"),
+  deleteHazardArchive,
+);
 adminRouter.get("/barangays", listBarangays);
 adminRouter.post("/barangay-login", signInBarangay);
 adminRouter.get(

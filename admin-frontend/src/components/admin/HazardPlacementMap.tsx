@@ -2,6 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
+import { HazardArchive } from "./HazardArchive";
 import { HazardRecordTime } from "./HazardRecordTime";
 import { SantaRosaBoundaryLayer } from "./SantaRosaBoundaryLayer";
 import { EarthquakeAreaHandles } from "./EarthquakeAreaHandles";
@@ -19,6 +20,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import {
+  Archive,
   Trash2,
   PersonStanding,
   ExternalLink,
@@ -57,6 +59,7 @@ import {
   deleteFloodReport,
   deleteFireIncident,
   deleteEarthquakeRoadImpact,
+  permanentlyDeleteHazard,
   type FloodReport,
   type FireIncident,
   type EarthquakeRoadImpact,
@@ -144,9 +147,9 @@ export default function HazardPlacementMap({
   onCreated,
 }: HazardPlacementMapProps) {
   const { confirmDelete, deleteDialog } = useDeleteConfirmation();
-  const [workspaceView, setWorkspaceView] = useState<"report" | "records">(
-    "report",
-  );
+  const [workspaceView, setWorkspaceView] = useState<
+    "report" | "records" | "archive"
+  >("report");
   const [mode, setMode] = useState<Mode>("flood");
   const [inspectStreet, setInspectStreet] = useState(false);
   const [streetViewPoint, setStreetViewPoint] = useState<{
@@ -200,6 +203,9 @@ export default function HazardPlacementMap({
   const [error, setError] = useState<string | null>(null);
   const [lookingUpRoads, setLookingUpRoads] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removalAction, setRemovalAction] = useState<"archive" | "delete">(
+    "archive",
+  );
   const [removalNotice, setRemovalNotice] = useState<string | null>(null);
   const removalPending = useRef(false);
   const roadLookupVersion = useRef(0);
@@ -503,32 +509,49 @@ export default function HazardPlacementMap({
     }
   }
 
-  async function removeHazard(kind: "flood" | "fire" | "impact", id: string) {
+  async function removeHazard(
+    kind: "flood" | "fire" | "impact",
+    id: string,
+    permanent = false,
+  ) {
     if (removalPending.current || loading) return;
-    const label =
-      kind === "impact" ? "earthquake report" : `${kind} record`;
+    const label = kind === "impact" ? "earthquake report" : `${kind} record`;
     if (
       !(await confirmDelete({
-        title: "Remove hazard record?",
+        variant: permanent ? "delete" : "archive",
+        title: permanent
+          ? "Permanently delete this hazard?"
+          : "Archive hazard record?",
         subject: label,
-        description:
-          "This removes the record from the hazard map and changes the information used for routing. This action cannot be undone.",
-        confirmLabel: "Remove record",
+        description: permanent
+          ? "This permanently deletes the active report and removes its restrictions from public routing. It will not be kept in the archive. This cannot be undone. Use Archive if you may need to restore it later."
+          : "This moves the record to the archive and removes its restrictions from active routing. You can review and restore it from the Archive tab.",
+        confirmLabel: permanent ? "Delete permanently" : "Archive record",
+        cancelLabel: "Keep record",
       }))
     )
       return;
     removalPending.current = true;
     setRemovingId(id);
+    setRemovalAction(permanent ? "delete" : "archive");
     setError(null);
     setRemovalNotice(null);
     try {
-      if (kind === "flood") await deleteFloodReport(authToken, id);
+      if (permanent) await permanentlyDeleteHazard(authToken, kind, id);
+      else if (kind === "flood") await deleteFloodReport(authToken, id);
       else if (kind === "fire") await deleteFireIncident(authToken, id);
       else await deleteEarthquakeRoadImpact(authToken, id);
+      setRemovalNotice(
+        permanent
+          ? "Hazard permanently deleted."
+          : "Hazard moved to the archive.",
+      );
       onCreated();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Could not remove this record.",
+        err instanceof Error
+          ? err.message
+          : "Could not remove this record. Refresh before retrying.",
       );
     } finally {
       removalPending.current = false;
@@ -543,16 +566,18 @@ export default function HazardPlacementMap({
     if (
       !count ||
       !(await confirmDelete({
-        title: "Remove all hazard records?",
+        variant: "archive",
+        title: "Archive all hazard records?",
         subject: `${count} loaded records`,
         description:
-          "This removes loaded flood reports, fire incidents and earthquake reports. Road restrictions from those reports are removed. This action cannot be undone.",
-        confirmLabel: "Remove all records",
+          "This archives loaded flood reports, fire incidents and earthquake reports. Their road restrictions are removed from active routing. You can restore them from the Archive tab.",
+        confirmLabel: "Archive all records",
       }))
     )
       return;
     removalPending.current = true;
     setRemovingId("all");
+    setRemovalAction("archive");
     setError(null);
     setRemovalNotice(null);
     try {
@@ -568,10 +593,10 @@ export default function HazardPlacementMap({
         ),
       ]);
       const { failed, removed } = result;
-      setRemovalNotice(`Removed ${removed} hazard record(s).`);
+      setRemovalNotice(`Archived ${removed} hazard record(s).`);
       if (failed)
         setError(
-          `${failed} record(s) could not be removed or were skipped. Refresh and retry the remaining records.`,
+          `${failed} record(s) could not be archived or were skipped. Refresh and retry the remaining records.`,
         );
       resetForm();
       onCreated();
@@ -579,6 +604,30 @@ export default function HazardPlacementMap({
       removalPending.current = false;
       setRemovingId(null);
     }
+  }
+
+  function hazardActions(kind: "flood" | "fire" | "impact", id: string) {
+    const pending = removingId === id;
+    return (
+      <div className="hazard-record-actions">
+        <button
+          type="button"
+          onClick={() => void removeHazard(kind, id)}
+          disabled={removingId !== null || loading}
+        >
+          <Archive size={14} aria-hidden="true" />
+          {pending && removalAction === "archive" ? "Archiving..." : "Archive"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void removeHazard(kind, id, true)}
+          disabled={removingId !== null || loading}
+        >
+          <Trash2 size={14} aria-hidden="true" />
+          {pending && removalAction === "delete" ? "Deleting..." : "Delete"}
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -602,8 +651,22 @@ export default function HazardPlacementMap({
             earthquakeRoadImpacts.length}
           )
         </button>
+        <button
+          type="button"
+          aria-pressed={workspaceView === "archive"}
+          onClick={() => setWorkspaceView("archive")}
+        >
+          Archive
+        </button>
       </div>
-      <div className="hazard-editor" data-view={workspaceView}>
+      {workspaceView === "archive" && (
+        <HazardArchive authToken={authToken} onRestored={onCreated} />
+      )}
+      <div
+        className="hazard-editor"
+        data-view={workspaceView}
+        style={workspaceView === "archive" ? { display: "none" } : undefined}
+      >
         <div className="hazard-tabs" aria-label="Hazard type">
           {[
             { key: "flood" as const, label: "Flood", icon: FloodIcon },
@@ -1362,12 +1425,17 @@ export default function HazardPlacementMap({
             }
             className="inline-flex items-center gap-1 rounded border border-red-300 px-3 py-2 text-xs text-red-700 disabled:opacity-50"
           >
-            <Trash2 size={14} aria-hidden="true" />
-            {removingId === "all" ? "Removing all…" : "Remove all hazards"}
+            <Archive size={14} aria-hidden="true" />
+            {removingId === "all" ? "Archiving all…" : "Archive all hazards"}
           </button>
           {removalNotice && (
             <p role="status" className="text-xs">
               {removalNotice}
+            </p>
+          )}
+          {workspaceView === "records" && error && (
+            <p role="alert" className="text-xs text-red-700">
+              {error}
             </p>
           )}
           {floodReports.length === 0 &&
@@ -1397,15 +1465,7 @@ export default function HazardPlacementMap({
                       label="Reported"
                     />
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeHazard("flood", report.id)}
-                    disabled={removingId !== null || loading}
-                    className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
-                  >
-                    <Trash2 size={13} />{" "}
-                    {removingId === report.id ? "Removing…" : "Remove"}
-                  </button>
+                  {hazardActions("flood", report.id)}
                 </div>
               ))}
             </section>
@@ -1427,15 +1487,7 @@ export default function HazardPlacementMap({
                       label="Reported"
                     />
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeHazard("fire", incident.id)}
-                    disabled={removingId !== null || loading}
-                    className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
-                  >
-                    <Trash2 size={13} />{" "}
-                    {removingId === incident.id ? "Removing…" : "Remove"}
-                  </button>
+                  {hazardActions("fire", incident.id)}
                 </div>
               ))}
             </section>
@@ -1475,15 +1527,7 @@ export default function HazardPlacementMap({
                       label="Verified"
                     />
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeHazard("impact", impact.id)}
-                    disabled={removingId !== null || loading}
-                    className="inline-flex items-center gap-1 text-red-700 disabled:opacity-50"
-                  >
-                    <Trash2 size={13} aria-hidden="true" />
-                    {removingId === impact.id ? "Removing..." : "Remove impact"}
-                  </button>
+                  {hazardActions("impact", impact.id)}
                 </div>
               ))}
             </section>

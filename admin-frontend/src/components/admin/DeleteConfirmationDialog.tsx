@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { CircleCheck, CircleX, Trash2, Truck, X } from "lucide-react";
+import { Archive, CircleCheck, CircleX, Trash2, Truck, X } from "lucide-react";
 import styles from "./DeleteConfirmationDialog.module.css";
 
 export interface ConfirmationPrompt {
@@ -10,7 +10,7 @@ export interface ConfirmationPrompt {
   subject?: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: "delete" | "dispatch" | "complete" | "cancel";
+  variant?: "delete" | "dispatch" | "complete" | "cancel" | "archive";
 }
 
 function ConfirmationDialog({
@@ -24,13 +24,15 @@ function ConfirmationDialog({
   const cancelRef = useRef<HTMLButtonElement>(null);
   const id = useId();
   const Icon =
-    prompt.variant === "dispatch"
-      ? Truck
-      : prompt.variant === "complete"
-        ? CircleCheck
-        : prompt.variant === "cancel"
-          ? CircleX
-          : Trash2;
+    prompt.variant === "archive"
+      ? Archive
+      : prompt.variant === "dispatch"
+        ? Truck
+        : prompt.variant === "complete"
+          ? CircleCheck
+          : prompt.variant === "cancel"
+            ? CircleX
+            : Trash2;
   useEffect(() => {
     const dialog = ref.current;
     const trigger = document.activeElement;

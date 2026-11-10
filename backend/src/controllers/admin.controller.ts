@@ -1,3 +1,4 @@
+import { archiveHazard } from "./hazardArchive.controller";
 import type { Response } from "express";
 import type { RoleAwareRequest } from "../middleware/role.middleware";
 import { isFloodImpassable, isFloodSeverity } from "../types/floodPassability";
@@ -187,24 +188,7 @@ export async function updateFloodReport(req: RoleAwareRequest, res: Response) {
 }
 
 export async function deleteFloodReport(req: RoleAwareRequest, res: Response) {
-  const { id } = req.params;
-
-  if (!req.userSupabase) {
-    res.status(401).json({ error: "Not authenticated." });
-    return;
-  }
-
-  const { error } = await req.userSupabase
-    .from("flood_reports")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    res.status(403).json({ error: "Delete rejected." });
-    return;
-  }
-
-  res.status(204).send();
+  await archiveHazard(req, res, "flood");
 }
 
 export async function createFireIncident(req: RoleAwareRequest, res: Response) {
@@ -306,24 +290,7 @@ export async function updateFireIncident(req: RoleAwareRequest, res: Response) {
 }
 
 export async function deleteFireIncident(req: RoleAwareRequest, res: Response) {
-  const { id } = req.params;
-
-  if (!req.userSupabase) {
-    res.status(401).json({ error: "Not authenticated." });
-    return;
-  }
-
-  const { error } = await req.userSupabase
-    .from("fire_incidents")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    res.status(403).json({ error: "Delete rejected." });
-    return;
-  }
-
-  res.status(204).send();
+  await archiveHazard(req, res, "fire");
 }
 
 export async function updateEarthquakeEvent(
@@ -366,24 +333,7 @@ export async function deleteEarthquakeEvent(
   req: RoleAwareRequest,
   res: Response,
 ) {
-  const { id } = req.params;
-
-  if (!req.userSupabase) {
-    res.status(401).json({ error: "Not authenticated." });
-    return;
-  }
-
-  const { error } = await req.userSupabase
-    .from("earthquake_events")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    res.status(403).json({ error: "Could not remove earthquake event." });
-    return;
-  }
-
-  res.status(204).send();
+  await archiveHazard(req, res, "event");
 }
 
 export async function createEarthquakeRoadImpact(
@@ -452,12 +402,10 @@ export async function createEarthquakeRoadImpact(
         ])
         .select();
       if (error) {
-        res
-          .status(403)
-          .json({
-            error:
-              "Could not save the area-only report. Check permissions and apply migration 0024_earthquake_area_only_reports.sql.",
-          });
+        res.status(403).json({
+          error:
+            "Could not save the area-only report. Check permissions and apply migration 0024_earthquake_area_only_reports.sql.",
+        });
         return;
       }
       res.status(201).json({ roadImpacts: data });
@@ -541,22 +489,5 @@ export async function deleteEarthquakeRoadImpact(
   req: RoleAwareRequest,
   res: Response,
 ) {
-  const { id } = req.params;
-
-  if (!req.userSupabase) {
-    res.status(401).json({ error: "Not authenticated." });
-    return;
-  }
-
-  const { error } = await req.userSupabase
-    .from("earthquake_road_impacts")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    res.status(403).json({ error: "Delete rejected." });
-    return;
-  }
-
-  res.status(204).send();
+  await archiveHazard(req, res, "impact");
 }

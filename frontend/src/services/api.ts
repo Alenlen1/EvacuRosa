@@ -115,7 +115,11 @@ export async function deleteAssistanceRequest(
       method: "DELETE",
       cache: "no-store",
       signal: AbortSignal.timeout(30000),
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ confirmed: true }),
     },
   );
   if (!response.ok) {
@@ -132,8 +136,20 @@ export async function fetchAssistanceRequests(
   signal?: AbortSignal,
   status?: AssistanceStatus,
 ): Promise<AssistanceRequest[]> {
+  return (await fetchAssistanceRequestPage(token, signal, status)).requests;
+}
+
+export async function fetchAssistanceRequestPage(
+  token: string,
+  signal?: AbortSignal,
+  status?: AssistanceStatus,
+  scope: "active" | "archive" = "active",
+  offset = 0,
+): Promise<{ requests: AssistanceRequest[]; hasMore: boolean }> {
+  const params = new URLSearchParams({ scope, offset: String(offset) });
+  if (status) params.set("status", status);
   const response = await fetch(
-    `${API_URL}/api/admin/assistance-requests${status ? `?status=${status}` : ""}`,
+    `${API_URL}/api/admin/assistance-requests?${params}`,
     {
       cache: "no-store",
       signal: signal
@@ -146,7 +162,7 @@ export async function fetchAssistanceRequests(
     throw new Error(
       "Unable to load shared locations. Check your connection and CDRRMO access.",
     );
-  return (await response.json()).requests;
+  return response.json();
 }
 
 export const assistanceEventsUrl = (id?: string) =>
@@ -661,6 +677,32 @@ async function adminDelete(path: string, token: string): Promise<void> {
 
 export const deleteFloodReport = (token: string, id: string) =>
   adminDelete(`/api/admin/floods/${encodeURIComponent(id)}`, token);
+
+export async function permanentlyDeleteHazard(
+  token: string,
+  kind: "flood" | "fire" | "impact",
+  id: string,
+): Promise<void> {
+  const response = await fetch(
+    `${API_URL}/api/admin/hazards/${kind}/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+      cache: "no-store",
+      signal: AbortSignal.timeout(30000),
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ confirmed: true }),
+    },
+  );
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw Error(
+      body.error ?? "Could not confirm deletion. Refresh before retrying.",
+    );
+  }
+}
 
 export const deleteFireIncident = (token: string, id: string) =>
   adminDelete(`/api/admin/fires/${encodeURIComponent(id)}`, token);

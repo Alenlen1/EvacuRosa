@@ -17,7 +17,7 @@ import {
   CdrrmoDashboard,
   type DashboardHazards,
 } from "@/components/admin/CdrrmoDashboard";
-import { MapPin, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -479,10 +479,6 @@ export default function AdminDashboardPage() {
                   <p>Flood, fire and verified earthquake road impacts.</p>
                 </div>
               </div>
-              <span className="cdrrmo-map-label">
-                <MapPin size={15} aria-hidden="true" />
-                Santa Rosa, Laguna
-              </span>
             </div>
             <ol
               className="cdrrmo-report-steps"

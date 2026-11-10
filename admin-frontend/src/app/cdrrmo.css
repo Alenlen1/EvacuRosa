@@ -695,3 +695,40 @@ html:has(.cdrrmo-workspace) {
     top: auto;
   }
 }
+
+/* Active reports keep reversible archival separate from permanent deletion. */
+.cdrrmo-workspace .hazard-record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.cdrrmo-workspace .hazard-record-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid #dfc6bc;
+  border-radius: 8px;
+  color: #943a2d;
+  background: #fffdf9;
+  font-size: 12px;
+}
+.cdrrmo-workspace .hazard-record-actions button:disabled {
+  opacity: 0.55;
+}
+.cdrrmo-workspace .hazard-record-actions button:not(:disabled):hover {
+  background: #f9ece9;
+}
+@container cdrrmo-main (max-width: 600px) {
+  .cdrrmo-workspace .hazard-records section > div {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cdrrmo-workspace .hazard-record-actions {
+    justify-content: flex-start;
+  }
+}
