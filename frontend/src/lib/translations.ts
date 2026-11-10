@@ -295,6 +295,8 @@ export const filipino: Record<string, string> = {
     "Pindutin ang mapa upang piliin ang destinasyon.",
   "Finding place name…": "Hinahanap ang pangalan ng lugar…",
   "Selected destination": "Napiling destinasyon",
+  "Selected location": "Napiling lokasyon",
+  "Destination: {place}": "Destinasyon: {place}",
   "Choose a point on the map or find a recommended evacuation center.":
     "Pumili ng lugar sa mapa o maghanap ng inirerekomendang evacuation center.",
   "Reported conditions and verified road impacts.":
