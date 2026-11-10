@@ -1,9 +1,11 @@
 import {
   Check,
-  ChevronDown,
   LocateFixed,
   LoaderCircle,
   MapPin,
+  Pencil,
+  Phone,
+  UserRound,
 } from "lucide-react";
 import type { AssistanceLocation } from "@/lib/assistanceLocation";
 import styles from "./AssistanceProvider.module.css";
@@ -147,32 +149,40 @@ export function AssistanceRequestForm({
           </p>
         )}
       </section>
-      <details className={styles.contactSection}>
-        <summary>
-          Contact details <span>{name || contact ? "Added" : "Optional"}</span>
-          <ChevronDown size={17} aria-hidden="true" />
-        </summary>
+      <section
+        className={styles.contactSection}
+        aria-labelledby="request-contact-title"
+      >
+        <div className={styles.contactHeading}>
+          <h3 id="request-contact-title">Contact details</h3>
+          <button
+            type="button"
+            className={styles.contactEdit}
+            disabled={submitting}
+            onClick={onEditContact}
+            aria-label="Edit saved contact details"
+          >
+            <Pencil size={14} aria-hidden="true" />
+            Edit
+          </button>
+        </div>
         <div className={styles.savedContactSummary}>
           <dl>
             <div>
-              <dt>Name</dt>
+              <dt>
+                <UserRound size={13} aria-hidden="true" /> Name
+              </dt>
               <dd>{name || "Not added"}</dd>
             </div>
             <div>
-              <dt>Contact number</dt>
+              <dt>
+                <Phone size={13} aria-hidden="true" /> Contact number
+              </dt>
               <dd>{contact || "Not added"}</dd>
             </div>
           </dl>
-          <button
-            type="button"
-            className="secondary-button"
-            disabled={submitting}
-            onClick={onEditContact}
-          >
-            Edit saved contact details
-          </button>
         </div>
-      </details>
+      </section>
       {!online && (
         <p className={styles.feedback} role="status">
           You are offline. Reconnect before sending your request.

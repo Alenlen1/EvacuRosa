@@ -1,5 +1,7 @@
 dialog.dialog {
-  width: min(680px, calc(100vw - 32px));
+  --assistance-brand: #75180e;
+  --assistance-border: #e5ddd5;
+  width: min(580px, calc(100vw - 32px));
   max-height: calc(var(--assistance-viewport-height, 100dvh) - 24px);
   top: calc(
     var(--assistance-viewport-top, 0px) +
@@ -10,8 +12,8 @@ dialog.dialog {
   margin: 0 auto;
   padding: 0;
   overflow: hidden;
-  border: 1px solid #e3dcd4;
-  border-radius: 20px;
+  border: 1px solid #e5ddd5;
+  border-radius: 22px;
   background: #fffdf9;
   color: #302825;
   box-shadow: 0 24px 80px #25130d38;
@@ -30,9 +32,9 @@ dialog.dialog {
 }
 .dialog > header {
   flex-shrink: 0;
-  padding: 16px 22px;
-  border-bottom: 1px solid #e9e1d8;
-  background: #fffdf9;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--assistance-border);
+  background: linear-gradient(120deg, #f8f1eb, #fffdf9 70%);
 }
 .dialogIdentity,
 .sectionHeading,
@@ -47,14 +49,14 @@ dialog.dialog {
 .dialogIdentity small {
   display: block;
   margin-bottom: 5px;
-  color: #86564a;
+  color: #80564a;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.2px;
 }
 .dialog h2 {
   margin: 0;
-  font-size: clamp(19px, 3vw, 24px);
+  font-size: clamp(19px, 3vw, 23px);
   line-height: 1.25;
   letter-spacing: -0.5px;
 }
@@ -68,8 +70,8 @@ dialog.dialog {
   width: 46px;
   height: 46px;
   border-radius: 13px;
-  background: #f3e7df;
-  color: #800000;
+  background: #f0e4dc;
+  color: var(--assistance-brand, #75180e);
 }
 .dialog button,
 .cancelDialog button {
@@ -87,7 +89,7 @@ dialog.dialog {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: transparent;
+  background: #fffdf9;
   color: #75685e;
   cursor: pointer;
 }
@@ -101,8 +103,39 @@ dialog.dialog {
 }
 .dialog button:disabled,
 .cancelDialog button:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.65;
+}
+.dialog :global(.primary-button) {
+  border: 1px solid var(--assistance-brand);
+  border-radius: 12px;
+  background: var(--assistance-brand);
+  color: #fffdf9;
+  box-shadow: 0 3px 7px #75180e14;
+}
+.dialog :global(.primary-button):hover:not(:disabled) {
+  border-color: #5e130b;
+  background: #5e130b;
+}
+.dialog :global(.secondary-button) {
+  border: 1px solid #ded5cc;
+  border-radius: 10px;
+  background: #fffdf9;
+  color: #644b40;
+  font-size: 12px;
+}
+.dialog :global(.secondary-button):hover:not(:disabled) {
+  border-color: #c4afa2;
+  background: #f5ede6;
+}
+.dialog :global(.primary-button):disabled {
+  border-color: #e4ded7;
+  background: #eee9e2;
+  color: #8b8076;
+  box-shadow: none;
+}
+.dialog button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 .body {
   flex: 0 1 auto;
@@ -110,9 +143,11 @@ dialog.dialog {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 18px 22px;
+  scrollbar-width: thin;
+  scrollbar-color: #c6b8ad transparent;
 }
 .dialog p {
-  line-height: 1.65;
+  line-height: 1.55;
   font-size: 14px;
 }
 .dialog .intro {
@@ -124,7 +159,7 @@ dialog.dialog {
 }
 .steps {
   display: flex;
-  gap: 24px;
+  gap: 12px;
   margin: 0 0 16px;
   padding: 0;
   list-style: none;
@@ -136,22 +171,33 @@ dialog.dialog {
   color: #81766c;
   font-size: 12px;
   font-weight: 600;
+  flex: 1;
+  min-width: 0;
+}
+.steps li:first-child::after {
+  content: "";
+  flex: 1;
+  min-width: 12px;
+  height: 1px;
+  margin-left: 4px;
+  background: #ded4c9;
 }
 .steps li > span {
   display: grid;
   place-items: center;
   width: 25px;
   height: 25px;
+  flex-shrink: 0;
   border: 1px solid #dfd5ca;
   border-radius: 50%;
   background: #f4f0ea;
 }
 .steps li[aria-current="step"] {
-  color: #800000;
+  color: var(--assistance-brand);
 }
 .steps li[aria-current="step"] > span {
-  border-color: #800000;
-  background: #800000;
+  border-color: var(--assistance-brand);
+  background: var(--assistance-brand);
   color: #fff;
 }
 .steps li[data-complete="true"] > span {
@@ -160,10 +206,10 @@ dialog.dialog {
   color: #326441;
 }
 .locationCard {
-  padding: 14px;
+  padding: 16px;
   border: 1px solid #e5ddd3;
-  border-radius: 13px;
-  background: #f8f5f0;
+  border-radius: 16px;
+  background: #faf7f3;
 }
 .dialog .sectionHeading h3 {
   margin: 0;
@@ -186,6 +232,8 @@ dialog.dialog {
 }
 .locationDetails {
   margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--assistance-border);
 }
 .accuracy {
   display: inline-flex;
@@ -208,6 +256,7 @@ dialog.dialog {
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
+  letter-spacing: -0.25px;
 }
 .dialog .captureTime,
 .dialog .smallNote {
@@ -218,8 +267,9 @@ dialog.dialog {
 .dialog .accuracyWarning {
   margin: 10px 0;
   padding: 8px 10px;
-  border-left: 3px solid #bc942d;
-  background: #fff6df;
+  border: 1px solid #e8d6a7;
+  border-radius: 9px;
+  background: #fbf5e4;
   color: #745421;
   font-size: 12px;
 }
@@ -227,20 +277,21 @@ dialog.dialog {
   flex-wrap: wrap;
   margin-top: 10px;
 }
-.dialog .locationActions .secondary-button {
+.dialog .locationActions :global(.secondary-button) {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   border-color: #dacfbe;
   background: #fffdf9;
   color: #593f32;
+  width: 100%;
 }
 .textButton {
   padding: 8px 12px;
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #800000;
+  color: var(--assistance-brand);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -251,34 +302,39 @@ dialog.dialog {
   font-size: 12px;
 }
 .contactSection {
-  margin-top: 14px;
-  padding: 0 12px;
+  margin-top: 12px;
+  padding: 10px 14px 14px;
   border: 1px solid #e5ddd3;
-  border-radius: 10px;
+  border-radius: 14px;
 }
-.contactSection summary {
+.contactHeading {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 46px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.dialog .contactHeading h3 {
+  margin: 0;
   font-size: 13px;
-  font-weight: 600;
+}
+.dialog .contactEdit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #f5ede7;
+  color: var(--assistance-brand);
+  font-size: 12px;
+  font-weight: 650;
   cursor: pointer;
-  list-style: none;
 }
-.contactSection summary::-webkit-details-marker {
-  display: none;
-}
-.contactSection summary > span {
-  color: #8a7c72;
-  font-size: 11px;
-  font-weight: 500;
-}
-.contactSection summary > svg {
-  margin-left: auto;
-}
-.contactSection[open] summary > svg {
-  transform: rotate(180deg);
+.contactEdit:hover:not(:disabled) {
+  background: #ecded4;
 }
 .contactGrid {
   display: grid;
@@ -347,7 +403,7 @@ dialog.dialog {
 .contactPrivacy svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #800000;
+  color: var(--assistance-brand);
 }
 .contactActions {
   display: grid;
@@ -362,24 +418,32 @@ dialog.dialog {
   gap: 8px;
 }
 .dialog .editContactButton {
-  margin-top: 16px;
+  margin-top: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--assistance-brand);
+  padding: 8px 0;
+  font-size: 12px;
 }
 .savedContactSummary {
-  padding: 0 0 12px;
+  padding: 0;
 }
 .savedContactSummary dl {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin: 0 0 12px;
+  margin: 0;
 }
 .savedContactSummary dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   color: #807368;
   font-size: 11px;
 }
 .savedContactSummary dd {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: 13px;
   overflow-wrap: anywhere;
 }
 .dialog .submitButton {
@@ -388,13 +452,15 @@ dialog.dialog {
   justify-content: center;
   gap: 10px;
   width: 100%;
-  min-height: 48px;
+  min-height: 50px;
+  font-size: 13px;
 }
 .footer {
   flex-shrink: 0;
   padding: 12px 22px;
   border-top: 1px solid #e9e1d8;
-  background: #f8f5ef;
+  background: #fffdf9;
+  box-shadow: 0 -6px 18px #49382b05;
 }
 .dialog .footer p {
   margin: 0;
@@ -403,7 +469,16 @@ dialog.dialog {
   line-height: 1.6;
 }
 .dialog .footer .submitConsent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin: 0 0 10px;
+  font-size: 11px;
+}
+.submitConsent > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--assistance-brand);
 }
 .dialog .footer > p:last-child {
   margin-top: 8px;
@@ -413,9 +488,9 @@ dialog.dialog {
   align-items: flex-start;
   gap: 10px;
   padding: 12px;
-  border: 1px solid #ead5a4;
-  border-radius: 13px;
-  background: #fff7de;
+  border: 1px solid #e8d8af;
+  border-radius: 14px;
+  background: #fcf6e6;
 }
 .dialog .statusCard h3 {
   margin: 0 0 4px;
@@ -450,11 +525,11 @@ dialog.dialog {
   background: #f1ede7;
 }
 .progress {
-  margin-bottom: 14px;
-  padding: 14px 12px;
+  margin-bottom: 12px;
+  padding: 12px;
   border: 1px solid #e5ddd3;
-  border-radius: 12px;
-  background: #fffdf9;
+  border-radius: 14px;
+  background: #faf7f3;
 }
 .progressHeading {
   display: flex;
@@ -462,7 +537,7 @@ dialog.dialog {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 6px 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 .dialog .progressHeading h3 {
   margin: 0;
@@ -534,13 +609,13 @@ dialog.dialog {
   background: #edf5ee;
 }
 .progressStages > li[aria-current="step"] {
-  color: #800000;
+  color: var(--assistance-brand);
 }
 .progressStages > li[aria-current="step"] .progressMarker {
-  border-color: #800000;
-  background: #800000;
+  border-color: var(--assistance-brand);
+  background: var(--assistance-brand);
   color: #fffdf9;
-  box-shadow: 0 0 0 4px #8000000d;
+  box-shadow: 0 0 0 4px #75180e0d;
 }
 .progressStages > li[aria-current="step"][data-complete="true"] {
   color: #326441;
@@ -574,7 +649,7 @@ dialog.dialog {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 5px 12px;
-  margin: 10px 0 14px;
+  margin: 10px 0 12px;
 }
 .dialog .connection {
   display: flex;
@@ -619,11 +694,11 @@ dialog.dialog {
 .trackingDetails {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0 0 14px;
-  padding: 12px;
+  gap: 10px 14px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
   border: 1px solid #e9e1d8;
-  border-radius: 10px;
+  border-radius: 14px;
 }
 .trackingDetails dt {
   margin-bottom: 5px;
@@ -638,6 +713,8 @@ dialog.dialog {
 }
 .requestReference {
   grid-column: 1 / -1;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee6dd;
 }
 .requestReference dd {
   overflow-wrap: anywhere;
@@ -817,7 +894,7 @@ dialog.dialog {
   gap: 4px;
   padding: 5px 16px;
   border-bottom: 1px solid #e9e1d8;
-  background: #f8f5ef;
+  background: #f6f0e9;
 }
 .dialog .requestTabs button {
   display: flex;
@@ -837,7 +914,7 @@ dialog.dialog {
 }
 .dialog .requestTabs [aria-selected="true"] {
   background: #fffdf9;
-  color: #800000;
+  color: var(--assistance-brand);
   box-shadow: 0 1px 4px #49382b0d;
 }
 .locationSummary {
@@ -848,8 +925,8 @@ dialog.dialog {
   gap: 10px;
   padding: 12px;
   border: 1px solid #e5ddd3;
-  border-radius: 10px;
-  background: #f8f5f0;
+  border-radius: 14px;
+  background: #faf7f3;
 }
 .locationSummary .sectionHeading {
   flex: 1 1 140px;
@@ -1045,10 +1122,27 @@ dialog.dialog {
     padding: 16px;
   }
   .headerIcon {
-    display: none;
+    display: grid;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+  .headerIcon > svg {
+    width: 21px;
+    height: 21px;
+  }
+  .dialogIdentity {
+    gap: 10px;
+  }
+  .dialogIdentity small {
+    font-size: 9px;
+    letter-spacing: 1px;
   }
   .body {
     padding: 14px 16px;
+  }
+  .dialog[data-view="overview"] .body {
+    padding-block: 12px;
   }
   .locationCard {
     padding: 14px;
@@ -1063,7 +1157,7 @@ dialog.dialog {
     padding: 12px 16px;
   }
   .steps {
-    gap: 16px;
+    gap: 10px;
   }
   .steps li {
     font-size: 11px;
@@ -1080,7 +1174,7 @@ dialog.dialog {
   }
   .progressLabel {
     padding: 0;
-    font-size: 10px;
+    font-size: 11px;
     overflow-wrap: normal;
   }
   .statusIcon {
