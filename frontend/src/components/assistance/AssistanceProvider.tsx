@@ -296,10 +296,12 @@ export function AssistanceProvider({
     // tracking link to remain valid. Failed cancellations retain the request.
     if (tracking?.request.status === "CANCELLED" && !busy) resetRequest();
   }, [tracking?.request.status, busy, resetRequest]);
-  const terminal =
-    confirmed.current &&
-    !!tracking &&
-    !assistanceActive(tracking.request.status);
+  // A cached closed request may be replaced even if its tracking link has
+  // expired. Fresh confirmation still controls live status presentation.
+  const requestEnded = Boolean(
+    tracking && !assistanceActive(tracking.request.status),
+  );
+  const terminal = confirmed.current && requestEnded;
   useEffect(() => {
     if (!open || terminal || unavailable || credentials?.id !== cancelTarget) {
       setCancelTarget(null);
@@ -700,7 +702,7 @@ export function AssistanceProvider({
     }
   }
   function newRequest() {
-    if (!terminal || busyRef.current) return;
+    if (!requestEnded || busyRef.current) return;
     resetRequest();
   }
   return (
@@ -907,7 +909,7 @@ export function AssistanceProvider({
                   </button>
                 )}
                 {tracking &&
-                  (!terminal ? (
+                  (!requestEnded ? (
                     <button
                       type="button"
                       className={styles.cancelRequestButton}
@@ -928,6 +930,7 @@ export function AssistanceProvider({
                     <button
                       type="button"
                       className="primary-button"
+                      disabled={busy}
                       onClick={newRequest}
                     >
                       Start a new request
