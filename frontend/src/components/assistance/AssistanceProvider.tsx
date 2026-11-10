@@ -12,8 +12,10 @@ import {
   ArrowRight,
   HandHeart,
   LoaderCircle,
+  Pencil,
   Save,
   Send,
+  ShieldCheck,
   UserRound,
   X,
 } from "lucide-react";
@@ -867,7 +869,7 @@ export function AssistanceProvider({
               disabled={busy}
               onClick={editContact}
             >
-              <UserRound size={17} aria-hidden="true" />
+              <Pencil size={15} aria-hidden="true" />
               Edit saved contact details
             </button>
           )}
@@ -951,9 +953,12 @@ export function AssistanceProvider({
           ) : (
             <>
               <p id="assistance-consent" className={styles.submitConsent}>
-                Confirming sends this location, accuracy, capture time and any
-                contact details to CDRRMO. No live tracking. Assistance or
-                dispatch is not guaranteed.
+                <ShieldCheck size={16} aria-hidden="true" />
+                <span>
+                  Confirming shares your location, accuracy, capture time and
+                  contact details with CDRRMO. No live tracking. Assistance or
+                  dispatch is not guaranteed.
+                </span>
               </p>
               <button
                 type="submit"
