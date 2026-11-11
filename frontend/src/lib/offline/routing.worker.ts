@@ -8,12 +8,20 @@ self.onmessage = (
   event: MessageEvent<{
     id: number;
     package?: OfflinePackage;
+    location?: LatLng;
     start: LatLng;
     destination: LatLng | null;
     travelMode: TravelMode;
   }>,
 ) => {
-  const { id, package: data, start, destination, travelMode } = event.data;
+  const {
+    id,
+    package: data,
+    location,
+    start,
+    destination,
+    travelMode,
+  } = event.data;
   try {
     if (data) {
       engine = new OfflineRoutingEngine(data);
@@ -21,6 +29,13 @@ self.onmessage = (
       return;
     }
     if (!engine) throw new Error("Offline routing data has not been loaded.");
+    if (location) {
+      self.postMessage({
+        id,
+        locationName: engine.lookupLocationName(location),
+      });
+      return;
+    }
     self.postMessage({
       id,
       ...engine.calculate(start, destination, travelMode),

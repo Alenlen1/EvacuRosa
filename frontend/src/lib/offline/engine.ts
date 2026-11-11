@@ -15,6 +15,20 @@ export class OfflineRoutingEngine {
   constructor(private data: OfflinePackage) {
     this.graph = new RoadGraph(data.graph.data);
   }
+  // A nearby street reference, not a verified address. Resolve locally so an
+  // assistance location is not sent to a geocoding service before confirmation.
+  lookupLocationName(point: LatLng): string | null {
+    if (
+      !Number.isFinite(point.latitude) ||
+      !Number.isFinite(point.longitude) ||
+      Math.abs(point.latitude) > 90 ||
+      Math.abs(point.longitude) > 180
+    )
+      return null;
+    const road = this.graph.nearestRoads(point.latitude, point.longitude, 1)[0];
+    const name = road?.roadName?.trim();
+    return name && road.distanceMeters <= 150 ? name : null;
+  }
   calculate(start: LatLng, destination: LatLng | null, travelMode: TravelMode) {
     const snapshot = this.data.snapshot;
     const warnings = [

@@ -250,7 +250,8 @@ dialog.dialog {
   background: #fff3d9;
   color: #805e24;
 }
-.dialog .coordinates {
+.dialog .coordinates,
+.dialog .locationName {
   margin: 12px 0 4px;
   font-size: clamp(14px, 2.6vw, 18px);
   font-weight: 650;

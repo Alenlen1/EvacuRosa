@@ -569,40 +569,60 @@ export function AssistanceProvider({
     setIntent(context ?? { kind: "emergency", travelMode: "walking" });
     setOpen(true);
   }
-  async function locate(forceFresh = false) {
-    if (busyRef.current) return;
-    busyRef.current = true;
-    setOperation("locating");
-    setError("");
-    const capture = new AbortController();
-    locationCapture.current = capture;
-    try {
-      if (!navigator.onLine)
-        throw Error(
-          "You are offline. This request cannot be submitted until connected. Use official emergency communication channels.",
-        );
-      const result = await captureAssistanceLocation({
-        cached: geolocation,
-        forceFresh,
-        geolocation: navigator.geolocation,
-        signal: capture.signal,
-      });
-      if (!mounted.current || capture.signal.aborted) return;
-      setFix(result.fix);
-      setFixSource(result.source);
-    } catch (cause) {
-      if (mounted.current && !capture.signal.aborted)
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Could not retrieve location.",
-        );
-    } finally {
-      locationCapture.current = null;
-      busyRef.current = false;
-      if (mounted.current) setOperation(null);
+  const locate = useCallback(
+    async (forceFresh = false) => {
+      if (busyRef.current) return;
+      busyRef.current = true;
+      setOperation("locating");
+      setError("");
+      const capture = new AbortController();
+      locationCapture.current = capture;
+      try {
+        if (!navigator.onLine)
+          throw Error(
+            "You are offline. This request cannot be submitted until connected. Use official emergency communication channels.",
+          );
+        const result = await captureAssistanceLocation({
+          cached: geolocation,
+          forceFresh,
+          geolocation: navigator.geolocation,
+          signal: capture.signal,
+        });
+        if (!mounted.current || capture.signal.aborted) return;
+        setFix(result.fix);
+        setFixSource(result.source);
+      } catch (cause) {
+        if (mounted.current && !capture.signal.aborted)
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : "Could not retrieve location.",
+          );
+      } finally {
+        locationCapture.current = null;
+        busyRef.current = false;
+        if (mounted.current) setOperation(null);
+      }
+    },
+    [geolocation],
+  );
+
+  const automaticLocationAttempted = useRef(false);
+  useEffect(() => {
+    if (!open || hasExistingRequest) {
+      automaticLocationAttempted.current = false;
+      return;
     }
-  }
+    // Opening contact settings or receiving map updates must not start another
+    // capture. A stopped/failed attempt stays stopped until the user retries.
+    if (contactMode || automaticLocationAttempted.current || busyRef.current)
+      return;
+    automaticLocationAttempted.current = true;
+    setFix(null);
+    setFixSource(null);
+    void locate();
+  }, [open, hasExistingRequest, contactMode, operation, locate]);
+
   async function submit() {
     if (!fix || busyRef.current) return;
     busyRef.current = true;

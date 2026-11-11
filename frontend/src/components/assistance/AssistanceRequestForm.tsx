@@ -8,6 +8,7 @@ import {
   UserRound,
 } from "lucide-react";
 import type { AssistanceLocation } from "@/lib/assistanceLocation";
+import { useAssistanceLocationName } from "@/hooks/useAssistanceLocationName";
 import styles from "./AssistanceProvider.module.css";
 
 export function AssistanceRequestForm({
@@ -36,6 +37,7 @@ export function AssistanceRequestForm({
   onSubmit: () => void;
 }) {
   const busy = locating || submitting;
+  const locationName = useAssistanceLocationName(fix);
   return (
     <form
       id="assistance-request-form"
@@ -48,7 +50,9 @@ export function AssistanceRequestForm({
       <p className={styles.intro}>
         {fix
           ? "Check your location below, then confirm your request."
-          : "Get your location to request assistance from CDRRMO."}
+          : locating
+            ? "Getting your location. Review your details while you wait."
+            : "Use your current location to request assistance from CDRRMO."}
       </p>
       <ol className={styles.steps} aria-label="Request steps">
         <li
@@ -81,8 +85,17 @@ export function AssistanceRequestForm({
             <span className={styles.accuracy} data-poor={fix.accuracy > 100}>
               Reported accuracy: ±{Math.round(fix.accuracy)} m
             </span>
-            <p className={styles.coordinates}>
-              {fix.latitude.toFixed(6)}, {fix.longitude.toFixed(6)}
+            <p className={styles.locationName} aria-live="polite">
+              {locationName.name
+                ? `Near ${locationName.name}`
+                : "Location captured"}
+            </p>
+            <p className={styles.smallNote}>
+              {locationName.loading
+                ? "Finding a nearby street on your device…"
+                : locationName.name
+                  ? "Approximate nearby street. Check the reported accuracy."
+                  : "Street name unavailable. Your device location is ready to share."}
             </p>
             <p className={styles.captureTime}>
               {source === "map"
@@ -106,8 +119,9 @@ export function AssistanceRequestForm({
           </div>
         ) : (
           <p className={styles.locationHint}>
-            Use your device location, then review the coordinates and reported
-            accuracy before sending.
+            {locating
+              ? "Allow location access if your browser asks. Nothing is sent until you confirm."
+              : "Try getting your location again, then review the reported accuracy before sending."}
           </p>
         )}
         <div className={styles.locationActions}>
@@ -144,8 +158,8 @@ export function AssistanceRequestForm({
         </div>
         {locating && (
           <p className={styles.progressMessage} role="status">
-            Waiting for your device's location. You can fill in your contact
-            details while you wait.
+            Waiting for your device's location. You can stop and try again if
+            needed.
           </p>
         )}
       </section>
