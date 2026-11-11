@@ -198,7 +198,7 @@ export function ChangePasswordDialog({
           >
             <div className={styles.fields}>
               <p id={`${id}-description`} className={styles.description}>
-                Update the password for your signed-in barangay account.
+                Update the password for your signed-in account.
               </p>
               {(
                 [

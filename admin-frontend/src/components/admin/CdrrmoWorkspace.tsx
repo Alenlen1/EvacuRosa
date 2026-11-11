@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import { SkeletonBlock } from "./Skeleton";
-import { SignOutButton } from "./SignOutButton";
+import { StaffAccountMenu } from "./StaffAccountMenu";
 import styles from "./CdrrmoWorkspace.module.css";
 
 const sections = [
@@ -272,16 +272,12 @@ export function CdrrmoWorkspace({
               </div>
             </div>
             <div className={styles.topbarActions}>
-              <span className={styles.city}>
-                <MapPin size={15} aria-hidden="true" />
-                Santa Rosa, Laguna
-              </span>
               {loading ? (
                 <>
                   {publicMapUrl && (
                     <SkeletonBlock className={styles.publicMapSkeleton} />
                   )}
-                  <SkeletonBlock className={styles.signOutSkeleton} />
+                  <SkeletonBlock className={styles.accountSkeleton} />
                 </>
               ) : (
                 <>
@@ -291,10 +287,7 @@ export function CdrrmoWorkspace({
                       <ArrowUpRight size={16} aria-hidden="true" />
                     </a>
                   )}
-                  <SignOutButton
-                    className={styles.signOut}
-                    onSignOut={onSignOut}
-                  />
+                  <StaffAccountMenu onSignOut={onSignOut} />
                 </>
               )}
             </div>

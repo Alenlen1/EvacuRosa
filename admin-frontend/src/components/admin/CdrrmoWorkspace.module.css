@@ -262,13 +262,6 @@
   gap: 20px;
   flex-shrink: 0;
 }
-.city {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #766960;
-  font-size: 11px;
-}
 .publicMap {
   display: inline-flex;
   align-items: center;
@@ -278,7 +271,6 @@
   font-size: 12px;
   font-weight: 600;
 }
-.signOut,
 .menuButton,
 .closeMenu {
   display: inline-flex;
@@ -293,12 +285,6 @@
   color: #604c42;
   cursor: pointer;
 }
-.signOut {
-  padding: 0 13px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.signOut:hover,
 .menuButton:hover {
   background: #f7f0ea;
 }
@@ -359,16 +345,13 @@
   width: 88px;
   height: 18px;
 }
-.signOutSkeleton {
-  width: 100px;
+.accountSkeleton {
+  width: 122px;
   height: 44px;
 }
 @media (max-width: 1280px) {
   .topbar {
     padding-inline: 24px;
-  }
-  .city {
-    display: none;
   }
 }
 @media (max-width: 1100px) {
@@ -416,18 +399,9 @@
   .publicMapSkeleton {
     display: none;
   }
-  .signOut {
-    width: 44px;
-    padding: 0;
-  }
-  .signOut span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-  .signOutSkeleton {
+}
+@media (max-width: 540px) {
+  .accountSkeleton {
     width: 44px;
   }
 }
