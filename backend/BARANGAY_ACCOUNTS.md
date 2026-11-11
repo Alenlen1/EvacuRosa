@@ -101,8 +101,11 @@ apply are required.
 ## Change your own password
 
 In the barangay workspace header, open **Account** (the person icon on mobile)
-and choose **Change password**. Enter the current password, a new password of at least 12 characters,
-and its confirmation. The dialog verifies the current credentials with an
+and choose **Change password**. Enter the current password, a new password of
+at least 10 characters containing an uppercase letter (A–Z), a lowercase letter
+(a–z), a number (0–9) and a special symbol, and its confirmation. Spaces do not
+count as special symbols. Existing passwords can still be used to sign in.
+The dialog verifies the current credentials with an
 in-memory Auth client, checks the account matches the workspace session, and
 updates that signed-in user through Supabase Auth. The temporary verification
 session is signed out with local scope; the workspace session is preserved.
@@ -113,3 +116,9 @@ Passwords are not written to browser storage or the private credentials export.
 Editing a password in a JSON export does not change Supabase Auth. After a
 successful change, the exported initial password is outdated; use the new one.
 No SQL migration or backend service-role endpoint is needed for this feature.
+
+For server-side enforcement, set the same minimum length (10) and required
+character types in the project's Supabase Auth password-security settings.
+The form validation alone does not prevent someone calling the Auth API
+directly. Project Auth settings are configured separately; this code change
+does not modify the live project's settings.

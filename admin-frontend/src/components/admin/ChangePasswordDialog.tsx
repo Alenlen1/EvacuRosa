@@ -21,6 +21,8 @@ import {
   changeOwnPassword,
   passwordChangeFailure,
   validatePasswordChange,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_REQUIREMENTS,
   type PasswordErrors,
   type PasswordField,
   type PasswordValues,
@@ -224,6 +226,9 @@ export function ChangePasswordDialog({
                     onChange={(event) => edit(field, event.target.value)}
                     disabled={busy}
                     required
+                    minLength={
+                      field === "current" ? undefined : PASSWORD_MIN_LENGTH
+                    }
                     data-focus={field}
                     aria-invalid={Boolean(errors[field])}
                     aria-describedby={
@@ -237,7 +242,7 @@ export function ChangePasswordDialog({
                   />
                   {field === "next" && (
                     <p id={`${id}-hint`} className={styles.hint}>
-                      At least 12 characters. A unique passphrase works well.
+                      {PASSWORD_REQUIREMENTS}
                     </p>
                   )}
                   {errors[field] && (

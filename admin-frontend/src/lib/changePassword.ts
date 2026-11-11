@@ -4,13 +4,31 @@ export type PasswordField = "current" | "next" | "confirm";
 export type PasswordValues = Record<PasswordField, string>;
 export type PasswordErrors = Partial<Record<PasswordField, string>>;
 
+export const PASSWORD_MIN_LENGTH = 10;
+export const PASSWORD_REQUIREMENTS =
+  "At least 10 characters, with an uppercase letter, a lowercase letter, a number and a special symbol.";
+// Match the symbols supported by Supabase's password-strength settings.
+const PASSWORD_SYMBOLS = "!@#$%^&*()_+-=[]{};'\":\\|<>?,./`~";
+
 export function validatePasswordChange(values: PasswordValues): PasswordErrors {
   const errors: PasswordErrors = {};
   if (!values.current) errors.current = "Enter your current password.";
-  if (values.next.length < 12)
-    errors.next = "Use at least 12 characters for your new password.";
+  if (values.next.length < PASSWORD_MIN_LENGTH)
+    errors.next = `Use at least ${PASSWORD_MIN_LENGTH} characters for your new password.`;
   else if (values.next === values.current)
     errors.next = "Choose a password different from your current password.";
+  else {
+    const missing = [
+      !/[A-Z]/.test(values.next) && "an uppercase letter",
+      !/[a-z]/.test(values.next) && "a lowercase letter",
+      !/[0-9]/.test(values.next) && "a number",
+      !Array.from(values.next).some((character) =>
+        PASSWORD_SYMBOLS.includes(character),
+      ) && "a special symbol",
+    ].filter(Boolean);
+    if (missing.length)
+      errors.next = `Your new password needs ${missing.join(", ")}.`;
+  }
   if (!values.confirm) errors.confirm = "Confirm your new password.";
   else if (values.confirm !== values.next)
     errors.confirm = "The new passwords do not match.";

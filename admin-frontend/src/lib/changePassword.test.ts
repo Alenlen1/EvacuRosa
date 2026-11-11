@@ -7,8 +7,8 @@ import {
 
 const values = {
   current: "OldPrivatePassword!",
-  next: "NewPrivatePassword!",
-  confirm: "NewPrivatePassword!",
+  next: "NewPrivatePassword1!",
+  confirm: "NewPrivatePassword1!",
 };
 
 function fixture() {
@@ -31,16 +31,19 @@ function fixture() {
 }
 
 describe("password change validation", () => {
-  it("requires all fields and a minimum of 12 characters", () => {
+  it("requires all fields and at least 10 characters, even with all character types", () => {
     expect(
       Object.keys(
         validatePasswordChange({ current: "", next: "", confirm: "" }),
       ),
     ).toEqual(["current", "next", "confirm"]);
     expect(
-      validatePasswordChange({ ...values, next: "short", confirm: "short" })
-        .next,
-    ).toContain("12 characters");
+      validatePasswordChange({
+        ...values,
+        next: "Aa123456!",
+        confirm: "Aa123456!",
+      }).next,
+    ).toContain("10 characters");
   });
   it("rejects mismatched confirmation and reuse of the current password", () => {
     expect(
@@ -54,19 +57,45 @@ describe("password change validation", () => {
       }).next,
     ).toContain("different");
   });
-  it("accepts long passphrases without trimming or silently changing passwords", () => {
-    expect(
-      validatePasswordChange({
-        current: " x ",
-        next: " a long passphrase ",
-        confirm: " a long passphrase ",
-      }),
-    ).toEqual({});
+  it("accepts exactly 10 characters and longer passwords with all required character types", () => {
     expect(
       validatePasswordChange({
         ...values,
-        next: "123456789012",
-        confirm: "123456789012",
+        next: "Aa1234567!",
+        confirm: "Aa1234567!",
+      }),
+    ).toEqual({});
+    expect(validatePasswordChange(values)).toEqual({});
+  });
+  it.each([
+    ["lowercase123!", "uppercase letter"],
+    ["UPPERCASE123!", "lowercase letter"],
+    ["NoNumbersHere!", "number"],
+    ["NoSymbolsHere123", "special symbol"],
+    ["SpacesAreNotSymbols1 ", "special symbol"],
+    ["123456789012", "uppercase letter"],
+  ])("rejects %s and explains the missing %s", (password, missing) => {
+    expect(
+      validatePasswordChange({ ...values, next: password, confirm: password })
+        .next,
+    ).toContain(missing);
+  });
+  it("lists multiple missing types together", () => {
+    const message = validatePasswordChange({
+      ...values,
+      next: "lowercaseonly",
+      confirm: "lowercaseonly",
+    }).next;
+    expect(message).toContain("uppercase letter");
+    expect(message).toContain("number");
+    expect(message).toContain("special symbol");
+  });
+  it("accepts valid passphrases without trimming or applying new rules to the current password", () => {
+    expect(
+      validatePasswordChange({
+        current: " x ",
+        next: " A long passphrase 1! ",
+        confirm: " A long passphrase 1! ",
       }),
     ).toEqual({});
   });
@@ -114,6 +143,19 @@ describe("change only the authenticated account password", () => {
     await expect(
       changeOwnPassword(auth, createVerifier, values),
     ).rejects.toEqual({ code: "session_missing" });
+    expect(createVerifier).not.toHaveBeenCalled();
+  });
+  it("rejects a weak new password before any Auth requests", async () => {
+    const { auth, createVerifier } = fixture();
+    await expect(
+      changeOwnPassword(auth, createVerifier, {
+        ...values,
+        next: "lowercaseonly",
+        confirm: "lowercaseonly",
+      }),
+    ).rejects.toThrow();
+    expect(auth.getUser).not.toHaveBeenCalled();
+    expect(auth.updateUser).not.toHaveBeenCalled();
     expect(createVerifier).not.toHaveBeenCalled();
   });
   it.each(["verification", "workspace"])(
