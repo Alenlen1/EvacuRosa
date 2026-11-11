@@ -40,6 +40,11 @@ The location-sharing sections below describe the earlier 0011-0013 implementatio
    and deployment. CDRRMO uses `SUPER_ADMIN`; every barangay account must have
    its own assigned `barangay_id`. Null assignments no longer grant citywide access.
    No admin pages are deployed in the public `frontend/` website.
+   Barangay staff now use 18 assigned email/password accounts instead of the
+   shared entry login and access codes. Follow
+   [the account migration guide](../backend/BARANGAY_ACCOUNTS.md) to reuse the
+   existing Auth identities. This login change needs no new SQL migration;
+   retain migration 0017 and the historical private mapping table.
 6. For emergency request tracking, apply `0018_emergency_assistance_tracking.sql`
    and configure the backend-only `ASSISTANCE_TRACKING_SECRET` as described in
    [the assistance guide](../backend/ASSISTANCE.md).

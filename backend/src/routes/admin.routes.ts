@@ -27,10 +27,7 @@ import {
   deleteEarthquakeRoadImpact,
 } from "../controllers/admin.controller";
 
-import {
-  listBarangays,
-  signInBarangay,
-} from "../controllers/barangayAccess.controller";
+import { listBarangays } from "../controllers/barangay.controller";
 import {
   listAdminCenters,
   createCenter,
@@ -68,7 +65,6 @@ adminRouter.delete(
   deleteHazardArchive,
 );
 adminRouter.get("/barangays", listBarangays);
-adminRouter.post("/barangay-login", signInBarangay);
 adminRouter.get(
   "/evacuation-centers",
   requireAuth,

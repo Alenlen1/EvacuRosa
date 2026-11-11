@@ -8,6 +8,7 @@
     "postbuild": "node scripts/copy-road-data.mjs",
     "start": "node dist/server.js",
     "test": "vitest run",
+    "accounts:barangays": "tsx scripts/provision-barangay-accounts.ts",
     "benchmark:routing": "npm run build && node --expose-gc scripts/benchmark-routing.cjs",
     "audit:roads": "npm run build && node scripts/audit-road-network.cjs",
     "fetch:roads": "tsx scripts/fetch-santa-rosa-roads.ts",

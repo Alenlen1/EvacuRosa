@@ -25,6 +25,7 @@ import { publicSans } from "@/app/fonts/publicSans";
 import { barangayCardAppearance } from "@/lib/barangayCardAppearance";
 import { BarangayWorkspaceCenter } from "@/components/admin/BarangayWorkspaceCenter";
 import { BarangayWorkspaceSummary } from "@/components/admin/BarangayWorkspaceSummary";
+import { BarangayAssignedMap } from "@/components/admin/BarangayAssignedMap";
 import { useWorkspaceLoadingRole } from "@/hooks/useWorkspaceLoadingRole";
 import {
   clearWorkspaceRole,
@@ -81,6 +82,7 @@ export default function AdminDashboardPage() {
   >({});
   const [ready, setReady] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [refreshingCenters, setRefreshingCenters] = useState(false);
 
   const [floodReports, setFloodReports] = useState<FloodReport[]>([]);
   const [fireIncidents, setFireIncidents] = useState<FireIncident[]>([]);
@@ -378,6 +380,22 @@ export default function AdminDashboardPage() {
         <BarangayWorkspaceSummary
           centers={centers}
           unavailable={Boolean(error)}
+        />
+      )}
+      {profile.role === "BARANGAY_ADMIN" && profile.barangay_id && (
+        <BarangayAssignedMap
+          centers={centers}
+          barangayId={profile.barangay_id}
+          barangayName={barangayName ?? "your barangay"}
+          loading={refreshingCenters}
+          error={error ?? ""}
+          onRefresh={() => {
+            if (refreshingCenters || savingId !== null) return;
+            setRefreshingCenters(true);
+            void loadCenters()
+              .catch(() => {})
+              .finally(() => setRefreshingCenters(false));
+          }}
         />
       )}
 

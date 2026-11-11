@@ -189,6 +189,10 @@ function BarangayWorkspaceSkeleton() {
           ))}
         </div>
       </div>
+      <MapSkeleton
+        className="barangay-overview-map"
+        label="Loading assigned evacuation centers..."
+      />
       <div className="barangay-center-management">
         <div className="admin-center-cards">
           {Array.from({ length: 2 }, (_, index) => (
@@ -278,23 +282,5 @@ export function DashboardSkeleton({
 }
 
 export function BarangayPageSkeleton() {
-  return (
-    <main
-      className={`staff-login barangay-access-page ${publicSans.className}`}
-    >
-      <StaffHeader role="BARANGAY_ADMIN" directory loading />
-      <div className="staff-login-content">
-        <SkeletonRegion label="Loading barangay administration...">
-          <div className="staff-login-title staff-skeleton-directory-heading">
-            <div className="staff-skeleton-copy">
-              <SkeletonBlock className="staff-skeleton-eyebrow" />
-              <SkeletonBlock className="staff-skeleton-workspace-title" />
-              <SkeletonBlock className="staff-skeleton-line" />
-            </div>
-          </div>
-        </SkeletonRegion>
-        <BarangayDirectorySkeleton />
-      </div>
-    </main>
-  );
+  return <DashboardSkeleton role="BARANGAY_ADMIN" />;
 }
