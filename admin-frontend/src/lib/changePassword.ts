@@ -10,25 +10,30 @@ export const PASSWORD_REQUIREMENTS =
 // Match the symbols supported by Supabase's password-strength settings.
 const PASSWORD_SYMBOLS = "!@#$%^&*()_+-=[]{};'\":\\|<>?,./`~";
 
+export function passwordStrengthError(password: string): string | undefined {
+  if (password.length < PASSWORD_MIN_LENGTH)
+    return `Use at least ${PASSWORD_MIN_LENGTH} characters for your new password.`;
+  const missing = [
+    !/[A-Z]/.test(password) && "an uppercase letter",
+    !/[a-z]/.test(password) && "a lowercase letter",
+    !/[0-9]/.test(password) && "a number",
+    !Array.from(password).some((character) =>
+      PASSWORD_SYMBOLS.includes(character),
+    ) && "a special symbol",
+  ].filter(Boolean);
+  if (missing.length) return `Your new password needs ${missing.join(", ")}.`;
+}
+
 export function validatePasswordChange(values: PasswordValues): PasswordErrors {
   const errors: PasswordErrors = {};
   if (!values.current) errors.current = "Enter your current password.";
-  if (values.next.length < PASSWORD_MIN_LENGTH)
-    errors.next = `Use at least ${PASSWORD_MIN_LENGTH} characters for your new password.`;
-  else if (values.next === values.current)
+  if (
+    values.next.length >= PASSWORD_MIN_LENGTH &&
+    values.next === values.current
+  )
     errors.next = "Choose a password different from your current password.";
-  else {
-    const missing = [
-      !/[A-Z]/.test(values.next) && "an uppercase letter",
-      !/[a-z]/.test(values.next) && "a lowercase letter",
-      !/[0-9]/.test(values.next) && "a number",
-      !Array.from(values.next).some((character) =>
-        PASSWORD_SYMBOLS.includes(character),
-      ) && "a special symbol",
-    ].filter(Boolean);
-    if (missing.length)
-      errors.next = `Your new password needs ${missing.join(", ")}.`;
-  }
+  else if (passwordStrengthError(values.next))
+    errors.next = passwordStrengthError(values.next);
   if (!values.confirm) errors.confirm = "Confirm your new password.";
   else if (values.confirm !== values.next)
     errors.confirm = "The new passwords do not match.";

@@ -15,11 +15,16 @@ import {
 import { supabase } from "@/lib/supabaseClient";
 import { Brand } from "@/components/ui/Brand";
 import { SecretInput } from "@/components/admin/SecretInput";
+import { PasswordRecoveryDialog } from "@/components/admin/PasswordRecoveryDialog";
 import { LoginSlideshow } from "@/components/admin/LoginSlideshow";
 import { useLoginViewport } from "@/hooks/useLoginViewport";
 import { publicSans } from "@/app/fonts/publicSans";
 import { rememberWorkspaceRole } from "@/lib/workspaceLoading";
 import { staffAccessError } from "@/lib/staffAccess";
+import {
+  takePasswordRecoveryLink,
+  type RecoveryLink,
+} from "@/lib/passwordRecoveryLink";
 import {
   signInFailure,
   validateLogin,
@@ -39,6 +44,9 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [recoveryLink, setRecoveryLink] = useState<RecoveryLink | null>(null);
+  const recoveryTrigger = useRef<HTMLButtonElement>(null);
   const [stage, setStage] = useState<
     "idle" | "signing-in" | "verifying-access" | "redirecting"
   >("idle");
@@ -55,6 +63,14 @@ export default function AdminLoginPage() {
   const pageRef = useRef<HTMLElement>(null);
   useLoginViewport(pageRef);
   const focusTarget = useRef<LoginFailure["focus"] | null>(null);
+
+  useEffect(() => {
+    const link = takePasswordRecoveryLink(window);
+    if (link) {
+      setRecoveryLink(link);
+      setRecoveryOpen(true);
+    }
+  }, []);
 
   // Focus after feedback is committed and the fields are re-enabled.
   useEffect(() => {
@@ -335,6 +351,19 @@ export default function AdminLoginPage() {
                   {fieldErrors.password}
                 </p>
               )}
+              <button
+                type="button"
+                className="login-forgot-password"
+                ref={recoveryTrigger}
+                disabled={busy}
+                aria-haspopup="dialog"
+                onClick={() => {
+                  setPassword("");
+                  setRecoveryOpen(true);
+                }}
+              >
+                Forgot password?
+              </button>
             </div>
             {feedback && (
               <div
@@ -374,6 +403,23 @@ export default function AdminLoginPage() {
         <span>EvacuRosa</span>
         <span>Community preparedness. Coordinated action.</span>
       </footer>
+      {recoveryOpen && (
+        <PasswordRecoveryDialog
+          initialEmail={email}
+          recoveryLink={recoveryLink}
+          returnFocusRef={recoveryTrigger}
+          onClose={(recoveredEmail) => {
+            setRecoveryOpen(false);
+            setRecoveryLink(null);
+            if (recoveredEmail) {
+              setEmail(recoveredEmail);
+              setPassword("");
+              setFeedback(null);
+              setFieldErrors({});
+            }
+          }}
+        />
+      )}
     </main>
   );
 }
