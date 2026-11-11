@@ -341,7 +341,9 @@
   font-weight: 600;
   border: 1px solid #800000;
   box-shadow: 0 5px 14px #80000015;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
 }
 .login-submit > svg {
   position: absolute;
@@ -3005,4 +3007,28 @@
   .barangay-access-dialog[data-compact="true"] .barangay-access-form {
     padding: 12px 18px;
   }
+}
+.login-forgot-password {
+  display: block;
+  margin: 4px auto 0 0;
+  padding: 8px 4px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #76160d;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.login-forgot-password:hover:not(:disabled) {
+  background: #f3eae4;
+}
+.login-forgot-password:focus-visible {
+  outline: 2px solid #995c51;
+  outline-offset: 3px;
+}
+.login-forgot-password:disabled {
+  opacity: 0.6;
 }

@@ -1,5 +1,9 @@
 # Barangay email/password accounts
 
+For staff **Change email** and email-code **Forgot password**, follow
+[ACCOUNT_EMAIL_SETUP.md](ACCOUNT_EMAIL_SETUP.md). Configure SMTP and apply the
+recovery email template in Supabase before handing accounts over to staff.
+
 One account per barangay opens its assigned dashboard directly. The system
 operator provisions accounts; CDRRMO has no account-management responsibility.
 This does not change public access, routing, hazards, or center permissions.

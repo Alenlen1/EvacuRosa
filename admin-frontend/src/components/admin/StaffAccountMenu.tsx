@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, KeyRound, LoaderCircle, UserRound } from "lucide-react";
+import {
+  ChevronDown,
+  KeyRound,
+  LoaderCircle,
+  Mail,
+  UserRound,
+} from "lucide-react";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { ChangeEmailDialog } from "./ChangeEmailDialog";
 import { SignOutButton } from "./SignOutButton";
 import styles from "./StaffAccountMenu.module.css";
 
@@ -18,6 +25,7 @@ export function StaffAccountMenu({
   const trigger = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
@@ -111,6 +119,18 @@ export function StaffAccountMenu({
               disabled={disabled || signingOut}
               onClick={() => {
                 setOpen(false);
+                setEmailOpen(true);
+              }}
+            >
+              <Mail size={17} aria-hidden="true" />
+              <span>Change email</span>
+            </button>
+            <button
+              type="button"
+              className={styles.action}
+              disabled={disabled || signingOut}
+              onClick={() => {
+                setOpen(false);
                 setPasswordOpen(true);
               }}
             >
@@ -130,6 +150,12 @@ export function StaffAccountMenu({
         <ChangePasswordDialog
           returnFocusRef={trigger}
           onClose={() => setPasswordOpen(false)}
+        />
+      )}
+      {emailOpen && (
+        <ChangeEmailDialog
+          returnFocusRef={trigger}
+          onClose={() => setEmailOpen(false)}
         />
       )}
     </>
