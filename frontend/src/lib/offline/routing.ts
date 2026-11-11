@@ -120,6 +120,24 @@ async function loadWorker(data: OfflinePackage) {
   }
 }
 
+// Read only already-saved road data. Never download or send the GPS position
+// over the network, and never make request submission depend on a street name.
+export async function lookupSavedLocationName(
+  point: LatLng,
+): Promise<string | null> {
+  try {
+    const data = await getOfflinePackage();
+    if (!data) return null;
+    await loadWorker(data);
+    const result = await requestWorker<{ locationName: string | null }>({
+      location: point,
+    });
+    return result.locationName;
+  } catch {
+    return null;
+  }
+}
+
 // Precache every versioned JS/CSS/font asset, including lazy map and worker
 // chunks, before claiming readiness for an offline reload of this build.
 async function prepareAppAssets(): Promise<void> {

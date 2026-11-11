@@ -55,6 +55,28 @@ function data(): OfflinePackage {
   };
 }
 describe("offline routing", () => {
+  it("resolves a nearby named road locally without inventing an address", () => {
+    const saved = data();
+    saved.graph.data.edges[0].roadName = "  Sinalhan Road  ";
+    const engine = new OfflineRoutingEngine(saved);
+    expect(
+      engine.lookupLocationName({ latitude: 14.3005, longitude: 121.1001 }),
+    ).toBe("Sinalhan Road");
+    expect(
+      engine.lookupLocationName({ latitude: 14.3005, longitude: 121.11 }),
+    ).toBeNull();
+  });
+  it("does not label an unnamed road or an invalid location", () => {
+    const engine = new OfflineRoutingEngine(data());
+    expect(engine.lookupLocationName(start)).toBeNull();
+    for (const point of [
+      { latitude: NaN, longitude: 121.1 },
+      { latitude: 14.3, longitude: Infinity },
+      { latitude: 91, longitude: 121.1 },
+      { latitude: 14.3, longitude: -181 },
+    ])
+      expect(engine.lookupLocationName(point)).toBeNull();
+  });
   it("preserves a verified earthquake section after serializing its offline snapshot", () => {
     const saved = data();
     saved.snapshot.earthquakeRoadImpacts = [
