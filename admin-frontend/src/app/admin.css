@@ -2422,6 +2422,19 @@
   background: var(--surface);
   color: var(--ink);
 }
+.barangay-workspace-map {
+  margin-block: 24px;
+}
+.barangay-workspace-map .barangay-overview {
+  padding: clamp(16px, 2vw, 24px);
+  border: 1px solid #e2d7ce;
+  border-radius: 18px;
+  background: #fffdf9;
+}
+.barangay-workspace-map .barangay-overview-heading p,
+.barangay-workspace-map .barangay-map-focus-caption {
+  color: var(--muted);
+}
 .barangay-access-page {
   --muted: #655a53;
 }

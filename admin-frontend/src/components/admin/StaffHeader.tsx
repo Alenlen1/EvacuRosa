@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { House, ArrowUpRight } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import type { WorkspaceRole } from "@/lib/workspaceLoading";
 import { SkeletonBlock } from "./Skeleton";
@@ -40,10 +40,7 @@ export function StaffHeader({
             </span>
           </>
         ) : (
-          <Link
-            href={directory ? "/admin/barangays" : "/admin/dashboard"}
-            aria-label="EvacuRosa administration"
-          >
+          <Link href="/admin/dashboard" aria-label="EvacuRosa administration">
             <Brand />
           </Link>
         )}
@@ -62,11 +59,11 @@ export function StaffHeader({
             ) : (
               <Link
                 className="staff-header-home"
-                href="/admin/barangays"
-                aria-label="Back to barangay home"
+                href="/admin/dashboard"
+                aria-label="Open your barangay workspace"
               >
-                <ArrowLeft size={16} aria-hidden="true" />
-                <span>Barangay home</span>
+                <House size={16} aria-hidden="true" />
+                <span>My barangay</span>
               </Link>
             ))}
           {hasPublicMap &&

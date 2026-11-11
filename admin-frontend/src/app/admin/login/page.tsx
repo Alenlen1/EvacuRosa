@@ -19,6 +19,7 @@ import { LoginSlideshow } from "@/components/admin/LoginSlideshow";
 import { useLoginViewport } from "@/hooks/useLoginViewport";
 import { publicSans } from "@/app/fonts/publicSans";
 import { rememberWorkspaceRole } from "@/lib/workspaceLoading";
+import { staffAccessError } from "@/lib/staffAccess";
 import {
   signInFailure,
   validateLogin,
@@ -157,13 +158,7 @@ export default function AdminLoginPage() {
       if (profileError) {
         accessError =
           "Could not verify your admin access. Please try again. If this continues, contact your CDRRMO administrator.";
-      } else if (
-        profile?.role !== "SUPER_ADMIN" &&
-        profile?.role !== "BARANGAY_ADMIN"
-      ) {
-        accessError =
-          "Your account does not have admin access. Contact your CDRRMO administrator.";
-      }
+      } else accessError = staffAccessError(profile) ?? "";
       if (accessError) {
         await supabase.auth.signOut();
         showFailure({ message: accessError, invalidFields: [], focus: "form" });
@@ -172,11 +167,7 @@ export default function AdminLoginPage() {
       rememberWorkspaceRole(profile!.role, data.user.id);
       setPassword("");
       setStage("redirecting");
-      router.replace(
-        profile?.role === "BARANGAY_ADMIN"
-          ? "/admin/barangays"
-          : "/admin/dashboard",
-      );
+      router.replace("/admin/dashboard");
       openingWorkspace = true;
     } catch (e) {
       showFailure(signInFailure(e));
