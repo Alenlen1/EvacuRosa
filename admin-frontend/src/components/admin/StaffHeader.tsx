@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { House, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import type { WorkspaceRole } from "@/lib/workspaceLoading";
 import { SkeletonBlock } from "./Skeleton";
 import { SignOutButton } from "./SignOutButton";
+import { StaffAccountMenu } from "./StaffAccountMenu";
 
 export function StaffHeader({
   role = null,
@@ -52,20 +53,6 @@ export function StaffHeader({
             ) : (
               <span className="city-label">Santa Rosa, Laguna</span>
             ))}
-          {!directory &&
-            role === "BARANGAY_ADMIN" &&
-            (loading ? (
-              <SkeletonBlock className="staff-skeleton-header-home" />
-            ) : (
-              <Link
-                className="staff-header-home"
-                href="/admin/dashboard"
-                aria-label="Open your barangay workspace"
-              >
-                <House size={16} aria-hidden="true" />
-                <span>My barangay</span>
-              </Link>
-            ))}
           {hasPublicMap &&
             (loading ? (
               <SkeletonBlock className="staff-skeleton-header-public" />
@@ -80,6 +67,8 @@ export function StaffHeader({
             ))}
           {loading ? (
             <SkeletonBlock className="staff-skeleton-header-action" />
+          ) : role === "BARANGAY_ADMIN" ? (
+            <StaffAccountMenu disabled={busy} onSignOut={onSignOut} />
           ) : (
             <SignOutButton
               className="staff-header-sign-out"
