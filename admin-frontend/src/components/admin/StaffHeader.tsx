@@ -46,13 +46,6 @@ export function StaffHeader({
           </Link>
         )}
         <div className="staff-header-actions">
-          {!directory &&
-            role === "SUPER_ADMIN" &&
-            (loading ? (
-              <SkeletonBlock className="staff-skeleton-header-city" />
-            ) : (
-              <span className="city-label">Santa Rosa, Laguna</span>
-            ))}
           {hasPublicMap &&
             (loading ? (
               <SkeletonBlock className="staff-skeleton-header-public" />
@@ -67,7 +60,7 @@ export function StaffHeader({
             ))}
           {loading ? (
             <SkeletonBlock className="staff-skeleton-header-action" />
-          ) : role === "BARANGAY_ADMIN" ? (
+          ) : role === "BARANGAY_ADMIN" || role === "SUPER_ADMIN" ? (
             <StaffAccountMenu disabled={busy} onSignOut={onSignOut} />
           ) : (
             <SignOutButton
