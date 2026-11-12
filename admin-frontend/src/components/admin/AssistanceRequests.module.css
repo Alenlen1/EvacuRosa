@@ -374,13 +374,61 @@
   height: 100%;
   min-height: 0;
   padding: 20px;
-  overflow: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 .panel > * {
   flex-shrink: 0;
 }
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-eyebrow),
+:global(.cdrrmo-workspace) .panel :global(.assistance-caption) {
+  display: none;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
+  margin: 0;
+  font-size: 20px;
+}
+.headerActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+:global(.cdrrmo-workspace) .panel .recordTabs {
+  display: inline-flex;
+  gap: 4px;
+  min-width: 0;
+  padding: 3px;
+  border: 1px solid #e7ddd3;
+  border-radius: 10px;
+  background: #f5efe9;
+}
+:global(.cdrrmo-workspace) .panel .recordTabs button {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-color: transparent;
+  border-radius: 7px;
+  background: transparent;
+  white-space: nowrap;
+}
+:global(.cdrrmo-workspace) .panel .recordTabs button[aria-pressed="true"] {
+  border-color: #e1cbbd;
+  background: #fffdf9;
+  color: #76160d;
+  box-shadow: 0 1px 3px #40231a09;
+}
 :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
-  margin: 14px 0 10px;
+  margin: 12px 0 8px;
   padding: 8px 12px;
 }
 :global(.cdrrmo-workspace) .panel :global(.assistance-caption) {
@@ -394,10 +442,11 @@
 :global(.cdrrmo-workspace) .panel :global(.assistance-workspace-body) {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 18px;
-  flex: 1;
-  min-height: 0;
-  margin-top: 16px;
+  flex: 1 0 380px;
+  min-height: 380px;
+  margin-top: 12px;
 }
 :global(.cdrrmo-workspace) .panel :global(.assistance-map-section) {
   display: flex;
@@ -411,8 +460,8 @@
 }
 :global(.cdrrmo-workspace) .panel :global(.assistance-location-map) {
   flex: 1;
-  height: 100%;
-  min-height: 0;
+  height: auto;
+  min-height: 280px;
 }
 :global(.cdrrmo-workspace) .panel :global(.assistance-list) {
   display: flex;
@@ -548,6 +597,69 @@
   color: #746862;
   font-size: 10px;
   line-height: 1.5;
+}
+.reviewNew {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  min-width: 104px;
+  padding: 6px 10px;
+  border: 1px solid #d9b9aa;
+  border-radius: 8px;
+  color: #76160d;
+  background: #f7e9e3;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.reviewNew[data-empty="true"] {
+  visibility: hidden;
+}
+.reviewNew:not(:disabled):hover {
+  border-color: #b57761;
+  background: #f0dcd2;
+}
+.reviewNew:focus-visible {
+  outline: 2px solid #76160d;
+  outline-offset: 2px;
+}
+.newBadge {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #76160d;
+  color: #fffdf9;
+  font-size: 10px;
+  font-weight: 650;
+}
+:global(.cdrrmo-workspace) .panel :global(.assistance-record[data-new="true"]) {
+  border-color: #c79484;
+  background: #fff9f4;
+  box-shadow: inset 3px 0 #76160d;
+}
+@container cdrrmo-main (max-width: 600px) {
+  .reviewNew {
+    min-width: 86px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  .reviewNew > svg:last-child {
+    display: none;
+  }
+  .headerActions {
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+  }
+  :global(.cdrrmo-workspace) .panel .recordTabs button {
+    padding-inline: 10px;
+    font-size: 11px;
+  }
 }
 :global(.cdrrmo-workspace) .refreshButton {
   flex-shrink: 0;

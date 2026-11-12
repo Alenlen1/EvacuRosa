@@ -21,6 +21,12 @@ import {
 import { Brand } from "@/components/ui/Brand";
 import { SkeletonBlock } from "./Skeleton";
 import { StaffAccountMenu } from "./StaffAccountMenu";
+import {
+  AssistanceNotificationsProvider,
+  AssistanceNotificationButton,
+  AssistanceNotificationToast,
+  useAssistanceNotifications,
+} from "./AssistanceNotifications";
 import styles from "./CdrrmoWorkspace.module.css";
 
 const sections = [
@@ -66,20 +72,35 @@ export function CdrrmoSection({
   );
 }
 
-export function CdrrmoWorkspace({
-  children,
-  loading = false,
-  onSignOut,
-}: {
+type WorkspaceProps = {
   children: ReactNode;
   loading?: boolean;
   onSignOut?: () => void | Promise<void>;
-}) {
+};
+
+export function CdrrmoWorkspace(props: WorkspaceProps) {
+  return (
+    <AssistanceNotificationsProvider enabled={!props.loading}>
+      <CdrrmoWorkspaceShell {...props} />
+    </AssistanceNotificationsProvider>
+  );
+}
+
+function CdrrmoWorkspaceShell({
+  children,
+  loading = false,
+  onSignOut,
+}: WorkspaceProps) {
+  const { unread, reviewTarget } = useAssistanceNotifications();
   const [active, setActive] = useState<SectionId>("dashboard-overview");
   const drawerRef = useRef<HTMLDialogElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const focusSection = useRef(false);
   const publicMapUrl = process.env.NEXT_PUBLIC_PUBLIC_APP_URL;
+
+  useEffect(() => {
+    if (reviewTarget) drawerRef.current?.close();
+  }, [reviewTarget]);
 
   useEffect(() => {
     const restoreSection = () => {
@@ -183,6 +204,14 @@ export function CdrrmoWorkspace({
                 >
                   <Icon size={20} aria-hidden="true" />
                   <span>{label}</span>
+                  {id === "shared-locations" && unread.length > 0 && (
+                    <span
+                      className={styles.notificationBadge}
+                      aria-label={`${unread.length} new requests`}
+                    >
+                      {unread.length}
+                    </span>
+                  )}
                 </a>
               ))}
             </nav>
@@ -287,6 +316,7 @@ export function CdrrmoWorkspace({
                       <ArrowUpRight size={16} aria-hidden="true" />
                     </a>
                   )}
+                  <AssistanceNotificationButton />
                   <StaffAccountMenu onSignOut={onSignOut} />
                 </>
               )}
@@ -307,6 +337,7 @@ export function CdrrmoWorkspace({
             {children}
           </div>
         </div>
+        {!loading && <AssistanceNotificationToast />}
       </div>
     </SectionContext.Provider>
   );

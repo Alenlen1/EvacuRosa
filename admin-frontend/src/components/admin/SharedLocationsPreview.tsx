@@ -2,24 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, MapPin, RefreshCw } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
 import { isVisibleAssistanceRequest } from "@/lib/assistanceVisibility";
 import { ASSISTANCE_LABELS } from "@/lib/assistance";
-import {
-  fetchAssistanceRequests,
-  type AssistanceRequest,
-} from "@/services/api";
-import { useCdrrmoActiveSection } from "./CdrrmoWorkspace";
+import { useAssistanceNotifications } from "./AssistanceNotifications";
 import { SkeletonBlock } from "./Skeleton";
 import dashboardStyles from "./CdrrmoDashboard.module.css";
 import styles from "./SharedLocationsPreview.module.css";
 
 export function SharedLocationsPreview() {
-  const active = useCdrrmoActiveSection();
-  const [requests, setRequests] = useState<AssistanceRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reload, setReload] = useState(0);
+  const { feed, refresh, review } = useAssistanceNotifications();
+  const requests = (feed.page?.requests ?? []).filter(
+    isVisibleAssistanceRequest,
+  );
+  const loading = feed.loading && !feed.page;
+  const error = Boolean(feed.error);
   const [limit, setLimit] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -32,31 +28,6 @@ export function SharedLocationsPreview() {
     observer.observe(list);
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    if (active !== "dashboard-overview") return;
-    let cancelled = false;
-    const controller = new AbortController();
-    setLoading(true);
-    setError(false);
-    void (async () => {
-      try {
-        const session = await supabase?.auth.getSession();
-        const token = session?.data.session?.access_token;
-        if (!token) throw new Error("Sign in required");
-        const rows = await fetchAssistanceRequests(token, controller.signal);
-        if (!cancelled) setRequests(rows.filter(isVisibleAssistanceRequest));
-      } catch {
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [active, reload]);
 
   const statusCounts = [
     { status: "PENDING", label: "Pending" },
@@ -79,9 +50,9 @@ export function SharedLocationsPreview() {
           <button
             type="button"
             className={styles.refresh}
-            disabled={loading}
+            disabled={feed.loading}
             aria-label="Refresh shared locations"
-            onClick={() => setReload((value) => value + 1)}
+            onClick={refresh}
           >
             <RefreshCw size={14} aria-hidden="true" />
           </button>
@@ -133,10 +104,7 @@ export function SharedLocationsPreview() {
         ) : error ? (
           <div className={styles.feedback} role="status">
             <p>Could not load assistance requests.</p>
-            <button
-              type="button"
-              onClick={() => setReload((value) => value + 1)}
-            >
+            <button type="button" onClick={refresh}>
               Try again
             </button>
           </div>
@@ -150,6 +118,7 @@ export function SharedLocationsPreview() {
             <a
               className={styles.request}
               href="#shared-locations"
+              onClick={() => review(request.id)}
               key={request.id}
               aria-label={`View shared locations for ${request.display_name || "this request"}`}
             >
