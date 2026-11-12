@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import boundaries from "../data/santaRosaBarangays.json";
 import city from "../data/santaRosaBoundary.json";
 import { SANTA_ROSA_BARANGAYS } from "./barangays";
-import { barangayForEntrance } from "./barangayBoundary";
+import {
+  barangayForEntrance,
+  getBarangayBoundary,
+  validateEntranceBarangay,
+} from "./barangayBoundary";
 
 describe("entrance barangay boundaries", () => {
   it("covers exactly the configured 18 barangays with closed polygon rings", () => {
@@ -24,6 +28,18 @@ describe("entrance barangay boundaries", () => {
       expect(barangayForEntrance(latitude, longitude)).toBe(
         name === "Market Area" ? "Market Area (Poblacion)" : name,
       );
+      const selected =
+        name === "Market Area" ? "Market Area (Poblacion)" : name;
+      expect(getBarangayBoundary(selected)?.properties.name).toBe(selected);
+      expect(() =>
+        validateEntranceBarangay(latitude, longitude, selected),
+      ).not.toThrow();
+      for (const other of SANTA_ROSA_BARANGAYS.filter(
+        (entry) => entry !== selected,
+      ))
+        expect(() =>
+          validateEntranceBarangay(latitude, longitude, other),
+        ).toThrow(`within ${other}`);
     },
   );
 
@@ -31,6 +47,13 @@ describe("entrance barangay boundaries", () => {
     expect(barangayForEntrance(14.321186738188034, 121.11866693614958)).toBe(
       "Aplaya",
     );
+  });
+
+  it("does not substitute a nearest area when a boundary is unavailable", () => {
+    expect(getBarangayBoundary("Unknown barangay")).toBeNull();
+    expect(() =>
+      validateEntranceBarangay(14.330227, 121.110327, "Unknown barangay"),
+    ).toThrow("boundary is unavailable");
   });
 
   it.each([
@@ -63,5 +86,8 @@ describe("entrance barangay boundaries", () => {
     expect(() => barangayForEntrance(point![1], point![0])).toThrow(
       "shared barangay boundary",
     );
+    expect(() =>
+      validateEntranceBarangay(point![1], point![0], "Aplaya"),
+    ).toThrow("shared barangay boundary");
   });
 });

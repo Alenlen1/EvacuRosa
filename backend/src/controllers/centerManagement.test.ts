@@ -268,7 +268,7 @@ describe("center role boundaries", () => {
   );
 });
 
-describe("entrance-based center assignment", () => {
+describe("selected-barangay center assignment", () => {
   const aplayaId = "11111111-1111-4111-8111-111111111111";
   const sinalhanId = "22222222-2222-4222-8222-222222222222";
   const entrance = {
@@ -283,6 +283,7 @@ describe("entrance-based center assignment", () => {
     current_occupancy: 10,
   };
   const details = {
+    barangayId: aplayaId,
     name: "Verified shelter",
     address: "Entrance address",
     capacity: 100,
@@ -312,12 +313,10 @@ describe("entrance-based center assignment", () => {
     const barangays = {
       select: vi.fn(),
       eq: vi.fn(),
-      maybeSingle: vi
-        .fn()
-        .mockResolvedValue({
-          data: barangayId ? { id: barangayId } : null,
-          error: lookupError,
-        }),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: barangayId ? { id: barangayId } : null,
+        error: lookupError,
+      }),
     };
     barangays.select.mockReturnValue(barangays);
     barangays.eq.mockReturnValue(barangays);
@@ -346,13 +345,12 @@ describe("entrance-based center assignment", () => {
     return { res, db };
   }
 
-  it("creates a center with its derived barangay when the client omits the assignment", async () => {
-    const { res, db } = await call(createCenter, details);
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(db.barangays.eq).toHaveBeenCalledWith("name", "Aplaya");
-    expect(db.records.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ barangay_id: aplayaId }),
-    );
+  it("rejects creation without a selected barangay instead of assigning automatically", async () => {
+    const { barangayId: _id, ...withoutAssignment } = details;
+    const { res, db } = await call(createCenter, withoutAssignment);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(db.records.insert).not.toHaveBeenCalled();
+    expect(db.barangays.eq).not.toHaveBeenCalled();
   });
   it("accepts a matching assignment", async () => {
     const { res } = await call(createCenter, {
@@ -372,10 +370,19 @@ describe("entrance-based center assignment", () => {
     });
     expect(db.records.insert).not.toHaveBeenCalled();
   });
-  it("reassigns a moved entrance using its new barangay", async () => {
+  it("rejects moving to another barangay without selecting the new assignment", async () => {
     const { res, db } = await call(
       updateCenter,
       { latitude: 14.330227, longitude: 121.110327 },
+      client(sinalhanId),
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(db.records.update).not.toHaveBeenCalled();
+  });
+  it("allows moving the entrance after selecting its matching new barangay", async () => {
+    const { res, db } = await call(
+      updateCenter,
+      { barangayId: sinalhanId, latitude: 14.330227, longitude: 121.110327 },
       client(sinalhanId),
     );
     expect(res.json).toHaveBeenCalledWith({ center });

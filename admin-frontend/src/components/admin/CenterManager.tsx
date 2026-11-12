@@ -22,6 +22,7 @@ import styles from "./CenterManager.module.css";
 import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
 import { getCdrrmoShelterStatusCounts } from "@/lib/cdrrmoShelterStatus";
 import { entranceBarangay } from "@/lib/entranceBarangay";
+import { getBarangayBoundary } from "../../../../backend/src/geography/barangayBoundary";
 
 const LocationPicker = dynamic(() => import("./CenterLocationPicker"), {
   ssr: false,
@@ -43,6 +44,7 @@ export interface ManagedCenter {
 }
 
 const empty = {
+  barangayId: "",
   name: "",
   address: "",
   latitude: "",
@@ -71,7 +73,14 @@ export function CenterManager({
     draft.latitude,
     draft.longitude,
     barangays,
+    draft.barangayId,
   );
+  const entranceEnabled = Boolean(
+    assignment.barangay && getBarangayBoundary(assignment.barangay.name),
+  );
+  const [locationFeedback, setLocationFeedback] = useState("");
+  const [barangaysLoading, setBarangaysLoading] = useState(true);
+  const [barangaysError, setBarangaysError] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [focusRequest, setFocusRequest] = useState(0);
@@ -83,10 +92,23 @@ export function CenterManager({
   const editorTriggerRef = useRef<HTMLButtonElement>(null);
   const returnFocus = useRef(false);
 
-  useEffect(() => {
+  function loadBarangays() {
+    setBarangaysLoading(true);
+    setBarangaysError("");
     adminApi("/barangays")
-      .then((body) => setBarangays(body.barangays))
-      .catch((e) => setError(e.message));
+      .then((body) => {
+        if (!Array.isArray(body.barangays) || !body.barangays.length)
+          throw new Error("No barangays available.");
+        setBarangays(body.barangays);
+      })
+      .catch(() =>
+        setBarangaysError("Could not load barangays. Please try again."),
+      )
+      .finally(() => setBarangaysLoading(false));
+  }
+
+  useEffect(() => {
+    loadBarangays();
   }, []);
 
   useEffect(() => {
@@ -98,7 +120,7 @@ export function CenterManager({
       block: "start",
     });
     editorRef.current
-      ?.querySelector<HTMLInputElement>("#center-name")
+      ?.querySelector<HTMLSelectElement>("#center-barangay")
       ?.focus({ preventScroll: true });
   }, [editorOpen, focusRequest]);
 
@@ -112,6 +134,7 @@ export function CenterManager({
   function edit(center: ManagedCenter) {
     setEditing(center.id);
     setDraft({
+      barangayId: center.barangay_id,
       name: center.name,
       address: center.address,
       latitude: String(center.latitude),
@@ -120,6 +143,7 @@ export function CenterManager({
       contactInformation: center.contact_information ?? "",
     });
     setError("");
+    setLocationFeedback("");
     setMessage("");
     setEditorOpen(true);
     setFocusRequest((request) => request + 1);
@@ -129,6 +153,7 @@ export function CenterManager({
     returnFocus.current = true;
     setEditing(null);
     setDraft(empty);
+    setLocationFeedback("");
     setEditorOpen(false);
     setError("");
   }
@@ -139,7 +164,8 @@ export function CenterManager({
     setError("");
     setMessage("");
     try {
-      if (!assignment.barangay) throw new Error(assignment.message);
+      if (!assignment.valid || !assignment.barangay)
+        throw new Error(assignment.message);
       await adminApi(
         editing ? `/evacuation-centers/${editing}` : "/evacuation-centers",
         editing ? "PUT" : "POST",
@@ -158,12 +184,33 @@ export function CenterManager({
       returnFocus.current = true;
       setEditing(null);
       setDraft(empty);
+      setLocationFeedback("");
       setEditorOpen(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save center.");
     } finally {
       setBusy(false);
     }
+  }
+
+  function selectBarangay(barangayId: string) {
+    const keepEntrance = entranceBarangay(
+      draft.latitude,
+      draft.longitude,
+      barangays,
+      barangayId,
+    ).valid;
+    setDraft((current) => ({
+      ...current,
+      barangayId,
+      ...(!keepEntrance ? { latitude: "", longitude: "" } : {}),
+    }));
+    setError("");
+    setLocationFeedback(
+      !keepEntrance && (draft.latitude || draft.longitude)
+        ? "Previous entrance cleared. Select an entrance within the selected barangay."
+        : "",
+    );
   }
 
   const search = query.trim().toLocaleLowerCase();
@@ -304,21 +351,71 @@ export function CenterManager({
               <p>
                 {editing
                   ? "Update the verified details for this center."
-                  : "Add a verified shelter. Its entrance determines the assigned barangay."}
+                  : "Choose a barangay, then select the shelter entrance within its boundary."}
               </p>
             </div>
             <fieldset disabled={busy} className={styles.fields}>
               <section
                 className={styles.coordinatesSection}
+                aria-labelledby="center-barangay-title"
+              >
+                <div>
+                  <h4 id="center-barangay-title">1. Choose barangay</h4>
+                  <p>
+                    The map will highlight its boundary. Place the entrance
+                    inside the highlighted area.
+                  </p>
+                </div>
+                <div className={styles.fieldGrid}>
+                  <label className={styles.wide}>
+                    Assigned barangay
+                    <select
+                      id="center-barangay"
+                      required
+                      value={draft.barangayId}
+                      disabled={barangaysLoading || !!barangaysError}
+                      aria-describedby="center-barangay-help"
+                      onChange={(event) => selectBarangay(event.target.value)}
+                    >
+                      <option value="">
+                        {barangaysLoading
+                          ? "Loading barangays..."
+                          : "Select barangay"}
+                      </option>
+                      {barangays.map((barangay) => (
+                        <option key={barangay.id} value={barangay.id}>
+                          {barangay.name}
+                        </option>
+                      ))}
+                    </select>
+                    <small id="center-barangay-help">
+                      {barangaysError ||
+                        (assignment.barangay
+                          ? `Only entrances within ${assignment.barangay.name} can be saved.`
+                          : "Select a barangay to enable the entrance map and coordinates.")}
+                    </small>
+                  </label>
+                  {barangaysError && (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={loadBarangays}
+                    >
+                      Retry loading barangays
+                    </button>
+                  )}
+                </div>
+              </section>
+              <section
+                className={styles.coordinatesSection}
                 aria-labelledby="center-coordinates-title"
               >
                 <div>
-                  <h4 id="center-coordinates-title">
-                    Verified entrance coordinates
-                  </h4>
+                  <h4 id="center-coordinates-title">2. Select entrance</h4>
                   <p>
-                    Enter coordinates or select the entrance on the map. The
-                    location must be inside Santa Rosa.
+                    {assignment.barangay
+                      ? `Select the entrance on the map or enter its coordinates within ${assignment.barangay.name}.`
+                      : "Choose an assigned barangay first, then select the entrance on the map or enter its coordinates."}
                   </p>
                 </div>
                 <div className={styles.fieldGrid}>
@@ -328,10 +425,18 @@ export function CenterManager({
                       type="number"
                       step="any"
                       required
-                      value={draft.latitude}
-                      onChange={(e) =>
-                        setDraft({ ...draft, latitude: e.target.value })
+                      disabled={!entranceEnabled}
+                      aria-describedby="center-entrance-feedback"
+                      aria-invalid={
+                        !!draft.latitude &&
+                        !!draft.longitude &&
+                        !assignment.valid
                       }
+                      value={draft.latitude}
+                      onChange={(e) => {
+                        setDraft({ ...draft, latitude: e.target.value });
+                        setLocationFeedback("");
+                      }}
                     />
                   </label>
                   <label>
@@ -340,10 +445,18 @@ export function CenterManager({
                       type="number"
                       step="any"
                       required
-                      value={draft.longitude}
-                      onChange={(e) =>
-                        setDraft({ ...draft, longitude: e.target.value })
+                      disabled={!entranceEnabled}
+                      aria-describedby="center-entrance-feedback"
+                      aria-invalid={
+                        !!draft.latitude &&
+                        !!draft.longitude &&
+                        !assignment.valid
                       }
+                      value={draft.longitude}
+                      onChange={(e) => {
+                        setDraft({ ...draft, longitude: e.target.value });
+                        setLocationFeedback("");
+                      }}
                     />
                   </label>
                 </div>
@@ -363,18 +476,6 @@ export function CenterManager({
                           setDraft({ ...draft, name: e.target.value })
                         }
                       />
-                    </label>
-                    <label>
-                      Assigned barangay
-                      <input
-                        readOnly
-                        value={assignment.barangay?.name ?? ""}
-                        placeholder="Select an entrance first"
-                        aria-describedby="center-barangay-help"
-                      />
-                      <small id="center-barangay-help" role="status">
-                        {assignment.message}
-                      </small>
                     </label>
                     <label>
                       Verified evacuation capacity
@@ -420,20 +521,38 @@ export function CenterManager({
                 <div className={styles.locationSection}>
                   <h4>Entrance map</h4>
                   <p>
-                    Select the verified entrance. The coordinates above update
-                    automatically.
+                    {assignment.barangay
+                      ? `${assignment.barangay.name} is outlined in burgundy. Shaded areas are outside its boundary.`
+                      : "Choose a barangay above to highlight its boundary and enable entrance selection."}
+                  </p>
+                  <p
+                    id="center-entrance-feedback"
+                    className={styles.entranceFeedback}
+                    data-invalid={
+                      !!locationFeedback ||
+                      (!!draft.latitude &&
+                        !!draft.longitude &&
+                        !assignment.valid)
+                    }
+                    role="status"
+                  >
+                    {locationFeedback || assignment.message}
                   </p>
                   <LocationPicker
                     centers={centers}
                     latitude={draft.latitude}
                     longitude={draft.longitude}
-                    onPoint={(latitude, longitude) =>
+                    barangay={assignment.barangay}
+                    disabled={busy || !entranceEnabled}
+                    onInvalidPoint={setLocationFeedback}
+                    onPoint={(latitude, longitude) => {
+                      setLocationFeedback("");
                       setDraft((current) => ({
                         ...current,
                         latitude: String(latitude),
                         longitude: String(longitude),
-                      }))
-                    }
+                      }));
+                    }}
                   />
                 </div>
               </div>
@@ -441,7 +560,7 @@ export function CenterManager({
                 <button
                   className="primary-button"
                   type="submit"
-                  disabled={!assignment.barangay}
+                  disabled={!assignment.valid}
                 >
                   {busy
                     ? "Saving..."
