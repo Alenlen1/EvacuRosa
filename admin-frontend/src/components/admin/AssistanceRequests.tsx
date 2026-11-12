@@ -1,10 +1,17 @@
 ﻿"use client";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Clock3, Info, MapPin, RefreshCw, Trash2 } from "lucide-react";
+import {
+  ArrowRight,
+  Bell,
+  Clock3,
+  Info,
+  MapPin,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import {
-  assistanceEventsUrl,
   fetchAssistanceRequestPage,
   fetchAssistanceDetails,
   updateAssistanceStatus,
@@ -16,7 +23,6 @@ import {
   ASSISTANCE_LABELS,
   ASSISTANCE_STATUSES,
   assistanceActive,
-  consumeAssistanceEvents,
   type AssistanceHistory,
 } from "@/lib/assistance";
 import { TRAVEL_MODES } from "@/lib/travelTime";
@@ -32,6 +38,8 @@ import {
   assistanceTime,
 } from "@/lib/assistancePresentation";
 import { MapSkeleton, RecordsSkeleton } from "./LoadingSkeleton";
+import { useAssistanceNotifications } from "./AssistanceNotifications";
+import { useCdrrmoActiveSection } from "./CdrrmoWorkspace";
 const AssistanceLocationMap = dynamic(() => import("./AssistanceLocationMap"), {
   ssr: false,
   loading: () => <MapSkeleton label="Loading reported-location map..." />,
@@ -45,6 +53,10 @@ const legendStatuses = [
 ] as const;
 export function AssistanceRequests() {
   const [archived, setArchived] = useState(false);
+  const { reviewTarget } = useAssistanceNotifications();
+  useEffect(() => {
+    if (reviewTarget) setArchived(false);
+  }, [reviewTarget]);
   return (
     <AssistanceRequestsList
       key={archived ? "archive" : "active"}
@@ -60,6 +72,17 @@ function AssistanceRequestsList({
   archived: boolean;
   onArchiveChange: (value: boolean) => void;
 }) {
+  const {
+    feed,
+    unread,
+    reviewTarget,
+    review,
+    markReviewed,
+    applyStatus,
+    finishReview,
+    refresh: refreshLive,
+  } = useAssistanceNotifications();
+  const activeSection = useCdrrmoActiveSection();
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const visibleRequest = archived
@@ -78,13 +101,17 @@ function AssistanceRequestsList({
   const [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
-  const [connection, setConnection] = useState("Reconnecting"),
-    [refresh, setRefresh] = useState(0),
+  const connection = feed.connection;
+  const [refresh, setRefresh] = useState(0),
     [busy, setBusy] = useState<string | null>(null);
   const [histories, setHistories] = useState<
     Record<string, AssistanceHistory[]>
   >({});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
+  const useLivePage = !archived && !filter && page === 0;
+  const sourcePage = useLivePage ? feed.page : null;
+  const sourceLoading = useLivePage && feed.loading;
+  const sourceError = useLivePage ? feed.error : "";
   const recordRefs = useRef(new Map<string, HTMLElement>());
   const requestList = useRef<HTMLDivElement>(null);
   const selectedRequest = requests.find((item) => item.id === selection?.id);
@@ -102,6 +129,7 @@ function AssistanceRequestsList({
     });
   }
   function selectRequest(id: string, fromMap = false) {
+    markReviewed(id);
     setSelection((previous) => ({ id, version: (previous?.version ?? 0) + 1 }));
     if (fromMap) revealRequest(id);
   }
@@ -117,137 +145,137 @@ function AssistanceRequestsList({
     return () => clearTimeout(timeout);
   }, [notice]);
   useEffect(() => {
-    let stopped = false,
-      inFlight = false,
-      queued = false,
-      live = false,
-      stream: AbortController | null = null;
-    let reconnect: ReturnType<typeof setTimeout>,
-      backoff = 1000,
-      lastSuccess = 0;
+    if (useLivePage) {
+      if (pending.current) return;
+      if (sourcePage) {
+        const visible = sourcePage.requests.filter(isVisibleAssistanceRequest);
+        setHasMore(sourcePage.hasMore);
+        setRequests(visible);
+        setSelection((selected) =>
+          selected && visible.some((row) => row.id === selected.id)
+            ? selected
+            : null,
+        );
+      } else if (!sourceLoading) {
+        setRequests([]);
+        setHasMore(false);
+        setSelection(null);
+      }
+      setLoading(sourceLoading);
+      setError(sourceError);
+      return;
+    }
+    let stopped = false;
     const abort = new AbortController();
     async function load() {
-      if (stopped || !navigator.onLine || pending.current) return;
-      if (inFlight) {
-        queued = true;
+      if (!navigator.onLine || pending.current) {
+        setLoading(false);
         return;
       }
-      inFlight = true;
       const version = mutationVersion.current;
       try {
-        do {
-          queued = false;
-          const session = await supabase?.auth.getSession();
-          const token = session?.data.session?.access_token;
-          if (!token) throw Error("Sign in again to view assistance requests.");
-          const result = await fetchAssistanceRequestPage(
-            token,
-            abort.signal,
-            filter || undefined,
-            archived ? "archive" : "active",
-            page * 100,
+        const session = await supabase?.auth.getSession();
+        const token = session?.data.session?.access_token;
+        if (!token) throw Error("Sign in again to view assistance requests.");
+        const result = await fetchAssistanceRequestPage(
+          token,
+          abort.signal,
+          filter || undefined,
+          archived ? "archive" : "active",
+          page * 100,
+        );
+        if (stopped) return;
+        if (version === mutationVersion.current && !pending.current) {
+          const visible = result.requests.filter(visibleRequest);
+          setHasMore(result.hasMore);
+          setRequests(visible);
+          setSelection((current) =>
+            current && visible.some((row) => row.id === current.id)
+              ? current
+              : null,
           );
-          if (stopped) return;
-          if (version === mutationVersion.current && !pending.current) {
-            const visible = result.requests.filter(visibleRequest);
-            setHasMore(result.hasMore);
-            setRequests(visible);
-            setSelection((current) =>
-              current && visible.some((row) => row.id === current.id)
-                ? current
-                : null,
-            );
-            setError("");
-            lastSuccess = Date.now();
-          }
-        } while (queued && !stopped);
+          setError("");
+        }
       } catch (cause) {
         if (!stopped) {
           setError(
             cause instanceof Error ? cause.message : "Could not load requests.",
           );
-          setConnection(
-            navigator.onLine ? "Status May Be Outdated" : "Offline",
-          );
         }
       } finally {
-        inFlight = false;
         if (!stopped) setLoading(false);
       }
     }
-    async function connect() {
-      if (stopped || !navigator.onLine) return;
-      stream?.abort();
-      const ownStream = new AbortController();
-      stream = ownStream;
-      try {
-        const session = await supabase?.auth.getSession();
-        if (!session?.data.session) throw Error("Sign in required");
-        await consumeAssistanceEvents(
-          assistanceEventsUrl(),
-          session.data.session.access_token,
-          ownStream.signal,
-          () => void load(),
-          (value) => {
-            if (stopped || stream !== ownStream) return;
-            live = value;
-            setConnection(value ? "Connected" : "Reconnecting");
-            if (value) {
-              backoff = 1000;
-              void load();
-            }
-          },
-        );
-      } catch {
-        /* Poll securely when realtime is unavailable. */
-      }
-      if (!stopped && stream === ownStream) {
-        live = false;
-        setConnection(navigator.onLine ? "Reconnecting" : "Offline");
-        reconnect = setTimeout(connect, backoff);
-        backoff = Math.min(backoff * 2, 30000);
-      }
-    }
-    const restored = () => {
-      void load();
-      clearTimeout(reconnect);
-      void connect();
-    };
-    const visible = () => {
-      if (document.visibilityState === "visible") {
-        void load();
-        if (!live) restored();
-      }
-    };
-    const offline = () => {
-      live = false;
-      stream?.abort();
-      setConnection("Offline");
-    };
-    window.addEventListener("online", restored);
-    window.addEventListener("offline", offline);
-    document.addEventListener("visibilitychange", visible);
-    const poll = setInterval(() => {
-      if (
-        document.visibilityState === "visible" &&
-        (!live || Date.now() - lastSuccess > 60000)
-      )
-        void load();
-    }, 12000);
-    setLoading(true);
     void load();
-    void connect();
     return () => {
       stopped = true;
       abort.abort();
-      stream?.abort();
-      clearInterval(poll);
-      clearTimeout(reconnect);
-      window.removeEventListener("online", restored);
-      window.removeEventListener("offline", offline);
-      document.removeEventListener("visibilitychange", visible);
     };
-  }, [filter, refresh, archived, page]);
+  }, [
+    filter,
+    refresh,
+    archived,
+    page,
+    useLivePage,
+    sourcePage,
+    sourceLoading,
+    sourceError,
+    feed.revision,
+  ]);
+
+  // Review links open the active, unfiltered first page without acknowledging.
+  useEffect(() => {
+    if (!reviewTarget || archived || activeSection !== "shared-locations")
+      return;
+    if (filter || page !== 0) {
+      setFilter("");
+      setPage(0);
+      return;
+    }
+    if (loading || pending.current) return;
+    if (!requests.some((request) => request.id === reviewTarget.id)) {
+      // The live response may have arrived one render before the card list.
+      if (
+        feed.loading ||
+        feed.page?.requests.some((request) => request.id === reviewTarget.id)
+      )
+        return;
+      if (!feed.error) {
+        setNotice(
+          "This request is no longer in the latest active requests. Check the archive or other pages.",
+        );
+        finishReview(reviewTarget.id);
+      }
+      return;
+    }
+    const id = reviewTarget.id;
+    setMobileView("requests");
+    setSelection((current) => ({ id, version: (current?.version ?? 0) + 1 }));
+    const frame = requestAnimationFrame(() => {
+      revealRequest(id, true);
+      markReviewed(id);
+      finishReview(id);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    reviewTarget,
+    archived,
+    activeSection,
+    filter,
+    page,
+    loading,
+    requests,
+    feed.loading,
+    feed.page,
+    feed.error,
+    markReviewed,
+    finishReview,
+  ]);
+
+  function refreshRequests() {
+    refreshLive();
+    setRefresh((value) => value + 1);
+  }
   async function token() {
     const session = await supabase?.auth.getSession();
     const access = session?.data.session?.access_token;
@@ -308,7 +336,7 @@ function AssistanceRequestsList({
       setError(
         "This request changed while you were reviewing it. Review its latest status before continuing.",
       );
-      setRefresh((value) => value + 1);
+      refreshRequests();
       return;
     }
     pending.current = true;
@@ -325,6 +353,7 @@ function AssistanceRequestsList({
         Boolean(prompt),
       );
       if (!mounted.current) return;
+      applyStatus(updated);
       setRequests((rows) =>
         rows
           .map((row) => (row.id === item.id ? { ...row, ...updated } : row))
@@ -355,7 +384,7 @@ function AssistanceRequestsList({
       mutationVersion.current++;
       if (mounted.current) {
         setBusy(null);
-        setRefresh((n) => n + 1);
+        refreshRequests();
       }
     }
   }
@@ -398,7 +427,7 @@ function AssistanceRequestsList({
         return next;
       });
       setNotice("Archived request permanently deleted.");
-      setRefresh((n) => n + 1);
+      refreshRequests();
     } catch (cause) {
       if (mounted.current)
         setError(
@@ -444,37 +473,56 @@ function AssistanceRequestsList({
       className={`admin-assistance ${styles.panel}`}
       aria-labelledby="assistance-requests-title"
     >
-      <div className="assistance-list-heading">
-        <div>
-          <span className="assistance-eyebrow">CDRRMO</span>
-          <h2 id="assistance-requests-title">
-            {archived ? "Shared location archive" : "Shared locations"}{" "}
-            <span className="assistance-count">{requests.length}</span>
-          </h2>
-          <p className="assistance-caption">
-            {archived
-              ? "Completed and cancelled requests, with status history. Records remain subject to scheduled retention cleanup."
-              : "Review reported locations and update assistance requests."}
-          </p>
+      <div className={styles.sectionHeader}>
+        <div className="assistance-list-heading">
+          <div>
+            <span className="assistance-eyebrow">CDRRMO</span>
+            <h2 id="assistance-requests-title">
+              {archived ? "Shared location archive" : "Shared locations"}{" "}
+              <span className="assistance-count">{requests.length}</span>
+            </h2>
+            <p className="assistance-caption">
+              {archived
+                ? "Completed and cancelled requests, with status history. Records remain subject to scheduled retention cleanup."
+                : "Review reported locations and update assistance requests."}
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="hazard-view-tabs" aria-label="Assistance records">
-        <button
-          type="button"
-          aria-pressed={!archived}
-          disabled={busy !== null}
-          onClick={() => onArchiveChange(false)}
-        >
-          Active requests
-        </button>
-        <button
-          type="button"
-          aria-pressed={archived}
-          disabled={busy !== null}
-          onClick={() => onArchiveChange(true)}
-        >
-          Archive
-        </button>
+        <div className={styles.headerActions}>
+          <div
+            className={`hazard-view-tabs ${styles.recordTabs}`}
+            aria-label="Assistance records"
+          >
+            <button
+              type="button"
+              aria-pressed={!archived}
+              disabled={busy !== null}
+              onClick={() => onArchiveChange(false)}
+            >
+              Active requests
+            </button>
+            <button
+              type="button"
+              aria-pressed={archived}
+              disabled={busy !== null}
+              onClick={() => onArchiveChange(true)}
+            >
+              Archive
+            </button>
+          </div>
+          <button
+            type="button"
+            className={styles.reviewNew}
+            data-empty={!unread.length}
+            disabled={busy !== null || !unread.length}
+            aria-label={`Review ${unread.length} new assistance ${unread.length === 1 ? "request" : "requests"}`}
+            onClick={() => review()}
+          >
+            <Bell size={15} aria-hidden="true" />
+            <span>{unread.length} new</span>
+            <ArrowRight size={14} aria-hidden="true" />
+          </button>
+        </div>
       </div>
       <div className="assistance-toolbar">
         <span
@@ -514,7 +562,7 @@ function AssistanceRequestsList({
           className={`secondary-button ${styles.refreshButton}`}
           aria-label="Refresh shared locations"
           disabled={loading}
-          onClick={() => setRefresh((n) => n + 1)}
+          onClick={refreshRequests}
         >
           <RefreshCw size={16} aria-hidden="true" />
           <span className={styles.refreshLabel}>
@@ -647,6 +695,9 @@ function AssistanceRequestsList({
               className="assistance-record"
               data-status={item.status}
               data-selected={selection?.id === item.id}
+              data-new={unread.some((request) => request.id === item.id)}
+              onClick={() => markReviewed(item.id)}
+              onFocus={() => markReviewed(item.id)}
               aria-current={selection?.id === item.id ? "true" : undefined}
               tabIndex={-1}
               aria-label={assistanceDisplayName(item)}
@@ -658,6 +709,9 @@ function AssistanceRequestsList({
             >
               <header className="assistance-record-heading">
                 <h3>{assistanceDisplayName(item)}</h3>
+                {unread.some((request) => request.id === item.id) && (
+                  <span className={styles.newBadge}>New</span>
+                )}
                 <span className="assistance-mode">
                   {TRAVEL_MODES[item.travel_mode].label}
                 </span>
