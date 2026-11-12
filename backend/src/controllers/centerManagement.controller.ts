@@ -108,12 +108,18 @@ export async function listAdminCenters(req: RoleAwareRequest, res: Response) {
     },
   });
 }
-async function assignEntranceBarangay(
+async function verifyEntranceBarangay(
   req: RoleAwareRequest,
   updates: Record<string, unknown>,
   latitude: number,
   longitude: number,
+  existingBarangayId?: string,
 ) {
+  const selectedId = updates.barangay_id ?? existingBarangayId;
+  if (typeof selectedId !== "string")
+    throw new Error(
+      "Select an assigned barangay before choosing the entrance.",
+    );
   const name = barangayForEntrance(latitude, longitude);
   const { data, error } = await req
     .userSupabase!.from("barangays")
@@ -124,12 +130,9 @@ async function assignEntranceBarangay(
     throw new Error(
       "Could not verify the entrance barangay. Reload and try again.",
     );
-  if (
-    typeof updates.barangay_id === "string" &&
-    updates.barangay_id.toLowerCase() !== data.id.toLowerCase()
-  )
+  if (selectedId.toLowerCase() !== data.id.toLowerCase())
     throw new Error(
-      `This entrance is in ${name}. It cannot be assigned to another barangay.`,
+      `This entrance is in ${name}. Select an entrance inside the assigned barangay.`,
     );
   updates.barangay_id = data.id;
 }
@@ -154,7 +157,7 @@ export async function createCenter(req: RoleAwareRequest, res: Response) {
       )
     )
       throw new Error("Select a location inside Santa Rosa City.");
-    await assignEntranceBarangay(
+    await verifyEntranceBarangay(
       req,
       updates,
       updates.latitude as number,
@@ -238,11 +241,12 @@ export async function updateCenter(req: RoleAwareRequest, res: Response) {
   }
   if (profile.role === "SUPER_ADMIN") {
     try {
-      await assignEntranceBarangay(
+      await verifyEntranceBarangay(
         req,
         updates,
         (updates.latitude ?? center.latitude) as number,
         (updates.longitude ?? center.longitude) as number,
+        center.barangay_id,
       );
     } catch (error) {
       res.status(400).json({ error: (error as Error).message });

@@ -235,6 +235,26 @@
   line-height: 1.5;
   color: #716158;
 }
+:global(.cdrrmo-workspace) .entranceFeedback {
+  margin: -4px 0 18px;
+  padding: 10px 12px;
+  border: 1px solid #e4d8cd;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #65564e;
+  font-size: 12px;
+  line-height: 1.6;
+}
+:global(.cdrrmo-workspace) .entranceFeedback[data-invalid="true"] {
+  border-color: #dcb7ad;
+  background: #fbebe7;
+  color: #922a24;
+}
+:global(.cdrrmo-workspace) .fieldGrid :is(input, select):disabled {
+  background: #f2ede6;
+  color: #827066;
+  cursor: not-allowed;
+}
 .wide {
   grid-column: 1 / -1;
 }
@@ -521,6 +541,12 @@
 @container cdrrmo-main (max-width: 1100px) {
   .editorColumns {
     grid-template-columns: 1fr;
+  }
+  .locationSection {
+    grid-row: 1;
+  }
+  .detailsSection {
+    grid-row: 2;
   }
 }
 @container cdrrmo-main (max-width: 740px) {

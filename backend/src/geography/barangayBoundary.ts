@@ -1,6 +1,30 @@
 import boundaries from "../data/santaRosaBarangays.json";
 import { isInsideRing } from "./santaRosa";
 
+export function getBarangayBoundary(name: string) {
+  return (
+    boundaries.features.find((feature) => feature.properties.name === name) ??
+    null
+  );
+}
+
+/** The form, map and API must agree on the same unambiguous polygon. */
+export function validateEntranceBarangay(
+  latitude: number,
+  longitude: number,
+  barangayName: string,
+): void {
+  if (!getBarangayBoundary(barangayName))
+    throw new Error(
+      "The selected barangay boundary is unavailable. Reload and try again.",
+    );
+  const actual = barangayForEntrance(latitude, longitude);
+  if (actual !== barangayName)
+    throw new Error(
+      `Please select an entrance within ${barangayName}. This location is in ${actual}.`,
+    );
+}
+
 /** Use the published polygons, never a nearest centroid or bounding box. */
 export function barangayForEntrance(
   latitude: number,
