@@ -285,6 +285,14 @@ function AssistanceRequestsList({
   async function change(item: AssistanceRequest, status: AssistanceStatus) {
     if (pending.current) return;
     const prompts = {
+      ACKNOWLEDGED: {
+        variant: "acknowledge",
+        title: "Acknowledge this request?",
+        confirmLabel: "Acknowledge request",
+        cancelLabel: "Go back",
+        description:
+          "Confirm that CDRRMO has received this assistance request. The user will see Request Acknowledged. Dispatching a response team requires a separate action.",
+      },
       DISPATCHED: {
         variant: "dispatch",
         title: "Dispatch team?",
@@ -311,6 +319,7 @@ function AssistanceRequestsList({
       },
     } as const;
     const prompt =
+      status === "ACKNOWLEDGED" ||
       status === "DISPATCHED" ||
       status === "COMPLETED" ||
       status === "CANCELLED"

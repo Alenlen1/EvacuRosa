@@ -115,10 +115,12 @@
 .actions .remove:hover {
   background: #7f1c17;
 }
+.dialog[data-variant="acknowledge"] .icon,
 .dialog[data-variant="dispatch"] .icon {
   background: #f3e7df;
   color: #800000;
 }
+.dialog[data-variant="acknowledge"] .remove,
 .dialog[data-variant="dispatch"] .remove {
   border-color: #800000;
   background: #800000;
@@ -131,6 +133,7 @@
   border-color: #286240;
   background: #286240;
 }
+.dialog[data-variant="acknowledge"] .remove:hover,
 .dialog[data-variant="dispatch"] .remove:hover,
 .dialog[data-variant="complete"] .remove:hover {
   filter: brightness(0.9);
