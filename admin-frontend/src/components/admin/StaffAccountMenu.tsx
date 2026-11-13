@@ -16,9 +16,11 @@ import styles from "./StaffAccountMenu.module.css";
 export function StaffAccountMenu({
   disabled = false,
   onSignOut,
+  variant = "header",
 }: {
   disabled?: boolean;
   onSignOut?: () => void | Promise<void>;
+  variant?: "header" | "sidebar";
 }) {
   const id = useId();
   const container = useRef<HTMLDivElement>(null);
@@ -68,7 +70,7 @@ export function StaffAccountMenu({
   return (
     <>
       <div
-        className={styles.account}
+        className={`${styles.account}${variant === "sidebar" ? ` ${styles.sidebar}` : ""}`}
         ref={container}
         onBlur={(event) => {
           if (
@@ -137,13 +139,24 @@ export function StaffAccountMenu({
               <KeyRound size={17} aria-hidden="true" />
               <span>Change password</span>
             </button>
-            <div className={styles.divider} />
-            <SignOutButton
-              className={`${styles.action} ${styles.signOut}`}
-              disabled={disabled}
-              onSignOut={onSignOut ? signOut : undefined}
-            />
+            {variant === "header" && (
+              <>
+                <div className={styles.divider} />
+                <SignOutButton
+                  className={`${styles.action} ${styles.signOut}`}
+                  disabled={disabled}
+                  onSignOut={onSignOut ? signOut : undefined}
+                />
+              </>
+            )}
           </div>
+        )}
+        {variant === "sidebar" && (
+          <SignOutButton
+            className={`${styles.action} ${styles.sidebarSignOut}`}
+            disabled={disabled}
+            onSignOut={onSignOut ? signOut : undefined}
+          />
         )}
       </div>
       {passwordOpen && (

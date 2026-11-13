@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, MapPin, RefreshCw } from "lucide-react";
+import { ArrowRight, CircleCheck, MapPin, RefreshCw } from "lucide-react";
+import { assistanceDisplayName } from "@/lib/assistancePresentation";
 import { isVisibleAssistanceRequest } from "@/lib/assistanceVisibility";
 import { ASSISTANCE_LABELS } from "@/lib/assistance";
 import { useAssistanceNotifications } from "./AssistanceNotifications";
@@ -16,14 +17,21 @@ export function SharedLocationsPreview() {
   );
   const loading = feed.loading && !feed.page;
   const error = Boolean(feed.error);
-  const [limit, setLimit] = useState(0);
+  const [limit, setLimit] = useState(3);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
     const observer = new ResizeObserver(() => {
-      setLimit(Math.max(0, Math.min(3, Math.floor(list.clientHeight / 64))));
+      const stacked =
+        getComputedStyle(list).getPropertyValue("--preview-layout").trim() ===
+        "stacked";
+      setLimit(
+        stacked
+          ? 3
+          : Math.max(1, Math.min(3, Math.floor(list.clientHeight / 64))),
+      );
     });
     observer.observe(list);
     return () => observer.disconnect();
@@ -45,23 +53,20 @@ export function SharedLocationsPreview() {
       aria-label="Assistance requests overview"
     >
       <div className={dashboardStyles.panelHeading}>
-        <h3>Assistance requests</h3>
-        <div className={styles.controls}>
-          <button
-            type="button"
-            className={styles.refresh}
-            disabled={feed.loading}
-            aria-label="Refresh shared locations"
-            onClick={refresh}
-          >
-            <RefreshCw size={14} aria-hidden="true" />
-          </button>
-          <a href="#shared-locations">
-            View all <ArrowUpRight size={15} aria-hidden="true" />
-          </a>
+        <div>
+          <h3>Assistance requests</h3>
+          <p>Pending requests appear first</p>
         </div>
+        <button
+          type="button"
+          className={dashboardStyles.refresh}
+          disabled={feed.loading}
+          aria-label="Refresh shared locations"
+          onClick={refresh}
+        >
+          <RefreshCw size={16} aria-hidden="true" />
+        </button>
       </div>
-      <div className={styles.scope}>Among latest 100 requests</div>
       <dl
         className={styles.stats}
         aria-label="Assistance status counts"
@@ -82,9 +87,6 @@ export function SharedLocationsPreview() {
           </div>
         ))}
       </dl>
-      <p className={styles.pendingHint}>
-        Pending requests are waiting for acknowledgment.
-      </p>
       <div className={styles.list} ref={listRef} aria-busy={loading}>
         {loading ? (
           <>
@@ -110,8 +112,15 @@ export function SharedLocationsPreview() {
           </div>
         ) : !openRequests.length ? (
           <div className={styles.feedback} role="status">
-            <MapPin size={24} aria-hidden="true" />
-            <p>No open requests among the latest 100.</p>
+            <span className={styles.emptyIcon}>
+              <CircleCheck size={23} aria-hidden="true" />
+            </span>
+            <strong>No open requests</strong>
+            <p>
+              None among the latest 100 requests.
+              <br />
+              New requests will appear here automatically.
+            </p>
           </div>
         ) : (
           openRequests.slice(0, limit).map((request) => (
@@ -126,7 +135,7 @@ export function SharedLocationsPreview() {
                 <MapPin size={17} aria-hidden="true" />
               </span>
               <span className={styles.copy}>
-                <strong>{request.display_name || "Name not provided"}</strong>
+                <strong>{assistanceDisplayName(request)}</strong>
                 <small>
                   {request.location_name
                     ? `Near ${request.location_name.roadName}`
@@ -139,6 +148,12 @@ export function SharedLocationsPreview() {
             </a>
           ))
         )}
+      </div>
+      <div className={dashboardStyles.panelFooter}>
+        <span>Latest 100 requests</span>
+        <a className={dashboardStyles.textLink} href="#shared-locations">
+          View all requests <ArrowRight size={15} aria-hidden="true" />
+        </a>
       </div>
     </section>
   );

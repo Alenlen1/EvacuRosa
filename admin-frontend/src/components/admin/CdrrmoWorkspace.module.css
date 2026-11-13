@@ -114,6 +114,17 @@
   flex-shrink: 0;
   margin: 22px 0 24px;
 }
+.sidebarSettings {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #fff3e522;
+}
+.settingsSkeleton {
+  height: 88px;
+  width: 100%;
+  background: #b35f53;
+}
 .navigationGroup nav {
   display: grid;
   gap: 8px;
@@ -213,23 +224,34 @@
     padding: 8px;
   }
 }
-@media (max-height: 700px) {
-  @container cdrrmo-main (max-width: 700px) {
-    .viewport[data-workspace-scroll="false"][data-workspace-section="dashboard-overview"] {
-      overflow-y: auto;
-    }
-    .viewport[data-workspace-scroll="false"][data-workspace-section="dashboard-overview"]
-      .sectionPanel {
-      height: auto;
-      min-height: 100%;
-      overflow: visible;
-    }
-    .viewport[data-workspace-scroll="false"][data-workspace-section="dashboard-overview"]
-      :global(.cdrrmo-content) {
-      height: auto;
-      min-height: 100%;
-      overflow: visible;
-    }
+@container cdrrmo-main (max-width: 700px) {
+  .viewport[data-workspace-scroll="false"][data-workspace-section="dashboard-overview"] {
+    overflow-y: auto;
+  }
+  .viewport[data-workspace-scroll="false"][data-workspace-section="dashboard-overview"]
+    .sectionPanel {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+  .viewport[data-workspace-scroll="false"][data-workspace-section="dashboard-overview"]
+    :global(.cdrrmo-content) {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+}
+/* A short landscape viewport still needs access to the complete overview. */
+@media (max-height: 600px) {
+  .viewport[data-workspace-section="dashboard-overview"] {
+    overflow-y: auto;
+  }
+  .viewport[data-workspace-section="dashboard-overview"] .sectionPanel,
+  .viewport[data-workspace-section="dashboard-overview"]
+    :global(.cdrrmo-content) {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
   }
 }
 .sectionPanel {
@@ -365,7 +387,7 @@
   height: 18px;
 }
 .accountSkeleton {
-  width: 122px;
+  width: 44px;
   height: 44px;
 }
 @media (max-width: 1280px) {
@@ -494,6 +516,9 @@
   }
 }
 @media (max-height: 420px) {
+  .sidebarSettings {
+    padding-top: 6px;
+  }
   .sidebarContent,
   .drawer .sidebarContent {
     padding-bottom: 12px;
@@ -520,7 +545,7 @@
     height: 40px;
   }
   .mobilePublicMap {
-    min-height: 36px;
+    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
