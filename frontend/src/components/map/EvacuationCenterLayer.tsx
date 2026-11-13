@@ -48,6 +48,7 @@ interface EvacuationCenterLayerProps {
   onSelectCenter?: (center: EvacuationCenter) => void;
   renderPopup?: (center: EvacuationCenter) => ReactNode;
   selectedCenterId?: string;
+  showPopups?: boolean;
 }
 
 export function EvacuationCenterLayer({
@@ -55,6 +56,7 @@ export function EvacuationCenterLayer({
   onSelectCenter,
   renderPopup,
   selectedCenterId,
+  showPopups = true,
 }: EvacuationCenterLayerProps) {
   const { t } = useLanguage();
   return (
@@ -69,20 +71,22 @@ export function EvacuationCenterLayer({
           zIndexOffset={center.id === selectedCenterId ? 500 : 0}
           eventHandlers={{ click: () => onSelectCenter?.(center) }}
         >
-          <Popup>
-            {renderPopup ? (
-              renderPopup(center)
-            ) : (
-              <div className="center-popup">
-                <strong>{center.name}</strong>
-                <div>{center.address}</div>
-                <div>
-                  {center.currentOccupancy} / {center.capacity} occupied
+          {showPopups && (
+            <Popup>
+              {renderPopup ? (
+                renderPopup(center)
+              ) : (
+                <div className="center-popup">
+                  <strong>{center.name}</strong>
+                  <div>{center.address}</div>
+                  <div>
+                    {center.currentOccupancy} / {center.capacity} occupied
+                  </div>
+                  <StatusBadge status={center.status} />
                 </div>
-                <StatusBadge status={center.status} />
-              </div>
-            )}
-          </Popup>
+              )}
+            </Popup>
+          )}
         </Marker>
       ))}
     </>

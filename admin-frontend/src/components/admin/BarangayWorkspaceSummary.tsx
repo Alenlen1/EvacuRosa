@@ -14,7 +14,7 @@ export function BarangayWorkspaceSummary({
   const totals = getBarangayWorkspaceSummary(centers);
   const metrics = [
     {
-      label: "Centers managed",
+      label: "Assigned centers",
       value: totals.centerCount,
       detail: "Assigned to this barangay",
       icon: House,
@@ -26,7 +26,7 @@ export function BarangayWorkspaceSummary({
       icon: UsersRound,
     },
     {
-      label: "Remaining spaces",
+      label: "Spaces available",
       value: totals.remainingSpaces,
       detail: "At accepting centers",
       icon: BedDouble,
@@ -39,10 +39,14 @@ export function BarangayWorkspaceSummary({
       aria-label="Shelter summary"
     >
       <dl className="barangay-workspace-metrics">
-        {metrics.map(({ label, value, detail, icon: Icon }) => {
+        {metrics.map(({ label, value, detail, icon: Icon }, index) => {
           const displayedValue = unavailable ? null : value;
           return (
-            <div className="barangay-workspace-metric" key={label}>
+            <div
+              className="barangay-workspace-metric"
+              data-metric={index}
+              key={label}
+            >
               <dt>
                 <span className="barangay-workspace-metric-icon">
                   <Icon size={20} aria-hidden="true" />

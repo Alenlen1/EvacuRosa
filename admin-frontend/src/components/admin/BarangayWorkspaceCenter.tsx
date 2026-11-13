@@ -1,7 +1,15 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
-import { Check, CircleAlert, Clock3, House, MapPin, Save } from "lucide-react";
+import {
+  Check,
+  CircleAlert,
+  Clock3,
+  House,
+  LoaderCircle,
+  MapPin,
+  Save,
+} from "lucide-react";
 import type { ManagedCenter } from "./CenterManager";
 import styles from "./BarangayWorkspaceCenter.module.css";
 
@@ -13,6 +21,7 @@ interface BarangayWorkspaceCenterProps {
   availabilityDraft: string;
   saving: boolean;
   updatesDisabled: boolean;
+  selected?: boolean;
   feedback?: { kind: "success" | "error"; message: string };
   onOccupancyChange: (value: string) => void;
   onAvailabilityChange: (value: string) => void;
@@ -36,6 +45,7 @@ export function BarangayWorkspaceCenter({
   availabilityDraft,
   saving,
   updatesDisabled,
+  selected = false,
   feedback,
   onOccupancyChange,
   onAvailabilityChange,
@@ -99,6 +109,8 @@ export function BarangayWorkspaceCenter({
       className={`barangay-center-card ${styles.card}`}
       aria-labelledby={`${fieldId}-name`}
       aria-busy={saving}
+      tabIndex={-1}
+      data-selected={selected || undefined}
     >
       <header className={styles.header}>
         <span className={styles.shelterIcon} aria-hidden="true">
@@ -125,22 +137,38 @@ export function BarangayWorkspaceCenter({
           className={styles.occupancy}
           aria-labelledby={`${fieldId}-occupancy-title`}
         >
-          <h3 id={`${fieldId}-occupancy-title`}>Current occupancy</h3>
-          <p className={styles.occupancyCount}>
-            <strong>
-              {occupancyKnown ? count.format(center.current_occupancy) : "—"}
-            </strong>
-            <span>
-              / {capacityKnown ? count.format(center.capacity) : "—"} people
+          <div className={styles.occupancyHeading}>
+            <h3 id={`${fieldId}-occupancy-title`}>Current occupancy</h3>
+            <span className={styles.percentage}>
+              {percent !== null
+                ? `${count.format(percent)}% occupied`
+                : "Occupancy unavailable"}
             </span>
-          </p>
-          <p className={styles.percentage}>
-            {percent !== null
-              ? `${count.format(percent)}% occupied`
-              : !occupancyKnown
-                ? "Occupancy unavailable"
-                : "Occupancy percentage unavailable"}
-          </p>
+          </div>
+          <div className={styles.occupancySummary}>
+            <p className={styles.occupancyCount}>
+              <strong>
+                {occupancyKnown ? count.format(center.current_occupancy) : "—"}
+              </strong>
+              <span>
+                / {capacityKnown ? count.format(center.capacity) : "—"} people
+              </span>
+            </p>
+            <p className={styles.remaining}>
+              {closed ? (
+                "Closed to new arrivals"
+              ) : status === "FULL" ? (
+                "Not accepting new arrivals"
+              ) : open && remaining !== null ? (
+                <>
+                  <strong>{count.format(remaining)}</strong>
+                  <span>spaces remaining</span>
+                </>
+              ) : (
+                "Remaining spaces unavailable"
+              )}
+            </p>
+          </div>
           {ratioKnown ? (
             <div
               className={styles.progress}
@@ -157,26 +185,13 @@ export function BarangayWorkspaceCenter({
           ) : (
             <div className={styles.emptyProgress} aria-hidden="true" />
           )}
-          <p className={styles.remaining}>
-            {closed ? (
-              "Closed to new arrivals"
-            ) : status === "FULL" ? (
-              "Not accepting new arrivals"
-            ) : open && remaining !== null ? (
-              <>
-                <strong>{count.format(remaining)}</strong> remaining spaces
-              </>
-            ) : (
-              "Remaining spaces unavailable"
-            )}
-          </p>
           <p className={styles.updated}>
             <Clock3 size={14} aria-hidden="true" />
             {dateValid ? (
               <span>
-                Last updated{" "}
+                Updated{" "}
                 <time dateTime={savedDate.toISOString()}>
-                  {timestamp.format(savedDate)}
+                  {timestamp.format(savedDate)} PHT
                 </time>
               </span>
             ) : (
@@ -197,48 +212,59 @@ export function BarangayWorkspaceCenter({
               <span className={styles.unsaved}>Unsaved changes</span>
             )}
           </div>
-          <label htmlFor={`${fieldId}-availability`}>Availability</label>
-          <select
-            id={`${fieldId}-availability`}
-            value={availabilityDraft}
-            onChange={(event) => onAvailabilityChange(event.target.value)}
-            disabled={updatesDisabled}
-          >
-            <option value="AVAILABLE">Open</option>
-            <option value="CLOSED">Closed</option>
-          </select>
-          <p className={styles.capacityHint}>
-            Capacity status is based on occupancy.
-          </p>
-          <label htmlFor={`${fieldId}-occupancy`}>Update occupancy</label>
-          <div className={styles.inputWrap}>
-            <input
-              id={`${fieldId}-occupancy`}
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={capacityKnown ? center.capacity : undefined}
-              step={1}
-              required
-              value={occupancyDraft}
-              onChange={(event) => {
-                setOccupancyTouched(true);
-                onOccupancyChange(event.target.value);
-              }}
-              onBlur={() => setOccupancyTouched(true)}
-              disabled={updatesDisabled}
-              aria-invalid={showInputError || undefined}
-              aria-describedby={
-                showInputError ? `${fieldId}-input-error` : undefined
-              }
-            />
-            <span aria-hidden="true">people</span>
+          <div className={styles.fields}>
+            <div className={styles.field}>
+              <label htmlFor={`${fieldId}-availability`}>Availability</label>
+              <select
+                id={`${fieldId}-availability`}
+                value={availabilityDraft}
+                onChange={(event) => onAvailabilityChange(event.target.value)}
+                disabled={updatesDisabled}
+              >
+                <option value="AVAILABLE">Open</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+            </div>
+            <div className={styles.field}>
+              <label htmlFor={`${fieldId}-occupancy`}>Update occupancy</label>
+              <div className={styles.inputWrap}>
+                <input
+                  id={`${fieldId}-occupancy`}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={capacityKnown ? center.capacity : undefined}
+                  step={1}
+                  required
+                  value={occupancyDraft}
+                  onChange={(event) => {
+                    setOccupancyTouched(true);
+                    onOccupancyChange(event.target.value);
+                  }}
+                  onBlur={() => setOccupancyTouched(true)}
+                  disabled={updatesDisabled}
+                  aria-invalid={showInputError || undefined}
+                  aria-describedby={
+                    showInputError
+                      ? `${fieldId}-input-error`
+                      : `${fieldId}-capacity-hint`
+                  }
+                />
+                <span aria-hidden="true">people</span>
+              </div>
+            </div>
           </div>
           {showInputError && (
             <p id={`${fieldId}-input-error`} className={styles.inputError}>
               {inputError}
             </p>
           )}
+          <p id={`${fieldId}-capacity-hint`} className={styles.capacityHint}>
+            {capacityKnown
+              ? `Maximum ${count.format(center.capacity)} people. `
+              : ""}
+            Capacity status updates automatically.
+          </p>
           <button
             type="submit"
             className={`barangay-save-button ${styles.save}`}
@@ -246,7 +272,15 @@ export function BarangayWorkspaceCenter({
               updatesDisabled || !dirty || !draftValid || !availabilityValid
             }
           >
-            <Save size={17} aria-hidden="true" />
+            {saving ? (
+              <LoaderCircle
+                className={styles.saving}
+                size={17}
+                aria-hidden="true"
+              />
+            ) : (
+              <Save size={17} aria-hidden="true" />
+            )}
             {saving ? "Saving…" : "Save changes"}
           </button>
           {feedback && (

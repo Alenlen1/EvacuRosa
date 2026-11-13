@@ -17,7 +17,7 @@ import {
   CdrrmoDashboard,
   type DashboardHazards,
 } from "@/components/admin/CdrrmoDashboard";
-import { TriangleAlert } from "lucide-react";
+import { MapPin, SlidersHorizontal, TriangleAlert } from "lucide-react";
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -83,6 +83,8 @@ export default function AdminDashboardPage() {
   const [ready, setReady] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [refreshingCenters, setRefreshingCenters] = useState(false);
+  const [selectedBarangayCenterId, setSelectedBarangayCenterId] =
+    useState<string>();
 
   const [floodReports, setFloodReports] = useState<FloodReport[]>([]);
   const [fireIncidents, setFireIncidents] = useState<FireIncident[]>([]);
@@ -290,6 +292,27 @@ export default function AdminDashboardPage() {
     (barangayName ?? "").replace(/^barangay\s+/i, ""),
   );
 
+  function showBarangayCenter(centerId: string) {
+    if (
+      profile?.role !== "BARANGAY_ADMIN" ||
+      !centers.some(
+        (center) =>
+          center.id === centerId && center.barangay_id === profile.barangay_id,
+      )
+    )
+      return;
+    const card = document.getElementById(`center-${centerId}`);
+    if (!card) return;
+    setSelectedBarangayCenterId(centerId);
+    card.focus({ preventScroll: true });
+    card.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "start",
+    });
+  }
+
   if (!ready || (!profile && retrying))
     return <DashboardSkeleton role={profile?.role ?? loadingRole} />;
 
@@ -347,7 +370,7 @@ export default function AdminDashboardPage() {
             <span className="eyebrow">BARANGAY WORKSPACE</span>
             <h1>{barangayTitle}</h1>
             <p className="barangay-workspace-subtitle">
-              Evacuation center management
+              Manage your shelters, occupancy and availability.
             </p>
             {error && (
               <p className="error-message" role="alert">
@@ -355,6 +378,19 @@ export default function AdminDashboardPage() {
               </p>
             )}
           </div>
+          <nav
+            className="barangay-workspace-shortcuts"
+            aria-label="Workspace shortcuts"
+          >
+            <a href="#barangay-centers">
+              <SlidersHorizontal size={16} aria-hidden="true" />
+              Update centers
+            </a>
+            <a href="#barangay-map">
+              <MapPin size={16} aria-hidden="true" />
+              View shelter map
+            </a>
+          </nav>
         </div>
       )}
 
@@ -382,23 +418,6 @@ export default function AdminDashboardPage() {
           unavailable={Boolean(error)}
         />
       )}
-      {profile.role === "BARANGAY_ADMIN" && profile.barangay_id && (
-        <BarangayAssignedMap
-          centers={centers}
-          barangayId={profile.barangay_id}
-          barangayName={barangayName ?? "your barangay"}
-          loading={refreshingCenters}
-          error={error ?? ""}
-          onRefresh={() => {
-            if (refreshingCenters || savingId !== null) return;
-            setRefreshingCenters(true);
-            void loadCenters()
-              .catch(() => {})
-              .finally(() => setRefreshingCenters(false));
-          }}
-        />
-      )}
-
       {profile?.role === "SUPER_ADMIN" && (
         <CdrrmoSection id="evacuation-centers">
           <CenterManager
@@ -409,63 +428,89 @@ export default function AdminDashboardPage() {
           />
         </CdrrmoSection>
       )}
-      <div
-        className={
-          profile?.role !== "SUPER_ADMIN"
-            ? "barangay-center-management"
-            : undefined
-        }
-      >
-        {profile?.role !== "SUPER_ADMIN" && (
-          <div
-            className="admin-center-cards"
-            data-single={centers.length === 1}
-          >
-            {centers.map((center) => (
-              <BarangayWorkspaceCenter
-                key={center.id}
-                center={center}
-                occupancyDraft={
-                  occupancyDrafts[center.id] ?? String(center.current_occupancy)
-                }
-                availabilityDraft={
-                  availabilityDrafts[center.id] ??
-                  (center.status === "CLOSED" ? "CLOSED" : "AVAILABLE")
-                }
-                saving={savingId === center.id}
-                updatesDisabled={savingId !== null}
-                feedback={centerFeedback[center.id]}
-                onOccupancyChange={(value) => {
-                  clearCenterFeedback(center.id);
-                  setOccupancyDrafts((drafts) => ({
-                    ...drafts,
-                    [center.id]: value,
-                  }));
-                }}
-                onAvailabilityChange={(value) => {
-                  clearCenterFeedback(center.id);
-                  setAvailabilityDrafts((drafts) => ({
-                    ...drafts,
-                    [center.id]: value,
-                  }));
-                }}
-                onSave={() => void updateOccupancy(center.id)}
-              />
-            ))}
-            {centers.length === 0 && !error && (
-              <div className="col-span-full rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
-                <p className="font-medium text-slate-700">
-                  No evacuation centers are assigned to your account.
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  Contact your designated system operator about access. CDRRMO
-                  registers and assigns evacuation centers.
-                </p>
-              </div>
-            )}
+      {profile.role === "BARANGAY_ADMIN" && (
+        <div className="barangay-dashboard-grid">
+          <div className="barangay-centers-heading">
+            <div>
+              <h2>Your evacuation centers</h2>
+              <p>Keep counts and availability up to date.</p>
+            </div>
+            <span className="barangay-center-count">
+              {centers.length} assigned
+            </span>
           </div>
-        )}
-      </div>
+          <div id="barangay-centers" className="barangay-center-management">
+            <div
+              className="admin-center-cards"
+              data-single={centers.length === 1}
+            >
+              {centers.map((center) => (
+                <BarangayWorkspaceCenter
+                  key={center.id}
+                  center={center}
+                  selected={selectedBarangayCenterId === center.id}
+                  occupancyDraft={
+                    occupancyDrafts[center.id] ??
+                    String(center.current_occupancy)
+                  }
+                  availabilityDraft={
+                    availabilityDrafts[center.id] ??
+                    (center.status === "CLOSED" ? "CLOSED" : "AVAILABLE")
+                  }
+                  saving={savingId === center.id}
+                  updatesDisabled={savingId !== null}
+                  feedback={centerFeedback[center.id]}
+                  onOccupancyChange={(value) => {
+                    clearCenterFeedback(center.id);
+                    setOccupancyDrafts((drafts) => ({
+                      ...drafts,
+                      [center.id]: value,
+                    }));
+                  }}
+                  onAvailabilityChange={(value) => {
+                    clearCenterFeedback(center.id);
+                    setAvailabilityDrafts((drafts) => ({
+                      ...drafts,
+                      [center.id]: value,
+                    }));
+                  }}
+                  onSave={() => void updateOccupancy(center.id)}
+                />
+              ))}
+              {centers.length === 0 && !error && (
+                <div className="col-span-full rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
+                  <p className="font-medium text-slate-700">
+                    No evacuation centers are assigned to your account.
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Contact your designated system operator about access. CDRRMO
+                    registers and assigns evacuation centers.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {profile.barangay_id && (
+            <BarangayAssignedMap
+              centers={centers}
+              barangayId={profile.barangay_id}
+              barangayName={barangayName ?? "your barangay"}
+              loading={refreshingCenters}
+              error={error ?? ""}
+              selectedCenterId={selectedBarangayCenterId}
+              onSelectCenter={showBarangayCenter}
+              onRefresh={() => {
+                if (refreshingCenters || savingId !== null) return;
+                setRefreshingCenters(true);
+                void loadCenters()
+                  .catch(() => {})
+                  .finally(() => setRefreshingCenters(false));
+              }}
+            />
+          )}
+        </div>
+      )}
 
       {profile?.role === "SUPER_ADMIN" && (
         <CdrrmoSection id="shared-locations">

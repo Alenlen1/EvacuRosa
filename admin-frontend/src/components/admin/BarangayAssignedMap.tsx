@@ -12,6 +12,8 @@ export function BarangayAssignedMap({
   loading,
   error,
   onRefresh,
+  onSelectCenter,
+  selectedCenterId,
 }: {
   centers: (ManagedCenter & { updated_at?: string | null })[];
   barangayId: string;
@@ -19,6 +21,8 @@ export function BarangayAssignedMap({
   loading: boolean;
   error: string;
   onRefresh: () => void;
+  onSelectCenter: (centerId: string) => void;
+  selectedCenterId?: string;
 }) {
   const focusedBarangay = useMemo(
     () => ({ id: barangayId, name: barangayName }),
@@ -58,6 +62,8 @@ export function BarangayAssignedMap({
         loading={loading}
         error={error}
         onRefresh={onRefresh}
+        onSelectCenter={onSelectCenter}
+        selectedCenterId={selectedCenterId}
       />
     </div>
   );

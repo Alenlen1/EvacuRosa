@@ -112,6 +112,12 @@ function WorkspaceHeadingSkeleton({ role }: { role: WorkspaceRole | null }) {
         <SkeletonBlock className="staff-skeleton-workspace-title" />
         <SkeletonBlock className="staff-skeleton-line" />
       </div>
+      {role === "BARANGAY_ADMIN" && (
+        <div className="barangay-workspace-shortcuts">
+          <SkeletonBlock />
+          <SkeletonBlock />
+        </div>
+      )}
     </div>
   );
 }
@@ -189,36 +195,61 @@ function BarangayWorkspaceSkeleton() {
           ))}
         </div>
       </div>
-      <MapSkeleton
-        className="barangay-overview-map"
-        label="Loading assigned evacuation centers..."
-      />
-      <div className="barangay-center-management">
-        <div className="admin-center-cards">
-          {Array.from({ length: 2 }, (_, index) => (
-            <div
-              className={`barangay-center-card ${workspaceStyles.card}`}
-              key={index}
-            >
-              <div className={workspaceStyles.header}>
-                <SkeletonBlock className={workspaceStyles.shelterIcon} />
-                <div className="staff-skeleton-copy">
-                  <SkeletonBlock className="staff-skeleton-eyebrow" />
-                  <SkeletonBlock className="staff-skeleton-title" />
+      <div className="barangay-dashboard-grid">
+        <div className="barangay-centers-heading staff-skeleton-copy">
+          <SkeletonBlock className="staff-skeleton-title" />
+          <SkeletonBlock className="staff-skeleton-line" />
+        </div>
+        <div className="barangay-center-management">
+          <div className="admin-center-cards">
+            {Array.from({ length: 1 }, (_, index) => (
+              <div
+                className={`barangay-center-card ${workspaceStyles.card}`}
+                key={index}
+              >
+                <div className={workspaceStyles.header}>
+                  <SkeletonBlock className={workspaceStyles.shelterIcon} />
+                  <div className="staff-skeleton-copy">
+                    <SkeletonBlock className="staff-skeleton-eyebrow" />
+                    <SkeletonBlock className="staff-skeleton-title" />
+                    <SkeletonBlock className="staff-skeleton-line" />
+                  </div>
+                </div>
+                <div
+                  className={`${workspaceStyles.occupancy} staff-skeleton-copy`}
+                >
+                  <SkeletonBlock className="staff-skeleton-line staff-skeleton-short" />
+                  <SkeletonBlock className="staff-skeleton-number" />
                   <SkeletonBlock className="staff-skeleton-line" />
+                  <SkeletonBlock className="staff-skeleton-line staff-skeleton-short" />
+                </div>
+                <div className={`${workspaceStyles.form} staff-skeleton-copy`}>
+                  <SkeletonBlock className="staff-skeleton-line staff-skeleton-short" />
+                  <div className={workspaceStyles.fields}>
+                    <SkeletonBlock className="staff-skeleton-input" />
+                    <SkeletonBlock className="staff-skeleton-input" />
+                  </div>
+                  <SkeletonBlock className="staff-skeleton-line" />
+                  <SkeletonBlock className="staff-skeleton-input" />
                 </div>
               </div>
-              <div
-                className={`${workspaceStyles.occupancy} staff-skeleton-copy`}
-              >
-                <SkeletonBlock className="staff-skeleton-line staff-skeleton-short" />
-                <SkeletonBlock className="staff-skeleton-number" />
-                <SkeletonBlock className="staff-skeleton-line" />
-                <SkeletonBlock className="staff-skeleton-input" />
-                <SkeletonBlock className="staff-skeleton-input" />
-              </div>
+            ))}
+          </div>
+        </div>
+        <div className="barangay-workspace-map">
+          <div className="barangay-overview">
+            <div className="barangay-overview-heading staff-skeleton-copy">
+              <SkeletonBlock className="staff-skeleton-title" />
+              <SkeletonBlock className="staff-skeleton-line" />
             </div>
-          ))}
+            <MapSkeleton
+              className="barangay-overview-map"
+              label="Loading assigned evacuation centers..."
+            />
+            <div className="barangay-map-footer">
+              <SkeletonBlock className="staff-skeleton-line" />
+            </div>
+          </div>
         </div>
       </div>
     </>
