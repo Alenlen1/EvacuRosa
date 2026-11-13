@@ -1,5 +1,5 @@
-import {
-  ArrowUpRight,
+﻿import {
+  ArrowRight,
   CircleCheck,
   CircleMinus,
   Flame,
@@ -38,7 +38,30 @@ export function CdrrmoDashboard({
 }) {
   const shelterCounts = getCdrrmoShelterStatusCounts(centers);
   const totals = getBarangayWorkspaceSummary(centers);
-  const metrics = [
+  const capacityMetrics = [
+    {
+      label: "Available spaces",
+      value: totals.remainingSpaces,
+      icon: House,
+      detail: "At centers accepting evacuees",
+      featured: true,
+    },
+    {
+      label: "Reported occupants",
+      value: totals.occupancy,
+      icon: UsersRound,
+      detail: "Latest saved barangay counts",
+      featured: false,
+    },
+    {
+      label: "Registered centers",
+      value: centers.length,
+      icon: House,
+      detail: "Across all barangays",
+      featured: false,
+    },
+  ];
+  const statuses = [
     {
       label: "Available",
       value: shelterCounts.AVAILABLE,
@@ -64,26 +87,24 @@ export function CdrrmoDashboard({
       tone: "neutral",
     },
   ];
-  const capacityMetrics = [
-    { label: "Registered centers", value: centers.length, icon: House },
-    { label: "Reported occupants", value: totals.occupancy, icon: UsersRound },
-    { label: "Available spaces", value: totals.remainingSpaces, icon: House },
-  ];
   const hazardRows = [
     {
       label: "Flood reports",
+      detail: "Reported flood conditions",
       value: hazards.floods,
       icon: Waves,
       tone: "flood",
     },
     {
       label: "Fire incidents",
+      detail: "Reported fire locations",
       value: hazards.fires,
       icon: Flame,
       tone: "fire",
     },
     {
       label: "Earthquake reports",
+      detail: "Verified debris and road impacts",
       value: hazards.earthquakes,
       icon: TriangleAlert,
       tone: "earthquake",
@@ -92,6 +113,7 @@ export function CdrrmoDashboard({
   const hazardTotal = hazardRows.every(({ value }) => value !== null)
     ? hazardRows.reduce((total, { value }) => total + (value ?? 0), 0)
     : null;
+
   return (
     <section
       id="dashboard-overview"
@@ -100,103 +122,103 @@ export function CdrrmoDashboard({
       aria-labelledby="dashboard-overview-title"
     >
       <div className={styles.heading}>
-        <span className="eyebrow">CITY RESPONSE OVERVIEW</span>
-        <h2 id="dashboard-overview-title">Overview</h2>
-        <p>
-          Shelter availability, active hazards and assistance requests across
-          Santa Rosa.
-        </p>
+        <div>
+          <h2 id="dashboard-overview-title">City response overview</h2>
+          <p>
+            Monitor shelter availability and requests that need your attention.
+          </p>
+        </div>
+        <a className={styles.textLink} href="#evacuation-centers">
+          Manage centers <ArrowRight size={16} aria-hidden="true" />
+        </a>
       </div>
-      <section className={styles.shelters} aria-label="Shelter availability">
-        <div className={styles.metrics}>
-          {metrics.map(({ label, value, icon: Icon, tone }) => (
-            <div className={styles.metric} key={label} data-tone={tone}>
-              <span className={styles.metricIcon} data-tone={tone}>
-                <Icon size={21} aria-hidden="true" />
-              </span>
+      <section
+        className={styles.capacitySummary}
+        aria-label="City shelter capacity"
+      >
+        {capacityMetrics.map(
+          ({ label, value, icon: Icon, detail, featured }) => (
+            <div
+              className={styles.capacityCard}
+              data-featured={featured || undefined}
+              key={label}
+            >
               <dl>
-                <dt>{label}</dt>
-                <dd data-unavailable={centersUnavailable || undefined}>
+                <dt>
+                  <span>{label}</span>
+                  <Icon size={20} aria-hidden="true" />
+                </dt>
+                <dd
+                  data-unavailable={
+                    centersUnavailable || value === null || undefined
+                  }
+                >
                   {centersUnavailable
                     ? "Unavailable"
                     : (value?.toLocaleString() ?? "Unavailable")}
                 </dd>
               </dl>
+              <p>{detail}</p>
             </div>
-          ))}
+          ),
+        )}
+      </section>
+      <section
+        className={styles.availability}
+        aria-labelledby="center-availability-title"
+      >
+        <div className={styles.availabilityHeading}>
+          <h3 id="center-availability-title">Center availability</h3>
+          <p>Based on saved center status</p>
         </div>
-        <dl
-          className={styles.capacitySummary}
-          aria-label="City shelter capacity"
-        >
-          {capacityMetrics.map(({ label, value, icon: Icon }) => (
-            <div key={label}>
+        <dl className={styles.statuses}>
+          {statuses.map(({ label, value, icon: Icon, tone }) => (
+            <div className={styles.status} data-tone={tone} key={label}>
               <dt>
-                <Icon size={14} aria-hidden="true" />
+                <Icon size={16} aria-hidden="true" />
                 {label}
               </dt>
-              <dd>
-                {centersUnavailable
-                  ? "Unavailable"
-                  : (value?.toLocaleString() ?? "Unavailable")}
+              <dd data-unavailable={centersUnavailable || undefined}>
+                {centersUnavailable ? "Unavailable" : value.toLocaleString()}
               </dd>
             </div>
           ))}
         </dl>
-        <p className={styles.capacityNote}>
-          Spaces at centers accepting evacuees; counts reflect saved barangay
-          updates.
-        </p>
       </section>
       <div className={styles.panels}>
+        <SharedLocationsPreview />
         <section
           className={`${styles.panel} ${styles.hazardPanel}`}
           aria-labelledby="active-hazards-title"
         >
           <div className={styles.panelHeading}>
-            <h3 id="active-hazards-title">Active hazards</h3>
-            <div className={styles.panelControls}>
-              <button
-                type="button"
-                className={styles.refresh}
-                aria-label="Refresh hazard overview"
-                disabled={hazardsLoading}
-                onClick={onRefreshHazards}
-              >
-                <RefreshCw size={14} aria-hidden="true" />
-              </button>
-              <a href="#hazard-management">
-                Open map <ArrowUpRight size={15} aria-hidden="true" />
-              </a>
+            <div>
+              <h3 id="active-hazards-title">Active hazards</h3>
+              <p>Current reports on the public map</p>
             </div>
+            <button
+              type="button"
+              className={styles.refresh}
+              aria-label="Refresh hazard overview"
+              disabled={hazardsLoading}
+              onClick={onRefreshHazards}
+            >
+              <RefreshCw size={16} aria-hidden="true" />
+            </button>
           </div>
-          <p>Active flood/fire reports and verified earthquake reports.</p>
-          <dl className={styles.hazardTotal} aria-busy={hazardsLoading}>
-            <dt>Active hazard records</dt>
-            <dd data-unavailable={hazardTotal === null || undefined}>
-              {hazardsLoading ? (
-                <SkeletonBlock className={styles.countSkeleton} />
-              ) : hazardTotal === null ? (
-                "Unavailable"
-              ) : (
-                hazardTotal.toLocaleString()
-              )}
-            </dd>
-          </dl>
           <dl className={styles.hazardList} aria-busy={hazardsLoading}>
-            {hazardRows.map(({ label, value, icon: Icon, tone }) => (
+            {hazardRows.map(({ label, detail, value, icon: Icon, tone }) => (
               <div key={label}>
                 <dt>
                   <span className={styles.hazardIcon} data-tone={tone}>
                     <Icon size={19} aria-hidden="true" />
                   </span>
-                  {label}
+                  <span>
+                    <strong>{label}</strong>
+                    <small>{detail}</small>
+                  </span>
                 </dt>
-                <dd
-                  className={
-                    value === null ? styles.unavailableCount : undefined
-                  }
-                >
+                <dd data-unavailable={value === null || undefined}>
                   {hazardsLoading ? (
                     <SkeletonBlock className={styles.countSkeleton} />
                   ) : value === null ? (
@@ -208,14 +230,19 @@ export function CdrrmoDashboard({
               </div>
             ))}
           </dl>
-          {!hazardsLoading &&
-            hazardRows.some(({ value }) => value === null) && (
-              <p className={styles.unavailable} role="status">
-                Some counts are unavailable. Refresh to try again.
-              </p>
-            )}
+          <div className={styles.panelFooter}>
+            <span role="status">
+              {hazardsLoading
+                ? "Updating reports…"
+                : hazardTotal === null
+                  ? "Some counts are unavailable"
+                  : `${hazardTotal.toLocaleString()} active ${hazardTotal === 1 ? "report" : "reports"}`}
+            </span>
+            <a className={styles.textLink} href="#hazard-management">
+              Manage hazards <ArrowRight size={15} aria-hidden="true" />
+            </a>
+          </div>
         </section>
-        <SharedLocationsPreview />
       </div>
     </section>
   );
@@ -224,24 +251,31 @@ export function CdrrmoDashboard({
 export function CdrrmoDashboardSkeleton() {
   return (
     <div className={styles.dashboard}>
-      <div className={`${styles.heading} staff-skeleton-copy`}>
-        <SkeletonBlock className="staff-skeleton-eyebrow" />
-        <SkeletonBlock className="staff-skeleton-title" />
-        <SkeletonBlock className="staff-skeleton-line" />
+      <div className={styles.heading}>
+        <div className="staff-skeleton-copy">
+          <SkeletonBlock className="staff-skeleton-title" />
+          <SkeletonBlock className="staff-skeleton-line" />
+        </div>
       </div>
-      <div className={styles.shelters}>
-        <div className={styles.metrics}>
+      <div className={styles.capacitySummary}>
+        {Array.from({ length: 3 }, (_, index) => (
+          <div
+            className={`${styles.capacityCard} staff-skeleton-copy`}
+            key={index}
+          >
+            <SkeletonBlock className="staff-skeleton-line" />
+            <SkeletonBlock className="staff-skeleton-number" />
+            <SkeletonBlock className="staff-skeleton-line staff-skeleton-short" />
+          </div>
+        ))}
+      </div>
+      <div className={styles.availability}>
+        <SkeletonBlock className="staff-skeleton-line" />
+        <div className={styles.statuses}>
           {Array.from({ length: 4 }, (_, index) => (
-            <div className={styles.metric} key={index}>
-              <SkeletonBlock className={styles.metricIcon} />
-              <div className="staff-skeleton-copy">
-                <SkeletonBlock className="staff-skeleton-line" />
-                <SkeletonBlock className="staff-skeleton-number" />
-              </div>
-            </div>
+            <SkeletonBlock className={styles.statusSkeleton} key={index} />
           ))}
         </div>
-        <SkeletonBlock className={styles.capacitySkeleton} />
       </div>
       <div className={styles.panels}>
         {Array.from({ length: 2 }, (_, index) => (

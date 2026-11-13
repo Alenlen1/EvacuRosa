@@ -223,6 +223,13 @@ function CdrrmoWorkspaceShell({
             Public map <ArrowUpRight size={16} aria-hidden="true" />
           </a>
         )}
+        <div className={styles.sidebarSettings}>
+          {loading ? (
+            <SkeletonBlock className={styles.settingsSkeleton} />
+          ) : (
+            <StaffAccountMenu variant="sidebar" onSignOut={onSignOut} />
+          )}
+        </div>
       </div>
     );
   }
@@ -317,7 +324,6 @@ function CdrrmoWorkspaceShell({
                     </a>
                   )}
                   <AssistanceNotificationButton />
-                  <StaffAccountMenu onSignOut={onSignOut} />
                 </>
               )}
             </div>

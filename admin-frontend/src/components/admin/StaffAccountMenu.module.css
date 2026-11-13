@@ -83,6 +83,57 @@
 .spinner {
   animation: spin 0.8s linear infinite;
 }
+.sidebar {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+}
+.sidebar .trigger,
+.sidebar .sidebarSignOut {
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #f4dfd7;
+  font-size: 13px;
+  font-weight: 500;
+}
+.sidebar .trigger:hover:not(:disabled),
+.sidebar .trigger[aria-expanded="true"],
+.sidebar .sidebarSignOut:hover:not(:disabled) {
+  border-color: #fff3e522;
+  background: #fff1df12;
+  color: #fff8f1;
+}
+.sidebar .trigger > span {
+  display: inline;
+}
+.sidebar .chevron {
+  display: block;
+  margin-left: auto;
+  transform: rotate(180deg);
+}
+.sidebar .trigger[aria-expanded="true"] .chevron {
+  transform: rotate(0);
+}
+.sidebar .panel {
+  top: auto;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: 100%;
+}
+.sidebar > span {
+  width: 100%;
+}
+.sidebar > span > [role="alert"] {
+  top: auto;
+  bottom: calc(100% + 8px);
+  text-align: left;
+}
 @keyframes spin {
   to {
     transform: rotate(360deg);
