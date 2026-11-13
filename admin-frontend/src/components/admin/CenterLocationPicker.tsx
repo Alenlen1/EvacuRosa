@@ -6,7 +6,6 @@ import {
   MapContainer,
   TileLayer,
   CircleMarker,
-  Polygon,
   Tooltip,
   useMap,
   useMapEvents,
@@ -18,57 +17,9 @@ import {
 } from "@/lib/mapBounds";
 import type { ManagedCenter } from "./CenterManager";
 import { SantaRosaBoundaryLayer } from "./SantaRosaBoundaryLayer";
-import {
-  getBarangayBoundary,
-  validateEntranceBarangay,
-} from "../../../../backend/src/geography/barangayBoundary";
+import { BarangayBoundaryLayer } from "./BarangayBoundaryLayer";
+import { validateEntranceBarangay } from "../../../../backend/src/geography/barangayBoundary";
 import type { EntranceBarangay } from "@/lib/entranceBarangay";
-
-function BarangayBoundary({ name }: { name: string }) {
-  const map = useMap();
-  const boundary = getBarangayBoundary(name);
-  useEffect(() => {
-    if (!boundary) return;
-    map.fitBounds(
-      boundary.geometry.coordinates[0].map(
-        ([lng, lat]) => [lat, lng] as [number, number],
-      ),
-      { padding: [12, 12], maxZoom: 17, animate: false },
-    );
-    // Move just a quarter level closer than the half-level overview.
-    map.setZoom(Math.floor(map.getZoom() * 2) / 2 + 0.25, { animate: false });
-  }, [boundary, map]);
-  if (!boundary) return null;
-  const [outer, ...holes] = boundary.geometry.coordinates.map((ring) =>
-    ring.map(([lng, lat]) => [lat, lng] as [number, number]),
-  );
-  const world: [number, number][] = [
-    [85, -180],
-    [85, 180],
-    [-85, 180],
-    [-85, -180],
-  ];
-  return (
-    <>
-      <Polygon
-        positions={[[world, outer], ...holes.map((hole) => [hole])]}
-        interactive={false}
-        pathOptions={{ stroke: false, fillColor: "#302825", fillOpacity: 0.28 }}
-      />
-      <Polygon
-        positions={[outer, ...holes]}
-        interactive={false}
-        attribution='Barangay boundaries: PSA/NAMRIA via <a href="https://github.com/faeldon/philippines-json-maps">Philippines JSON Maps</a>'
-        pathOptions={{
-          color: "#76160d",
-          weight: 3,
-          fillColor: "#76160d",
-          fillOpacity: 0.06,
-        }}
-      />
-    </>
-  );
-}
 
 function FitEntrance({
   latitude,
@@ -174,7 +125,7 @@ export default function CenterLocationPicker({
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {!barangay && <SantaRosaBoundaryLayer />}
-      {barangay && <BarangayBoundary name={barangay.name} />}
+      {barangay && <BarangayBoundaryLayer name={barangay.name} />}
       <FitEntrance
         latitude={valid ? lat : null}
         longitude={valid ? lng : null}

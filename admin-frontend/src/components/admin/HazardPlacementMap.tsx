@@ -5,10 +5,13 @@ import { useDeleteConfirmation } from "./DeleteConfirmationDialog";
 import { HazardArchive } from "./HazardArchive";
 import { HazardRecordTime } from "./HazardRecordTime";
 import { SantaRosaBoundaryLayer } from "./SantaRosaBoundaryLayer";
+import { BarangayBoundaryLayer } from "./BarangayBoundaryLayer";
+import { BARANGAY_LOCATIONS } from "@/lib/barangayLocations";
 import { EarthquakeAreaHandles } from "./EarthquakeAreaHandles";
 import { isImpactArea } from "../../../../backend/src/algorithms/earthquakeArea";
 import { EarthquakeLayer } from "@/components/map/EarthquakeLayer";
 import { useEffect, useRef, useState } from "react";
+import { latLngBounds } from "leaflet";
 import {
   MapContainer,
   TileLayer,
@@ -67,6 +70,10 @@ import {
 } from "@/services/api";
 
 type Mode = "flood" | "fire" | "earthquake";
+
+const barangayNames = BARANGAY_LOCATIONS.map(({ name }) => name).sort((a, b) =>
+  a.localeCompare(b),
+);
 
 const pendingIcon = createDivIcon(
   `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -151,6 +158,7 @@ export default function HazardPlacementMap({
     "report" | "records" | "archive"
   >("report");
   const [mode, setMode] = useState<Mode>("flood");
+  const [boundaryBarangay, setBoundaryBarangay] = useState("");
   const [inspectStreet, setInspectStreet] = useState(false);
   const [streetViewPoint, setStreetViewPoint] = useState<{
     latitude: number;
@@ -706,45 +714,89 @@ export default function HazardPlacementMap({
           ))}
         </div>
 
-        {mode === "flood" && (
-          <div className="hazard-event-selector">
-            <label htmlFor="flood-coverage" className="mb-1 block text-xs">
-              Flood coverage
-            </label>
-            <select
-              id="flood-coverage"
-              value={floodCoverage}
-              disabled={loading || removingId !== null}
-              onChange={(event) => {
-                setFloodCoverage(
-                  event.target.value as "section" | "entire-road",
-                );
-                resetForm();
-                setError(null);
-              }}
-              className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
-            >
-              <option value="section">
-                Affected road section (start and end)
-              </option>
-              <option value="entire-road">Entire mapped road</option>
-            </select>
-            <p className="mt-1 text-xs">
-              {floodCoverage === "section"
-                ? "Select the start, review the street, then select the end on the same connected street. The preview follows the street between those points."
-                : "Select a point near the road. Every mapped segment of that road will be affected."}
+        <div className="hazard-location-toolbar">
+          <div
+            className="hazard-boundary-selector"
+            data-has-boundary={Boolean(boundaryBarangay)}
+          >
+            <div className="hazard-boundary-field">
+              <label htmlFor="hazard-barangay-boundary">
+                Barangay boundary <span>Optional</span>
+              </label>
+              <select
+                id="hazard-barangay-boundary"
+                value={boundaryBarangay}
+                onChange={(event) => setBoundaryBarangay(event.target.value)}
+                disabled={loading || removingId !== null}
+                aria-describedby="hazard-boundary-help"
+              >
+                <option value="">All Santa Rosa barangays</option>
+                {barangayNames.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p id="hazard-boundary-help" role="status">
+              {boundaryBarangay
+                ? "Boundary guide only. You can report hazards across barangay boundaries."
+                : "Choose a barangay to focus the map, or report anywhere in Santa Rosa."}
             </p>
+            {boundaryBarangay && (
+              <button
+                type="button"
+                className="secondary-button hazard-citywide-button"
+                aria-label="Show all Santa Rosa barangays"
+                title="Citywide view"
+                onClick={() => setBoundaryBarangay("")}
+                disabled={loading || removingId !== null}
+              >
+                <RotateCcw size={16} aria-hidden="true" />
+                <span>Citywide view</span>
+              </button>
+            )}
           </div>
-        )}
+          {mode === "flood" && (
+            <div className="hazard-event-selector">
+              <label htmlFor="flood-coverage" className="mb-1 block text-xs">
+                Flood coverage
+              </label>
+              <select
+                id="flood-coverage"
+                value={floodCoverage}
+                disabled={loading || removingId !== null}
+                onChange={(event) => {
+                  setFloodCoverage(
+                    event.target.value as "section" | "entire-road",
+                  );
+                  resetForm();
+                  setError(null);
+                }}
+                className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+              >
+                <option value="section">
+                  Affected road section (start and end)
+                </option>
+                <option value="entire-road">Entire mapped road</option>
+              </select>
+              <p className="mt-1 text-xs">
+                {floodCoverage === "section"
+                  ? "Select the start, review the street, then select the end on the same connected street. The preview follows the street between those points."
+                  : "Select a point near the road. Every mapped segment of that road will be affected."}
+              </p>
+            </div>
+          )}
 
-        {mode === "earthquake" && (
-          <p className="earthquake-area-instructions">
-            Click and drag across the map to draw a rectangle around observed
-            debris. Drag its centre to move, a corner to resize, or the round
-            arrow handle to rotate. Then confirm only roads with verified
-            damage.
-          </p>
-        )}
+          {mode === "earthquake" && (
+            <p className="earthquake-area-instructions">
+              Click and drag across the map to draw a rectangle around observed
+              debris. Drag its centre to move, a corner to resize, or the round
+              arrow handle to rotate. Then confirm only roads with verified
+              damage.
+            </p>
+          )}
+        </div>
 
         <div
           className={`hazard-editor-map${inspectStreet ? " is-inspecting-street" : ""}`}
@@ -752,9 +804,11 @@ export default function HazardPlacementMap({
           <MapContainer
             bounds={santaRosaBounds}
             boundsOptions={{ padding: [16, 16], animate: false }}
-            maxBounds={santaRosaBounds}
+            maxBounds={latLngBounds(santaRosaBounds).pad(0.1)}
             maxBoundsViscosity={0.8}
             minZoom={10}
+            zoomSnap={0.25}
+            zoomDelta={0.5}
             className="h-full w-full"
           >
             <KeepMapSized />
@@ -763,6 +817,12 @@ export default function HazardPlacementMap({
               url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <SantaRosaBoundaryLayer />
+            <BarangayBoundaryLayer
+              name={boundaryBarangay || null}
+              resetToCity
+              shadeOutside={false}
+              zoomOffset={0}
+            />
             <FloodLayer reports={floodReports} />
             <FireLayer incidents={fireIncidents} />
             <EarthquakeLayer events={[]} roadImpacts={earthquakeRoadImpacts} />

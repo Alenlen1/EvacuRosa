@@ -177,6 +177,96 @@ html:has(.cdrrmo-workspace) {
   border-bottom: 1px solid var(--border);
   background: #fffdf9;
 }
+.cdrrmo-workspace .hazard-location-toolbar {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-width: 0;
+}
+.cdrrmo-workspace .hazard-boundary-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px 18px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #fcf9f5;
+}
+.cdrrmo-workspace .hazard-boundary-field {
+  flex: 0 1 300px;
+  min-width: 0;
+}
+.cdrrmo-workspace .hazard-boundary-field label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #493a34;
+  font-size: 13px;
+  font-weight: 600;
+}
+.cdrrmo-workspace .hazard-boundary-field label span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+.cdrrmo-workspace .hazard-boundary-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 32px 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background-color: #fffdf9;
+  color: #302825;
+  font: inherit;
+  font-size: 13px;
+}
+.cdrrmo-workspace .hazard-boundary-selector > p {
+  flex: 1 1 220px;
+  margin: 0;
+  padding-bottom: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.cdrrmo-workspace .hazard-citywide-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+@container cdrrmo-main (max-width: 760px) {
+  .cdrrmo-workspace .hazard-boundary-selector {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 12px;
+  }
+  .cdrrmo-workspace .hazard-boundary-field {
+    grid-column: 1 / -1;
+  }
+  .cdrrmo-workspace
+    .hazard-boundary-selector[data-has-boundary="true"]
+    .hazard-boundary-field {
+    grid-column: 1;
+  }
+  .cdrrmo-workspace .hazard-boundary-selector > p {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+  .cdrrmo-workspace .hazard-citywide-button {
+    grid-row: 1;
+    grid-column: 2;
+    width: 44px;
+    padding: 10px;
+  }
+  .cdrrmo-workspace .hazard-citywide-button span {
+    display: none;
+  }
+}
 .cdrrmo-workspace .hazard-event-selector p {
   color: var(--muted);
   font-size: 12px;
