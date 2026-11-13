@@ -24,12 +24,16 @@ export function BarangayEvacuationOverview({
   loading,
   error,
   onRefresh,
+  onSelectCenter,
+  selectedCenterId,
 }: {
   focusedBarangay?: { id: string; name: string } | null;
   centers: EvacuationCenter[] | null;
   loading: boolean;
   error: string;
   onRefresh: () => void;
+  onSelectCenter?: (centerId: string) => void;
+  selectedCenterId?: string;
 }) {
   const focusedBarangayId = focusedBarangay?.id;
   const matchingCenters = useMemo(() => {
@@ -74,7 +78,11 @@ export function BarangayEvacuationOverview({
               ? `${areaName} shelters`
               : "City evacuation centers"}
           </h2>
-          <p>Select a shelter to view its details.</p>
+          <p>
+            {onSelectCenter
+              ? "Select a shelter on the map to open its update card."
+              : "Select a shelter to view its details."}
+          </p>
         </div>
         <button
           type="button"
@@ -110,6 +118,8 @@ export function BarangayEvacuationOverview({
         <AdminEvacuationMap
           centers={mappedCenters}
           focusedBarangay={focusedBarangay}
+          onSelectCenter={onSelectCenter}
+          selectedCenterId={selectedCenterId}
         />
       )}
       {centers !== null ? (

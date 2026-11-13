@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./admin.css";
+import "./barangay-dashboard.css";
 
 export const metadata: Metadata = {
   title: "EvacuRosa Administration",

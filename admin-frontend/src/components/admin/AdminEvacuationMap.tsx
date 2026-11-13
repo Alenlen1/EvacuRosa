@@ -74,9 +74,13 @@ function FitMap({
 export default function AdminEvacuationMap({
   centers,
   focusedBarangay,
+  onSelectCenter,
+  selectedCenterId,
 }: {
   centers: EvacuationCenter[];
   focusedBarangay?: FocusedBarangay | null;
+  onSelectCenter?: (centerId: string) => void;
+  selectedCenterId?: string;
 }) {
   return (
     <MapContainer
@@ -97,6 +101,11 @@ export default function AdminEvacuationMap({
       <FitMap centers={centers} focusedBarangay={focusedBarangay} />
       <EvacuationCenterLayer
         centers={centers}
+        selectedCenterId={selectedCenterId}
+        onSelectCenter={
+          onSelectCenter ? (center) => onSelectCenter(center.id) : undefined
+        }
+        showPopups={!onSelectCenter}
         renderPopup={(center) => <BarangayShelterPopup center={center} />}
       />
     </MapContainer>
