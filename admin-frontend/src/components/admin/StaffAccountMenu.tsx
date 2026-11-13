@@ -29,6 +29,7 @@ export function StaffAccountMenu({
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const showAccountProgress = signingOut && variant === "header";
 
   useEffect(() => {
     if (!open) return;
@@ -88,11 +89,11 @@ export function StaffAccountMenu({
           disabled={disabled || signingOut}
           aria-expanded={open}
           aria-controls={id}
-          aria-label={signingOut ? "Signing out" : "Account"}
-          aria-busy={signingOut}
+          aria-label={showAccountProgress ? "Signing out" : "Account"}
+          aria-busy={showAccountProgress}
           onClick={() => setOpen((value) => !value)}
         >
-          {signingOut ? (
+          {showAccountProgress ? (
             <LoaderCircle
               className={styles.spinner}
               size={18}
@@ -101,7 +102,7 @@ export function StaffAccountMenu({
           ) : (
             <UserRound size={18} aria-hidden="true" />
           )}
-          <span>{signingOut ? "Signing out…" : "Account"}</span>
+          <span>{showAccountProgress ? "Signing out…" : "Account"}</span>
           <ChevronDown
             className={styles.chevron}
             size={15}
