@@ -108,10 +108,12 @@ export function CenterDirectory({
           type="button"
           className={styles.filter}
           aria-pressed={acceptingOnly}
+          aria-label={t("Accepting internally displaced persons (IDPs)")}
+          title={t("Accepting internally displaced persons (IDPs)")}
           onClick={() => onAcceptingOnlyChange(!acceptingOnly)}
         >
           <CircleCheck size={16} aria-hidden="true" />
-          {t("Accepting evacuees")}
+          {t("Accepting IDPs")}
         </button>
         {(query || acceptingOnly) && (
           <button type="button" className={styles.reset} onClick={resetFilters}>

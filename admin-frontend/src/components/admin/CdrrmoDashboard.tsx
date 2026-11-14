@@ -43,14 +43,14 @@ export function CdrrmoDashboard({
       label: "Available spaces",
       value: totals.remainingSpaces,
       icon: House,
-      detail: "At centers accepting evacuees",
+      detail: "At centers accepting IDPs",
       featured: true,
     },
     {
-      label: "Reported occupants",
+      label: "Reported IDPs",
       value: totals.occupancy,
       icon: UsersRound,
-      detail: "Latest saved barangay counts",
+      detail: "Internally displaced persons (IDPs)",
       featured: false,
     },
     {

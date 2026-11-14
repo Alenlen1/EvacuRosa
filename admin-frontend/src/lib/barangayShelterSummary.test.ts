@@ -18,8 +18,8 @@ describe("barangay shelter summary", () => {
   });
 
   it.each([
-    ["AVAILABLE", "Available", "1 shelter accepting evacuees."],
-    ["NEARLY_FULL", "Nearly full", "1 shelter accepting evacuees."],
+    ["AVAILABLE", "Available", "1 shelter accepting IDPs."],
+    ["NEARLY_FULL", "Nearly full", "1 shelter accepting IDPs."],
     ["FULL", "No available shelters", "1 shelter full."],
     ["CLOSED", "Shelters closed", "1 shelter closed."],
   ] as const)("describes one %s shelter", (status, label, detail) => {
@@ -41,7 +41,7 @@ describe("barangay shelter summary", () => {
     ).toEqual({
       status: "AVAILABLE",
       label: "Available",
-      detail: "2 of 4 shelters accepting evacuees.",
+      detail: "2 of 4 shelters accepting IDPs.",
     });
   });
 
@@ -55,7 +55,7 @@ describe("barangay shelter summary", () => {
     ).toEqual({
       status: "NEARLY_FULL",
       label: "Nearly full",
-      detail: "1 of 3 shelters accepting evacuees.",
+      detail: "1 of 3 shelters accepting IDPs.",
     });
   });
 
@@ -74,7 +74,7 @@ describe("barangay shelter summary", () => {
   });
 
   it.each([
-    ["AVAILABLE", "2 of 2 shelters accepting evacuees."],
+    ["AVAILABLE", "2 of 2 shelters accepting IDPs."],
     ["FULL", "2 shelters full."],
     ["CLOSED", "2 shelters closed."],
   ] as const)("uses plural grammar for multiple %s shelters", (status, detail) => {
