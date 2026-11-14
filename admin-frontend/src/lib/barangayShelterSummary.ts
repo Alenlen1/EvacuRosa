@@ -33,8 +33,8 @@ export function getBarangayShelterSummary(
       label: status === "AVAILABLE" ? "Available" : "Nearly full",
       detail:
         total === 1
-          ? "1 shelter accepting evacuees."
-          : `${accepting} of ${total} shelters accepting evacuees.`,
+          ? "1 shelter accepting IDPs."
+          : `${accepting} of ${total} shelters accepting IDPs.`,
     };
   }
 

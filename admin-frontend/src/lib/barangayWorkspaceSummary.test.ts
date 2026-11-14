@@ -18,7 +18,7 @@ const center = (overrides: Partial<SummaryCenter> = {}): SummaryCenter => ({
 });
 
 describe("barangay workspace summary", () => {
-  it("counts nearly full centers with remaining spaces as accepting evacuees", () => {
+  it("counts nearly full centers with remaining spaces as accepting IDPs", () => {
     const centers = [
       center({ capacity: 500, current_occupancy: 200 }),
       center({ capacity: 500, current_occupancy: 103 }),
@@ -119,7 +119,7 @@ describe("barangay workspace summary", () => {
     }
   });
 
-  it("does not need capacity values for centers that cannot accept evacuees", () => {
+  it("does not need capacity values for centers that cannot accept IDPs", () => {
     expect(
       getBarangayWorkspaceSummary([
         center({ status: "FULL", capacity: NaN }),

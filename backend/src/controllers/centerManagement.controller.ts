@@ -41,7 +41,7 @@ export function centerUpdates(
     } else if (key === "status") {
       if (value !== "AVAILABLE" && value !== "CLOSED")
         throw new Error(
-          "Select accepting evacuees or closed. Fullness is calculated from occupancy.",
+          "Select accepting IDPs or closed. Fullness is calculated from occupancy.",
         );
       updates.status = value;
     } else if (key === "barangayId") {

@@ -60,7 +60,9 @@ export const filipino: Record<string, string> = {
   "Search evacuation centers": "Maghanap ng evacuation center",
   "Center name, barangay or address": "Pangalan ng center, barangay o address",
   "Clear center search": "Burahin ang paghahanap ng center",
-  "Accepting evacuees": "Tumatanggap ng mga evacuee",
+  "Accepting IDPs": "Tumatanggap ng mga IDP",
+  "Accepting internally displaced persons (IDPs)":
+    "Tumatanggap ng mga taong lumikas sa loob ng bansa (IDPs)",
   "Reset filters": "I-reset ang mga filter",
   "Showing {count} of {total} centers":
     "Ipinapakita ang {count} sa {total} center",

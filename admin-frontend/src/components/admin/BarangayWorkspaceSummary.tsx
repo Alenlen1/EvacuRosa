@@ -20,9 +20,9 @@ export function BarangayWorkspaceSummary({
       icon: House,
     },
     {
-      label: "Current evacuees",
+      label: "Current IDPs",
       value: totals.occupancy,
-      detail: "Across assigned centers",
+      detail: "Internally displaced persons (IDPs)",
       icon: UsersRound,
     },
     {
