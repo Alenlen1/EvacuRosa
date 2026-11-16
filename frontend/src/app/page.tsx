@@ -9,6 +9,7 @@ import {
   LanguageToggle,
 } from "@/components/LanguageProvider";
 import { PublicStatus } from "@/components/PublicStatus";
+import { LocationRecovery } from "@/components/LocationRecovery";
 import mobileStyles from "./PublicMobile.module.css";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
@@ -64,6 +65,7 @@ import {
   getOfflinePackage,
   type OfflineStatus,
 } from "@/lib/offline/routing";
+import { watchOfflinePreparation } from "@/lib/offline/autoPrepare";
 import { fetchWithCache } from "@/lib/offline/sync";
 import {
   cacheEvacuationCenters,
@@ -210,53 +212,21 @@ function PublicHome({
   const canRoute =
     isOnline || (offlineStatus.state === "ready" && !offlineHazardsStale);
   useEffect(() => {
-    let cancelled = false;
-    let retryTimer: ReturnType<typeof setTimeout> | undefined;
-    let retries = 0;
-    let waitingForVisible = false;
     const update = (status: OfflineStatus) => {
-      if (!cancelled) {
-        setOfflineStatus(status);
-        if (
-          status.state === "ready" &&
-          status.updatedAt &&
-          Date.parse(status.updatedAt) >= offlineStaleSince.current &&
-          !status.message?.includes("Update failed")
-        )
-          setOfflineHazardsStale(false);
-      }
+      setOfflineStatus(status);
+      if (
+        status.state === "ready" &&
+        status.updatedAt &&
+        Date.parse(status.updatedAt) >= offlineStaleSince.current &&
+        !status.message?.includes("Update failed")
+      )
+        setOfflineHazardsStale(false);
     };
-    const retry = () => {
-      if (cancelled || !isOnline || !navigator.onLine) return;
-      if (document.visibilityState !== "visible") {
-        waitingForVisible = true;
-        return;
-      }
-      waitingForVisible = false;
-      retries++;
-      // Reuse a verified road package; a transient startup failure must not
-      // force the user to download the full graph again.
-      void prepare(false);
-    };
-    async function prepare(force: boolean) {
-      const status = await prepareOfflineRouting(isOnline, force, update);
-      if (cancelled) return;
-      update(status);
-      if (status.state === "unavailable" && isOnline && retries < 2) {
-        retryTimer = setTimeout(retry, retries === 0 ? 5000 : 15000);
-      }
-    }
-    const visible = () => {
-      if (waitingForVisible && document.visibilityState === "visible") retry();
-    };
-    document.addEventListener("visibilitychange", visible);
-    void prepare(offlineRetry > 0);
-    return () => {
-      cancelled = true;
-      clearTimeout(retryTimer);
-      document.removeEventListener("visibilitychange", visible);
-    };
-  }, [isOnline, offlineRetry]);
+    return watchOfflinePreparation({
+      prepare: prepareOfflineRouting,
+      publish: update,
+    });
+  }, [offlineRetry]);
 
   const [destination, setDestination] = useState<{
     latitude: number;
@@ -1057,6 +1027,10 @@ function PublicHome({
           <MapPin size={16} /> Santa Rosa, Laguna
         </span>
         <LanguageToggle />
+        <PublicStatus
+          location={geolocation}
+          onRetryLocation={geolocation.retry}
+        />
         <LanguageToggle compact />
         <EmergencyContact {...emergencyContactProps} />
       </header>
@@ -1070,14 +1044,9 @@ function PublicHome({
           </span>
         </div>
       )}
-      <PublicStatus
-        status={offlineStatus}
-        online={isOnline}
-        location={geolocation}
-        onRetryLocation={geolocation.retry}
-        onUpdateOffline={() => setOfflineRetry((value) => value + 1)}
-        formatTime={timeAgo}
-      />
+      <div className={mobileStyles.desktopLocationRecovery}>
+        <LocationRecovery location={geolocation} onRetry={geolocation.retry} />
+      </div>
       <AssistanceRequestShortcut />
       <div className="public-workspace">
         <nav className="navigation-rail" aria-label={t("Map views")}>

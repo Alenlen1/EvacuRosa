@@ -771,46 +771,6 @@ select:focus-visible {
   overflow: hidden;
   background: var(--surface);
 }
-.offline-readiness {
-  flex-shrink: 0;
-  padding: 0 12px;
-  background: #eef5f280;
-  color: #244b3b;
-  font-size: 11px;
-}
-.offline-readiness > summary {
-  padding: 8px 0;
-  cursor: pointer;
-  line-height: 1.4;
-}
-.offline-readiness-details {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 0 8px;
-}
-.offline-readiness-details > button {
-  min-height: 44px;
-}
-.offline-readiness button {
-  flex-shrink: 0;
-  text-decoration: underline;
-  cursor: pointer;
-}
-.offline-readiness-copy {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.25rem 0.75rem;
-}
-.offline-readiness-copy strong {
-  font-weight: 600;
-}
-.offline-readiness-copy small {
-  font-size: inherit;
-  opacity: 0.8;
-}
 .offline-banner {
   display: flex;
   align-items: center;
@@ -3889,9 +3849,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .navigation-buttons button {
     flex-direction: column;
     gap: 2px;
-  }
-  .public-app:has(.navigation-card.is-active) .offline-readiness {
-    display: none;
   }
 }
 /* Give walking navigation the mobile viewport; details remain one tap away. */

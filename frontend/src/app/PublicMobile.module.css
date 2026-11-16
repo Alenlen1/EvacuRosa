@@ -1,3 +1,7 @@
+.desktopLocationRecovery {
+  display: contents;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .mobile :global(.mobile-language-thumb) {
     transition: transform 160ms ease;
@@ -5,6 +9,8 @@
 }
 @media ((max-width: 800px) or ((max-width: 1100px) and (max-height: 500px))) {
   .mobile:global(.public-app) :global(.app-header) {
+    position: relative;
+    z-index: 1600;
     min-height: 56px;
     padding: 6px 12px;
     gap: 8px;
@@ -25,7 +31,10 @@
   }
   .mobile:global(.public-app) :global(.app-header > h1) {
     flex: 1;
-    max-width: calc(100% - 84px);
+    max-width: calc(100% - 136px);
+  }
+  .desktopLocationRecovery {
+    display: none;
   }
   .mobile:global(.public-app) :global(.mobile-language-toggle) {
     position: relative;
@@ -33,7 +42,7 @@
     grid-template-columns: 1fr 1fr;
     align-items: center;
     flex-shrink: 0;
-    margin-left: auto;
+    margin-left: 0;
     width: 76px;
     height: 44px;
     padding: 0;
@@ -202,6 +211,18 @@
   }
   .mobile:global(.public-app) :global(.map-location-status) {
     display: none;
+  }
+}
+@media (max-width: 360px) {
+  .mobile:global(.public-app) :global(.app-header) {
+    padding-inline: 8px;
+    gap: 4px;
+  }
+  .mobile:global(.public-app) :global(.app-header .brand) {
+    gap: 6px;
+  }
+  .mobile:global(.public-app) :global(.app-header .brand-name) {
+    font-size: 18px;
   }
 }
 @media ((max-width: 800px) or ((max-width: 1100px) and (max-height: 500px))) and (max-height: 650px) {
