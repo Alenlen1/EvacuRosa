@@ -13,9 +13,8 @@ export function deriveStatus(
 ): EvacuationCenterStatus {
   if (manualStatus === "CLOSED") return "CLOSED";
   if (capacity <= 0) return "CLOSED";
-  const pct = (currentOccupancy / capacity) * 100;
-  if (pct >= 90) return "FULL";
-  if (pct >= 70) return "NEARLY_FULL";
+  if (currentOccupancy >= capacity) return "FULL";
+  if (currentOccupancy * 10 >= capacity * 7) return "NEARLY_FULL";
   return "AVAILABLE";
 }
 

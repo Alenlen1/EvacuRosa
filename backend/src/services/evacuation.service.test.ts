@@ -3,7 +3,11 @@ const database = vi.hoisted(() => ({ select: vi.fn() }));
 vi.mock("../database/supabase", () => ({
   getSupabase: () => ({ from: () => ({ select: database.select }) }),
 }));
-import { deriveStatus, getAllCenters } from "./evacuation.service";
+import {
+  deriveStatus,
+  getAllCenters,
+  getAvailableCenters,
+} from "./evacuation.service";
 
 it("loads center records without the retired supply columns", async () => {
   database.select.mockResolvedValueOnce({
@@ -49,15 +53,41 @@ describe("deriveStatus", () => {
     expect(deriveStatus(50, 100)).toBe("AVAILABLE");
   });
 
-  it("is NEARLY_FULL between 70% and 90%", () => {
-    expect(deriveStatus(80, 100)).toBe("NEARLY_FULL");
-  });
+  it.each([350, 450, 469, 499])(
+    "is NEARLY_FULL at %i out of 500",
+    (occupancy) => {
+      expect(deriveStatus(occupancy, 500)).toBe("NEARLY_FULL");
+    },
+  );
 
-  it("is FULL at 90% or above", () => {
-    expect(deriveStatus(95, 100)).toBe("FULL");
+  it("is FULL when it reaches capacity", () => {
+    expect(deriveStatus(500, 500)).toBe("FULL");
   });
-
   it("is CLOSED when manually marked CLOSED", () => {
     expect(deriveStatus(0, 100, "CLOSED")).toBe("CLOSED");
   });
+});
+
+it("keeps a nearly full center eligible for routing even with an old stored FULL status", async () => {
+  database.select.mockResolvedValueOnce({
+    data: [
+      {
+        id: "nearly-full",
+        capacity: 500,
+        current_occupancy: 469,
+        status: "FULL",
+      },
+      {
+        id: "at-capacity",
+        capacity: 500,
+        current_occupancy: 500,
+        status: "FULL",
+      },
+      { id: "closed", capacity: 500, current_occupancy: 469, status: "CLOSED" },
+    ],
+    error: null,
+  });
+  expect(await getAvailableCenters()).toMatchObject([
+    { id: "nearly-full", status: "NEARLY_FULL" },
+  ]);
 });

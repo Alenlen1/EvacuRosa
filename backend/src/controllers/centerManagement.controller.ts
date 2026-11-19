@@ -16,6 +16,20 @@ const metadataFields = [
 ];
 const centerRecordFields =
   "id,barangay_id,name,address,latitude,longitude,capacity,current_occupancy,status,contact_information,notes,created_at,updated_at,updated_by";
+
+function withCenterStatus<
+  T extends { current_occupancy: number; capacity: number; status: string },
+>(center: T) {
+  return {
+    ...center,
+    status: deriveStatus(
+      center.current_occupancy,
+      center.capacity,
+      center.status,
+    ),
+  };
+}
+
 export function centerUpdates(
   body: unknown,
   superAdmin: boolean,
@@ -97,10 +111,7 @@ export async function listAdminCenters(req: RoleAwareRequest, res: Response) {
   }
   res.setHeader("Cache-Control", "no-store");
   res.json({
-    centers: (data ?? []).map((row) => ({
-      ...row,
-      status: deriveStatus(row.current_occupancy, row.capacity, row.status),
-    })),
+    centers: (data ?? []).map(withCenterStatus),
     profile: {
       role: req.profile.role,
       barangay_id: req.profile.barangay_id,
@@ -186,7 +197,7 @@ export async function createCenter(req: RoleAwareRequest, res: Response) {
     });
     return;
   }
-  res.status(201).json({ center: data });
+  res.status(201).json({ center: withCenterStatus(data) });
 }
 export async function updateCenter(req: RoleAwareRequest, res: Response) {
   const { profile, userSupabase: client } = req;
@@ -269,7 +280,7 @@ export async function updateCenter(req: RoleAwareRequest, res: Response) {
     });
     return;
   }
-  res.json({ center: data });
+  res.json({ center: withCenterStatus(data) });
 }
 export async function deleteCenter(req: RoleAwareRequest, res: Response) {
   if (!req.userSupabase || req.profile?.role !== "SUPER_ADMIN") {

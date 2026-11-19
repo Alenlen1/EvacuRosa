@@ -10,7 +10,7 @@ export function watchPublicRouting<T>({
   subscribe,
   intervalMs = 15000,
 }: {
-  load: () => Promise<{ data: T; fresh: boolean }>;
+  load: (isCurrent: () => boolean) => Promise<{ data: T; fresh: boolean }>;
   signature: (data: T) => string;
   publish: (data: T, changed: boolean) => void;
   invalidate: () => void;
@@ -41,9 +41,10 @@ export function watchPublicRouting<T>({
     }
     busy = true;
     const version = generation;
+    const isCurrent = () => !stopped && version === generation;
     try {
-      const snapshot = await load();
-      if (stopped || version !== generation) return;
+      const snapshot = await load(isCurrent);
+      if (!isCurrent()) return;
       if (!snapshot.fresh && previous !== undefined) {
         failed();
         return;
@@ -58,7 +59,7 @@ export function watchPublicRouting<T>({
       if (snapshot.fresh) invalid = false;
       else if (invalid) failed();
     } catch {
-      if (!stopped && version === generation) failed();
+      if (isCurrent()) failed();
     } finally {
       busy = false;
       if (!stopped && queued) {
