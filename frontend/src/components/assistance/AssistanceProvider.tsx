@@ -10,6 +10,7 @@ import {
 } from "react";
 import {
   ArrowRight,
+  CircleAlert,
   HandHeart,
   LoaderCircle,
   Pencil,
@@ -34,6 +35,7 @@ import {
 } from "@/lib/assistanceContact";
 import { AssistanceRequestStatus } from "./AssistanceRequestStatus";
 import { AssistanceRequestTabs } from "./AssistanceRequestTabs";
+import { RequestReference } from "./RequestReference";
 import {
   clearAssistanceView,
   restoreAssistanceView,
@@ -129,7 +131,7 @@ export function AssistanceProvider({
   const confirmed = useRef(false);
   const [open, setOpen] = useState(false),
     [operation, setOperation] = useState<
-      "locating" | "submitting" | "cancelling" | null
+      "locating" | "submitting" | "cancelling" | "checking" | null
     >(null),
     [error, setError] = useState("");
   const busy = operation !== null;
@@ -157,8 +159,11 @@ export function AssistanceProvider({
     [requestView, setRequestView] = useState<AssistanceView>("overview");
   const [viewReady, setViewReady] = useState(false);
   const hasExistingRequest = Boolean(credentials?.trackingToken);
+  const showRequestDetails =
+    hasExistingRequest && Boolean(tracking) && !unavailable;
   const dialog = useRef<HTMLDialogElement>(null),
-    previousFocus = useRef<HTMLElement | null>(null);
+    previousFocus = useRef<HTMLElement | null>(null),
+    dialogTitle = useRef<HTMLHeadingElement>(null);
   const busyRef = useRef(false),
     mounted = useRef(true),
     initial = useRef(false);
@@ -263,6 +268,13 @@ export function AssistanceProvider({
     }
   }, []);
   const resetRequest = useCallback(() => {
+    const saved = readAssistance();
+    if (saved && saved.id !== credentialsRef.current?.id) {
+      setError(
+        "A different request was saved in another tab. Reload to view it.",
+      );
+      return;
+    }
     try {
       localStorage.removeItem(ASSISTANCE_STORAGE_KEY);
     } catch {
@@ -389,8 +401,14 @@ export function AssistanceProvider({
         } while (queued && !stopped);
       } catch (cause) {
         if (!stopped) {
-          if (cause instanceof AssistanceTrackingError && cause.status === 404)
+          if (
+            cause instanceof AssistanceTrackingError &&
+            cause.status === 404
+          ) {
             setUnavailable(true);
+            setError("");
+            return;
+          }
           setConnection(
             navigator.onLine ? "Status May Be Outdated" : "Offline",
           );
@@ -724,8 +742,34 @@ export function AssistanceProvider({
     }
   }
   function newRequest() {
-    if (!requestEnded || busyRef.current) return;
+    if ((!requestEnded && !unavailable) || busyRef.current) return;
+    dialogTitle.current?.focus({ preventScroll: true });
     resetRequest();
+  }
+  async function retryUnavailableRequest() {
+    const saved = credentialsRef.current;
+    if (!saved?.trackingToken || busyRef.current || !navigator.onLine) return;
+    busyRef.current = true;
+    setOperation("checking");
+    setError("");
+    try {
+      const next = await fetchTrackedAssistance(saved.id, saved.trackingToken);
+      if (!mounted.current || credentialsRef.current?.id !== saved.id) return;
+      apply(next);
+      setConnection("Reconnecting");
+      setUnavailable(false);
+      dialogTitle.current?.focus({ preventScroll: true });
+    } catch (cause) {
+      if (!mounted.current) return;
+      setError(
+        cause instanceof AssistanceTrackingError && cause.status === 404
+          ? "This request’s status is still unavailable."
+          : "We could not check the status. Try again when you’re connected.",
+      );
+    } finally {
+      busyRef.current = false;
+      if (mounted.current) setOperation(null);
+    }
   }
   return (
     <AssistanceContext.Provider
@@ -743,7 +787,13 @@ export function AssistanceProvider({
         className={`assistance-tracking-dialog ${styles.dialog}`}
         aria-labelledby="assistance-dialog-title"
         data-view={
-          contactMode ? "contact" : hasExistingRequest ? requestView : "form"
+          contactMode
+            ? "contact"
+            : unavailable
+              ? "unavailable"
+              : hasExistingRequest
+                ? requestView
+                : "form"
         }
         onCancel={(e) => {
           if (contactMode) {
@@ -779,7 +829,7 @@ export function AssistanceProvider({
             </span>
             <div>
               <small>EVACUROSA · CDRRMO</small>
-              <h2 id="assistance-dialog-title">
+              <h2 id="assistance-dialog-title" ref={dialogTitle} tabIndex={-1}>
                 {contactMode
                   ? "Your contact details"
                   : hasExistingRequest
@@ -811,11 +861,11 @@ export function AssistanceProvider({
             <X size={20} aria-hidden="true" />
           </button>
         </header>
-        {!contactMode && hasExistingRequest && (
+        {!contactMode && showRequestDetails && (
           <AssistanceRequestTabs view={requestView} onChange={setRequestView} />
         )}
         <div
-          className={`${styles.body} ${!contactMode && hasExistingRequest && requestView === "location" ? styles.mapBody : ""}`}
+          className={`${styles.body} ${!contactMode && showRequestDetails && requestView === "location" ? styles.mapBody : ""}`}
         >
           {contactMode ? (
             <AssistanceContactForm
@@ -838,6 +888,34 @@ export function AssistanceProvider({
               }}
               onSave={saveContact}
             />
+          ) : unavailable && credentials ? (
+            <div className={styles.unavailableRequest}>
+              <section className={styles.statusCard} aria-live="polite">
+                <span className={styles.statusIcon}>
+                  <CircleAlert size={20} aria-hidden="true" />
+                </span>
+                <div>
+                  <h3>Request status unavailable</h3>
+                  <p>
+                    We could not verify your request status. If you still need
+                    help, use an official emergency contact.
+                  </p>
+                </div>
+              </section>
+              <dl className={styles.trackingDetails}>
+                <RequestReference key={credentials.id} id={credentials.id} />
+                {tracking && (
+                  <div>
+                    <dt>Last saved status</dt>
+                    <dd>{ASSISTANCE_LABELS[tracking.request.status]}</dd>
+                  </div>
+                )}
+              </dl>
+              <p>
+                Starting a new request clears this saved request from this
+                device. CDRRMO may still have the earlier request.
+              </p>
+            </div>
           ) : tracking ? (
             <AssistanceRequestStatus
               tracking={tracking}
@@ -846,9 +924,7 @@ export function AssistanceProvider({
               confirmed={confirmed.current}
               lastCheckedAt={lastCheckedAt}
               connection={connection}
-              unavailable={unavailable}
               view={requestView}
-              onRetry={() => setUnavailable(false)}
               onViewChange={setRequestView}
             />
           ) : hasExistingRequest ? (
@@ -882,7 +958,7 @@ export function AssistanceProvider({
               onSubmit={() => void submit()}
             />
           )}
-          {!contactMode && hasExistingRequest && requestView === "overview" && (
+          {!contactMode && showRequestDetails && requestView === "overview" && (
             <button
               type="button"
               className={`secondary-button ${styles.editContactButton}`}
@@ -918,6 +994,27 @@ export function AssistanceProvider({
                 Save details
               </button>
             </div>
+          ) : unavailable ? (
+            <div
+              className={`${styles.pinnedActions} ${styles.recoveryActions}`}
+            >
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={!online || busy}
+                onClick={() => void retryUnavailableRequest()}
+              >
+                {operation === "checking" ? "Checking…" : "Check status again"}
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                disabled={busy}
+                onClick={newRequest}
+              >
+                Start a new request
+              </button>
+            </div>
           ) : hasExistingRequest ? (
             <>
               <div className={styles.pinnedActions}>
@@ -938,7 +1035,6 @@ export function AssistanceProvider({
                       disabled={
                         busy ||
                         !online ||
-                        unavailable ||
                         !assistanceActive(tracking.request.status)
                       }
                       onClick={() => {
@@ -958,15 +1054,6 @@ export function AssistanceProvider({
                       Start a new request
                     </button>
                   ))}
-                {!tracking && unavailable && (
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => setUnavailable(false)}
-                  >
-                    Check status again
-                  </button>
-                )}
               </div>
               <p>Updates require this page to stay open and connected.</p>
             </>
