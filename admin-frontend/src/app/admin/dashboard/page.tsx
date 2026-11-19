@@ -18,7 +18,13 @@ import {
   type DashboardHazards,
 } from "@/components/admin/CdrrmoDashboard";
 import { MapPin, SlidersHorizontal, TriangleAlert } from "lucide-react";
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { publicSans } from "@/app/fonts/publicSans";
@@ -83,6 +89,7 @@ export default function AdminDashboardPage() {
   const [ready, setReady] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [refreshingCenters, setRefreshingCenters] = useState(false);
+  const centerLoadVersion = useRef(0);
   const [selectedBarangayCenterId, setSelectedBarangayCenterId] =
     useState<string>();
 
@@ -120,6 +127,47 @@ export default function AdminDashboardPage() {
     setHazardsLoading(false);
   }, []);
 
+  const loadCenters = useCallback(async (background?: AbortSignal) => {
+    const version = ++centerLoadVersion.current;
+    const isCurrent = () =>
+      !background?.aborted && version === centerLoadVersion.current;
+    if (!background) setError(null);
+    try {
+      const body = await adminApi("/evacuation-centers");
+      const loadedProfile: Profile = body.profile;
+      if (!isCurrent()) return loadedProfile;
+      setProfile(loadedProfile);
+      setError(null);
+      const rows: AdminCenter[] = body.centers;
+      setCenters(rows);
+      if (loadedProfile.role === "BARANGAY_ADMIN") {
+        setAvailabilityDrafts(
+          Object.fromEntries(
+            rows.map((center) => [
+              center.id,
+              center.status === "CLOSED" ? "CLOSED" : "AVAILABLE",
+            ]),
+          ),
+        );
+        setOccupancyDrafts(
+          Object.fromEntries(
+            rows.map((center) => [center.id, String(center.current_occupancy)]),
+          ),
+        );
+      }
+      return loadedProfile;
+    } catch (error) {
+      if (!background && isCurrent()) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Could not load assigned centers.",
+        );
+      }
+      throw error;
+    }
+  }, []);
+
   useEffect(() => {
     if (!supabase) {
       setError("Supabase isn't configured yet — see supabase/README.md.");
@@ -148,36 +196,61 @@ export default function AdminDashboardPage() {
     void refreshHazards();
   }, [profile?.role, refreshHazards]);
 
-  async function loadCenters() {
-    setError(null);
-    try {
-      const body = await adminApi("/evacuation-centers");
-      setProfile(body.profile);
-      const rows: AdminCenter[] = body.centers;
-      setCenters(rows);
-      setAvailabilityDrafts(
-        Object.fromEntries(
-          rows.map((center) => [
-            center.id,
-            center.status === "CLOSED" ? "CLOSED" : "AVAILABLE",
-          ]),
-        ),
-      );
-      setOccupancyDrafts(
-        Object.fromEntries(
-          rows.map((center) => [center.id, String(center.current_occupancy)]),
-        ),
-      );
-      return body.profile as Profile;
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Could not load assigned centers.",
-      );
-      throw error;
+  useEffect(() => {
+    if (profile?.role !== "SUPER_ADMIN" || !supabase) return;
+    const client = supabase;
+    const lifecycle = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let refreshing = false;
+    let queued = false;
+    const canRefresh = () =>
+      !lifecycle.signal.aborted && navigator.onLine && !document.hidden;
+
+    function refresh() {
+      if (!canRefresh()) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (!canRefresh()) return;
+        if (refreshing) {
+          queued = true;
+          return;
+        }
+        refreshing = true;
+        void loadCenters(lifecycle.signal)
+          .catch(() => {})
+          .finally(() => {
+            refreshing = false;
+            if (queued) {
+              queued = false;
+              refresh();
+            }
+          });
+      }, 200);
     }
-  }
+
+    const channel = client
+      .channel("cdrrmo-center-updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "evacuation_centers" },
+        refresh,
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") refresh();
+      });
+    window.addEventListener("online", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    const poll = setInterval(refresh, 30000);
+
+    return () => {
+      lifecycle.abort();
+      clearTimeout(timer);
+      clearInterval(poll);
+      window.removeEventListener("online", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+      void client.removeChannel(channel);
+    };
+  }, [loadCenters, profile?.role]);
 
   async function updateOccupancy(id: string) {
     if (!supabase || savingId !== null) return;

@@ -76,6 +76,15 @@ The location-sharing sections below describe the earlier 0011-0013 implementatio
    route. Offline routing still uses downloaded data and cannot receive changes
    without a connection; known-stale offline data is disabled until refreshed.
 
+## Evacuation center capacity and realtime updates
+
+Apply `0028_center_full_at_capacity.sql` after the preceding migrations, then
+redeploy the backend and both frontends. This updates existing centers marked
+full below capacity. Open centers are nearly full from 70% up to capacity and
+full at capacity. Closed centers stay closed. Both web apps refresh center
+details when Supabase Realtime publishes a saved change. Migration 0021 adds
+`evacuation_centers` to the publication.
+
 ## Rectangular earthquake debris selection
 
 Apply `0022_earthquake_rectangular_areas.sql` after migration 0020, then deploy

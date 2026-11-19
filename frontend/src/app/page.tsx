@@ -233,7 +233,8 @@ function PublicHome({
     longitude: number;
   } | null>(null);
   const [centers, setCenters] = useState<EvacuationCenter[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
+  const [centersLoading, setCentersLoading] = useState(true);
+  const [hazardsLoading, setHazardsLoading] = useState(true);
   useEffect(() => {
     if (isOnline || offlineStatus.state !== "ready") return;
     let cancelled = false;
@@ -336,14 +337,21 @@ function PublicHome({
       setError(null);
       setAssistanceContext(null);
     }
-    async function loadAll() {
+    async function loadAll(isCurrent: () => boolean) {
       const earthquake = fetchEarthquakes();
-      const [centers, floods, fires, events, impacts] = await Promise.all([
-        fetchWithCache(
-          fetchEvacuationCenters,
-          getCachedEvacuationCenters,
-          cacheEvacuationCenters,
-        ),
+      const centerLoad = fetchWithCache(
+        fetchEvacuationCenters,
+        getCachedEvacuationCenters,
+        cacheEvacuationCenters,
+      ).then((centers) => {
+        // Shelter availability can go live while the hazard snapshot is pending.
+        if (centers.source === "live" && isCurrent()) {
+          setCenters(centers.data);
+          setCentersLoading(false);
+        }
+        return centers;
+      });
+      const hazardLoad = Promise.all([
         fetchWithCache(
           fetchFloodReports,
           getCachedFloodReports,
@@ -365,6 +373,14 @@ function PublicHome({
           cacheEarthquakeRoadImpacts,
         ),
       ]);
+      const [centerResult, hazardResult] = await Promise.allSettled([
+        centerLoad,
+        hazardLoad,
+      ]);
+      if (centerResult.status === "rejected") throw centerResult.reason;
+      if (hazardResult.status === "rejected") throw hazardResult.reason;
+      const centers = centerResult.value;
+      const [floods, fires, events, impacts] = hazardResult.value;
       const sources = [centers, floods, fires, events, impacts];
       return {
         fresh: sources.every((r) => r.source === "live"),
@@ -401,7 +417,8 @@ function PublicHome({
         setEarthquakeRoadImpacts(data.impacts);
         setUsingCachedData(data.cached);
         setDataAsOf(data.asOf);
-        setDataLoading(false);
+        setCentersLoading(false);
+        setHazardsLoading(false);
         if (changed) {
           recheckReady.current = true;
           setOfflineRetry((value) => value + 1);
@@ -409,7 +426,8 @@ function PublicHome({
         }
       },
       failed() {
-        setDataLoading(false);
+        setCentersLoading(false);
+        setHazardsLoading(false);
         setUsingCachedData(true);
         if (recheckPending.current) {
           recheckReady.current = false;
@@ -693,8 +711,22 @@ function PublicHome({
       )
     : null;
 
-  const recommendedCenter =
+  const routeRecommendation =
     result?.kind === "evacuation" ? result.data.recommendedCenter : undefined;
+  const listedRecommendation = routeRecommendation
+    ? centers.find((center) => center.id === routeRecommendation.id)
+    : undefined;
+  const recommendedCenter =
+    listedRecommendation &&
+    routeRecommendation &&
+    Date.parse(listedRecommendation.updatedAt) >=
+      Date.parse(routeRecommendation.updatedAt)
+      ? listedRecommendation
+      : routeRecommendation;
+  const displayedCenter = selectedCenter
+    ? (centers.find((center) => center.id === selectedCenter.id) ??
+      selectedCenter)
+    : null;
   const lookedUpDestination = useDestinationLabel(
     destination,
     centers,
@@ -722,7 +754,7 @@ function PublicHome({
     panel === "hazards"
       ? t("Hazard information")
       : panel === "centers"
-        ? (selectedCenter?.name ?? t("Evacuation centers"))
+        ? (displayedCenter?.name ?? t("Evacuation centers"))
         : (routeLabel?.title ?? t("Plan your route"));
   const travelTime = result
     ? estimatedTravelTime(result.data.distance, resultMode)
@@ -740,10 +772,6 @@ function PublicHome({
               ? t("Capacity and contact details")
               : t("Reported conditions and verified road impacts.");
 
-  const displayedCenter = selectedCenter
-    ? (centers.find((center) => center.id === selectedCenter.id) ??
-      selectedCenter)
-    : null;
   const selectedCenterRoute =
     result && displayedCenter && routeCenter?.id === displayedCenter.id
       ? { result, label: routeLabel, travelMode: resultMode }
@@ -1110,7 +1138,7 @@ function PublicHome({
               setSheetState("collapsed");
             }}
           />
-          {panel === "hazards" && !dataLoading && (
+          {panel === "hazards" && !hazardsLoading && (
             <div className="desktop-hazard-overview">{hazardOverview}</div>
           )}
           <div className="map-canvas">
@@ -1325,7 +1353,7 @@ function PublicHome({
             </>
           }
         >
-          {panel === "hazards" && !dataLoading && (
+          {panel === "hazards" && !hazardsLoading && (
             <div className="mobile-hazard-overview">{hazardOverview}</div>
           )}
           {panel === "map" && loading && !result && (
@@ -1394,10 +1422,10 @@ function PublicHome({
               </div>
             </div>
           )}
-          {panel === "hazards" && dataLoading && (
+          {panel === "hazards" && hazardsLoading && (
             <PublicSkeleton kind="hazards" />
           )}
-          {panel === "hazards" && !dataLoading && (
+          {panel === "hazards" && !hazardsLoading && (
             <section className="hazard-details">
               <div className="info-notice">
                 {t(
@@ -1511,7 +1539,7 @@ function PublicHome({
             <div hidden={!!displayedCenter}>
               <CenterDirectory
                 centers={centers}
-                loading={dataLoading}
+                loading={centersLoading}
                 query={centerQuery}
                 onQueryChange={setCenterQuery}
                 acceptingOnly={acceptingOnly}

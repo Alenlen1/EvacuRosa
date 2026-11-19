@@ -9,7 +9,9 @@ function fixture() {
   let changed = () => {};
   let reconnect = () => {};
   const load = vi
-    .fn<() => Promise<{ data: string; fresh: boolean }>>()
+    .fn<
+      (isCurrent: () => boolean) => Promise<{ data: string; fresh: boolean }>
+    >()
     .mockResolvedValue({ data: "open", fresh: true });
   const publish = vi.fn(),
     invalidate = vi.fn(),
@@ -108,6 +110,29 @@ describe("public routing hazard updates", () => {
     f.load.mockResolvedValue({ data: "open", fresh: true });
     await vi.advanceTimersByTimeAsync(15000);
     expect(f.publish).toHaveBeenLastCalledWith("open", true);
+    f.watcher.stop();
+  });
+  it("allows fresh center details to appear before hazard verification and guards late results", async () => {
+    const f = fixture();
+    await flush();
+    let isCurrent!: () => boolean;
+    let reject!: (reason: Error) => void;
+    f.load.mockImplementationOnce(
+      (current) =>
+        new Promise((_, rejectLoad) => {
+          isCurrent = current;
+          reject = rejectLoad;
+        }),
+    );
+    f.changed();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(isCurrent()).toBe(true);
+    expect(f.publish).toHaveBeenCalledTimes(1);
+    f.changed();
+    expect(isCurrent()).toBe(false);
+    reject(new Error("Hazards unavailable"));
+    await flush();
+    expect(f.failed).not.toHaveBeenCalled();
     f.watcher.stop();
   });
   it("survives a failed fetch and rechecks after reconnect", async () => {

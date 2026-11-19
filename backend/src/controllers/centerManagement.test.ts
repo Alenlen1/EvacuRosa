@@ -281,6 +281,7 @@ describe("selected-barangay center assignment", () => {
     ...entrance,
     capacity: 100,
     current_occupancy: 10,
+    status: "AVAILABLE",
   };
   const details = {
     barangayId: aplayaId,

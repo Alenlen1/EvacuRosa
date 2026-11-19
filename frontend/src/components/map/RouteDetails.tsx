@@ -39,6 +39,10 @@ export function RouteDetails({
   const { t } = useLanguage();
   const travelTime = estimatedTravelTime(result.data.distance, travelMode);
   const mode = TRAVEL_MODES[travelMode];
+  const shelter =
+    result.kind === "evacuation"
+      ? (center ?? result.data.recommendedCenter)
+      : null;
   return (
     <section
       className="route-summary"
@@ -92,13 +96,14 @@ export function RouteDetails({
         </p>
       )}
       <div className="route-extra">
-        {result.kind === "evacuation" && (
-          <p>
-            {result.data.recommendedCenter.capacity -
-              result.data.recommendedCenter.currentOccupancy}{" "}
-            {t("slots available")}
-          </p>
-        )}
+        {shelter &&
+          (shelter.status === "AVAILABLE" ||
+            shelter.status === "NEARLY_FULL") && (
+            <p>
+              {Math.max(0, shelter.capacity - shelter.currentOccupancy)}{" "}
+              {t("slots available")}
+            </p>
+          )}
       </div>
       {result.data.warnings.map((warning, index) => (
         <p className="warning-message" key={index}>
