@@ -20,7 +20,6 @@ import {
   Building2,
   ShieldAlert,
   ArrowRight,
-  Phone,
 } from "lucide-react";
 import {
   FloodIcon as Droplet,
@@ -1325,20 +1324,10 @@ function PublicHome({
                             context={assistanceContext}
                           />
                         )}
-                        <button
-                          type="button"
-                          className="emergency-contact-button"
-                          disabled
-                          aria-describedby="emergency-contact-pending"
-                        >
-                          <Phone size={18} aria-hidden="true" />
-                          {t("Emergency contact")}
-                        </button>
-                        <p id="emergency-contact-pending">
-                          {t(
-                            "CDRRMO number pending verification. Calling unavailable.",
-                          )}
-                        </p>
+                        <EmergencyContact
+                          placement="route"
+                          {...emergencyContactProps}
+                        />
                         <details className="route-failure-details">
                           <summary>{t("Details")}</summary>
                           <p>{error}</p>
