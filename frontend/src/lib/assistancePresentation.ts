@@ -9,7 +9,7 @@ export function assistanceConnection({
   confirmed: boolean;
   terminal: boolean;
   connection: string;
-  unavailable: boolean;
+  unavailable?: boolean;
 }) {
   if (!online) return { state: "offline", label: "Offline" } as const;
   if (unavailable)

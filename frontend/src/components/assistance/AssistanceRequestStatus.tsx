@@ -30,9 +30,7 @@ export function AssistanceRequestStatus({
   confirmed,
   lastCheckedAt,
   connection,
-  unavailable,
   view,
-  onRetry,
   onViewChange,
 }: {
   tracking: TrackedAssistance;
@@ -41,9 +39,7 @@ export function AssistanceRequestStatus({
   confirmed: boolean;
   lastCheckedAt: string | null;
   connection: string;
-  unavailable: boolean;
   view: AssistanceView;
-  onRetry: () => void;
   onViewChange: (view: AssistanceView) => void;
 }) {
   const { request } = tracking;
@@ -56,16 +52,12 @@ export function AssistanceRequestStatus({
           ? Clock3
           : ShieldCheck;
   const outdated =
-    !online ||
-    !confirmed ||
-    unavailable ||
-    connection === "Status May Be Outdated";
+    !online || !confirmed || connection === "Status May Be Outdated";
   const connectionState = assistanceConnection({
     online,
     confirmed,
     terminal,
     connection,
-    unavailable,
   });
   const coordinates = `${request.latitude.toFixed(6)}, ${request.longitude.toFixed(6)}`;
 
@@ -123,11 +115,6 @@ export function AssistanceRequestStatus({
             <p className={styles.staleNote}>
               Showing last known status. Updates may be delayed.
             </p>
-          )}
-          {unavailable && (
-            <button className="secondary-button" onClick={onRetry}>
-              Check status again
-            </button>
           )}
           <dl className={styles.trackingDetails}>
             <RequestReference key={request.id} id={request.id} />
