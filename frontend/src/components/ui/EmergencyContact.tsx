@@ -6,6 +6,11 @@ import { useAssistance } from "@/components/assistance/AssistanceProvider";
 import { useId, useRef, useState } from "react";
 import { Phone, X, Landmark, MapPin, Share2, ChevronRight } from "lucide-react";
 
+const CDRRMO_HOTLINES = [
+  { carrier: "Globe", number: "0995-650-1943", href: "tel:+639956501943" },
+  { carrier: "Smart", number: "0999-873-5431", href: "tel:+639998735431" },
+];
+
 export function EmergencyContact({
   placement = "header",
   position,
@@ -13,7 +18,7 @@ export function EmergencyContact({
   routingUnavailable,
   travelMode = "walking",
 }: {
-  placement?: "header" | "floating";
+  placement?: "header" | "floating" | "route";
   position: { latitude: number; longitude: number } | null;
   onFindCenter: () => void;
   routingUnavailable: string | null;
@@ -54,7 +59,11 @@ export function EmergencyContact({
         ref={trigger}
         type="button"
         className="emergency-contact-trigger"
-        aria-label={t("Emergency contact information")}
+        aria-label={t(
+          placement === "route"
+            ? "Emergency contact"
+            : "Emergency contact information",
+        )}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={id}
@@ -65,7 +74,9 @@ export function EmergencyContact({
         }}
       >
         <Phone size={18} aria-hidden="true" />
-        <span>{t("Emergency")}</span>
+        <span>
+          {t(placement === "route" ? "Emergency contact" : "Emergency")}
+        </span>
       </button>
       <dialog
         ref={dialog}
@@ -79,12 +90,11 @@ export function EmergencyContact({
         }}
         onKeyDown={(event) => {
           if (event.key === "Tab") {
-            const buttons =
-              event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                "button:not(:disabled)",
-              );
-            const first = buttons[0];
-            const last = buttons[buttons.length - 1];
+            const controls = event.currentTarget.querySelectorAll<HTMLElement>(
+              "button:not(:disabled), a[href]",
+            );
+            const first = controls[0];
+            const last = controls[controls.length - 1];
             if (event.shiftKey && document.activeElement === first) {
               event.preventDefault();
               last?.focus();
@@ -138,36 +148,35 @@ export function EmergencyContact({
             </span>
             <ChevronRight size={18} aria-hidden="true" />
           </button>
-          <button
-            className="emergency-action emergency-action-call"
-            type="button"
-            disabled
-          >
+          <a className="emergency-action emergency-action-call" href="tel:911">
             <span className="emergency-action-icon">
               <Phone size={22} aria-hidden="true" />
             </span>
             <span>
-              <strong>{t("Call emergency services")}</strong>
-              <small>
-                {t("Number pending verification · Calling unavailable")}
-              </small>
+              <strong>{t("Call 911")}</strong>
+              <small>{t("National emergency hotline")}</small>
             </span>
-          </button>
-          <button
+            <ChevronRight size={18} aria-hidden="true" />
+          </a>
+          <section
             className="emergency-action emergency-action-agency"
-            type="button"
-            disabled
+            aria-labelledby={`${id}-cdrrmo`}
           >
             <span className="emergency-action-icon">
               <Landmark size={22} aria-hidden="true" />
             </span>
-            <span>
-              <strong>{t("Call Santa Rosa CDRRMO")}</strong>
-              <small>
-                {t("Number pending verification · Calling unavailable")}
-              </small>
-            </span>
-          </button>
+            <div className="emergency-action-content">
+              <h3 id={`${id}-cdrrmo`}>{t("Call Santa Rosa CDRRMO")}</h3>
+              <div className="emergency-hotline-links">
+                {CDRRMO_HOTLINES.map(({ carrier, number, href }) => (
+                  <a key={carrier} href={href}>
+                    <span>{carrier}</span>
+                    <strong>{number}</strong>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
           <button
             className="emergency-action emergency-action-center"
             type="button"

@@ -219,10 +219,9 @@ export const filipino: Record<string, string> = {
   "Close emergency contact": "Isara ang kontak sa emerhensiya",
   "Choose an option for assistance, evacuation routes, or sharing your location.":
     "Pumili para sa tulong, ruta ng paglikas, o pagbabahagi ng lokasyon.",
-  "Call emergency services": "Tumawag sa serbisyong pang-emerhensiya",
+  "Call 911": "Tumawag sa 911",
+  "National emergency hotline": "Pambansang hotline sa emerhensiya",
   "Call Santa Rosa CDRRMO": "Tumawag sa CDRRMO ng Santa Rosa",
-  "Number pending verification · Calling unavailable":
-    "Hindi pa beripikado ang numero · Hindi pa maaaring tumawag",
   "Find an evacuation center": "Maghanap ng evacuation center",
   "Find a reachable center using your travel mode":
     "Maghanap ng center na mararating sa napiling paraan ng paglalakbay",
@@ -376,8 +375,6 @@ export const filipino: Record<string, string> = {
   "Emergency contact information": "Impormasyon ng kontak sa emerhensiya",
   Details: "Mga detalye",
   Cancel: "Kanselahin",
-  "CDRRMO number pending verification. Calling unavailable.":
-    "Hindi pa beripikado ang numero ng CDRRMO. Hindi pa maaaring tumawag.",
   "Unable to calculate a route.": "Hindi makalkula ang ruta.",
   "Location shared with the CDRRMO dashboard.":
     "Naibahagi ang lokasyon sa dashboard ng CDRRMO.",
