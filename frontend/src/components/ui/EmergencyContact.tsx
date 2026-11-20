@@ -4,7 +4,16 @@ import type { TravelMode } from "@/lib/travelTime";
 import { useAssistance } from "@/components/assistance/AssistanceProvider";
 
 import { useId, useRef, useState } from "react";
-import { Phone, X, Landmark, MapPin, Share2, ChevronRight } from "lucide-react";
+import {
+  ChevronRight,
+  HandHeart,
+  Landmark,
+  MapPin,
+  Phone,
+  PhoneCall,
+  Share2,
+  X,
+} from "lucide-react";
 
 const CDRRMO_HOTLINES = [
   { carrier: "Globe", number: "0995-650-1943", href: "tel:+639956501943" },
@@ -34,11 +43,12 @@ export function EmergencyContact({
 
   async function shareLocation() {
     if (!position) return;
-    const text = `My current location: ${position.latitude.toFixed(6)}, ${position.longitude.toFixed(6)}`;
+    const coordinates = `${position.latitude.toFixed(6)}, ${position.longitude.toFixed(6)}`;
+    const text = t("My current location: {coordinates}", { coordinates });
     const url = `https://www.openstreetmap.org/?mlat=${position.latitude}&mlon=${position.longitude}#map=18/${position.latitude}/${position.longitude}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "My location", text, url });
+        await navigator.share({ title: t("My location"), text, url });
       } else {
         await navigator.clipboard.writeText(`${text}\n${url}`);
         setShareStatus(
@@ -48,7 +58,9 @@ export function EmergencyContact({
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") return;
       setShareStatus(
-        `Could not share automatically. Your coordinates: ${position.latitude.toFixed(6)}, ${position.longitude.toFixed(6)}`,
+        t("Could not share your location. Coordinates: {coordinates}", {
+          coordinates,
+        }),
       );
     }
   }
@@ -83,7 +95,6 @@ export function EmergencyContact({
         id={id}
         className="emergency-contact-dialog"
         aria-labelledby={`${id}-title`}
-        aria-describedby={`${id}-description`}
         onClose={() => {
           setOpen(false);
           trigger.current?.focus();
@@ -105,7 +116,6 @@ export function EmergencyContact({
           }
         }}
       >
-        <span className="emergency-sheet-handle" aria-hidden="true" />
         <div className="emergency-contact-heading">
           <h2 id={`${id}-title`}>{t("Emergency Assistance")}</h2>
           <button
@@ -117,115 +127,131 @@ export function EmergencyContact({
             <X size={22} aria-hidden="true" />
           </button>
         </div>
-        <p id={`${id}-description`}>
-          {t(
-            "Choose an option for assistance, evacuation routes, or sharing your location.",
-          )}
-        </p>
-        <div className="emergency-action-list">
-          <button
-            type="button"
-            className="emergency-action emergency-action-agency"
-            onClick={() => {
-              dialog.current?.close();
-              openRequest({ kind: "emergency", travelMode });
-            }}
-          >
-            <span className="emergency-action-icon">
-              <Phone size={22} aria-hidden="true" />
-            </span>
-            <span>
-              <strong>
-                {hasRequest
-                  ? t("View My Assistance Request")
-                  : t("Request Assistance")}
-              </strong>
-              <small>
-                {t(
-                  "Share a one-time GPS location with CDRRMO and track your request",
-                )}
-              </small>
-            </span>
-            <ChevronRight size={18} aria-hidden="true" />
-          </button>
+        <div className="emergency-contact-body">
           <a className="emergency-action emergency-action-call" href="tel:911">
             <span className="emergency-action-icon">
-              <Phone size={22} aria-hidden="true" />
+              <PhoneCall size={22} aria-hidden="true" />
             </span>
-            <span>
+            <span className="emergency-action-copy">
               <strong>{t("Call 911")}</strong>
               <small>{t("National emergency hotline")}</small>
             </span>
-            <ChevronRight size={18} aria-hidden="true" />
+            <ChevronRight
+              className="emergency-action-arrow"
+              size={18}
+              aria-hidden="true"
+            />
           </a>
           <section
-            className="emergency-action emergency-action-agency"
+            className="emergency-hotlines"
             aria-labelledby={`${id}-cdrrmo`}
           >
-            <span className="emergency-action-icon">
-              <Landmark size={22} aria-hidden="true" />
-            </span>
-            <div className="emergency-action-content">
-              <h3 id={`${id}-cdrrmo`}>{t("Call Santa Rosa CDRRMO")}</h3>
-              <div className="emergency-hotline-links">
-                {CDRRMO_HOTLINES.map(({ carrier, number, href }) => (
-                  <a key={carrier} href={href}>
-                    <span>{carrier}</span>
-                    <strong>{number}</strong>
-                  </a>
-                ))}
-              </div>
+            <h3 id={`${id}-cdrrmo`}>
+              <Landmark size={16} aria-hidden="true" />
+              {t("Call Santa Rosa CDRRMO")}
+            </h3>
+            <div className="emergency-hotline-links">
+              {CDRRMO_HOTLINES.map(({ carrier, number, href }) => (
+                <a
+                  key={carrier}
+                  href={href}
+                  aria-label={t("Call {carrier} at {number}", { carrier, number })}
+                >
+                  <span className="emergency-hotline-carrier">
+                    {carrier}
+                    <Phone size={14} aria-hidden="true" />
+                  </span>
+                  <strong>{number}</strong>
+                </a>
+              ))}
             </div>
           </section>
-          <button
-            className="emergency-action emergency-action-center"
-            type="button"
-            disabled={!!routingUnavailable}
-            onClick={() => {
-              dialog.current?.close();
-              onFindCenter();
-            }}
-          >
-            <span className="emergency-action-icon">
-              <MapPin size={22} aria-hidden="true" />
-            </span>
-            <span>
-              <strong>{t("Find an evacuation center")}</strong>
-              <small>
-                {routingUnavailable ??
-                  t("Find a reachable center using your travel mode")}
-              </small>
-            </span>
-            <ChevronRight size={18} aria-hidden="true" />
-          </button>
-          <button
-            className="emergency-action emergency-action-share"
-            type="button"
-            disabled={!position}
-            onClick={shareLocation}
-          >
-            <span className="emergency-action-icon">
-              <Share2 size={22} aria-hidden="true" />
-            </span>
-            <span>
-              <strong>{t("Share current location")}</strong>
-              <small>
-                {position
-                  ? t("Share a location snapshot with a contact")
-                  : t("Enable location access to share your coordinates")}
-              </small>
-            </span>
-            <ChevronRight size={18} aria-hidden="true" />
-          </button>
-        </div>
-        {shareStatus && (
-          <p role="status" className="emergency-contact-note">
+          <div className="emergency-action-list">
+            <button
+              type="button"
+              className="emergency-action"
+              onClick={() => {
+                dialog.current?.close();
+                openRequest({ kind: "emergency", travelMode });
+              }}
+            >
+              <span className="emergency-action-icon">
+                <HandHeart size={19} aria-hidden="true" />
+              </span>
+              <span className="emergency-action-copy">
+                <strong>
+                  {hasRequest
+                    ? t("View My Assistance Request")
+                    : t("Request Assistance")}
+                </strong>
+                <small>
+                  {hasRequest
+                    ? t("Check your request status")
+                    : t("Review and send your location to CDRRMO")}
+                </small>
+              </span>
+              <ChevronRight
+                className="emergency-action-arrow"
+                size={18}
+                aria-hidden="true"
+              />
+            </button>
+            <button
+              className="emergency-action"
+              type="button"
+              disabled={!!routingUnavailable}
+              onClick={() => {
+                dialog.current?.close();
+                onFindCenter();
+              }}
+            >
+              <span className="emergency-action-icon">
+                <MapPin size={19} aria-hidden="true" />
+              </span>
+              <span className="emergency-action-copy">
+                <strong>{t("Find an evacuation center")}</strong>
+                <small>
+                  {routingUnavailable ?? t("Find a route using your travel mode")}
+                </small>
+              </span>
+              {!routingUnavailable && (
+                <ChevronRight
+                  className="emergency-action-arrow"
+                  size={18}
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+            <button
+              className="emergency-action"
+              type="button"
+              disabled={!position}
+              onClick={shareLocation}
+            >
+              <span className="emergency-action-icon">
+                <Share2 size={19} aria-hidden="true" />
+              </span>
+              <span className="emergency-action-copy">
+                <strong>{t("Share current location")}</strong>
+                <small>
+                  {position
+                    ? t("Share a map link with a contact")
+                    : t("Enable location access to share")}
+                </small>
+              </span>
+              {position && (
+                <ChevronRight
+                  className="emergency-action-arrow"
+                  size={18}
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          </div>
+          <div role="status" className="emergency-share-status">
             {shareStatus}
-          </p>
-        )}
-        <p className="emergency-contact-note">
-          {t("Opening this panel does not dispatch assistance.")}
-        </p>
+          </div>
+        </div>
       </dialog>
     </div>
   );
