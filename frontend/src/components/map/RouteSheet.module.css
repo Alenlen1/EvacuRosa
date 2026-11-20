@@ -234,6 +234,29 @@
     text-align: left;
   }
   :global(.public-app)
+    .sheet[data-active-view="hazards"]
+    :global(.sheet-controls)::after {
+    content: none;
+  }
+  :global(.public-app)
+    .sheet[data-active-view="hazards"]
+    :global(.sheet-desktop-title) {
+    font-size: 15px;
+  }
+  :global(.public-app)
+    .sheet[data-active-view="hazards"]
+    :global(.sheet-controls .sheet-size-button) {
+    flex-basis: auto;
+    max-width: 46%;
+    padding-inline: 9px;
+  }
+  :global(.public-app)
+    .sheet[data-active-view="hazards"]
+    :global(.sheet-body .panel-scroll) {
+    padding: 12px;
+    scrollbar-gutter: auto;
+  }
+  :global(.public-app)
     .sheet[data-active-view="map"]:global(.sheet-expanded)
     :global(.sheet-controls) {
     align-items: flex-start;

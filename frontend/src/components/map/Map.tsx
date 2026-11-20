@@ -41,6 +41,7 @@ import { PublicMapScope } from "./PublicMapScope";
 import { isInsideSantaRosa, PUBLIC_MAP_MIN_ZOOM } from "@/lib/mapBounds";
 import { Basemap } from "./Basemap";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import type { HazardMapFocus } from "./HazardReports";
 
 interface MapProps {
   navigationCenter?: EvacuationCenter;
@@ -57,6 +58,7 @@ interface MapProps {
   destination: { latitude: number; longitude: number } | null;
   destinationLabel?: string;
   searchFocus?: { latitude: number; longitude: number } | null;
+  hazardFocus?: HazardMapFocus | null;
   previewCenter?: EvacuationCenter | null;
   onClearDestination: () => void;
   route: { latitude: number; longitude: number }[] | null;
@@ -152,19 +154,21 @@ function ClickToSetDestination({
   return null;
 }
 
-function FocusSearchResult({
+function FocusMapPoint({
   target,
+  minimumZoom = 15,
 }: {
   target?: { latitude: number; longitude: number } | null;
+  minimumZoom?: number;
 }) {
   const map = useMap();
   useEffect(() => {
     if (target)
       map.setView(
         [target.latitude, target.longitude],
-        Math.max(map.getZoom(), 15),
+        Math.max(map.getZoom(), minimumZoom),
       );
-  }, [target, map]);
+  }, [target, map, minimumZoom]);
   return null;
 }
 
@@ -266,6 +270,7 @@ export default function Map({
   destination,
   destinationLabel,
   searchFocus,
+  hazardFocus,
   previewCenter,
   onClearDestination,
   route,
@@ -290,6 +295,13 @@ export default function Map({
   const [showFlood, setShowFlood] = useState(true);
   const [showFire, setShowFire] = useState(true);
   const [showEarthquakes, setShowEarthquakes] = useState(true);
+  useEffect(() => {
+    if (!hazardFocus) return;
+    setFollowing(false);
+    if (hazardFocus.type === "flood") setShowFlood(true);
+    if (hazardFocus.type === "fire") setShowFire(true);
+    if (hazardFocus.type === "earthquake") setShowEarthquakes(true);
+  }, [hazardFocus]);
 
   return (
     <MapContainer
@@ -363,8 +375,9 @@ export default function Map({
         following={following && !navigating}
         onPause={() => setFollowing(false)}
       />
-      {!navigating && <FocusSearchResult target={searchFocus} />}
-      {!navigating && <FocusSearchResult target={previewCenter} />}
+      {!navigating && <FocusMapPoint target={searchFocus} />}
+      {!navigating && <FocusMapPoint target={previewCenter} />}
+      {!navigating && <FocusMapPoint target={hazardFocus} minimumZoom={17} />}
       {!navigating && (
         <LayerToggle
           showFlood={showFlood}

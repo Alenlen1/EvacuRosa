@@ -1,0 +1,188 @@
+.reports {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  color: #302825;
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f4efe8;
+  color: #65544a;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.notice[data-blocked="true"] {
+  background: #f8eae5;
+  color: #8b2c21;
+}
+
+.notice > svg {
+  flex-shrink: 0;
+}
+
+.notice strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.filter {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 2px;
+  border: 1px solid #e7ddd4;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #66564b;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.filter:is(:hover, [aria-pressed="true"]) {
+  border-color: #d6b8ad;
+  background: #f5e9e3;
+  color: #76160d;
+}
+
+.filter[aria-pressed="true"] {
+  box-shadow: inset 0 -2px #76160d;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+.resultCount {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.group {
+  display: grid;
+  gap: 8px;
+}
+
+.group h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #54151b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.group ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card,
+.empty {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #e7ddd4;
+  border-radius: 10px;
+  background: #fffdf9;
+  overflow-wrap: anywhere;
+}
+
+.card[data-blocked="true"] {
+  border-inline-start: 3px solid #973b2d;
+}
+
+.cardHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  font-size: 14px;
+}
+
+.severity {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #f2ece6;
+  color: #66564b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.impact,
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #68584e;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.card[data-blocked="true"] .impact {
+  color: #8b2c21;
+  font-weight: 700;
+}
+
+.card svg {
+  flex-shrink: 0;
+}
+
+.notes,
+.empty p {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.empty {
+  justify-items: start;
+  background: #f9f5ef;
+  font-size: 14px;
+}
+
+.empty p {
+  color: #68584e;
+}
+
+.viewOnMap {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 6px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid #e7ddd4;
+  border-radius: 8px;
+  color: #76160d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.viewOnMap:hover {
+  background: #f5e9e3;
+}
