@@ -21,11 +21,6 @@ import {
   ShieldAlert,
   ArrowRight,
 } from "lucide-react";
-import {
-  FloodIcon as Droplet,
-  FireIcon as Flame,
-  EarthquakeIcon as Activity,
-} from "@/components/ui/HazardIcons";
 import { Brand } from "@/components/ui/Brand";
 import { EmergencyContact } from "@/components/ui/EmergencyContact";
 import { AssistancePrompt } from "@/components/map/AssistancePrompt";
@@ -33,6 +28,10 @@ import { MapLegend } from "@/components/map/MapLegend";
 import { PlaceSearch } from "@/components/map/PlaceSearch";
 import type { PlaceResult } from "@/lib/placeSearch";
 import { RouteDetails } from "@/components/map/RouteDetails";
+import {
+  HazardReports,
+  type HazardMapFocus,
+} from "@/components/map/HazardReports";
 import { CenterDirectory } from "@/components/map/CenterDirectory";
 import { CenterDetails } from "@/components/map/CenterDetails";
 import { PublicSkeleton } from "@/components/map/PublicSkeleton";
@@ -140,6 +139,7 @@ function PublicHome({
 }) {
   const { t } = useLanguage();
   const [panel, setPanel] = useState<"map" | "centers" | "hazards">("map");
+  const [hazardFocus, setHazardFocus] = useState<HazardMapFocus | null>(null);
   const [sheetState, setSheetState] = useState<SheetState>("collapsed");
   const [travelMode, setTravelMode] = useState<TravelMode>("walking");
   const [selectedCenter, setSelectedCenter] = useState<EvacuationCenter | null>(
@@ -233,7 +233,9 @@ function PublicHome({
   } | null>(null);
   const [centers, setCenters] = useState<EvacuationCenter[]>([]);
   const [centersLoading, setCentersLoading] = useState(true);
-  const [hazardsLoading, setHazardsLoading] = useState(true);
+  const [hazardStatus, setHazardStatus] = useState<
+    "loading" | "available" | "unavailable"
+  >("loading");
   useEffect(() => {
     if (isOnline || offlineStatus.state !== "ready") return;
     let cancelled = false;
@@ -417,7 +419,7 @@ function PublicHome({
         setUsingCachedData(data.cached);
         setDataAsOf(data.asOf);
         setCentersLoading(false);
-        setHazardsLoading(false);
+        setHazardStatus("available");
         if (changed) {
           recheckReady.current = true;
           setOfflineRetry((value) => value + 1);
@@ -426,7 +428,9 @@ function PublicHome({
       },
       failed() {
         setCentersLoading(false);
-        setHazardsLoading(false);
+        setHazardStatus((status) =>
+          status === "available" ? status : "unavailable",
+        );
         setUsingCachedData(true);
         if (recheckPending.current) {
           recheckReady.current = false;
@@ -487,8 +491,6 @@ function PublicHome({
             ? t("Location unavailable")
             : t("Location unavailable");
 
-  const blockedFloodCount = floodReports.filter((r) => r.roadImpassable).length;
-  const passableFloodCount = floodReports.length - blockedFloodCount;
   const showOfflineBanner = !isOnline || usingCachedData;
 
   async function handleFindRoute(
@@ -955,46 +957,6 @@ function PublicHome({
       )}
     </>
   );
-  const hazardOverview = (
-    <div className="hazard-strip">
-      <button onClick={() => choosePanel("hazards")}>
-        <Droplet className="flood-color" size={24} />
-        <span>
-          <strong>{t("Flood")}</strong>
-          <small>
-            {t("{count} reports · {blocked} blocked", {
-              count: floodReports.length,
-              blocked: blockedFloodCount,
-            })}
-          </small>
-        </span>
-      </button>
-      <button onClick={() => choosePanel("hazards")}>
-        <Flame className="fire-color" size={24} />
-        <span>
-          <strong>{t("Fire")}</strong>
-          <small>
-            {t("{count} incidents loaded", { count: fireIncidents.length })}
-          </small>
-        </span>
-      </button>
-      <button onClick={() => choosePanel("hazards")}>
-        <Activity className="earthquake-color" size={24} />
-        <span>
-          <strong>{t("Earthquake")}</strong>
-          <small>
-            {t("{count} reports · {blocked} blocked", {
-              count: earthquakeRoadImpacts.length,
-              blocked: earthquakeRoadImpacts.filter(
-                (impact) => impact.roadId != null && impact.confirmedBlocked,
-              ).length,
-            })}
-          </small>
-        </span>
-      </button>
-    </div>
-  );
-
   const travelModeSelector = (
     <TravelModeSelector
       value={travelMode}
@@ -1141,9 +1103,6 @@ function PublicHome({
               setSheetState("collapsed");
             }}
           />
-          {panel === "hazards" && !hazardsLoading && (
-            <div className="desktop-hazard-overview">{hazardOverview}</div>
-          )}
           <div className="map-canvas">
             <Map
               navigationCenter={routeCenter}
@@ -1154,6 +1113,7 @@ function PublicHome({
                 setResultMode(travelMode);
               }}
               onNavigationStart={() => {
+                setHazardFocus(null);
                 setNavigationActive(true);
                 resumeCenterId.current = routeCenter?.id;
                 setRouteNavigation(true, routeCenter?.id);
@@ -1181,6 +1141,7 @@ function PublicHome({
               destination={destination}
               destinationLabel={destinationName.label?.title}
               searchFocus={searchSelection}
+              hazardFocus={hazardFocus}
               previewCenter={panel === "centers" ? displayedCenter : null}
               onClearDestination={clearDestination}
               route={activeRoutePoints}
@@ -1246,7 +1207,9 @@ function PublicHome({
           summary={sheetSummary}
           hideDetails={panel === "map" && !!error}
           onClearDestination={
-            destination || restoring || result ? clearDestination : undefined
+            panel !== "hazards" && (destination || restoring || result)
+              ? clearDestination
+              : undefined
           }
           mobileActions={
             <>
@@ -1346,9 +1309,6 @@ function PublicHome({
             </>
           }
         >
-          {panel === "hazards" && !hazardsLoading && (
-            <div className="mobile-hazard-overview">{hazardOverview}</div>
-          )}
           {panel === "map" && loading && !result && (
             <PublicSkeleton kind="route" />
           )}
@@ -1379,24 +1339,16 @@ function PublicHome({
               {routeLabel.subtitle && <p>{routeLabel.subtitle}</p>}
             </section>
           )}
-          {panel !== "centers" && (
+          {panel === "map" && (
             <div
-              className={`panel-heading ${panel === "map" && (result || destination) ? "route-intro" : ""}`}
+              className={`panel-heading ${result || destination ? "route-intro" : ""}`}
             >
               <span className="eyebrow">SANTA ROSA · LAGUNA</span>
-              <h2>
-                {panel === "hazards"
-                  ? t("Hazard information")
-                  : result
-                    ? t("Your route")
-                    : t("Find your way to safety")}
-              </h2>
+              <h2>{t(result ? "Your route" : "Find your way to safety")}</h2>
               <p>
-                {panel === "hazards"
-                  ? t("Reported conditions and verified road impacts.")
-                  : t(
-                      "Choose a point on the map or find a recommended evacuation center.",
-                    )}
+                {t(
+                  "Choose a point on the map or find a recommended evacuation center.",
+                )}
               </p>
             </div>
           )}
@@ -1415,109 +1367,22 @@ function PublicHome({
               </div>
             </div>
           )}
-          {panel === "hazards" && hazardsLoading && (
-            <PublicSkeleton kind="hazards" />
-          )}
-          {panel === "hazards" && !hazardsLoading && (
-            <section className="hazard-details">
-              <div className="info-notice">
-                {t(
-                  "Loaded reports are not an all-clear. Conditions can change; follow local emergency guidance.",
-                )}
-              </div>
-              <h3>
-                <Droplet size={18} /> {t("Flood reports")}
-              </h3>
-              <p>
-                {t(
-                  "{blocked} blocked road reports · {passable} passable flood reports",
-                  { blocked: blockedFloodCount, passable: passableFloodCount },
-                )}
-              </p>
-              {floodReports.map((report) => (
-                <article className="record-card" key={report.id}>
-                  <strong>
-                    {t(report.severity)} {t("Flood")}
-                  </strong>
-                  <span>
-                    {report.roadImpassable
-                      ? t("Road blocked")
-                      : t("Road passable")}{" "}
-                    · {report.roadId}
-                  </span>
-                  {report.notes && <p>{report.notes}</p>}
-                </article>
-              ))}
-              <h3>
-                <Flame size={18} /> {t("Fire incidents")}
-              </h3>
-              {fireIncidents.length === 0 && (
-                <p>{t("No fire incidents loaded.")}</p>
-              )}
-              {fireIncidents.map((incident) => (
-                <article className="record-card" key={incident.id}>
-                  <strong>
-                    {t(incident.severity)} {t("Fire")}
-                  </strong>
-                  <span>
-                    {incident.radiusMeters} m radius ·{" "}
-                    {incident.confirmedBlockedRoadIds.length}{" "}
-                    {t("confirmed blocked roads")}
-                  </span>
-                  {incident.notes && <p>{incident.notes}</p>}
-                </article>
-              ))}
-              <h3>
-                <Activity size={18} /> {t("Earthquake reports")}
-              </h3>
-              {earthquakeRoadImpacts.length === 0 && (
-                <p>{t("No earthquake reports loaded.")}</p>
-              )}
-              {earthquakeRoadImpacts.map((impact) => (
-                <article
-                  className="record-card earthquake-impact-record"
-                  key={impact.id}
-                >
-                  <strong>
-                    {t(impact.impactLevel)}{" "}
-                    {t(
-                      impact.roadId == null
-                        ? "Earthquake area report"
-                        : "Earthquake road impact",
-                    )}
-                  </strong>
-                  <span>
-                    {impact.roadId == null
-                      ? t("No road routing change")
-                      : impact.confirmedBlocked
-                        ? t("Road blocked")
-                        : t("No confirmed road blockage")}
-                  </span>
-                  {impact.notes && <p>{impact.notes}</p>}
-                </article>
-              ))}
-              {earthquakeEvents.length > 0 && (
-                <h3>
-                  <Activity size={18} /> {t("Earthquake events")}
-                </h3>
-              )}
-              {earthquakeEvents.map((event) => (
-                <article className="record-card" key={event.id}>
-                  <strong>
-                    M{event.magnitude.toFixed(1)} · {event.status}
-                  </strong>
-                  <span>
-                    {
-                      earthquakeRoadImpacts.filter(
-                        (impact) => impact.earthquakeEventId === event.id,
-                      ).length
-                    }{" "}
-                    {t("verified road impacts")}
-                  </span>
-                  <span>{new Date(event.occurredAt).toLocaleString()}</span>
-                </article>
-              ))}
-            </section>
+          {panel === "hazards" && (
+            <HazardReports
+              floods={floodReports}
+              fires={fireIncidents}
+              earthquakeImpacts={earthquakeRoadImpacts}
+              earthquakeEvents={earthquakeEvents}
+              status={hazardStatus}
+              onViewOnMap={
+                navigationActive
+                  ? undefined
+                  : (target) => {
+                      setHazardFocus(target);
+                      backToMap();
+                    }
+              }
+            />
           )}
           {displayedCenter && panel === "centers" && (
             <CenterDetails
