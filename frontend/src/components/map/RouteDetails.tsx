@@ -1,6 +1,6 @@
 "use client";
 import { useLanguage } from "@/components/LanguageProvider";
-import { ShieldAlert, Users } from "lucide-react";
+import { Clock3, MapPin, Route, ShieldAlert } from "lucide-react";
 import type {
   RouteResponse,
   EvacuationRouteResponse,
@@ -13,6 +13,7 @@ import {
   estimatedTravelTime,
   type TravelMode,
 } from "@/lib/travelTime";
+import styles from "./RouteDetails.module.css";
 
 export type ActiveRouteResult =
   | { kind: "route"; data: RouteResponse }
@@ -40,13 +41,19 @@ export function RouteDetails({
   const travelTime = estimatedTravelTime(result.data.distance, travelMode);
   const mode = TRAVEL_MODES[travelMode];
   const shelter =
-    result.kind === "evacuation"
-      ? (center ?? result.data.recommendedCenter)
+    center ??
+    (result.kind === "evacuation" ? result.data.recommendedCenter : undefined);
+  const spacesRemaining =
+    shelter && (shelter.status === "AVAILABLE" || shelter.status === "NEARLY_FULL")
+      ? Math.max(0, shelter.capacity - shelter.currentOccupancy)
       : null;
+  const risk = (result.data.riskLevel ?? "UNKNOWN").replaceAll("_", " ");
+  const hasLocationDetails = Boolean(label?.subtitle || center);
+
   return (
     <section
-      className="route-summary"
-      aria-label="Active route details"
+      className={`route-summary ${styles.summary}`}
+      aria-label={t("Active route")}
       aria-live="polite"
     >
       {!hideHeading && (
@@ -55,38 +62,34 @@ export function RouteDetails({
           <h3>{label?.title ?? t("Selected destination")}</h3>
         </>
       )}
-      {label?.subtitle && <p>{label.subtitle}</p>}
-      {center && (
-        <>
-          <StatusBadge status={center.status} />
-          <p className="route-occupancy">
-            <Users size={18} />
-            {center.currentOccupancy} / {center.capacity} {t("occupied")}
-          </p>
-        </>
-      )}
-      <div className="route-metrics">
+      <dl className={styles.metrics}>
         <div>
-          <strong>{(result.data.distance / 1000).toFixed(1)} km</strong>
-          <small>{t("Route distance")}</small>
+          <dt>
+            <Route size={15} aria-hidden="true" />
+            {t("Route distance")}
+          </dt>
+          <dd>{(result.data.distance / 1000).toFixed(1)} km</dd>
         </div>
         <div>
-          <strong>{travelTime ?? t("unavailable")}</strong>
-          <small>
-            {t("Estimated time")} · {t(mode.label)}
-          </small>
+          <dt>
+            <Clock3 size={15} aria-hidden="true" />
+            {t("Estimated time")}
+          </dt>
+          <dd>{travelTime ?? t("Unavailable")}</dd>
+          <dd className={styles.mode}>{t(mode.label)}</dd>
         </div>
-      </div>
-      <p className="route-risk">
-        {t("Route risk")}:{" "}
-        {t((result.data.riskLevel ?? "UNKNOWN").replaceAll("_", " "))}
-      </p>
-      <p className="route-risk-context">
-        {t("Based on available reports, not a guarantee of safety.")}
-      </p>
-      {!travelTime && <p>{t("Estimated travel time is unavailable.")}</p>}
-      {result.kind === "route" && (
+      </dl>
+      <div className={styles.risk}>
         <p>
+          <strong>{t("Route risk")}</strong>
+          <span>{t(risk)}</span>
+        </p>
+        <p className={styles.context}>
+          {t("Based on available reports, not a guarantee of safety.")}
+        </p>
+      </div>
+      {result.kind === "route" && (
+        <p className={styles.context}>
           {result.data.affectedRoads === 0
             ? t("No reported road restrictions along this route.")
             : t(
@@ -95,26 +98,54 @@ export function RouteDetails({
               )}
         </p>
       )}
-      <div className="route-extra">
-        {shelter &&
-          (shelter.status === "AVAILABLE" ||
-            shelter.status === "NEARLY_FULL") && (
-            <p>
-              {Math.max(0, shelter.capacity - shelter.currentOccupancy)}{" "}
-              {t("slots available")}
-            </p>
+      {result.data.warnings.length > 0 && (
+        <ul className={styles.warnings}>
+          {result.data.warnings.map((warning, index) => (
+            <li key={index}>
+              <ShieldAlert size={16} aria-hidden="true" />
+              <span>{warning}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {(hasLocationDetails || spacesRemaining !== null) && (
+        <div className={styles.destination}>
+          {hasLocationDetails && (
+            <div className={styles.location}>
+              {label?.subtitle && (
+                <p>
+                  <MapPin size={15} aria-hidden="true" />
+                  <span>{label.subtitle}</span>
+                </p>
+              )}
+              {center && <StatusBadge status={center.status} />}
+            </div>
           )}
-      </div>
-      {result.data.warnings.map((warning, index) => (
-        <p className="warning-message" key={index}>
-          <ShieldAlert size={16} />
-          {warning}
-        </p>
-      ))}
+          {(center || spacesRemaining !== null) && (
+            <div className={styles.capacity}>
+              {center && (
+                <p>
+                  {t("{occupied} of {capacity} occupied", {
+                    occupied: center.currentOccupancy.toLocaleString(),
+                    capacity: center.capacity.toLocaleString(),
+                  })}
+                </p>
+              )}
+              {spacesRemaining !== null && (
+                <strong>
+                  {t("{count} spaces remaining", {
+                    count: spacesRemaining.toLocaleString(),
+                  })}
+                </strong>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       {travelTime && (
-        <details className="route-estimate-details">
+        <details className={styles.estimate}>
           <summary>{t("How this time is estimated")}</summary>
-          <p className="route-risk-context">
+          <p className={styles.context}>
             {t(
               "Assumes {speed} km/h over the calculated route. Pace, traffic, stops, and hazardous conditions may increase travel time.",
               { speed: mode.speedKmh },
