@@ -1086,55 +1086,6 @@ select:focus-visible {
   color: var(--muted);
   margin-top: 3px;
 }
-.route-summary {
-  padding: 16px;
-  margin-top: 18px;
-  border: 1px solid #e2d785;
-  background: #fffdf0;
-  border-radius: 10px;
-}
-.route-summary h3 {
-  font-weight: 700;
-  font-size: 14px;
-}
-.route-summary p {
-  margin-top: 8px;
-  font-size: 12px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.route-metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin: 16px 0;
-}
-.route-metrics > div {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.route-metrics strong {
-  font-size: 22px;
-}
-.route-metrics small {
-  font-size: 10px;
-  color: var(--muted);
-}
-.route-risk {
-  font-weight: 700;
-  text-transform: capitalize;
-}
-.warning-message {
-  color: #8b3819;
-  display: flex;
-  gap: 6px;
-  align-items: flex-start;
-}
-.warning-message svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
 .route-actions {
   flex-shrink: 0;
   border-top: 1px solid var(--border);
@@ -2286,27 +2237,11 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .public-app .route-intro {
   display: none;
 }
-.public-app .route-summary {
-  margin-top: 0;
-}
-.public-app .route-summary h3,
 .destination-heading h2 {
   margin-top: 8px;
   font-size: 20px;
   line-height: 1.35;
   overflow-wrap: anywhere;
-}
-.public-app .route-occupancy {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.public-app .route-metrics {
-  margin: 12px 0;
-}
-.public-app .route-risk {
-  text-transform: none;
-  font-weight: 700;
 }
 .public-app .action-destination strong {
   display: block;
@@ -2477,7 +2412,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
     .secondary-button {
     display: none;
   }
-  .public-app .sheet-partial .route-extra,
   .public-app .sheet-partial .data-note {
     display: none;
   }
@@ -2508,14 +2442,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   }
   .public-app .route-actions button svg {
     display: none;
-  }
-  .public-app .route-summary {
-    padding: 12px;
-  }
-  .public-app .route-summary .route-risk-context {
-    margin-top: 2px;
-    font-size: 11px;
-    color: var(--muted);
   }
   .public-app .remove-destination-button {
     align-self: flex-end;
@@ -3166,53 +3092,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   color: #5c6573;
   margin-top: 4px;
 }
-.public-app .route-summary {
-  padding: 18px;
-  background: #fffef7;
-  border-radius: 14px;
-}
-.public-app .route-summary p {
-  font-size: 13px;
-  line-height: 1.6;
-}
-.public-app .route-metrics {
-  gap: 14px;
-  margin: 18px 0;
-}
-.public-app .route-metrics > div + div {
-  border-left: 1px solid #e8e2bd;
-  padding-left: 14px;
-}
-.public-app .route-metrics strong {
-  font-size: clamp(20px, 2vw, 28px);
-  line-height: 1.2;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
-.public-app .route-metrics small {
-  font-size: 12px;
-  line-height: 1.5;
-}
-.public-app .route-risk {
-  display: inline-block;
-  padding: 5px 9px;
-  border-radius: 6px;
-  background: #f0edda;
-}
-.public-app .route-risk-context {
-  color: #5c6573;
-}
-.public-app .route-estimate-details {
-  margin-top: 12px;
-  border-top: 1px solid #e8e2bd;
-  font-size: 12px;
-  color: #5c6573;
-}
-.public-app .route-estimate-details summary {
-  min-height: 44px;
-  padding: 12px 0;
-  cursor: pointer;
-}
 .public-app .route-actions {
   gap: 10px;
   padding: 16px 18px;
@@ -3440,18 +3319,8 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .desktop-route-buttons {
     display: none;
   }
-  .public-app .sheet-partial .route-extra,
   .public-app .sheet-partial .data-note {
     display: block;
-  }
-  .public-app .route-summary {
-    padding: 14px;
-  }
-  .public-app .route-metrics strong {
-    font-size: 25px;
-  }
-  .public-app .route-summary .route-risk-context {
-    font-size: 12px;
   }
   .public-app .route-onboarding {
     margin-top: 12px;
@@ -3634,10 +3503,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .public-app .route-onboarding-icon {
   background: #fff4cf;
   color: #786119;
-}
-.public-app .route-summary {
-  background: #fffbed;
-  border-color: #ecddb2;
 }
 .public-app .travel-mode-options input:checked + span {
   background: #fff0ad;

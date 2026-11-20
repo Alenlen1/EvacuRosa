@@ -876,6 +876,10 @@ function PublicHome({
     browsingCenter &&
     (displayedCenter?.status === "FULL" ||
       displayedCenter?.status === "CLOSED");
+  const collapsedModeHint =
+    panel === "map" && sheetState === "collapsed"
+      ? t(TRAVEL_MODES[travelMode].label)
+      : null;
   const actionHint = browsingCenter
     ? centerNotAccepting
       ? t("This center is not accepting arrivals. Choose another center.")
@@ -884,7 +888,7 @@ function PublicHome({
       ? t("Enable location access to find a route")
       : (routingDisabledReason ??
         (destination
-          ? t(TRAVEL_MODES[travelMode].label)
+          ? collapsedModeHint
           : t("Choose a center or search the map to set your destination.")));
 
   const routeButtons = (

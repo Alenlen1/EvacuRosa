@@ -92,7 +92,7 @@ export function RouteSheet({
           </button>
         ))}
       </nav>
-      {mobileTravelMode && (
+      {mobileTravelMode && state !== "expanded" && (
         <div className="mobile-travel-mode">{mobileTravelMode}</div>
       )}
       <div className="sheet-controls">
@@ -158,7 +158,7 @@ export function RouteSheet({
       </div>
       <div className="sheet-body" id="sheet-details" ref={bodyRef}>
         <div className="panel-scroll" id="panel-details" ref={detailsRef}>
-          {mobileTravelMode && (
+          {mobileTravelMode && state === "expanded" && (
             <div className="sheet-inline-travel-mode">{mobileTravelMode}</div>
           )}
           {!hideDetails && children}
