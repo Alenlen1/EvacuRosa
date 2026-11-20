@@ -222,10 +222,24 @@ export const filipino: Record<string, string> = {
   "Call 911": "Tumawag sa 911",
   "National emergency hotline": "Pambansang hotline sa emerhensiya",
   "Call Santa Rosa CDRRMO": "Tumawag sa CDRRMO ng Santa Rosa",
+  "Call {carrier} at {number}": "Tumawag sa {carrier} sa {number}",
+  "Request Assistance": "Humingi ng tulong",
+  "View My Assistance Request": "Tingnan ang aking kahilingan",
+  "Check your request status": "Tingnan ang kalagayan ng iyong kahilingan",
+  "Review and send your location to CDRRMO":
+    "Suriin at ipadala ang iyong lokasyon sa CDRRMO",
   "Find an evacuation center": "Maghanap ng evacuation center",
+  "Find a route using your travel mode":
+    "Maghanap ng ruta ayon sa paraan ng iyong paglalakbay",
   "Find a reachable center using your travel mode":
     "Maghanap ng center na mararating sa napiling paraan ng paglalakbay",
   "Share current location": "Ibahagi ang kasalukuyang lokasyon",
+  "Share a map link with a contact": "Magbahagi ng link ng mapa sa iyong kontak",
+  "Enable location access to share": "Payagan ang access sa lokasyon para makapagbahagi",
+  "My location": "Aking lokasyon",
+  "My current location: {coordinates}": "Kasalukuyan kong lokasyon: {coordinates}",
+  "Could not share your location. Coordinates: {coordinates}":
+    "Hindi naibahagi ang iyong lokasyon. Mga coordinate: {coordinates}",
   "Share a location snapshot with a contact":
     "Ibahagi ang lokasyon sa iyong kontak",
   "Enable location access to share your coordinates":
