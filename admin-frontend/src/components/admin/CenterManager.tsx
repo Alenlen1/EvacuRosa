@@ -53,6 +53,16 @@ const empty = {
   contactInformation: "",
 };
 
+const centerFilters = [
+  { status: "all", label: "All centers", icon: House },
+  { status: "AVAILABLE", label: "Available", icon: CircleCheck },
+  { status: "NEARLY_FULL", label: "Nearly full", icon: TriangleAlert },
+  { status: "FULL", label: "Full", icon: CircleMinus },
+  { status: "CLOSED", label: "Closed", icon: LockKeyhole },
+] as const;
+
+type CenterFilter = (typeof centerFilters)[number]["status"];
+
 function nonNegativeInteger(value: number): number | null {
   return Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
@@ -85,11 +95,13 @@ export function CenterManager({
   const [editorOpen, setEditorOpen] = useState(false);
   const [focusRequest, setFocusRequest] = useState(0);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<CenterFilter>("all");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const editorRef = useRef<HTMLFormElement>(null);
   const editorTriggerRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const returnFocus = useRef(false);
 
   function loadBarangays() {
@@ -214,77 +226,69 @@ export function CenterManager({
   }
 
   const search = query.trim().toLocaleLowerCase();
-  const visibleCenters = centers.filter((center) =>
-    [center.name, center.barangays?.name ?? "", center.address]
+  const searchTerms = search ? search.split(/\s+/) : [];
+  const isFiltered = searchTerms.length > 0 || statusFilter !== "all";
+  const visibleCenters = centers.filter((center) => {
+    if (statusFilter !== "all" && center.status !== statusFilter) return false;
+    const searchText = [center.name, center.barangays?.name ?? "", center.address]
       .join(" ")
-      .toLocaleLowerCase()
-      .includes(search),
-  );
+      .toLocaleLowerCase();
+    return searchTerms.every((term) => searchText.includes(term));
+  });
   const editingCenter = centers.find((center) => center.id === editing);
   const statusCounts = getCdrrmoShelterStatusCounts(centers);
-  const stats = [
-    {
-      label: "Registered centers",
-      count: centers.length,
-      icon: House,
-      tone: "brand",
-    },
-    {
-      label: "Available",
-      count: statusCounts.AVAILABLE,
-      icon: CircleCheck,
-      tone: "safe",
-    },
-    {
-      label: "Nearly full",
-      count: statusCounts.NEARLY_FULL,
-      icon: TriangleAlert,
-      tone: "warning",
-    },
-    {
-      label: "Full",
-      count: statusCounts.FULL,
-      icon: CircleMinus,
-      tone: "danger",
-    },
-    {
-      label: "Closed",
-      count: statusCounts.CLOSED,
-      icon: LockKeyhole,
-      tone: "neutral",
-    },
-    {
-      label: "Barangays with centers",
-      count: new Set(centers.map((center) => center.barangay_id)).size,
-      icon: MapPin,
-      tone: "brand",
-    },
-  ];
+  const barangaysWithCenters = new Set(
+    centers.map((center) => center.barangay_id).filter(Boolean),
+  ).size;
+
+  function clearSearch() {
+    setQuery("");
+    searchRef.current?.focus();
+  }
+
+  async function deleteCenter(center: ManagedCenter) {
+    const confirmed = await confirmDelete({
+      title: "Delete evacuation center?",
+      subject: center.name,
+      description:
+        "This removes the center from the shelter directory and public recommendations. This action cannot be undone.",
+      confirmLabel: "Delete center",
+      cancelLabel: "Keep center",
+    });
+    if (!confirmed) return;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await adminApi(`/evacuation-centers/${center.id}`, "DELETE");
+      if (editing === center.id) cancel();
+      await onSaved();
+      setMessage("Center deleted.");
+      returnFocus.current = true;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete center.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <section
       className={`center-management cdrrmo-section-anchor ${styles.manager}`}
       id="evacuation-centers"
-      data-editing={editorOpen}
       tabIndex={-1}
       aria-labelledby="center-management-title"
     >
       <div className={styles.sectionHeading}>
-        <div className={styles.headingCopy}>
-          <span className={styles.sectionIcon}>
-            <House size={22} aria-hidden="true" />
-          </span>
-          <div>
-            <span className="eyebrow">SHELTER MANAGEMENT</span>
-            <h2 id="center-management-title">
-              Evacuation centers{" "}
-              <span className={styles.count}>{centers.length}</span>
-            </h2>
-            <p>
-              Register verified centers and manage their details. Barangays
-              update occupancy and availability.
+        <div>
+          <h2 id="center-management-title">Center directory</h2>
+          {barangaysWithCenters > 0 && (
+            <p className={styles.coverage}>
+              <MapPin size={15} aria-hidden="true" />
+              {barangaysWithCenters}{" "}
+              {barangaysWithCenters === 1 ? "barangay" : "barangays"} with centers
             </p>
-          </div>
+          )}
         </div>
         <button
           className={`primary-button ${styles.registerButton}`}
@@ -309,19 +313,6 @@ export function CenterManager({
               ? "Continue editing"
               : "Register center"}
         </button>
-      </div>
-      <div className={styles.stats} role="list" aria-label="Center overview">
-        {stats.map(({ label, count, icon: Icon, tone }) => (
-          <div className={styles.stat} key={label} role="listitem">
-            <span className={styles.statIcon} data-tone={tone}>
-              <Icon size={20} aria-hidden="true" />
-            </span>
-            <dl>
-              <dt>{label}</dt>
-              <dd>{count.toLocaleString()}</dd>
-            </dl>
-          </div>
-        ))}
       </div>
       {error && (
         <p role="alert" className={styles.error}>
@@ -580,193 +571,185 @@ export function CenterManager({
           </form>
         )}
       </div>
-      <div className={styles.directoryToolbar}>
-        <h3>
-          Registered centers{" "}
-          <span className={styles.directoryCount}>
-            {search
-              ? `${visibleCenters.length} of ${centers.length}`
-              : centers.length}
-          </span>
-        </h3>
-        <div className={styles.search}>
-          <label
-            className={styles.visuallyHidden}
-            htmlFor="center-directory-search"
-          >
-            Search registered centers
-          </label>
-          <Search size={18} aria-hidden="true" />
-          <input
-            id="center-directory-search"
-            type="search"
-            placeholder="Search center or barangay"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          {query && (
+      <div className={styles.directory} hidden={editorOpen}>
+        <div
+          className={styles.filters}
+          role="group"
+          aria-label="Filter by status"
+        >
+          {centerFilters.map(({ status, label, icon: Icon }) => (
             <button
+              className={styles.filter}
+              key={status}
               type="button"
-              aria-label="Clear center search"
-              onClick={() => setQuery("")}
+              aria-pressed={statusFilter === status}
+              data-status={status}
+              onClick={() => setStatusFilter(status)}
             >
-              <X size={16} aria-hidden="true" />
+              <Icon size={16} aria-hidden="true" />
+              {label}
+              <span className={styles.filterCount}>
+                {(status === "all"
+                  ? centers.length
+                  : statusCounts[status]
+                ).toLocaleString()}
+              </span>
             </button>
-          )}
+          ))}
         </div>
-      </div>
-      <div className={styles.centerGrid}>
-        {visibleCenters.map((center) => {
-          const occupancy = nonNegativeInteger(center.current_occupancy);
-          const capacity = nonNegativeInteger(center.capacity);
-          const percent =
-            capacity !== null && capacity > 0 && occupancy !== null
-              ? Math.round((occupancy / capacity) * 100)
-              : null;
-          const barPercent =
-            percent === null ? undefined : Math.min(100, percent);
-          return (
-            <article className={styles.centerCard} key={center.id}>
-              <div className={styles.cardHeading}>
-                <span className={styles.cardIcon}>
-                  <House size={20} aria-hidden="true" />
-                </span>
-                <div>
-                  <p className={styles.barangay}>
-                    {center.barangays?.name || "Barangay not assigned"}
-                  </p>
-                  <h4>{center.name}</h4>
-                </div>
-              </div>
-              <div className={styles.centerMeta}>
-                <StatusBadge status={center.status} />
-                <span>
-                  <MapPin size={14} aria-hidden="true" />
-                  {center.address}
-                </span>
-              </div>
-              <div className={styles.occupancy}>
-                <div>
-                  <span>Current occupancy</span>
-                  <strong>
-                    {occupancy?.toLocaleString() ?? "—"}{" "}
-                    <span>/ {capacity?.toLocaleString() ?? "—"}</span>
-                  </strong>
-                </div>
-                <div
-                  className={styles.capacityTrack}
-                  role="progressbar"
-                  aria-label={`${center.name} occupancy`}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={barPercent}
-                  aria-valuetext={
-                    percent === null
-                      ? "Occupancy percentage unavailable"
-                      : `${occupancy} of ${capacity} spaces occupied (${percent}%)`
-                  }
-                >
-                  {barPercent !== undefined && (
-                    <span
-                      style={{ width: `${barPercent}%` }}
-                      data-status={center.status}
-                    />
-                  )}
-                </div>
-                <p>
-                  {percent !== null
-                    ? `${percent}% occupied`
-                    : capacity === null || capacity === 0
-                      ? "Capacity not set"
-                      : "Occupancy unavailable"}
-                </p>
-              </div>
-              <div className={styles.cardActions}>
-                <button
-                  className="secondary-button"
-                  disabled={busy}
-                  type="button"
-                  aria-label={`Edit ${center.name}`}
-                  onClick={() => edit(center)}
-                >
-                  <Pencil size={15} aria-hidden="true" />
-                  Edit center
-                </button>
-                <button
-                  className={styles.deleteButton}
-                  disabled={busy}
-                  type="button"
-                  aria-label={`Delete ${center.name}`}
-                  onClick={async () => {
-                    if (
-                      !(await confirmDelete({
-                        title: "Delete evacuation center?",
-                        subject: center.name,
-                        description:
-                          "This removes the center from the shelter directory and public recommendations. This action cannot be undone.",
-                        confirmLabel: "Delete center",
-                      }))
-                    )
-                      return;
-                    setBusy(true);
-                    setError("");
-                    try {
-                      await adminApi(
-                        `/evacuation-centers/${center.id}`,
-                        "DELETE",
-                      );
-                      if (editing === center.id) {
-                        returnFocus.current = true;
-                        setEditing(null);
-                        setDraft(empty);
-                        setEditorOpen(false);
-                      }
-                      await onSaved();
-                      setMessage("Center deleted.");
-                      returnFocus.current = true;
-                    } catch (e) {
-                      setError(
-                        e instanceof Error
-                          ? e.message
-                          : "Could not delete center.",
-                      );
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  <Trash2 size={15} aria-hidden="true" />
-                  Delete
-                </button>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-      {visibleCenters.length === 0 && (
-        <div className={styles.empty}>
-          <House size={28} aria-hidden="true" />
-          <h4>
-            {search
-              ? "No centers match your search"
-              : "No evacuation centers registered"}
-          </h4>
-          <p>
-            {search
-              ? "Try another center name, barangay, or address."
-              : "Register a verified center to start building the city shelter directory."}
+        <div className={styles.directoryToolbar}>
+          <div className={styles.search}>
+            <label
+              className={styles.visuallyHidden}
+              htmlFor="center-directory-search"
+            >
+              Search by center, barangay, or address
+            </label>
+            <Search size={18} aria-hidden="true" />
+            <input
+              ref={searchRef}
+              id="center-directory-search"
+              type="search"
+              placeholder="Search center, barangay, or address"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {query && (
+              <button
+                type="button"
+                aria-label="Clear center search"
+                onClick={clearSearch}
+              >
+                <X size={16} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          <p className={styles.directoryCount} role="status">
+            {isFiltered
+              ? `Showing ${visibleCenters.length.toLocaleString()} of ${centers.length.toLocaleString()} centers`
+              : `${centers.length.toLocaleString()} registered ${centers.length === 1 ? "center" : "centers"}`}
           </p>
-          {search && (
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => setQuery("")}
-            >
-              Clear search
-            </button>
-          )}
         </div>
-      )}
+        {visibleCenters.length === 0 ? (
+          <div className={styles.empty}>
+            <House size={24} aria-hidden="true" />
+            <h3>
+              {isFiltered ? "No matching centers" : "No centers registered"}
+            </h3>
+            {isFiltered && (
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => {
+                  setStatusFilter("all");
+                  clearSearch();
+                }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className={styles.tableFrame}>
+            <table
+              className={styles.table}
+              role="table"
+              aria-label="Registered evacuation centers"
+            >
+              <thead role="rowgroup" className={styles.tableHead}>
+                <tr role="row">
+                  <th role="columnheader" scope="col">
+                    Center
+                  </th>
+                  <th role="columnheader" scope="col">
+                    Status
+                  </th>
+                  <th role="columnheader" scope="col">
+                    Occupancy
+                  </th>
+                  <th role="columnheader" scope="col">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody role="rowgroup">
+                {visibleCenters.map((center) => {
+                  const occupancy = nonNegativeInteger(center.current_occupancy);
+                  const capacity = nonNegativeInteger(center.capacity);
+                  const barPercent =
+                    capacity && occupancy !== null
+                      ? Math.min(100, (occupancy / capacity) * 100)
+                      : undefined;
+
+                  return (
+                    <tr className={styles.centerRow} role="row" key={center.id}>
+                      <th role="rowheader" scope="row">
+                        <div className={styles.centerIdentity}>
+                          <strong>{center.name}</strong>
+                          <span>
+                            {center.barangays?.name || "Barangay not assigned"}
+                          </span>
+                          {center.address && (
+                            <span className={styles.address}>{center.address}</span>
+                          )}
+                        </div>
+                      </th>
+                      <td className={styles.statusCell} role="cell">
+                        <StatusBadge status={center.status} />
+                      </td>
+                      <td className={styles.occupancy} role="cell">
+                        <span className={styles.mobileLabel}>Occupancy</span>
+                        <div className={styles.occupancyCount}>
+                          <strong>{occupancy?.toLocaleString() ?? "—"}</strong>
+                          <span> / {capacity?.toLocaleString() ?? "—"}</span>
+                        </div>
+                        {barPercent !== undefined && (
+                          <div
+                            className={styles.capacityTrack}
+                            role="progressbar"
+                            aria-label={`${center.name} occupancy`}
+                            aria-valuenow={barPercent}
+                            aria-valuetext={`${occupancy} of ${capacity} spaces occupied`}
+                          >
+                            <span
+                              style={{ width: `${barPercent}%` }}
+                              data-status={center.status}
+                            />
+                          </div>
+                        )}
+                      </td>
+                      <td className={styles.actionCell} role="cell">
+                        <div className={styles.rowActions}>
+                          <button
+                            className="secondary-button"
+                            disabled={busy}
+                            type="button"
+                            aria-label={`Edit ${center.name}`}
+                            onClick={() => edit(center)}
+                          >
+                            <Pencil size={15} aria-hidden="true" />
+                            Edit
+                          </button>
+                          <button
+                            className={styles.deleteButton}
+                            disabled={busy}
+                            type="button"
+                            aria-label={`Delete ${center.name}`}
+                            onClick={() => void deleteCenter(center)}
+                          >
+                            <Trash2 size={15} aria-hidden="true" />
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
       {deleteDialog}
     </section>
   );
