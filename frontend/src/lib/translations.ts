@@ -205,9 +205,6 @@ export const filipino: Record<string, string> = {
   "Tap for travel options": "Pindutin para sa mga opsyon",
   "Capacity and contact details": "Kapasidad at mga detalye ng kontak",
   "Review route and assistance": "Tingnan ang ruta at tulong",
-  "Where do you need to go?": "Saan mo kailangang pumunta?",
-  "Search above or tap the map. No destination? Find an evacuation center below.":
-    "Maghanap sa itaas o pindutin ang mapa. Walang destinasyon? Maghanap ng evacuation center sa ibaba.",
   "Choose a center to review capacity and location.":
     "Pumili ng center upang tingnan ang kapasidad at lokasyon.",
   "Use as destination": "Gawing destinasyon",
@@ -317,7 +314,6 @@ export const filipino: Record<string, string> = {
   "Hazard Information": "Impormasyon sa panganib",
   "Plan your route": "Planuhin ang iyong ruta",
   "Your route": "Iyong ruta",
-  "Find your way to safety": "Hanapin ang daan patungo sa kaligtasan",
   "Find safer route": "Maghanap ng mas ligtas na ruta",
   "Find evacuation center": "Maghanap ng evacuation center",
   "Calculating…": "Kinakalkula…",
@@ -337,8 +333,6 @@ export const filipino: Record<string, string> = {
   "Selected destination": "Napiling destinasyon",
   "Selected location": "Napiling lokasyon",
   "Destination: {place}": "Destinasyon: {place}",
-  "Choose a point on the map or find a recommended evacuation center.":
-    "Pumili ng lugar sa mapa o maghanap ng inirerekomendang evacuation center.",
   "Reported conditions and verified road impacts.":
     "Mga naiulat na kondisyon at napatunayang epekto sa kalsada.",
   Flood: "Baha",

@@ -974,14 +974,6 @@ select:focus-visible {
   font-weight: 700;
   letter-spacing: 1.3px;
 }
-.panel-heading h2 {
-  font-size: 23px;
-  font-weight: 750;
-  line-height: 1.2;
-  letter-spacing: -0.6px;
-  margin: 10px 0;
-}
-.panel-heading p,
 .selected-center p {
   font-size: 12px;
   color: var(--muted);
@@ -2020,9 +2012,6 @@ select:focus-visible {
   .panel-scroll {
     padding: 8px 18px 16px;
   }
-  .panel-heading h2 {
-    font-size: 21px;
-  }
   .route-actions {
     padding: 8px 14px max(10px, env(safe-area-inset-bottom));
     gap: 6px;
@@ -2144,9 +2133,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   border: none;
 }
 /* Public navigation refinements. All responsive overrides stay out of admin pages. */
-.public-app .route-intro {
-  display: none;
-}
 .destination-heading h2 {
   margin-top: 8px;
   font-size: 20px;
@@ -2935,43 +2921,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 .public-app .panel-scroll {
   padding: 18px 18px 12px;
 }
-.public-app .panel-heading h2 {
-  font-size: 25px;
-  letter-spacing: -0.5px;
-}
-.public-app .panel-heading p {
-  font-size: 14px;
-  line-height: 1.6;
-}
-.route-onboarding {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin: 18px 0 4px;
-  padding: 14px;
-  border: 1px solid #e5e9ee;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-.route-onboarding-icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  color: #897621;
-  background: #f6efc4;
-}
-.route-onboarding strong {
-  font-size: 14px;
-}
-.route-onboarding p {
-  font-size: 13px;
-  line-height: 1.6;
-  color: #5c6573;
-  margin-top: 4px;
-}
 .public-app .route-actions {
   gap: 10px;
   padding: 16px 18px;
@@ -3165,9 +3114,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
   .public-app .sheet-partial .data-note {
     display: block;
   }
-  .public-app .route-onboarding {
-    margin-top: 12px;
-  }
   .public-app .sheet-partial {
     height: 42%;
     max-height: 42%;
@@ -3281,7 +3227,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 }
 .public-app .sheet-desktop-title,
 .public-app .sheet-preview strong,
-.public-app .panel-heading h2,
 .public-app .selected-center h3,
 .public-app .mobile-drawer-heading h2 {
   color: var(--ink);
@@ -3327,14 +3272,6 @@ strip that so our own SVG/HTML markers render without an extra frame. */
 }
 .public-app .navigation-rail > button:hover {
   background: #fff4ce;
-}
-.public-app .route-onboarding {
-  background: #f8fafc;
-  border-color: var(--border);
-}
-.public-app .route-onboarding-icon {
-  background: #fff4cf;
-  color: #786119;
 }
 .public-app .travel-mode-options input:checked + span {
   background: #fff0ad;

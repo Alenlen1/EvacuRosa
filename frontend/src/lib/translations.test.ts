@@ -3,7 +3,7 @@ import { translate } from "./translations";
 describe("public language selection", () => {
   it("translates the new planning and sheet controls", () => {
     for (const text of [
-      "Where do you need to go?",
+      "Choose a center or search the map to set your destination.",
       "Use as destination",
       "Full details",
       "Show less",
