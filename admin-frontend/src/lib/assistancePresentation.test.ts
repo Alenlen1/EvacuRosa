@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assistanceDisplayName,
   assistanceTime,
+  assistanceTravelModeLabel,
 } from "./assistancePresentation";
 
 describe("shared location presentation", () => {
@@ -23,5 +24,12 @@ describe("shared location presentation", () => {
     expect(assistanceTime("2026-10-30T16:33:00Z")).toBe("Oct 31, 12:33 AM PHT");
     expect(assistanceTime("invalid")).toBe("Time unavailable");
     expect(assistanceTime(null)).toBe("Time unavailable");
+  });
+  it("keeps request cards readable when a saved travel mode is missing or unknown", () => {
+    expect(assistanceTravelModeLabel("walking")).toBe("Walking");
+    expect(assistanceTravelModeLabel("biking")).toBe("Cycling");
+    for (const mode of [undefined, null, "walk", "constructor"]) {
+      expect(assistanceTravelModeLabel(mode)).toBe("Travel mode unavailable");
+    }
   });
 });

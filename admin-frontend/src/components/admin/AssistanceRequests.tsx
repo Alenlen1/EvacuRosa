@@ -17,7 +17,6 @@ import {
   assistanceActive,
   type AssistanceHistory,
 } from "@/lib/assistance";
-import { TRAVEL_MODES } from "@/lib/travelTime";
 import styles from "./AssistanceRequests.module.css";
 import { useConfirmation } from "./DeleteConfirmationDialog";
 import {
@@ -28,6 +27,7 @@ import {
   ASSISTANCE_MAP_COLORS,
   assistanceDisplayName,
   assistanceTime,
+  assistanceTravelModeLabel,
 } from "@/lib/assistancePresentation";
 import { MapSkeleton, RecordsSkeleton } from "./LoadingSkeleton";
 import { useAssistanceNotifications } from "./AssistanceNotifications";
@@ -722,7 +722,7 @@ function AssistanceRequestsList({
                   <span className={styles.newBadge}>New</span>
                 )}
                 <span className="assistance-mode">
-                  {TRAVEL_MODES[item.travel_mode].label}
+                  {assistanceTravelModeLabel(item.travel_mode)}
                 </span>
               </header>
               <div className="assistance-status-line">
