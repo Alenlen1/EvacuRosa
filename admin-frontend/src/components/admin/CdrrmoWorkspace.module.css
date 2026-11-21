@@ -218,12 +218,6 @@
   flex: none;
   overflow: visible;
 }
-@media (max-height: 500px) {
-  .viewport[data-workspace-section="shared-locations"]
-    :global(.cdrrmo-content) {
-    padding: 8px;
-  }
-}
 @container cdrrmo-main (max-width: 700px) {
   .viewport[data-workspace-scroll="false"][data-workspace-section="dashboard-overview"] {
     overflow-y: auto;

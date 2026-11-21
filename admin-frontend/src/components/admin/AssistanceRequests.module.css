@@ -1,50 +1,6 @@
-:global(.cdrrmo-workspace) .panel {
-  margin: 0;
-  padding: 24px;
-  border: 1px solid #e5ddd5;
-  border-radius: 16px;
-  background: #fffdf9;
-  color: #302825;
-  box-shadow: 0 4px 18px #40231a05;
-}
-
-:global(.cdrrmo-workspace) .panel :global(.assistance-list-heading) {
-  gap: 16px;
-  align-items: flex-start;
-}
-
-:global(.cdrrmo-workspace) .panel :global(.assistance-eyebrow) {
-  color: #925749;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-}
-
-:global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
-  margin: 5px 0 0;
-  font-size: 24px;
-  font-weight: 650;
-  letter-spacing: -0.6px;
-}
-
-:global(.cdrrmo-workspace) .panel :global(.assistance-count) {
-  min-width: 30px;
-  border-radius: 8px;
-  background: #f4e8e2;
-  color: #800000;
-  font-size: 13px;
-  letter-spacing: 0;
-}
-
-:global(.cdrrmo-workspace) .panel :global(.assistance-caption) {
-  margin-top: 7px;
-  max-width: 540px;
-  color: #746862;
-  line-height: 1.6;
-}
-
 :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
   align-items: center;
-  margin: 22px 0 12px;
+  margin: 0;
   padding: 12px 14px;
   gap: 12px 20px;
   border: 1px solid #e9e1da;
@@ -328,22 +284,13 @@
 }
 
 :global(.cdrrmo-workspace) .panel :global(.assistance-empty) {
-  margin-top: 18px;
+  margin: 0;
   border: 1px dashed #dfd3c7;
   border-radius: 10px;
   color: #746862;
 }
 
 @media (max-width: 600px) {
-  :global(.cdrrmo-workspace) .panel {
-    padding: 16px;
-    border-radius: 12px;
-  }
-
-  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
-    font-size: 21px;
-  }
-
   :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
     align-items: flex-start;
     flex-direction: column;
@@ -367,13 +314,7 @@
     height: 280px;
   }
 }
-
-:global(.cdrrmo-workspace) .panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  padding: 20px;
+:global(.cdrrmo-workspace [data-workspace-scroll="false"]) .panel {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -381,72 +322,22 @@
 .panel > * {
   flex-shrink: 0;
 }
-.sectionHeader {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
-}
-:global(.cdrrmo-workspace) .panel :global(.assistance-eyebrow),
-:global(.cdrrmo-workspace) .panel :global(.assistance-caption) {
-  display: none;
-}
-:global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
-  margin: 0;
-  font-size: 20px;
-}
-.headerActions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-}
-:global(.cdrrmo-workspace) .panel .recordTabs {
-  display: inline-flex;
-  gap: 4px;
-  min-width: 0;
-  padding: 3px;
-  border: 1px solid #e7ddd3;
-  border-radius: 10px;
-  background: #f5efe9;
-}
-:global(.cdrrmo-workspace) .panel .recordTabs button {
-  flex: 0 0 auto;
-  width: auto;
-  min-height: 34px;
-  padding: 6px 12px;
-  border-color: transparent;
-  border-radius: 7px;
-  background: transparent;
-  white-space: nowrap;
-}
-:global(.cdrrmo-workspace) .panel .recordTabs button[aria-pressed="true"] {
-  border-color: #e1cbbd;
-  background: #fffdf9;
-  color: #76160d;
-  box-shadow: 0 1px 3px #40231a09;
-}
 :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
-  margin: 12px 0 8px;
   padding: 8px 12px;
-}
-:global(.cdrrmo-workspace) .panel :global(.assistance-caption) {
-  margin-top: 4px;
-  font-size: 12px;
 }
 :global(.cdrrmo-workspace) .panel :global(.assistance-disclaimer) {
   padding: 8px 12px;
   font-size: 11px;
 }
-:global(.cdrrmo-workspace) .panel :global(.assistance-workspace-body) {
+:global(.cdrrmo-workspace)
+  .panel
+  :global(.assistance-workspace-body:not([hidden])) {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   gap: 18px;
   flex: 1 0 380px;
   min-height: 380px;
-  margin-top: 12px;
 }
 :global(.cdrrmo-workspace) .panel :global(.assistance-map-section) {
   display: flex;
@@ -547,7 +438,6 @@
   display: flex;
   align-items: baseline;
   gap: 8px 16px;
-  margin-bottom: 10px;
   padding: 8px 12px;
   border: 1px solid #e9e1da;
   border-radius: 9px;
@@ -598,35 +488,6 @@
   font-size: 10px;
   line-height: 1.5;
 }
-.reviewNew {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 38px;
-  min-width: 104px;
-  padding: 6px 10px;
-  border: 1px solid #d9b9aa;
-  border-radius: 8px;
-  color: #76160d;
-  background: #f7e9e3;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.reviewNew[data-empty="true"] {
-  visibility: hidden;
-}
-.reviewNew:not(:disabled):hover {
-  border-color: #b57761;
-  background: #f0dcd2;
-}
-.reviewNew:focus-visible {
-  outline: 2px solid #76160d;
-  outline-offset: 2px;
-}
 .newBadge {
   flex-shrink: 0;
   margin-left: auto;
@@ -641,25 +502,6 @@
   border-color: #c79484;
   background: #fff9f4;
   box-shadow: inset 3px 0 #76160d;
-}
-@container cdrrmo-main (max-width: 600px) {
-  .reviewNew {
-    min-width: 86px;
-    padding: 6px 8px;
-    font-size: 11px;
-  }
-  .reviewNew > svg:last-child {
-    display: none;
-  }
-  .headerActions {
-    justify-content: space-between;
-    gap: 8px;
-    width: 100%;
-  }
-  :global(.cdrrmo-workspace) .panel .recordTabs button {
-    padding-inline: 10px;
-    font-size: 11px;
-  }
 }
 :global(.cdrrmo-workspace) .refreshButton {
   flex-shrink: 0;
@@ -734,22 +576,6 @@
   .legend li:last-child {
     grid-column: 1 / -1;
   }
-  :global(.cdrrmo-workspace) .panel {
-    padding: 14px;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading) {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
-    margin: 0;
-    font-size: 18px;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-eyebrow),
-  :global(.cdrrmo-workspace) .panel :global(.assistance-caption),
   .updateHint {
     display: none;
   }
@@ -758,7 +584,6 @@
     flex-wrap: nowrap;
     align-items: center;
     gap: 8px;
-    margin-block: 12px 8px;
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar label) {
     display: flex;
@@ -801,29 +626,11 @@
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-view-tabs) {
     display: flex;
-    gap: 6px;
-    margin-top: 10px;
-    padding: 4px;
-    border-radius: 9px;
-    background: #f5eee6;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-view-tabs button) {
-    flex: 1;
-    min-height: 36px;
-    border-radius: 6px;
-    color: #765e4e;
-    font-size: 11px;
   }
   :global(.cdrrmo-workspace)
     .panel
-    :global(.assistance-view-tabs button[aria-pressed="true"]) {
-    background: #fffdf9;
-    color: #800000;
-    box-shadow: 0 1px 4px #30100c12;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-workspace-body) {
+    :global(.assistance-workspace-body:not([hidden])) {
     grid-template-columns: minmax(0, 1fr);
-    margin-top: 10px;
   }
   :global(.cdrrmo-workspace)
     .panel
@@ -840,30 +647,14 @@
   }
 }
 @media (max-height: 650px) {
-  :global(.cdrrmo-workspace) .panel {
-    padding: 12px;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-eyebrow),
-  :global(.cdrrmo-workspace) .panel :global(.assistance-caption) {
-    display: none;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading h2) {
-    font-size: 18px;
-    margin: 0;
-  }
   :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
-    margin: 8px 0 6px;
     padding: 6px 10px;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-workspace-body) {
-    margin-top: 10px;
   }
 }
 @media (max-height: 500px) {
   .legend {
     flex-direction: row;
     gap: 8px;
-    margin-bottom: 6px;
     padding: 5px 8px;
     font-size: 10px;
   }
@@ -871,18 +662,6 @@
     display: flex;
     width: auto;
   }
-  :global(.cdrrmo-workspace) .panel {
-    position: relative;
-    padding: 8px;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading) {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-list-heading > div),
   .mapFooter > span {
     position: absolute;
     width: 1px;
@@ -900,7 +679,6 @@
     padding: 6px;
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-toolbar) {
-    margin: 0 0 6px;
     padding: 4px 8px;
     flex-wrap: nowrap;
   }
@@ -917,16 +695,6 @@
   }
   .updateHint {
     display: none;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-view-tabs) {
-    margin-top: 0;
-    padding: 3px;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-view-tabs button) {
-    min-height: 32px;
-  }
-  :global(.cdrrmo-workspace) .panel :global(.assistance-workspace-body) {
-    margin-top: 8px;
   }
   :global(.cdrrmo-workspace) .panel :global(.assistance-map-section) {
     padding: 6px;

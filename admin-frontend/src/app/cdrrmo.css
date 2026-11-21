@@ -32,9 +32,126 @@ html:has(.cdrrmo-workspace) {
   min-height: 100%;
   overflow: visible;
 }
-.cdrrmo-workspace .cdrrmo-content > .center-management,
-.cdrrmo-workspace #shared-locations .admin-assistance {
+.cdrrmo-workspace .cdrrmo-panel {
+  --panel-padding: 20px;
+  --panel-gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--panel-gap);
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
   margin: 0;
+  padding: var(--panel-padding);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fffdf9;
+}
+.cdrrmo-workspace [data-workspace-scroll="true"] .cdrrmo-panel {
+  height: auto;
+  overflow: visible;
+}
+.cdrrmo-panel-heading {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+.cdrrmo-workspace .cdrrmo-panel-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(19px, 2.3cqi, 24px);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.cdrrmo-panel-description {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.cdrrmo-panel-description svg {
+  flex-shrink: 0;
+}
+.cdrrmo-workspace .cdrrmo-panel-action {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  white-space: nowrap;
+}
+.cdrrmo-view-controls {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cdrrmo-view-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 5px 10px;
+  border: 1px solid #e4dad0;
+  border-radius: 9px;
+  background: #fffdf9;
+  color: #51443c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cdrrmo-view-button:hover:not(:disabled) {
+  background: #f7f1eb;
+}
+.cdrrmo-view-button[aria-pressed="true"] {
+  border-color: #ba9890;
+  background: #f2e8e3;
+  color: #72170e;
+}
+.cdrrmo-view-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.cdrrmo-view-count {
+  min-width: 23px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  background: #f1ebe5;
+  text-align: center;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.cdrrmo-view-button[aria-pressed="true"] .cdrrmo-view-count {
+  background: #72170e;
+  color: #fffaf6;
+}
+@container cdrrmo-main (max-width: 760px) {
+  .cdrrmo-workspace .cdrrmo-panel {
+    --panel-padding: 14px;
+    --panel-gap: 14px;
+  }
+  .cdrrmo-workspace .cdrrmo-panel-action {
+    padding-inline: 10px;
+    font-size: 13px;
+  }
+  .cdrrmo-view-button {
+    flex: 1 0 auto;
+  }
+}
+@media (max-height: 650px) {
+  .cdrrmo-workspace .cdrrmo-panel {
+    --panel-padding: 12px;
+    --panel-gap: 12px;
+  }
 }
 .cdrrmo-workspace .eyebrow {
   color: #865247;
@@ -97,57 +214,6 @@ html:has(.cdrrmo-workspace) {
 }
 .cdrrmo-workspace .error-message {
   color: #a52e25;
-}
-.cdrrmo-workspace .admin-hazard-section {
-  padding: 24px;
-  border-color: var(--border);
-  border-radius: 16px;
-  background: #fffdf9;
-  box-shadow: 0 3px 18px #49382b05;
-}
-.cdrrmo-workspace .cdrrmo-heading-identity {
-  display: flex;
-  align-items: flex-start;
-  gap: 13px;
-  min-width: 0;
-}
-.cdrrmo-workspace .cdrrmo-section-symbol {
-  display: grid;
-  place-items: center;
-  flex: 0 0 44px;
-  width: 44px;
-  height: 44px;
-  border: 1px solid #ead7cb;
-  border-radius: 12px;
-  background: #f7eee7;
-  color: #800000;
-}
-.cdrrmo-workspace .cdrrmo-section-heading h2 {
-  color: var(--ink);
-  font-size: 23px;
-  font-weight: 650;
-  line-height: 1.3;
-  letter-spacing: -0.45px;
-}
-.cdrrmo-workspace .cdrrmo-section-heading p,
-.cdrrmo-workspace .cdrrmo-map-label {
-  color: var(--muted);
-  line-height: 1.6;
-}
-.cdrrmo-workspace .cdrrmo-report-steps {
-  gap: 10px 22px;
-  margin: 18px 0;
-  padding: 13px 16px;
-  border: 1px solid #eee2d7;
-  border-radius: 10px;
-  background: #fcf8f3;
-}
-.cdrrmo-workspace .cdrrmo-report-steps li {
-  color: #66564c;
-}
-.cdrrmo-workspace .cdrrmo-report-steps li > span {
-  background: #f0dfd3;
-  color: #704035;
 }
 .cdrrmo-workspace .hazard-editor {
   grid-template-columns: minmax(0, 1fr) 350px;
@@ -488,9 +554,6 @@ html:has(.cdrrmo-workspace) {
   .cdrrmo-workspace .cdrrmo-content {
     padding: 14px 16px;
   }
-  .cdrrmo-workspace .admin-hazard-section {
-    padding: 18px;
-  }
   .cdrrmo-workspace .hazard-form {
     padding: 18px;
   }
@@ -499,21 +562,6 @@ html:has(.cdrrmo-workspace) {
   }
 }
 @media (max-width: 540px) {
-  .cdrrmo-workspace .cdrrmo-section-heading h2 {
-    font-size: 21px;
-  }
-  .cdrrmo-workspace .cdrrmo-report-steps {
-    flex-direction: column;
-    gap: 10px;
-  }
-  .cdrrmo-workspace .cdrrmo-heading-identity {
-    gap: 10px;
-  }
-  .cdrrmo-workspace .cdrrmo-section-symbol {
-    flex-basis: 38px;
-    width: 38px;
-    height: 38px;
-  }
   .cdrrmo-workspace .hazard-tabs button {
     gap: 5px;
     font-size: 12px;
@@ -533,60 +581,12 @@ html:has(.cdrrmo-workspace) {
 .cdrrmo-workspace [data-workspace-scroll="true"] #shared-locations {
   height: auto;
 }
-.cdrrmo-workspace .admin-hazard-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  padding: 20px;
-}
-.cdrrmo-workspace .cdrrmo-section-heading {
-  flex-shrink: 0;
-}
-.cdrrmo-workspace .cdrrmo-section-heading h2 {
-  margin-top: 0;
-  font-size: 21px;
-}
-.cdrrmo-workspace .cdrrmo-section-heading p {
-  font-size: 12px;
-}
-.cdrrmo-workspace .cdrrmo-report-steps {
-  flex-shrink: 0;
-  margin: 0;
-  padding: 8px 12px;
-  gap: 12px;
-}
-.cdrrmo-workspace .cdrrmo-report-steps li {
-  font-size: 11px;
-}
 .cdrrmo-workspace .hazard-workspace {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: 10px;
-}
-.cdrrmo-workspace .hazard-view-tabs {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-.cdrrmo-workspace .hazard-view-tabs button {
-  min-height: 38px;
-  padding: 8px 14px;
-  border: 1px solid #e5d8cd;
-  border-radius: 8px;
-  color: #765e4e;
-  background: #fffdf9;
-  font-size: 12px;
-  font-weight: 600;
-}
-.cdrrmo-workspace .hazard-view-tabs button[aria-pressed="true"] {
-  color: #800000;
-  background: #f7e9e3;
-  border-color: #dfb9ac;
+  gap: var(--panel-gap);
 }
 .cdrrmo-workspace .hazard-editor {
   flex: 1;
@@ -670,29 +670,6 @@ html:has(.cdrrmo-workspace) {
   line-height: 1.5;
 }
 @container cdrrmo-main (max-width: 760px) {
-  .cdrrmo-workspace .admin-hazard-section {
-    padding: 14px;
-    gap: 10px;
-  }
-  .cdrrmo-workspace .cdrrmo-report-steps,
-  .cdrrmo-workspace .cdrrmo-section-heading p,
-  .cdrrmo-workspace .cdrrmo-map-label,
-  .cdrrmo-workspace .cdrrmo-heading-identity .eyebrow {
-    display: none;
-  }
-  .cdrrmo-workspace .cdrrmo-section-heading h2 {
-    font-size: 18px;
-  }
-  .cdrrmo-workspace .cdrrmo-section-symbol {
-    width: 32px;
-    height: 32px;
-    flex-basis: 32px;
-  }
-  .cdrrmo-workspace .hazard-view-tabs button {
-    flex: 1;
-    padding-inline: 8px;
-    font-size: 11px;
-  }
   .cdrrmo-workspace .hazard-editor {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto minmax(120px, 1fr) minmax(0, 1fr);
@@ -721,23 +698,11 @@ html:has(.cdrrmo-workspace) {
   .cdrrmo-workspace .cdrrmo-content {
     padding: 12px 16px;
   }
-  .cdrrmo-workspace .cdrrmo-report-steps,
-  .cdrrmo-workspace .cdrrmo-section-heading p,
-  .cdrrmo-workspace .cdrrmo-heading-identity .eyebrow {
-    display: none;
-  }
-  .cdrrmo-workspace .admin-hazard-section {
-    padding: 12px;
-    gap: 8px;
-  }
   .cdrrmo-workspace .hazard-event-selector p {
     display: none;
   }
 }
 @media (max-height: 500px) {
-  .cdrrmo-workspace .cdrrmo-section-heading {
-    display: none;
-  }
   .cdrrmo-workspace .hazard-event-selector {
     display: flex;
     align-items: center;
@@ -750,11 +715,6 @@ html:has(.cdrrmo-workspace) {
   .cdrrmo-workspace .hazard-event-selector select {
     min-width: 0;
   }
-}
-
-.cdrrmo-workspace [data-workspace-scroll="true"] .admin-hazard-section {
-  height: auto;
-  overflow: visible;
 }
 .cdrrmo-workspace [data-workspace-scroll="true"] .hazard-workspace,
 .cdrrmo-workspace [data-workspace-scroll="true"] .hazard-editor {

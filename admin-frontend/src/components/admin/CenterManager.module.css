@@ -1,53 +1,3 @@
-:global(.cdrrmo-workspace) .manager {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 20px;
-  overflow: hidden;
-  border: 1px solid #e6dcd3;
-  border-radius: 16px;
-  background: #fffdf9;
-  color: #302825;
-}
-.sectionHeading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  flex-shrink: 0;
-}
-:global(.cdrrmo-workspace) .sectionHeading h2 {
-  margin: 0;
-  font-size: clamp(19px, 2.3cqi, 24px);
-  font-weight: 700;
-  line-height: 1.25;
-}
-:global(.cdrrmo-workspace) .coverage {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 6px 0 0;
-  color: #716158;
-  font-size: 13px;
-  line-height: 1.4;
-}
-.coverage svg {
-  flex-shrink: 0;
-}
-:global(.cdrrmo-workspace) .registerButton {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 44px;
-  white-space: nowrap;
-}
 :global(.cdrrmo-workspace) .error,
 :global(.cdrrmo-workspace) .success {
   flex-shrink: 0;
@@ -236,28 +186,6 @@
 .editor[hidden] {
   display: none;
 }
-.filters {
-  display: flex;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.filter {
-  --filter-accent: #70443a;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 44px;
-  padding: 5px 10px;
-  border: 1px solid #e4dad0;
-  border-radius: 9px;
-  background: #fffdf9;
-  color: #51443c;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
 .filter[data-status="AVAILABLE"] {
   --filter-accent: #356147;
 }
@@ -272,27 +200,6 @@
 }
 .filter > svg {
   color: var(--filter-accent);
-}
-.filter:hover {
-  background: #f7f1eb;
-}
-.filter[aria-pressed="true"] {
-  border-color: #ba9890;
-  background: #f2e8e3;
-  color: #72170e;
-}
-.filterCount {
-  min-width: 23px;
-  padding: 2px 4px;
-  border-radius: 5px;
-  background: #f1ebe5;
-  text-align: center;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-.filter[aria-pressed="true"] .filterCount {
-  background: #72170e;
-  color: #fffaf6;
 }
 .directoryToolbar {
   display: flex;
@@ -524,19 +431,8 @@
 }
 
 @container cdrrmo-main (max-width: 720px) {
-  :global(.cdrrmo-workspace) .manager {
-    padding: 14px;
-    gap: 14px;
-  }
-  :global(.cdrrmo-workspace) .registerButton {
-    padding-inline: 10px;
-    font-size: 13px;
-  }
   .search {
     width: 100%;
-  }
-  .filter {
-    flex: 1 0 auto;
   }
   .filter > svg {
     display: none;
@@ -623,17 +519,9 @@
   }
 }
 @media (max-height: 650px) {
-  :global(.cdrrmo-workspace) .manager {
-    padding: 12px;
-    gap: 12px;
-  }
   .formActions {
     bottom: -16px;
   }
-}
-:global([data-workspace-scroll="true"]) .manager {
-  height: auto;
-  overflow: visible;
 }
 :global([data-workspace-scroll="true"]) .manager :is(.directory, .editor) {
   flex: none;

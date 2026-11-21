@@ -274,24 +274,25 @@ export function CenterManager({
 
   return (
     <section
-      className={`center-management cdrrmo-section-anchor ${styles.manager}`}
+      className={`cdrrmo-panel cdrrmo-section-anchor ${styles.manager}`}
       id="evacuation-centers"
       tabIndex={-1}
       aria-labelledby="center-management-title"
     >
-      <div className={styles.sectionHeading}>
+      <div className="cdrrmo-panel-heading">
         <div>
           <h2 id="center-management-title">Center directory</h2>
           {barangaysWithCenters > 0 && (
-            <p className={styles.coverage}>
+            <p className="cdrrmo-panel-description">
               <MapPin size={15} aria-hidden="true" />
               {barangaysWithCenters}{" "}
-              {barangaysWithCenters === 1 ? "barangay" : "barangays"} with centers
+              {barangaysWithCenters === 1 ? "barangay" : "barangays"} with
+              centers
             </p>
           )}
         </div>
         <button
-          className={`primary-button ${styles.registerButton}`}
+          className="primary-button cdrrmo-panel-action"
           ref={editorTriggerRef}
           type="button"
           aria-expanded={editorOpen}
@@ -573,13 +574,13 @@ export function CenterManager({
       </div>
       <div className={styles.directory} hidden={editorOpen}>
         <div
-          className={styles.filters}
+          className="cdrrmo-view-controls"
           role="group"
           aria-label="Filter by status"
         >
           {centerFilters.map(({ status, label, icon: Icon }) => (
             <button
-              className={styles.filter}
+              className={`cdrrmo-view-button ${styles.filter}`}
               key={status}
               type="button"
               aria-pressed={statusFilter === status}
@@ -588,7 +589,7 @@ export function CenterManager({
             >
               <Icon size={16} aria-hidden="true" />
               {label}
-              <span className={styles.filterCount}>
+              <span className="cdrrmo-view-count">
                 {(status === "all"
                   ? centers.length
                   : statusCounts[status]
