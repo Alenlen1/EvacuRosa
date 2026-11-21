@@ -23,6 +23,7 @@ export function RouteSheet({
   desktopActions,
   mobileActions,
   mobileTravelMode,
+  compactDetails = false,
   onClearDestination,
   hideDetails = false,
   activeView,
@@ -39,6 +40,7 @@ export function RouteSheet({
   desktopActions?: ReactNode;
   mobileActions?: ReactNode;
   mobileTravelMode?: ReactNode;
+  compactDetails?: boolean;
   onClearDestination?: () => void;
   hideDetails?: boolean;
   activeView: "map" | "centers" | "hazards";
@@ -71,6 +73,7 @@ export function RouteSheet({
     <aside
       className={`information-panel route-sheet sheet-${state} ${styles.sheet}`}
       data-active-view={activeView}
+      data-compact-details={compactDetails || undefined}
       aria-label={t("Navigation information")}
     >
       <nav className="sheet-view-tabs" aria-label={t("Map views")}>

@@ -17,7 +17,7 @@ import {
   CdrrmoDashboard,
   type DashboardHazards,
 } from "@/components/admin/CdrrmoDashboard";
-import { MapPin, SlidersHorizontal, TriangleAlert } from "lucide-react";
+import { MapPin, SlidersHorizontal } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -600,36 +600,18 @@ export default function AdminDashboardPage() {
         <CdrrmoSection id="hazard-management">
           <section
             id="hazard-management"
-            className="admin-hazard-section cdrrmo-section-anchor"
+            className="cdrrmo-panel cdrrmo-section-anchor"
             tabIndex={-1}
             aria-labelledby="hazard-management-title"
           >
-            <div className="cdrrmo-section-heading">
-              <div className="cdrrmo-heading-identity">
-                <span className="cdrrmo-section-symbol" aria-hidden="true">
-                  <TriangleAlert size={22} />
-                </span>
-                <div>
-                  <span className="eyebrow">CITYWIDE REPORTING</span>
-                  <h2 id="hazard-management-title">Hazard management</h2>
-                  <p>Flood, fire and verified earthquake road impacts.</p>
-                </div>
+            <div className="cdrrmo-panel-heading">
+              <div>
+                <h2 id="hazard-management-title">Hazard reports</h2>
+                <p className="cdrrmo-panel-description">
+                  Flood, fire and earthquake reports across Santa Rosa
+                </p>
               </div>
             </div>
-            <ol
-              className="cdrrmo-report-steps"
-              aria-label="How to report a hazard"
-            >
-              <li>
-                <span>1</span>Choose a hazard type
-              </li>
-              <li>
-                <span>2</span>Select a point on the map
-              </li>
-              <li>
-                <span>3</span>Review details and save
-              </li>
-            </ol>
             <HazardPlacementMapWrapper
               floodReports={floodReports}
               fireIncidents={fireIncidents}

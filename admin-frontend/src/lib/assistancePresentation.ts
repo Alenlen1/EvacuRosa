@@ -1,3 +1,5 @@
+import { TRAVEL_MODES, type TravelMode } from "../../../frontend/src/lib/travelTime";
+
 export const ASSISTANCE_MAP_COLORS = {
   PENDING: "#2563eb",
   ACKNOWLEDGED: "#b7791f",
@@ -23,6 +25,13 @@ export function assistanceDisplayName(request: {
     request.display_name?.trim() ||
     `Request #${request.id.slice(0, 8).toUpperCase()}`
   );
+}
+
+export function assistanceTravelModeLabel(mode: unknown) {
+  if (typeof mode === "string" && Object.hasOwn(TRAVEL_MODES, mode)) {
+    return TRAVEL_MODES[mode as TravelMode].label;
+  }
+  return "Travel mode unavailable";
 }
 
 export function assistanceTime(value: string | null | undefined) {

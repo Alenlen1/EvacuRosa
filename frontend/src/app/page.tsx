@@ -879,9 +879,17 @@ function PublicHome({
     (displayedCenter?.status === "FULL" ||
       displayedCenter?.status === "CLOSED");
   const collapsedModeHint =
-    panel === "map" && sheetState === "collapsed"
+    panel === "map" && destination && sheetState === "collapsed"
       ? t(TRAVEL_MODES[travelMode].label)
       : null;
+  const planningRoute =
+    panel === "map" &&
+    !destination &&
+    !result &&
+    !error &&
+    !loading &&
+    !restoring &&
+    !navigationActive;
   const actionHint = browsingCenter
     ? centerNotAccepting
       ? t("This center is not accepting arrivals. Choose another center.")
@@ -889,18 +897,18 @@ function PublicHome({
     : !geolocation.position
       ? t("Enable location access to find a route")
       : (routingDisabledReason ??
-        (destination
-          ? collapsedModeHint
-          : t("Choose a center or search the map to set your destination.")));
+        (planningRoute
+          ? t("Choose a center or search the map to set your destination.")
+          : collapsedModeHint));
 
-  const routeButtons = (
+  const renderRouteButtons = (hintId: string) => (
     <>
       {browsingCenter ? (
         <button
           type="button"
           className="primary-button center-route-button"
           disabled={!!centerNotAccepting}
-          aria-describedby={actionHint ? "destination-action-hint" : undefined}
+          aria-describedby={actionHint ? hintId : undefined}
           onClick={useCenterAsDestination}
         >
           <MapPin size={18} aria-hidden="true" />
@@ -919,9 +927,7 @@ function PublicHome({
                 recheckingHazards ||
                 !canRoute
               }
-              aria-describedby={
-                actionHint ? "destination-action-hint" : undefined
-              }
+              aria-describedby={actionHint ? hintId : undefined}
               onClick={() => {
                 setPanel("map");
                 setSheetState("collapsed");
@@ -941,6 +947,7 @@ function PublicHome({
               recheckingHazards ||
               !canRoute
             }
+            aria-describedby={actionHint ? hintId : undefined}
             onClick={() => {
               setSelectedCenter(null);
               setPanel("map");
@@ -1196,6 +1203,7 @@ function PublicHome({
           onViewChange={choosePanel}
           onBackToMap={backToMap}
           detailsRef={detailsRef}
+          compactDetails={planningRoute}
           mobileTravelMode={
             panel === "map" && (sheetState !== "collapsed" || navigationActive)
               ? travelModeSelector
@@ -1218,11 +1226,11 @@ function PublicHome({
                   {t("Checking route against updated hazards...")}
                 </p>
               )}
-              {routeButtons}
+              {renderRouteButtons("mobile-destination-hint")}
               {actionHint && (
                 <p
                   className="mobile-routing-hint"
-                  id="destination-action-hint"
+                  id="mobile-destination-hint"
                   role="status"
                 >
                   {actionHint}
@@ -1240,9 +1248,15 @@ function PublicHome({
                   {t("Checking route against updated hazards...")}
                 </p>
               )}
-              <div className="sheet-primary-actions">{routeButtons}</div>
+              <div className="sheet-primary-actions">
+                {renderRouteButtons("desktop-destination-hint")}
+              </div>
               {actionHint && (
-                <p className="desktop-routing-hint" role="status">
+                <p
+                  className="desktop-routing-hint"
+                  id="desktop-destination-hint"
+                  role="status"
+                >
                   {actionHint}
                 </p>
               )}
@@ -1338,34 +1352,6 @@ function PublicHome({
             <section className="destination-heading">
               {routeLabel.subtitle && <p>{routeLabel.subtitle}</p>}
             </section>
-          )}
-          {panel === "map" && (
-            <div
-              className={`panel-heading ${result || destination ? "route-intro" : ""}`}
-            >
-              <span className="eyebrow">SANTA ROSA · LAGUNA</span>
-              <h2>{t(result ? "Your route" : "Find your way to safety")}</h2>
-              <p>
-                {t(
-                  "Choose a point on the map or find a recommended evacuation center.",
-                )}
-              </p>
-            </div>
-          )}
-          {panel === "map" && !destination && !result && !error && (
-            <div className="route-onboarding">
-              <span className="route-onboarding-icon">
-                <MapPin size={22} aria-hidden="true" />
-              </span>
-              <div>
-                <strong>{t("Where do you need to go?")}</strong>
-                <p>
-                  {t(
-                    "Search above or tap the map. No destination? Find an evacuation center below.",
-                  )}
-                </p>
-              </div>
-            </div>
           )}
           {panel === "hazards" && (
             <HazardReports

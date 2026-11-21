@@ -94,12 +94,23 @@
 .staff-skeleton-navigation > .staff-skeleton {
   height: 46px;
 }
-.staff-skeleton-section-copy {
-  flex: 1;
-  width: 100%;
+.staff-skeleton-panel-title {
+  display: grid;
+  gap: 6px;
+  width: min(100%, 240px);
 }
-.staff-skeleton-center-record {
-  gap: 20px;
+.staff-skeleton-panel-controls > .staff-skeleton {
+  width: min(28%, 110px);
+  height: 44px;
+  border-radius: 9px;
+}
+.staff-skeleton-directory-rows {
+  display: grid;
+  gap: 2px;
+}
+.staff-skeleton-directory-rows > .staff-skeleton {
+  height: 64px;
+  border-radius: 9px;
 }
 .staff-skeleton-center-directory > .staff-skeleton-input {
   width: min(44%, 340px);

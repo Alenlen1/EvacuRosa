@@ -1,15 +1,7 @@
 ﻿"use client";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import {
-  ArrowRight,
-  Bell,
-  Clock3,
-  Info,
-  MapPin,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
+import { Bell, Clock3, Info, MapPin, RefreshCw, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import {
   fetchAssistanceRequestPage,
@@ -25,7 +17,6 @@ import {
   assistanceActive,
   type AssistanceHistory,
 } from "@/lib/assistance";
-import { TRAVEL_MODES } from "@/lib/travelTime";
 import styles from "./AssistanceRequests.module.css";
 import { useConfirmation } from "./DeleteConfirmationDialog";
 import {
@@ -36,6 +27,7 @@ import {
   ASSISTANCE_MAP_COLORS,
   assistanceDisplayName,
   assistanceTime,
+  assistanceTravelModeLabel,
 } from "@/lib/assistancePresentation";
 import { MapSkeleton, RecordsSkeleton } from "./LoadingSkeleton";
 import { useAssistanceNotifications } from "./AssistanceNotifications";
@@ -479,59 +471,56 @@ function AssistanceRequestsList({
   }
   return (
     <section
-      className={`admin-assistance ${styles.panel}`}
+      className={`cdrrmo-panel ${styles.panel}`}
       aria-labelledby="assistance-requests-title"
     >
-      <div className={styles.sectionHeader}>
-        <div className="assistance-list-heading">
-          <div>
-            <span className="assistance-eyebrow">CDRRMO</span>
-            <h2 id="assistance-requests-title">
-              {archived ? "Shared location archive" : "Shared locations"}{" "}
-              <span className="assistance-count">{requests.length}</span>
-            </h2>
-            <p className="assistance-caption">
-              {archived
-                ? "Completed and cancelled requests, with status history. Records remain subject to scheduled retention cleanup."
-                : "Review reported locations and update assistance requests."}
-            </p>
-          </div>
+      <div className="cdrrmo-panel-heading">
+        <div>
+          <h2 id="assistance-requests-title">
+            {archived ? "Shared location archive" : "Assistance requests"}
+          </h2>
+          <p className="cdrrmo-panel-description">
+            {archived
+              ? "Completed and cancelled requests"
+              : "Review reported locations and update response status"}
+          </p>
         </div>
-        <div className={styles.headerActions}>
-          <div
-            className={`hazard-view-tabs ${styles.recordTabs}`}
-            aria-label="Assistance records"
-          >
-            <button
-              type="button"
-              aria-pressed={!archived}
-              disabled={busy !== null}
-              onClick={() => onArchiveChange(false)}
-            >
-              Active requests
-            </button>
-            <button
-              type="button"
-              aria-pressed={archived}
-              disabled={busy !== null}
-              onClick={() => onArchiveChange(true)}
-            >
-              Archive
-            </button>
-          </div>
+        {!archived && unread.length > 0 && (
           <button
             type="button"
-            className={styles.reviewNew}
-            data-empty={!unread.length}
-            disabled={busy !== null || !unread.length}
+            className="primary-button cdrrmo-panel-action"
+            disabled={busy !== null}
             aria-label={`Review ${unread.length} new assistance ${unread.length === 1 ? "request" : "requests"}`}
             onClick={() => review()}
           >
             <Bell size={15} aria-hidden="true" />
-            <span>{unread.length} new</span>
-            <ArrowRight size={14} aria-hidden="true" />
+            <span>Review {unread.length} new</span>
           </button>
-        </div>
+        )}
+      </div>
+      <div
+        className="cdrrmo-view-controls"
+        role="group"
+        aria-label="Assistance records"
+      >
+        <button
+          className="cdrrmo-view-button"
+          type="button"
+          aria-pressed={!archived}
+          disabled={busy !== null}
+          onClick={() => onArchiveChange(false)}
+        >
+          Active requests
+        </button>
+        <button
+          className="cdrrmo-view-button"
+          type="button"
+          aria-pressed={archived}
+          disabled={busy !== null}
+          onClick={() => onArchiveChange(true)}
+        >
+          Archive
+        </button>
       </div>
       <div className="assistance-toolbar">
         <span
@@ -565,7 +554,8 @@ function AssistanceRequestsList({
           </select>
         </label>
         <span className={styles.updateHint}>
-          Automatic updates · Page {page + 1}
+          {requests.length} {requests.length === 1 ? "request" : "requests"} ·
+          Page {page + 1}
         </span>
         <button
           className={`secondary-button ${styles.refreshButton}`}
@@ -629,8 +619,13 @@ function AssistanceRequestsList({
         <RecordsSkeleton label="Loading assistance requests..." />
       )}
       {!!requests.length && (
-        <div className="assistance-view-tabs" aria-label="Shared location view">
+        <div
+          className="cdrrmo-view-controls assistance-view-tabs"
+          role="group"
+          aria-label="Shared location view"
+        >
           <button
+            className="cdrrmo-view-button"
             type="button"
             aria-pressed={mobileView === "requests"}
             onClick={() => {
@@ -641,6 +636,7 @@ function AssistanceRequestsList({
             Requests ({requests.length})
           </button>
           <button
+            className="cdrrmo-view-button"
             type="button"
             aria-pressed={mobileView === "map"}
             onClick={() => setMobileView("map")}
@@ -649,7 +645,11 @@ function AssistanceRequestsList({
           </button>
         </div>
       )}
-      <div className="assistance-workspace-body" data-mobile-view={mobileView}>
+      <div
+        className="assistance-workspace-body"
+        data-mobile-view={mobileView}
+        hidden={!requests.length}
+      >
         {!!requests.length && (
           <div
             ref={mapSection}
@@ -722,7 +722,7 @@ function AssistanceRequestsList({
                   <span className={styles.newBadge}>New</span>
                 )}
                 <span className="assistance-mode">
-                  {TRAVEL_MODES[item.travel_mode].label}
+                  {assistanceTravelModeLabel(item.travel_mode)}
                 </span>
               </header>
               <div className="assistance-status-line">
@@ -883,8 +883,13 @@ function AssistanceRequestsList({
         </div>
       </div>
       {(hasMore || page > 0) && (
-        <div className="hazard-view-tabs" aria-label="Request pages">
+        <div
+          className="cdrrmo-view-controls"
+          role="group"
+          aria-label="Request pages"
+        >
           <button
+            className="cdrrmo-view-button"
             type="button"
             disabled={loading || busy !== null || page === 0}
             onClick={() => {
@@ -897,6 +902,7 @@ function AssistanceRequestsList({
             Previous
           </button>
           <button
+            className="cdrrmo-view-button"
             type="button"
             disabled={loading || busy !== null || !hasMore}
             onClick={() => {

@@ -640,8 +640,13 @@ export default function HazardPlacementMap({
 
   return (
     <div className="hazard-workspace">
-      <div className="hazard-view-tabs" aria-label="Hazard workspace view">
+      <div
+        className="cdrrmo-view-controls"
+        role="group"
+        aria-label="Hazard workspace view"
+      >
         <button
+          className="cdrrmo-view-button"
           type="button"
           aria-pressed={workspaceView === "report"}
           onClick={() => setWorkspaceView("report")}
@@ -649,17 +654,20 @@ export default function HazardPlacementMap({
           Report a hazard
         </button>
         <button
+          className="cdrrmo-view-button"
           type="button"
           aria-pressed={workspaceView === "records"}
           onClick={() => setWorkspaceView("records")}
         >
-          Manage records (
-          {floodReports.length +
-            fireIncidents.length +
-            earthquakeRoadImpacts.length}
-          )
+          Manage records
+          <span className="cdrrmo-view-count">
+            {floodReports.length +
+              fireIncidents.length +
+              earthquakeRoadImpacts.length}
+          </span>
         </button>
         <button
+          className="cdrrmo-view-button"
           type="button"
           aria-pressed={workspaceView === "archive"}
           onClick={() => setWorkspaceView("archive")}

@@ -309,6 +309,15 @@
     clip-path: inset(50%);
   }
   :global(.public-app)
+    .sheet[data-compact-details]
+    :global(.sheet-inline-travel-mode legend) {
+    position: static;
+    width: auto;
+    height: auto;
+    margin-bottom: 6px;
+    clip-path: none;
+  }
+  :global(.public-app)
     .sheet
     :global(.sheet-inline-travel-mode .travel-mode-help) {
     display: none;
@@ -326,6 +335,10 @@
   :global(.public-app) .sheet:global(.sheet-expanded) {
     height: 90%;
     max-height: 90%;
+  }
+  :global(.public-app)
+    .sheet[data-compact-details]:global(.sheet-expanded) {
+    height: auto;
   }
   :global(.public-app) .sheet :global(.sheet-mobile-actions) {
     gap: 8px;

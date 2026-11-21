@@ -1,4 +1,5 @@
 import { publicSans } from "@/app/fonts/publicSans";
+import type { ReactNode } from "react";
 import type { WorkspaceRole } from "@/lib/workspaceLoading";
 import { StaffHeader } from "./StaffHeader";
 import { CdrrmoSection, CdrrmoWorkspace } from "./CdrrmoWorkspace";
@@ -122,59 +123,31 @@ function WorkspaceHeadingSkeleton({ role }: { role: WorkspaceRole | null }) {
   );
 }
 
-function CenterManagementSkeleton() {
+function CdrrmoPanelSkeleton({
+  controls,
+  action = false,
+  children,
+}: {
+  controls: number;
+  action?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <section className={`center-management ${centerStyles.manager}`}>
-      <div className={centerStyles.sectionHeading}>
-        <div
-          className={`${centerStyles.headingCopy} staff-skeleton-section-copy`}
-        >
-          <SkeletonBlock className={centerStyles.sectionIcon} />
-          <div className="staff-skeleton-copy">
-            <SkeletonBlock className="staff-skeleton-eyebrow" />
-            <SkeletonBlock className="staff-skeleton-title" />
-            <SkeletonBlock className="staff-skeleton-line" />
-          </div>
+    <div className="cdrrmo-panel">
+      <div className="cdrrmo-panel-heading">
+        <div className="staff-skeleton-panel-title">
+          <SkeletonBlock className="staff-skeleton-title" />
+          <SkeletonBlock className="staff-skeleton-line" />
         </div>
-        <SkeletonBlock className="staff-skeleton-register-button" />
+        {action && <SkeletonBlock className="staff-skeleton-register-button" />}
       </div>
-      <div className={centerStyles.stats}>
-        {Array.from({ length: 4 }, (_, index) => (
-          <div className={centerStyles.stat} key={index}>
-            <SkeletonBlock className={centerStyles.statIcon} />
-            <div className="staff-skeleton-copy">
-              <SkeletonBlock className="staff-skeleton-line" />
-              <SkeletonBlock className="staff-skeleton-metric-value" />
-            </div>
-          </div>
+      <div className="cdrrmo-view-controls staff-skeleton-panel-controls">
+        {Array.from({ length: controls }, (_, index) => (
+          <SkeletonBlock key={index} />
         ))}
       </div>
-      <div
-        className={`${centerStyles.directoryToolbar} staff-skeleton-center-directory`}
-      >
-        <SkeletonBlock className="staff-skeleton-title" />
-        <SkeletonBlock className="staff-skeleton-input" />
-      </div>
-      <div className={centerStyles.centerGrid}>
-        {Array.from({ length: 2 }, (_, index) => (
-          <div
-            className={`${centerStyles.centerCard} staff-skeleton-center-record`}
-            key={index}
-          >
-            <div className={centerStyles.cardHeading}>
-              <SkeletonBlock className={centerStyles.cardIcon} />
-              <div className="staff-skeleton-copy">
-                <SkeletonBlock className="staff-skeleton-line staff-skeleton-short" />
-                <SkeletonBlock className="staff-skeleton-title" />
-              </div>
-            </div>
-            <SkeletonBlock className="staff-skeleton-line" />
-            <SkeletonBlock className="staff-skeleton-input" />
-            <SkeletonBlock className="staff-skeleton-line staff-skeleton-short" />
-          </div>
-        ))}
-      </div>
-    </section>
+      {children}
+    </div>
   );
 }
 
@@ -273,13 +246,29 @@ export function DashboardSkeleton({
               <CdrrmoDashboardSkeleton />
             </CdrrmoSection>
             <CdrrmoSection id="evacuation-centers">
-              <CenterManagementSkeleton />
+              <CdrrmoPanelSkeleton controls={5} action>
+                <div
+                  className={`${centerStyles.directoryToolbar} staff-skeleton-center-directory`}
+                >
+                  <SkeletonBlock className="staff-skeleton-input" />
+                  <SkeletonBlock className="staff-skeleton-title" />
+                </div>
+                <div className="staff-skeleton-directory-rows">
+                  <SkeletonBlock />
+                  <SkeletonBlock />
+                  <SkeletonBlock />
+                </div>
+              </CdrrmoPanelSkeleton>
             </CdrrmoSection>
             <CdrrmoSection id="shared-locations">
-              <RecordsSkeleton label="Loading shared locations..." />
+              <CdrrmoPanelSkeleton controls={2}>
+                <RecordsSkeleton label="Loading shared locations..." />
+              </CdrrmoPanelSkeleton>
             </CdrrmoSection>
             <CdrrmoSection id="hazard-management">
-              <MapSkeleton label="Loading hazard management..." />
+              <CdrrmoPanelSkeleton controls={3}>
+                <MapSkeleton label="Loading hazard management..." />
+              </CdrrmoPanelSkeleton>
             </CdrrmoSection>
           </SkeletonRegion>
         </CdrrmoWorkspace>
