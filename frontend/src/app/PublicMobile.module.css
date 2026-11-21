@@ -229,6 +229,11 @@
   .mobile:global(.public-app) :global(.hazard-layer-controls) {
     left: 52px;
   }
+  .mobile:global(.public-app:has([data-status-panel]:not([hidden])))
+    :global(.map-legend-control .map-legend) {
+    top: calc(var(--mobile-map-controls-top) + 10px);
+    right: 66px;
+  }
 }
 @media (orientation: landscape) and (max-width: 1100px) and (max-height: 500px) {
   .mobile:global(.public-app) :global(.app-header) {

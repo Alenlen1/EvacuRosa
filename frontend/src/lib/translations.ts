@@ -65,6 +65,9 @@ export const filipino: Record<string, string> = {
   "Preparing offline data": "Inihahanda ang offline na datos",
   "Offline not ready": "Hindi pa handa offline",
   "Checking location": "Sinusuri ang lokasyon",
+  "Estimated GPS accuracy": "Tinatayang katumpakan ng GPS",
+  "Waiting for your device to send a location.":
+    "Hinihintay ang lokasyon mula sa iyong device.",
   "Offline information": "Impormasyon sa offline",
   "Close status details": "Isara ang detalye ng katayuan",
   "Your location is available for route planning.":

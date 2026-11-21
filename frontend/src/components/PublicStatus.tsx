@@ -18,26 +18,28 @@ export function PublicStatus({
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const locationButton = useRef<HTMLButtonElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
   const panelId = useId();
+  const panelTitleId = `${panelId}-title`;
   const located = location.status === "active";
-  const locationUnavailable =
-    ["denied", "timeout", "unavailable"].includes(location.status) ||
-    !!location.error;
+  const checking = location.status === "idle" || location.status === "locating";
   const statusLabel = t(
     located
       ? "Location active"
-      : locationUnavailable
-        ? "Location unavailable"
-        : "Checking location",
+      : checking
+        ? "Checking location"
+        : "Location unavailable",
   );
-  const StatusIcon = located
-    ? MapPin
-    : locationUnavailable
-      ? MapPinOff
-      : LoaderCircle;
+  const StatusIcon = located ? MapPin : checking ? LoaderCircle : MapPinOff;
+  const accuracy = location.position?.accuracy;
   function closeAndFocus() {
     locationButton.current?.focus();
     setOpen(false);
+  }
+
+  function retryLocation() {
+    closeButton.current?.focus({ preventScroll: true });
+    onRetryLocation();
   }
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export function PublicStatus({
         type="button"
         className={styles.trigger}
         data-ready={located}
-        data-checking={!located && !locationUnavailable}
+        data-checking={checking}
         data-status-trigger="location"
         title={statusLabel}
         aria-label={`${statusLabel}. ${t("Location help")}`}
@@ -95,13 +97,18 @@ export function PublicStatus({
         id={panelId}
         hidden={!open}
         data-status-panel
+        data-ready={located}
+        data-checking={checking}
         className={styles.panel}
-        role="region"
-        aria-label={t("Location help")}
+        aria-labelledby={panelTitleId}
       >
         <header className={styles.panelHeading}>
-          <strong>{t("Location help")}</strong>
+          <span className={styles.panelIcon}>
+            <StatusIcon size={18} aria-hidden="true" />
+          </span>
+          <h2 id={panelTitleId}>{statusLabel}</h2>
           <button
+            ref={closeButton}
             type="button"
             onClick={closeAndFocus}
             aria-label={t("Close status details")}
@@ -109,34 +116,27 @@ export function PublicStatus({
             <X size={17} aria-hidden="true" />
           </button>
         </header>
-        <p className={styles.currentStatus}>{statusLabel}</p>
         {located ? (
-          <>
+          accuracy !== undefined && Number.isFinite(accuracy) ? (
+            <dl className={styles.accuracy}>
+              <dt>{t("Estimated GPS accuracy")}</dt>
+              <dd>±{Math.round(accuracy)} m</dd>
+            </dl>
+          ) : (
             <p className={styles.statusText}>
               {t("Your location is available for route planning.")}
             </p>
-            {location.position &&
-              Number.isFinite(location.position.accuracy) && (
-                <p className={styles.statusText}>
-                  {t("GPS accuracy: approximately {meters} m", {
-                    meters: Math.round(location.position.accuracy),
-                  })}
-                </p>
-              )}
-          </>
-        ) : locationUnavailable ? (
-          <LocationRecovery location={location} onRetry={onRetryLocation} />
+          )
+        ) : checking ? (
+          <p className={styles.statusText}>
+            {t("Waiting for your device to send a location.")}
+          </p>
         ) : (
-          <>
-            <p className={styles.statusText}>{t("Checking your location…")}</p>
-            <button
-              type="button"
-              className={styles.retry}
-              onClick={onRetryLocation}
-            >
-              {t("Try location again")}
-            </button>
-          </>
+          <LocationRecovery
+            location={location}
+            onRetry={retryLocation}
+            embedded
+          />
         )}
       </section>
     </div>

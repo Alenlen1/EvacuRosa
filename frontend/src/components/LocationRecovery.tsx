@@ -7,9 +7,11 @@ import type { GeolocationState } from "@/hooks/useGeolocation";
 export function LocationRecovery({
   location,
   onRetry,
+  embedded = false,
 }: {
   location: GeolocationState;
   onRetry: () => void;
+  embedded?: boolean;
 }) {
   const { t } = useLanguage();
   const unavailable = ["denied", "unavailable", "timeout"].includes(
@@ -19,14 +21,19 @@ export function LocationRecovery({
     return null;
   const locating = location.status === "locating";
   return (
-    <section className="location-recovery" aria-label={t("Location help")}>
-      <MapPin size={20} aria-hidden="true" />
+    <section
+      className="location-recovery"
+      aria-label={embedded ? undefined : t("Location help")}
+    >
+      {!embedded && <MapPin size={20} aria-hidden="true" />}
       <div>
-        <strong role="status">
-          {t(
-            locating ? "Checking your location…" : "Location is not available",
-          )}
-        </strong>
+        {!embedded && (
+          <strong role="status">
+            {t(
+              locating ? "Checking your location…" : "Location is not available",
+            )}
+          </strong>
+        )}
 
         <details>
           <summary>{t("How to enable location")}</summary>
